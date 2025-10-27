@@ -2,23 +2,33 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileText, Image, Calendar } from "lucide-react";
+import { Search, Plus, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
 const patientSchema = z.object({
   full_name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
-  email: z.string().email("Email inválido").optional().or(z.literal("")),
-  phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
-  cpf: z.string().optional(),
+  gender: z.enum(["masculino", "feminino"], { required_error: "Selecione o sexo" }),
+  is_foreign: z.boolean().optional(),
   birth_date: z.string().optional(),
-  address: z.string().optional(),
+  cpf: z.string().optional(),
+  rg: z.string().optional(),
+  phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos"),
+  how_found: z.string().optional(),
+  tags: z.string().optional(),
+  responsible_name: z.string().optional(),
+  responsible_birth_date: z.string().optional(),
+  responsible_cpf: z.string().optional(),
+  responsible_phone: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -31,11 +41,18 @@ const Prontuario = () => {
   const [filteredPatients, setFilteredPatients] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     full_name: "",
-    email: "",
-    phone: "",
-    cpf: "",
+    gender: "" as "masculino" | "feminino" | "",
+    is_foreign: false,
     birth_date: "",
-    address: "",
+    cpf: "",
+    rg: "",
+    phone: "",
+    how_found: "",
+    tags: "",
+    responsible_name: "",
+    responsible_birth_date: "",
+    responsible_cpf: "",
+    responsible_phone: "",
     notes: "",
   });
 
@@ -82,11 +99,18 @@ const Prontuario = () => {
       // Validate form data
       const validatedData = patientSchema.parse({
         full_name: formData.full_name,
-        email: formData.email || undefined,
-        phone: formData.phone,
-        cpf: formData.cpf || undefined,
+        gender: formData.gender || undefined,
+        is_foreign: formData.is_foreign,
         birth_date: formData.birth_date || undefined,
-        address: formData.address || undefined,
+        cpf: formData.cpf || undefined,
+        rg: formData.rg || undefined,
+        phone: formData.phone,
+        how_found: formData.how_found || undefined,
+        tags: formData.tags || undefined,
+        responsible_name: formData.responsible_name || undefined,
+        responsible_birth_date: formData.responsible_birth_date || undefined,
+        responsible_cpf: formData.responsible_cpf || undefined,
+        responsible_phone: formData.responsible_phone || undefined,
         notes: formData.notes || undefined,
       });
 
@@ -104,17 +128,29 @@ const Prontuario = () => {
 
       if (!profile?.clinic_id) throw new Error("Clínica não encontrada");
 
+      // Parse tags if provided
+      const tagsArray = validatedData.tags 
+        ? validatedData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+        : null;
+
       // Save to database
       const { error } = await supabase
         .from("patients")
         .insert({
           clinic_id: profile.clinic_id,
           full_name: validatedData.full_name,
-          email: validatedData.email || null,
-          phone: validatedData.phone,
-          cpf: validatedData.cpf || null,
+          gender: validatedData.gender || null,
+          is_foreign: validatedData.is_foreign || false,
           birth_date: validatedData.birth_date || null,
-          address: validatedData.address || null,
+          cpf: validatedData.cpf || null,
+          rg: validatedData.rg || null,
+          phone: validatedData.phone,
+          how_found: validatedData.how_found || null,
+          tags: tagsArray,
+          responsible_name: validatedData.responsible_name || null,
+          responsible_birth_date: validatedData.responsible_birth_date || null,
+          responsible_cpf: validatedData.responsible_cpf || null,
+          responsible_phone: validatedData.responsible_phone || null,
           notes: validatedData.notes || null,
         });
 
@@ -124,11 +160,18 @@ const Prontuario = () => {
       setIsSheetOpen(false);
       setFormData({
         full_name: "",
-        email: "",
-        phone: "",
-        cpf: "",
+        gender: "",
+        is_foreign: false,
         birth_date: "",
-        address: "",
+        cpf: "",
+        rg: "",
+        phone: "",
+        how_found: "",
+        tags: "",
+        responsible_name: "",
+        responsible_birth_date: "",
+        responsible_cpf: "",
+        responsible_phone: "",
         notes: "",
       });
 
@@ -187,81 +230,205 @@ const Prontuario = () => {
               Novo Paciente
             </Button>
           </SheetTrigger>
-          <SheetContent className="sm:max-w-[500px] overflow-y-auto">
+          <SheetContent className="sm:max-w-[700px] overflow-y-auto">
             <SheetHeader>
-              <SheetTitle>Cadastrar Novo Paciente</SheetTitle>
+              <SheetTitle>Dados do paciente</SheetTitle>
               <SheetDescription>
                 Preencha os dados do paciente para criar o prontuário
               </SheetDescription>
             </SheetHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 mt-6">
-              <div className="space-y-2">
-                <Label htmlFor="full_name">Nome Completo *</Label>
-                <Input
-                  id="full_name"
-                  placeholder="Nome completo do paciente"
-                  value={formData.full_name}
-                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  required
-                />
-              </div>
+            <form onSubmit={handleSubmit} className="space-y-6 mt-6">
+              {/* Dados do Paciente */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-foreground">Dados do paciente</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="md:col-span-2 space-y-2">
+                    <Label htmlFor="full_name">Nome do paciente *</Label>
+                    <Input
+                      id="full_name"
+                      placeholder="Nome completo do paciente"
+                      value={formData.full_name}
+                      onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                      required
+                    />
+                  </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="phone">Telefone *</Label>
-                <Input
-                  id="phone"
-                  placeholder="(00) 00000-0000"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  required
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label>Sexo *</Label>
+                    <RadioGroup
+                      value={formData.gender}
+                      onValueChange={(value: "masculino" | "feminino") => 
+                        setFormData({ ...formData, gender: value })
+                      }
+                      className="flex gap-4"
+                      required
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="masculino" id="masculino" />
+                        <Label htmlFor="masculino" className="font-normal cursor-pointer">
+                          Masculino
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="feminino" id="feminino" />
+                        <Label htmlFor="feminino" className="font-normal cursor-pointer">
+                          Feminino
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="email@exemplo.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cpf">CPF</Label>
-                  <Input
-                    id="cpf"
-                    placeholder="000.000.000-00"
-                    value={formData.cpf}
-                    onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="is_foreign"
+                    checked={formData.is_foreign}
+                    onCheckedChange={(checked) => 
+                      setFormData({ ...formData, is_foreign: checked })
+                    }
                   />
+                  <Label htmlFor="is_foreign" className="font-normal cursor-pointer">
+                    Paciente estrangeiro
+                  </Label>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="birth_date">Data de nascimento</Label>
+                    <Input
+                      id="birth_date"
+                      type="date"
+                      value={formData.birth_date}
+                      onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="cpf">CPF</Label>
+                    <Input
+                      id="cpf"
+                      placeholder="000.000.000-00"
+                      value={formData.cpf}
+                      onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="rg">RG</Label>
+                    <Input
+                      id="rg"
+                      placeholder="00.000.000-0"
+                      value={formData.rg}
+                      onChange={(e) => setFormData({ ...formData, rg: e.target.value })}
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="birth_date">Data de Nascimento</Label>
+                  <Label htmlFor="phone">Celular do paciente *</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      className="w-24"
+                      value="+55"
+                      disabled
+                    />
+                    <Input
+                      id="phone"
+                      placeholder="11 93736 7647"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      required
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="how_found">Como o paciente chegou na clínica</Label>
+                  <Select
+                    value={formData.how_found}
+                    onValueChange={(value) => setFormData({ ...formData, how_found: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma opção" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="indicacao">Indicação</SelectItem>
+                      <SelectItem value="google">Google</SelectItem>
+                      <SelectItem value="redes_sociais">Redes Sociais</SelectItem>
+                      <SelectItem value="placa">Placa/Fachada</SelectItem>
+                      <SelectItem value="outro">Outro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="tags">Etiquetas</Label>
                   <Input
-                    id="birth_date"
-                    type="date"
-                    value={formData.birth_date}
-                    onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
+                    id="tags"
+                    placeholder="Digite etiquetas separadas por vírgula"
+                    value={formData.tags}
+                    onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Separe as etiquetas com vírgula (ex: VIP, Ortodontia, Prioritário)
+                  </p>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="address">Endereço</Label>
-                <Input
-                  id="address"
-                  placeholder="Rua, número, bairro, cidade"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                />
+              {/* Dados do Responsável */}
+              <div className="space-y-4 pt-4 border-t">
+                <h3 className="text-sm font-semibold text-foreground">Dados do responsável</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="responsible_name">Nome do responsável</Label>
+                    <Input
+                      id="responsible_name"
+                      placeholder="Nome completo do responsável"
+                      value={formData.responsible_name}
+                      onChange={(e) => setFormData({ ...formData, responsible_name: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="responsible_birth_date">Data de nascimento</Label>
+                    <Input
+                      id="responsible_birth_date"
+                      type="date"
+                      value={formData.responsible_birth_date}
+                      onChange={(e) => setFormData({ ...formData, responsible_birth_date: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="responsible_cpf">CPF</Label>
+                    <Input
+                      id="responsible_cpf"
+                      placeholder="000.000.000-00"
+                      value={formData.responsible_cpf}
+                      onChange={(e) => setFormData({ ...formData, responsible_cpf: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="responsible_phone">Celular do responsável</Label>
+                    <Input
+                      id="responsible_phone"
+                      placeholder="(00) 00000-0000"
+                      value={formData.responsible_phone}
+                      onChange={(e) => setFormData({ ...formData, responsible_phone: e.target.value })}
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="notes">Observações</Label>
+              {/* Observação */}
+              <div className="space-y-2 pt-4 border-t">
+                <Label htmlFor="notes">Observação</Label>
                 <Textarea
                   id="notes"
                   placeholder="Informações adicionais sobre o paciente"
@@ -272,11 +439,16 @@ const Prontuario = () => {
               </div>
 
               <div className="flex gap-3 pt-4">
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setIsSheetOpen(false)} disabled={saving}>
-                  Cancelar
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsSheetOpen(false)} 
+                  disabled={saving}
+                >
+                  FECHAR
                 </Button>
-                <Button type="submit" className="flex-1" disabled={saving}>
-                  {saving ? "Salvando..." : "Cadastrar Paciente"}
+                <Button type="submit" disabled={saving}>
+                  {saving ? "SALVANDO..." : "SALVAR"}
                 </Button>
               </div>
             </form>

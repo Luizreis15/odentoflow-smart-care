@@ -260,9 +260,18 @@ export type Database = {
           created_at: string | null
           email: string | null
           full_name: string
+          gender: string | null
+          how_found: string | null
           id: string
+          is_foreign: boolean | null
           notes: string | null
           phone: string
+          responsible_birth_date: string | null
+          responsible_cpf: string | null
+          responsible_name: string | null
+          responsible_phone: string | null
+          rg: string | null
+          tags: string[] | null
           updated_at: string | null
         }
         Insert: {
@@ -273,9 +282,18 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           full_name: string
+          gender?: string | null
+          how_found?: string | null
           id?: string
+          is_foreign?: boolean | null
           notes?: string | null
           phone: string
+          responsible_birth_date?: string | null
+          responsible_cpf?: string | null
+          responsible_name?: string | null
+          responsible_phone?: string | null
+          rg?: string | null
+          tags?: string[] | null
           updated_at?: string | null
         }
         Update: {
@@ -286,9 +304,18 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           full_name?: string
+          gender?: string | null
+          how_found?: string | null
           id?: string
+          is_foreign?: boolean | null
           notes?: string | null
           phone?: string
+          responsible_birth_date?: string | null
+          responsible_cpf?: string | null
+          responsible_name?: string | null
+          responsible_phone?: string | null
+          rg?: string | null
+          tags?: string[] | null
           updated_at?: string | null
         }
         Relationships: [
