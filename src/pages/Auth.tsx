@@ -41,7 +41,6 @@ const Auth = () => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        // Check if user has completed onboarding
         const { data: profile } = await supabase
           .from('profiles')
           .select('clinic_id')
@@ -49,19 +48,18 @@ const Auth = () => {
           .single();
         
         if (!profile?.clinic_id) {
-          navigate("/onboarding");
+          navigate("/onboarding/welcome");
           return;
         }
 
-        // Check if clinic has at least one professional
-        const { data: professionals } = await supabase
-          .from("professionals")
-          .select("id")
-          .eq("clinic_id", profile.clinic_id)
-          .limit(1);
+        const { data: clinica } = await (supabase as any)
+          .from('clinicas')
+          .select('onboarding_status')
+          .eq('id', profile.clinic_id)
+          .single();
 
-        if (!professionals || professionals.length === 0) {
-          navigate("/onboarding");
+        if (clinica?.onboarding_status !== 'completed') {
+          navigate("/onboarding/welcome");
           return;
         }
 
@@ -72,7 +70,6 @@ const Auth = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
-        // Check if user has completed onboarding
         const { data: profile } = await supabase
           .from('profiles')
           .select('clinic_id')
@@ -80,19 +77,18 @@ const Auth = () => {
           .single();
         
         if (!profile?.clinic_id) {
-          navigate("/onboarding");
+          navigate("/onboarding/welcome");
           return;
         }
 
-        // Check if clinic has at least one professional
-        const { data: professionals } = await supabase
-          .from("professionals")
-          .select("id")
-          .eq("clinic_id", profile.clinic_id)
-          .limit(1);
+        const { data: clinica } = await (supabase as any)
+          .from('clinicas')
+          .select('onboarding_status')
+          .eq('id', profile.clinic_id)
+          .single();
 
-        if (!professionals || professionals.length === 0) {
-          navigate("/onboarding");
+        if (clinica?.onboarding_status !== 'completed') {
+          navigate("/onboarding/welcome");
           return;
         }
 
