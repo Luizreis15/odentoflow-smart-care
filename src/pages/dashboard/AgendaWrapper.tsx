@@ -29,6 +29,22 @@ const AgendaWrapper = () => {
         return;
       }
 
+      // Check if clinic has at least one professional
+      const { data: professionals, error } = await supabase
+        .from("professionals")
+        .select("id")
+        .eq("clinic_id", profileData.clinic_id)
+        .limit(1);
+
+      if (error) {
+        console.error("Erro ao verificar profissionais:", error);
+      }
+
+      if (!professionals || professionals.length === 0) {
+        navigate("/onboarding");
+        return;
+      }
+
       setProfile(profileData);
       setLoading(false);
     };

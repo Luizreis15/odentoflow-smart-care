@@ -48,11 +48,24 @@ const Auth = () => {
           .eq('id', session.user.id)
           .single();
         
-        if (profile?.clinic_id) {
-          navigate("/dashboard");
-        } else {
+        if (!profile?.clinic_id) {
           navigate("/onboarding");
+          return;
         }
+
+        // Check if clinic has at least one professional
+        const { data: professionals } = await supabase
+          .from("professionals")
+          .select("id")
+          .eq("clinic_id", profile.clinic_id)
+          .limit(1);
+
+        if (!professionals || professionals.length === 0) {
+          navigate("/onboarding");
+          return;
+        }
+
+        navigate("/dashboard");
       }
     };
     checkUser();
@@ -66,11 +79,24 @@ const Auth = () => {
           .eq('id', session.user.id)
           .single();
         
-        if (profile?.clinic_id) {
-          navigate("/dashboard");
-        } else {
+        if (!profile?.clinic_id) {
           navigate("/onboarding");
+          return;
         }
+
+        // Check if clinic has at least one professional
+        const { data: professionals } = await supabase
+          .from("professionals")
+          .select("id")
+          .eq("clinic_id", profile.clinic_id)
+          .limit(1);
+
+        if (!professionals || professionals.length === 0) {
+          navigate("/onboarding");
+          return;
+        }
+
+        navigate("/dashboard");
       }
     });
 

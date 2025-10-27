@@ -70,7 +70,7 @@ const Index = () => {
                 onClick={() => navigate("/auth")}
                 className="bg-card text-primary hover:bg-card/90 shadow-xl text-lg px-8"
               >
-                Começar Gratuitamente
+                Iniciar Cadastro da Clínica
               </Button>
               <Button
                 size="lg"
