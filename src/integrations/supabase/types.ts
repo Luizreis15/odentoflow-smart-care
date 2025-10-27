@@ -635,6 +635,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      complete_user_onboarding: {
+        Args: {
+          _clinic_cnpj?: string
+          _clinic_name: string
+          _clinic_phone?: string
+        }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

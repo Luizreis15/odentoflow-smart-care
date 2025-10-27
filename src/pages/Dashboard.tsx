@@ -34,15 +34,31 @@ const Dashboard = () => {
         .eq("id", session.user.id)
         .single();
 
+      // Check if user has completed onboarding
+      if (!profileData?.clinic_id) {
+        navigate("/onboarding");
+        return;
+      }
+
       setProfile(profileData);
       setLoading(false);
     };
 
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!session) {
         navigate("/auth");
+      } else {
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("clinic_id")
+          .eq("id", session.user.id)
+          .single();
+
+        if (!profileData?.clinic_id) {
+          navigate("/onboarding");
+        }
       }
     });
 

@@ -41,14 +41,36 @@ const Auth = () => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate("/dashboard");
+        // Check if user has completed onboarding
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('clinic_id')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profile?.clinic_id) {
+          navigate("/dashboard");
+        } else {
+          navigate("/onboarding");
+        }
       }
     };
     checkUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
-        navigate("/dashboard");
+        // Check if user has completed onboarding
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('clinic_id')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profile?.clinic_id) {
+          navigate("/dashboard");
+        } else {
+          navigate("/onboarding");
+        }
       }
     });
 
