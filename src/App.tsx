@@ -13,6 +13,7 @@ import Profissional from "./pages/onboarding/Profissional";
 import Dashboard from "./pages/Dashboard";
 import AgendaWrapper from "./pages/dashboard/AgendaWrapper";
 import ProntuarioWrapper from "./pages/dashboard/ProntuarioWrapper";
+import PatientDetails from "./pages/dashboard/PatientDetails";
 import FinanceiroWrapper from "./pages/dashboard/FinanceiroWrapper";
 import CRMWrapper from "./pages/dashboard/CRMWrapper";
 import PortalPacienteWrapper from "./pages/dashboard/PortalPacienteWrapper";
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/dashboard/agenda" element={<AgendaWrapper />} />
             <Route path="/dashboard/prontuario" element={<ProntuarioWrapper />} />
+            <Route path="/dashboard/prontuario/:id" element={<PatientDetails />} />
             <Route path="/dashboard/financeiro" element={<FinanceiroWrapper />} />
             <Route path="/dashboard/crm" element={<CRMWrapper />} />
             <Route path="/dashboard/portal-paciente" element={<PortalPacienteWrapper />} />
