@@ -4,9 +4,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar as CalendarIcon, Clock, Plus, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 
 const Agenda = () => {
   const [selectedDate] = useState(new Date());
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    patient: "",
+    dentist: "",
+    type: "",
+    date: "",
+    time: "",
+    duration: "30",
+  });
 
   const appointments = [
     {
@@ -61,6 +75,27 @@ const Agenda = () => {
     cancelled: "Cancelado",
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.patient || !formData.dentist || !formData.type || !formData.date || !formData.time) {
+      toast.error("Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+
+    // Aqui você pode adicionar a lógica para salvar no banco de dados
+    toast.success("Agendamento criado com sucesso!");
+    setIsSheetOpen(false);
+    setFormData({
+      patient: "",
+      dentist: "",
+      type: "",
+      date: "",
+      time: "",
+      duration: "30",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -75,10 +110,108 @@ const Agenda = () => {
             <Filter className="mr-2 h-4 w-4" />
             Filtrar
           </Button>
-          <Button size="sm">
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Agendamento
-          </Button>
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <SheetTrigger asChild>
+              <Button size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Agendamento
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="sm:max-w-[500px] overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>Novo Agendamento</SheetTitle>
+                <SheetDescription>
+                  Preencha os dados para criar um novo agendamento
+                </SheetDescription>
+              </SheetHeader>
+              <form onSubmit={handleSubmit} className="space-y-4 mt-6">
+                <div className="space-y-2">
+                  <Label htmlFor="patient">Paciente *</Label>
+                  <Input
+                    id="patient"
+                    placeholder="Nome do paciente"
+                    value={formData.patient}
+                    onChange={(e) => setFormData({ ...formData, patient: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dentist">Dentista *</Label>
+                  <Select value={formData.dentist} onValueChange={(value) => setFormData({ ...formData, dentist: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o dentista" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Dr. João Santos">Dr. João Santos</SelectItem>
+                      <SelectItem value="Dra. Ana Paula">Dra. Ana Paula</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="type">Tipo de Consulta *</Label>
+                  <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Limpeza">Limpeza</SelectItem>
+                      <SelectItem value="Consulta">Consulta</SelectItem>
+                      <SelectItem value="Canal">Canal</SelectItem>
+                      <SelectItem value="Clareamento">Clareamento</SelectItem>
+                      <SelectItem value="Ortodontia">Ortodontia</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="date">Data *</Label>
+                    <Input
+                      id="date"
+                      type="date"
+                      value={formData.date}
+                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="time">Horário *</Label>
+                    <Input
+                      id="time"
+                      type="time"
+                      value={formData.time}
+                      onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="duration">Duração (minutos) *</Label>
+                  <Select value={formData.duration} onValueChange={(value) => setFormData({ ...formData, duration: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="30">30 minutos</SelectItem>
+                      <SelectItem value="60">60 minutos</SelectItem>
+                      <SelectItem value="90">90 minutos</SelectItem>
+                      <SelectItem value="120">120 minutos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button type="button" variant="outline" className="flex-1" onClick={() => setIsSheetOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" className="flex-1">
+                    Criar Agendamento
+                  </Button>
+                </div>
+              </form>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
 
