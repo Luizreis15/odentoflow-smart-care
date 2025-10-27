@@ -670,24 +670,15 @@ export type Database = {
         }
         Returns: Json
       }
-      has_role:
-        | {
-            Args: {
-              _role: Database["public"]["Enums"]["app_role"]
-              _user_id: string
-            }
-            Returns: boolean
-          }
-        | {
-            Args: {
-              _role: Database["public"]["Enums"]["perfil_usuario"]
-              _user_id: string
-            }
-            Returns: boolean
-          }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["perfil_usuario"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      app_role: "admin" | "dentist" | "receptionist"
       perfil_usuario: "admin" | "dentista" | "assistente" | "recepcao"
       plano_tipo: "starter" | "pro" | "enterprise"
       status_assinatura:
@@ -823,7 +814,6 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "dentist", "receptionist"],
       perfil_usuario: ["admin", "dentista", "assistente", "recepcao"],
       plano_tipo: ["starter", "pro", "enterprise"],
       status_assinatura: [
