@@ -55,13 +55,31 @@ const Agenda = () => {
       if (patientsError) throw patientsError;
       setPatients(patientsData || []);
 
-      // Load dentists
+      // Load dentists from user's clinic
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("clinic_id")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile?.clinic_id) throw new Error("Clínica não encontrada");
+
       const { data: dentistsData, error: dentistsError } = await supabase
         .from("profissionais")
-        .select("id, nome")
+        .select("id, nome, cro, especialidade")
+        .eq("clinica_id", profile.clinic_id)
+        .eq("ativo", true)
         .order("nome");
       
-      if (dentistsError) throw dentistsError;
+      if (dentistsError) {
+        console.error("Erro ao carregar dentistas:", dentistsError);
+        throw dentistsError;
+      }
+      
+      console.log("Dentistas carregados:", dentistsData);
       setDentists(dentistsData || []);
 
       // Show info if no data
