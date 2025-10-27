@@ -79,7 +79,7 @@ const Profissional = () => {
       const { data: profile } = await supabase.from("profiles").select("clinic_id").eq("id", user.id).single();
       if (!profile?.clinic_id) throw new Error("Clínica não encontrada");
 
-      const { error } = await (supabase as any).from("profissionais").insert({
+      const { error, data: profData } = await (supabase as any).from("profissionais").insert({
         clinica_id: profile.clinic_id,
         nome: validation.data.nome,
         cro: validation.data.cro,
@@ -88,9 +88,16 @@ const Profissional = () => {
         especialidade: validation.data.especialidade || null,
         perfil: "responsavel",
         ativo: true,
-      });
+      }).select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao inserir profissional:", error);
+        throw new Error(error.message || "Erro ao cadastrar profissional");
+      }
+
+      if (!profData || profData.length === 0) {
+        throw new Error("Profissional não foi cadastrado corretamente");
+      }
 
       await (supabase as any).from("clinicas").update({ onboarding_status: "completed" }).eq("id", profile.clinic_id);
 

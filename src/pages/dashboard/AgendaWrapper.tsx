@@ -25,23 +25,19 @@ const AgendaWrapper = () => {
         .single();
 
       if (!profileData?.clinic_id) {
-        navigate("/onboarding");
+        navigate("/onboarding/welcome");
         return;
       }
 
-      // Check if clinic has at least one professional
-      const { data: professionals, error } = await supabase
-        .from("profissionais")
-        .select("id")
-        .eq("clinica_id", profileData.clinic_id)
-        .limit(1);
+      // Check if onboarding is completed
+      const { data: clinicData } = await supabase
+        .from("clinicas")
+        .select("onboarding_status")
+        .eq("id", profileData.clinic_id)
+        .single();
 
-      if (error) {
-        console.error("Erro ao verificar profissionais:", error);
-      }
-
-      if (!professionals || professionals.length === 0) {
-        navigate("/onboarding");
+      if (clinicData?.onboarding_status !== "completed") {
+        navigate("/onboarding/welcome");
         return;
       }
 

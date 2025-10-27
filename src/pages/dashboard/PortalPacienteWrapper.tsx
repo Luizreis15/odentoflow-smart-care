@@ -25,7 +25,19 @@ const PortalPacienteWrapper = () => {
         .single();
 
       if (!profileData?.clinic_id) {
-        navigate("/onboarding");
+        navigate("/onboarding/welcome");
+        return;
+      }
+
+      // Check if onboarding is completed
+      const { data: clinicData } = await supabase
+        .from("clinicas")
+        .select("onboarding_status")
+        .eq("id", profileData.clinic_id)
+        .single();
+
+      if (clinicData?.onboarding_status !== "completed") {
+        navigate("/onboarding/welcome");
         return;
       }
 
