@@ -24,16 +24,22 @@ const Configuracoes = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
+      console.log("=== DEBUG CONFIGURAÇÕES ===");
+      console.log("Session:", session?.user?.email);
+      
       if (!session) {
         navigate("/auth");
         return;
       }
 
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", session.user.id)
         .single();
+
+      console.log("Profile data:", profileData);
+      console.log("Profile error:", profileError);
 
       if (!profileData?.clinic_id) {
         navigate("/onboarding/welcome");
@@ -41,22 +47,58 @@ const Configuracoes = () => {
       }
 
       // Verificar se é admin ANTES de prosseguir
-      const { data: userData } = await supabase
+      const { data: userData, error: userError } = await supabase
         .from("usuarios")
         .select("perfil")
         .eq("id", session.user.id)
         .single();
 
-      console.log("Perfil do usuário:", userData?.perfil);
+      console.log("User data:", userData);
+      console.log("User error:", userError);
 
-      if (!userData || userData.perfil !== "admin") {
+      if (!userData) {
+        console.error("Usuário não encontrado na tabela usuarios!");
+        console.log("Tentando criar registro...");
+        
+        // Tentar criar registro na tabela usuarios
+        const { data: newUser, error: insertError } = await supabase
+          .from("usuarios")
+          .insert({
+            id: session.user.id,
+            clinica_id: profileData.clinic_id,
+            nome: profileData.full_name,
+            email: session.user.email,
+            perfil: "admin"
+          })
+          .select()
+          .single();
+          
+        console.log("Novo usuário criado:", newUser);
+        console.log("Erro ao criar:", insertError);
+        
+        if (!insertError && newUser) {
+          // Criar role também
+          await supabase
+            .from("user_roles")
+            .insert({
+              user_id: session.user.id,
+              role: "admin"
+            });
+            
+          setIsAdmin(true);
+          setProfile(profileData);
+        } else {
+          navigate("/dashboard");
+          return;
+        }
+      } else if (userData.perfil !== "admin") {
         console.log("Usuário não é admin, redirecionando...");
         navigate("/dashboard");
         return;
+      } else {
+        setIsAdmin(true);
+        setProfile(profileData);
       }
-
-      setIsAdmin(true);
-      setProfile(profileData);
 
       // Buscar dados da clínica
       const { data: clinicData } = await supabase
