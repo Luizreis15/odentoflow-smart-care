@@ -116,8 +116,7 @@ const Profissional = () => {
               clinica_id: profile.clinic_id,
               nome: profile.full_name || "Administrador",
               email: user.email,
-              perfil: "admin",
-              ativo: true
+              perfil: "admin"
             });
 
           if (userError) {

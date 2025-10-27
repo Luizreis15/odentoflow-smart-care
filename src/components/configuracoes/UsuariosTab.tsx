@@ -13,7 +13,6 @@ interface Usuario {
   nome: string;
   email: string;
   perfil: string;
-  ativo: boolean;
   profissional_id: string | null;
   last_login_at: string | null;
   created_at: string;
@@ -58,7 +57,6 @@ export const UsuariosTab = ({ clinicaId }: UsuariosTabProps) => {
         nome: u.nome || "",
         email: u.email || "",
         perfil: u.perfil || "recepcionista",
-        ativo: u.ativo ?? true,
         profissional_id: u.profissional_id || null,
         last_login_at: u.last_login_at || null,
         created_at: u.created_at || "",
@@ -96,31 +94,7 @@ export const UsuariosTab = ({ clinicaId }: UsuariosTabProps) => {
   };
 
   const handleToggleStatus = async (usuario: Usuario) => {
-    try {
-      const { error } = await supabase
-        .from("usuarios" as any)
-        .update({ ativo: !usuario.ativo })
-        .eq("id", usuario.id);
-
-      if (error) throw error;
-
-      // Registrar auditoria
-      await supabase
-        .from("audit_log" as any)
-        .insert({
-          entidade: "usuarios",
-          entidade_id: usuario.id,
-          acao: usuario.ativo ? "deactivate" : "reactivate",
-          dif: { ativo: !usuario.ativo }
-        });
-
-      toast.success(
-        usuario.ativo ? "Usuário desativado" : "Usuário reativado"
-      );
-      loadUsuarios();
-    } catch (error: any) {
-      toast.error("Erro ao atualizar status: " + error.message);
-    }
+    toast.info("Funcionalidade de ativar/desativar usuários será implementada em breve");
   };
 
   return (

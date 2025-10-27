@@ -73,25 +73,20 @@ export const InviteUserModal = ({ open, onClose, clinicaId }: InviteUserModalPro
       }
 
       // Criar usuário placeholder
-      const { data: newUser, error: insertError } = await supabase
-        .from("usuarios" as any)
-        .insert({
-          clinica_id: clinicaId,
-          nome: formData.nome,
-          email: formData.email.toLowerCase(),
-          perfil: formData.perfil,
-          profissional_id: formData.profissional_id || null,
-          ativo: true
-        })
-        .select()
-        .single() as any;
+          const { error: userError } = await (supabase as any)
+            .from("usuarios")
+            .insert({
+              clinica_id: clinicaId,
+              nome: formData.nome,
+              email: formData.email.toLowerCase(),
+              perfil: formData.perfil,
+              profissional_id: formData.profissional_id || null
+            })
+            .select()
+            .single() as any;
 
-      if (insertError) throw insertError;
+          if (userError) throw userError;
 
-      // Nota: O envio do Magic Link requer acesso admin da API
-      // Por enquanto, o usuário será criado e poderá usar "Esqueci minha senha"
-      // para definir sua senha e acessar o sistema
-      
       toast.success("Usuário criado com sucesso! Use 'Esqueci minha senha' na tela de login para acessar.");
 
       // Registrar auditoria
@@ -99,7 +94,7 @@ export const InviteUserModal = ({ open, onClose, clinicaId }: InviteUserModalPro
         .from("audit_log" as any)
         .insert({
           entidade: "usuarios",
-          entidade_id: newUser?.id || "",
+          entidade_id: userError?.id || "",
           acao: "invite",
           dif: formData
         });

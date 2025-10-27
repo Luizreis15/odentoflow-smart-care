@@ -1,7 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Power, PowerOff } from "lucide-react";
+import { Edit } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -11,7 +11,6 @@ interface Usuario {
   nome: string;
   email: string;
   perfil: string;
-  ativo: boolean;
   profissional_id: string | null;
   last_login_at: string | null;
 }
@@ -71,7 +70,6 @@ export const UsuariosTable = ({ usuarios, loading, onEdit, onToggleStatus }: Usu
             <TableHead>E-mail</TableHead>
             <TableHead>Perfil</TableHead>
             <TableHead>Último Acesso</TableHead>
-            <TableHead>Status</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -93,11 +91,6 @@ export const UsuariosTable = ({ usuarios, loading, onEdit, onToggleStatus }: Usu
                     })
                   : "Nunca acessou"}
               </TableCell>
-              <TableCell>
-                <Badge variant={user.ativo ? "default" : "secondary"}>
-                  {user.ativo ? "Ativo" : "Inativo"}
-                </Badge>
-              </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <Button
@@ -106,17 +99,6 @@ export const UsuariosTable = ({ usuarios, loading, onEdit, onToggleStatus }: Usu
                     onClick={() => onEdit(user)}
                   >
                     <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onToggleStatus(user)}
-                  >
-                    {user.ativo ? (
-                      <PowerOff className="h-4 w-4" />
-                    ) : (
-                      <Power className="h-4 w-4" />
-                    )}
                   </Button>
                 </div>
               </TableCell>
