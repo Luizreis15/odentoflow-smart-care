@@ -111,36 +111,54 @@ export type Database = {
       }
       clinics: {
         Row: {
-          address: string | null
+          address: Json | null
           cnpj: string | null
           created_at: string | null
+          current_period_end: string | null
           id: string
           name: string
+          owner_user_id: string | null
           phone: string | null
-          plan: string | null
-          status: string | null
+          plano: Database["public"]["Enums"]["plano_tipo"] | null
+          status_assinatura:
+            | Database["public"]["Enums"]["status_assinatura"]
+            | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           updated_at: string | null
         }
         Insert: {
-          address?: string | null
+          address?: Json | null
           cnpj?: string | null
           created_at?: string | null
+          current_period_end?: string | null
           id?: string
           name: string
+          owner_user_id?: string | null
           phone?: string | null
-          plan?: string | null
-          status?: string | null
+          plano?: Database["public"]["Enums"]["plano_tipo"] | null
+          status_assinatura?:
+            | Database["public"]["Enums"]["status_assinatura"]
+            | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string | null
         }
         Update: {
-          address?: string | null
+          address?: Json | null
           cnpj?: string | null
           created_at?: string | null
+          current_period_end?: string | null
           id?: string
           name?: string
+          owner_user_id?: string | null
           phone?: string | null
-          plan?: string | null
-          status?: string | null
+          plano?: Database["public"]["Enums"]["plano_tipo"] | null
+          status_assinatura?:
+            | Database["public"]["Enums"]["status_assinatura"]
+            | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -183,6 +201,44 @@ export type Database = {
           {
             foreignKeyName: "financial_transactions_clinic_id_fkey"
             columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      limites_uso: {
+        Row: {
+          clinica_id: string
+          created_at: string | null
+          id: string
+          mensagens_enviadas: number | null
+          mes_referencia: string
+          pacientes_totais: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          clinica_id: string
+          created_at?: string | null
+          id?: string
+          mensagens_enviadas?: number | null
+          mes_referencia: string
+          pacientes_totais?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          clinica_id?: string
+          created_at?: string | null
+          id?: string
+          mensagens_enviadas?: number | null
+          mes_referencia?: string
+          pacientes_totais?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "limites_uso_clinica_id_fkey"
+            columns: ["clinica_id"]
             isOneToOne: false
             referencedRelation: "clinics"
             referencedColumns: ["id"]
@@ -289,6 +345,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      planos: {
+        Row: {
+          created_at: string | null
+          id: string
+          limites: Json | null
+          nome: string
+          ordem: number
+          recursos: Json | null
+          stripe_price_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          limites?: Json | null
+          nome: string
+          ordem: number
+          recursos?: Json | null
+          stripe_price_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          limites?: Json | null
+          nome?: string
+          ordem?: number
+          recursos?: Json | null
+          stripe_price_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       professionals: {
         Row: {
@@ -503,6 +592,44 @@ export type Database = {
           },
         ]
       }
+      usuarios: {
+        Row: {
+          clinica_id: string
+          created_at: string | null
+          email: string
+          id: string
+          nome: string
+          perfil: Database["public"]["Enums"]["perfil_usuario"]
+          updated_at: string | null
+        }
+        Insert: {
+          clinica_id: string
+          created_at?: string | null
+          email: string
+          id: string
+          nome: string
+          perfil?: Database["public"]["Enums"]["perfil_usuario"]
+          updated_at?: string | null
+        }
+        Update: {
+          clinica_id?: string
+          created_at?: string | null
+          email?: string
+          id?: string
+          nome?: string
+          perfil?: Database["public"]["Enums"]["perfil_usuario"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuarios_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -518,6 +645,14 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "dentist" | "receptionist"
+      perfil_usuario: "admin" | "dentista" | "assistente" | "recepcao"
+      plano_tipo: "starter" | "pro" | "enterprise"
+      status_assinatura:
+        | "trialing"
+        | "active"
+        | "past_due"
+        | "canceled"
+        | "incomplete"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -646,6 +781,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "dentist", "receptionist"],
+      perfil_usuario: ["admin", "dentista", "assistente", "recepcao"],
+      plano_tipo: ["starter", "pro", "enterprise"],
+      status_assinatura: [
+        "trialing",
+        "active",
+        "past_due",
+        "canceled",
+        "incomplete",
+      ],
     },
   },
 } as const
