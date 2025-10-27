@@ -24,6 +24,11 @@ const ProntuarioWrapper = () => {
         .eq("id", session.user.id)
         .single();
 
+      if (!profileData?.clinic_id) {
+        navigate("/onboarding");
+        return;
+      }
+
       setProfile(profileData);
       setLoading(false);
     };

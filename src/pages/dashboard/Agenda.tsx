@@ -64,6 +64,14 @@ const Agenda = () => {
       if (dentistsError) throw dentistsError;
       setDentists(dentistsData || []);
 
+      // Show info if no data
+      if (!patientsData?.length) {
+        toast.info("Cadastre pacientes no Prontuário antes de criar agendamentos");
+      }
+      if (!dentistsData?.length) {
+        toast.info("Cadastre profissionais no CRM antes de criar agendamentos");
+      }
+
       // Load appointments
       await loadAppointments();
     } catch (error: any) {
