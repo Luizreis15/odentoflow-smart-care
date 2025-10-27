@@ -11,9 +11,9 @@ interface Profissional {
   especialidade: string | null;
   email: string;
   telefone: string | null;
-  perfil_profissional: string;
+  perfil: string;
   ativo: boolean;
-  usuario_id: string | null;
+  user_id: string | null;
 }
 
 interface ProfissionaisTableProps {
@@ -84,7 +84,7 @@ export const ProfissionaisTable = ({
               </TableCell>
               <TableCell>
                 <Badge variant="outline">
-                  {perfilLabels[prof.perfil_profissional] || prof.perfil_profissional}
+                  {perfilLabels[prof.perfil] || prof.perfil}
                 </Badge>
               </TableCell>
               <TableCell>

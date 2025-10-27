@@ -21,7 +21,7 @@ export const ProfissionalModal = ({ open, onClose, profissional, clinicaId }: Pr
     especialidade: "",
     email: "",
     telefone: "",
-    perfil_profissional: "dentista",
+    perfil: "dentista",
     ativo: true
   });
   const [saving, setSaving] = useState(false);
@@ -34,7 +34,7 @@ export const ProfissionalModal = ({ open, onClose, profissional, clinicaId }: Pr
         especialidade: profissional.especialidade || "",
         email: profissional.email || "",
         telefone: profissional.telefone || "",
-        perfil_profissional: profissional.perfil_profissional || "dentista",
+        perfil: profissional.perfil || "dentista",
         ativo: profissional.ativo ?? true
       });
     } else {
@@ -44,7 +44,7 @@ export const ProfissionalModal = ({ open, onClose, profissional, clinicaId }: Pr
         especialidade: "",
         email: "",
         telefone: "",
-        perfil_profissional: "dentista",
+        perfil: "dentista",
         ativo: true
       });
     }
@@ -156,8 +156,8 @@ export const ProfissionalModal = ({ open, onClose, profissional, clinicaId }: Pr
             <div className="space-y-2">
               <Label htmlFor="perfil">Perfil *</Label>
               <Select
-                value={formData.perfil_profissional}
-                onValueChange={(value) => setFormData({ ...formData, perfil_profissional: value })}
+                value={formData.perfil}
+                onValueChange={(value) => setFormData({ ...formData, perfil: value })}
               >
                 <SelectTrigger>
                   <SelectValue />

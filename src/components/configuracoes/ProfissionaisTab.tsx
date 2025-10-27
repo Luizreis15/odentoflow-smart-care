@@ -14,11 +14,9 @@ interface Profissional {
   especialidade: string | null;
   email: string;
   telefone: string | null;
-  perfil_profissional: string;
+  perfil: string;
   ativo: boolean;
-  usuario_id: string | null;
-  user_id?: string | null;
-  perfil?: string;
+  user_id: string | null;
   clinica_id?: string;
   created_at?: string;
   updated_at?: string;
@@ -54,14 +52,7 @@ export const ProfissionaisTab = ({ clinicaId }: ProfissionaisTabProps) => {
         .order("nome");
 
       if (error) throw error;
-      
-      const mapped = (data || []).map((p: any) => ({
-        ...p,
-        perfil_profissional: p.perfil_profissional || p.perfil || "dentista",
-        usuario_id: p.usuario_id || p.user_id || null
-      }));
-      
-      setProfissionais(mapped);
+      setProfissionais(data || []);
     } catch (error: any) {
       toast.error("Erro ao carregar profissionais: " + error.message);
     } finally {
