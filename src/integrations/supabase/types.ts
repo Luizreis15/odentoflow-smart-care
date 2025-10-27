@@ -109,6 +109,134 @@ export type Database = {
           },
         ]
       }
+      budget_items: {
+        Row: {
+          budget_id: string
+          created_at: string | null
+          discount: number | null
+          id: string
+          notes: string | null
+          procedure_code: string | null
+          procedure_name: string
+          quantity: number
+          status: string | null
+          tooth_number: string | null
+          total_price: number
+          unit_price: number
+          updated_at: string | null
+        }
+        Insert: {
+          budget_id: string
+          created_at?: string | null
+          discount?: number | null
+          id?: string
+          notes?: string | null
+          procedure_code?: string | null
+          procedure_name: string
+          quantity?: number
+          status?: string | null
+          tooth_number?: string | null
+          total_price: number
+          unit_price: number
+          updated_at?: string | null
+        }
+        Update: {
+          budget_id?: string
+          created_at?: string | null
+          discount?: number | null
+          id?: string
+          notes?: string | null
+          procedure_code?: string | null
+          procedure_name?: string
+          quantity?: number
+          status?: string | null
+          tooth_number?: string | null
+          total_price?: number
+          unit_price?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_items_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgets: {
+        Row: {
+          approved_at: string | null
+          clinic_id: string
+          converted_at: string | null
+          created_at: string | null
+          created_by: string
+          description: string | null
+          discount_value: number | null
+          final_value: number | null
+          id: string
+          notes: string | null
+          patient_id: string
+          status: string
+          title: string
+          total_value: number | null
+          updated_at: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          clinic_id: string
+          converted_at?: string | null
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          discount_value?: number | null
+          final_value?: number | null
+          id?: string
+          notes?: string | null
+          patient_id: string
+          status?: string
+          title: string
+          total_value?: number | null
+          updated_at?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          clinic_id?: string
+          converted_at?: string | null
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          discount_value?: number | null
+          final_value?: number | null
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          status?: string
+          title?: string
+          total_value?: number | null
+          updated_at?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgets_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinicas: {
         Row: {
           address: Json | null
