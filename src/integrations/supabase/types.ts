@@ -296,7 +296,7 @@ export type Database = {
             foreignKeyName: "patients_clinic_id_fkey"
             columns: ["clinic_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "clinicas"
             referencedColumns: ["id"]
           },
         ]
