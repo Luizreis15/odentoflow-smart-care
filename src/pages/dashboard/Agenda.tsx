@@ -2,15 +2,20 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar as CalendarIcon, Clock, Plus, Filter } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Plus, Filter, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
+import { format, startOfWeek, endOfWeek, addDays, isSameDay, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 const appointmentSchema = z.object({
   patientId: z.string().uuid("Selecione um paciente válido"),
@@ -22,13 +27,20 @@ const appointmentSchema = z.object({
 });
 
 const Agenda = () => {
-  const [selectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [patients, setPatients] = useState<any[]>([]);
   const [dentists, setDentists] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
+  const [filteredAppointments, setFilteredAppointments] = useState<any[]>([]);
+  const [filters, setFilters] = useState({
+    status: "all",
+    dentistId: "all",
+    dateRange: "today" as "today" | "week" | "month" | "custom"
+  });
   const [formData, setFormData] = useState({
     patientId: "",
     dentistId: "",
@@ -41,6 +53,10 @@ const Agenda = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    applyFilters();
+  }, [appointments, filters, selectedDate]);
 
   const loadData = async () => {
     try {
@@ -124,6 +140,45 @@ const Agenda = () => {
     }
   };
 
+  const applyFilters = () => {
+    let filtered = [...appointments];
+
+    // Filtro por status
+    if (filters.status !== "all") {
+      filtered = filtered.filter(apt => apt.status === filters.status);
+    }
+
+    // Filtro por dentista
+    if (filters.dentistId !== "all") {
+      filtered = filtered.filter(apt => apt.dentist_id === filters.dentistId);
+    }
+
+    // Filtro por data
+    if (filters.dateRange === "today") {
+      filtered = filtered.filter(apt => {
+        const aptDate = parseISO(apt.appointment_date);
+        return isSameDay(aptDate, selectedDate);
+      });
+    } else if (filters.dateRange === "week") {
+      const weekStart = startOfWeek(selectedDate, { locale: ptBR });
+      const weekEnd = endOfWeek(selectedDate, { locale: ptBR });
+      filtered = filtered.filter(apt => {
+        const aptDate = parseISO(apt.appointment_date);
+        return aptDate >= weekStart && aptDate <= weekEnd;
+      });
+    }
+
+    setFilteredAppointments(filtered);
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      status: "all",
+      dentistId: "all",
+      dateRange: "today"
+    });
+  };
+
   const statusColors = {
     confirmed: "bg-secondary text-secondary-foreground",
     scheduled: "bg-primary/10 text-primary",
@@ -196,6 +251,28 @@ const Agenda = () => {
     }
   };
 
+  const getWeekDays = () => {
+    const weekStart = startOfWeek(selectedDate, { locale: ptBR });
+    return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  };
+
+  const getAppointmentsByDentist = () => {
+    const grouped: Record<string, any[]> = {};
+    filteredAppointments.forEach(apt => {
+      const dentistId = apt.dentist?.id || "sem-dentista";
+      const dentistName = apt.dentist?.nome || "Sem Dentista";
+      if (!grouped[dentistId]) {
+        grouped[dentistId] = [];
+      }
+      grouped[dentistId].push({ ...apt, dentistName });
+    });
+    return grouped;
+  };
+
+  const todayAppointments = filteredAppointments.filter(apt => 
+    isSameDay(parseISO(apt.appointment_date), new Date())
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -206,10 +283,105 @@ const Agenda = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Filter className="mr-2 h-4 w-4" />
-            Filtrar
-          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm">
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => date && setSelectedDate(date)}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+                locale={ptBR}
+              />
+            </PopoverContent>
+          </Popover>
+
+          <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Filter className="mr-2 h-4 w-4" />
+                Filtrar
+                {(filters.status !== "all" || filters.dentistId !== "all") && (
+                  <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center">
+                    {[filters.status !== "all", filters.dentistId !== "all"].filter(Boolean).length}
+                  </Badge>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Filtros</SheetTitle>
+                <SheetDescription>
+                  Filtre os agendamentos por status, profissional e período
+                </SheetDescription>
+              </SheetHeader>
+              <div className="space-y-4 mt-6">
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select value={filters.status} onValueChange={(value) => setFilters({ ...filters, status: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="scheduled">Agendado</SelectItem>
+                      <SelectItem value="confirmed">Confirmado</SelectItem>
+                      <SelectItem value="completed">Concluído</SelectItem>
+                      <SelectItem value="cancelled">Cancelado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Profissional</Label>
+                  <Select value={filters.dentistId} onValueChange={(value) => setFilters({ ...filters, dentistId: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {dentists.map(dentist => (
+                        <SelectItem key={dentist.id} value={dentist.id}>
+                          {dentist.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Período</Label>
+                  <Select value={filters.dateRange} onValueChange={(value: any) => setFilters({ ...filters, dateRange: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="today">Hoje</SelectItem>
+                      <SelectItem value="week">Esta Semana</SelectItem>
+                      <SelectItem value="month">Este Mês</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <Button variant="outline" className="flex-1" onClick={clearFilters}>
+                    <X className="mr-2 h-4 w-4" />
+                    Limpar
+                  </Button>
+                  <Button className="flex-1" onClick={() => setIsFilterOpen(false)}>
+                    Aplicar
+                  </Button>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
               <Button size="sm">
@@ -332,32 +504,38 @@ const Agenda = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground mt-1">4 confirmadas</p>
+            <div className="text-3xl font-bold">{todayAppointments.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {todayAppointments.filter(a => a.status === "confirmed").length} confirmadas
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Taxa de Presença
+              Esta Semana
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">94%</div>
-            <p className="text-xs text-muted-foreground mt-1">+2% vs. semana passada</p>
+            <div className="text-3xl font-bold">{filteredAppointments.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {filteredAppointments.filter(a => a.status === "completed").length} concluídas
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Próxima Consulta
+              Profissionais Ativos
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">14:30</div>
-            <p className="text-xs text-muted-foreground mt-1">Pedro Oliveira - Canal</p>
+            <div className="text-3xl font-bold">{dentists.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {new Set(filteredAppointments.map(a => a.dentist_id)).size} com agendamentos
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -374,14 +552,9 @@ const Agenda = () => {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Agendamentos de Hoje</CardTitle>
+                  <CardTitle>Agendamentos do Dia</CardTitle>
                   <CardDescription>
-                    {selectedDate.toLocaleDateString("pt-BR", {
-                      weekday: "long",
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+                    {format(selectedDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                   </CardDescription>
                 </div>
                 <CalendarIcon className="h-5 w-5 text-muted-foreground" />
@@ -392,42 +565,45 @@ const Agenda = () => {
                 <div className="text-center py-8 text-muted-foreground">
                   Carregando agendamentos...
                 </div>
-              ) : appointments.length === 0 ? (
+              ) : filteredAppointments.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  Nenhum agendamento encontrado
+                  Nenhum agendamento encontrado para este dia
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {appointments.map((apt) => {
-                    const aptDate = new Date(apt.appointment_date);
-                    const aptTime = aptDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-                    
-                    return (
-                      <div
-                        key={apt.id}
-                        className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-primary/10">
-                          <Clock className="h-6 w-6 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-lg">{aptTime}</span>
-                            <Badge className={statusColors[apt.status as keyof typeof statusColors]}>
-                              {statusLabels[apt.status as keyof typeof statusLabels]}
-                            </Badge>
+                  {filteredAppointments
+                    .filter(apt => isSameDay(parseISO(apt.appointment_date), selectedDate))
+                    .sort((a, b) => new Date(a.appointment_date).getTime() - new Date(b.appointment_date).getTime())
+                    .map((apt) => {
+                      const aptDate = parseISO(apt.appointment_date);
+                      const aptTime = format(aptDate, "HH:mm");
+                      
+                      return (
+                        <div
+                          key={apt.id}
+                          className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-primary/10">
+                            <Clock className="h-6 w-6 text-primary" />
                           </div>
-                          <p className="font-medium text-foreground">{apt.patient?.full_name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {apt.title} • {apt.dentist?.nome} • {apt.duration_minutes} min
-                          </p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-semibold text-lg">{aptTime}</span>
+                              <Badge className={statusColors[apt.status as keyof typeof statusColors]}>
+                                {statusLabels[apt.status as keyof typeof statusLabels]}
+                              </Badge>
+                            </div>
+                            <p className="font-medium text-foreground">{apt.patient?.full_name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {apt.title} • {apt.dentist?.nome} • {apt.duration_minutes} min
+                            </p>
+                          </div>
+                          <Button variant="outline" size="sm">
+                            Ver Detalhes
+                          </Button>
                         </div>
-                        <Button variant="outline" size="sm">
-                          Ver Detalhes
-                        </Button>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
               )}
             </CardContent>
@@ -438,28 +614,161 @@ const Agenda = () => {
           <Card>
             <CardHeader>
               <CardTitle>Visão Semanal</CardTitle>
-              <CardDescription>Agendamentos da semana</CardDescription>
+              <CardDescription>
+                {format(startOfWeek(selectedDate, { locale: ptBR }), "dd 'de' MMM", { locale: ptBR })} - {format(endOfWeek(selectedDate, { locale: ptBR }), "dd 'de' MMM", { locale: ptBR })}
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground text-center py-8">
-                Visualização de agenda semanal em desenvolvimento
-              </p>
+              {loading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Carregando agendamentos...
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {getWeekDays().map((day) => {
+                    const dayAppointments = filteredAppointments
+                      .filter(apt => isSameDay(parseISO(apt.appointment_date), day))
+                      .sort((a, b) => new Date(a.appointment_date).getTime() - new Date(b.appointment_date).getTime());
+
+                    return (
+                      <div key={day.toISOString()} className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <h3 className="font-semibold text-lg">
+                              {format(day, "EEEE", { locale: ptBR })}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              {format(day, "dd 'de' MMMM", { locale: ptBR })}
+                            </p>
+                          </div>
+                          <Badge variant={dayAppointments.length > 0 ? "default" : "secondary"}>
+                            {dayAppointments.length} agendamento{dayAppointments.length !== 1 && "s"}
+                          </Badge>
+                        </div>
+                        
+                        {dayAppointments.length === 0 ? (
+                          <p className="text-sm text-muted-foreground text-center py-4">
+                            Nenhum agendamento
+                          </p>
+                        ) : (
+                          <div className="space-y-2">
+                            {dayAppointments.map(apt => {
+                              const aptTime = format(parseISO(apt.appointment_date), "HH:mm");
+                              return (
+                                <div key={apt.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                                  <div className="flex items-center gap-3">
+                                    <Clock className="h-4 w-4 text-muted-foreground" />
+                                    <div>
+                                      <p className="font-medium">{aptTime} - {apt.patient?.full_name}</p>
+                                      <p className="text-sm text-muted-foreground">
+                                        {apt.title} • {apt.dentist?.nome}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Badge className={statusColors[apt.status as keyof typeof statusColors]}>
+                                    {statusLabels[apt.status as keyof typeof statusLabels]}
+                                  </Badge>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="dentist">
-          <Card>
-            <CardHeader>
-              <CardTitle>Agenda por Profissional</CardTitle>
-              <CardDescription>Visualize agendamentos por dentista</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-center py-8">
-                Visualização por profissional em desenvolvimento
-              </p>
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            {loading ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center py-8 text-muted-foreground">
+                    Carregando agendamentos...
+                  </div>
+                </CardContent>
+              </Card>
+            ) : dentists.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center py-8 text-muted-foreground">
+                    Nenhum profissional cadastrado
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              Object.entries(getAppointmentsByDentist()).map(([dentistId, dentistAppointments]) => {
+                const dentist = dentists.find(d => d.id === dentistId);
+                const dentistName = dentist?.nome || "Sem Dentista Atribuído";
+                
+                return (
+                  <Card key={dentistId}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle>{dentistName}</CardTitle>
+                          <CardDescription>
+                            {dentist?.especialidade && `${dentist.especialidade} • `}
+                            {dentist?.cro}
+                          </CardDescription>
+                        </div>
+                        <Badge variant="secondary">
+                          {dentistAppointments.length} agendamento{dentistAppointments.length !== 1 && "s"}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {dentistAppointments.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          Nenhum agendamento
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          {dentistAppointments
+                            .sort((a, b) => new Date(a.appointment_date).getTime() - new Date(b.appointment_date).getTime())
+                            .map(apt => {
+                              const aptDate = parseISO(apt.appointment_date);
+                              const aptTime = format(aptDate, "HH:mm");
+                              const aptDay = format(aptDate, "dd/MM/yyyy");
+                              
+                              return (
+                                <div
+                                  key={apt.id}
+                                  className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
+                                >
+                                  <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-primary/10">
+                                    <Clock className="h-6 w-6 text-primary" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="font-semibold text-lg">{aptDay} às {aptTime}</span>
+                                      <Badge className={statusColors[apt.status as keyof typeof statusColors]}>
+                                        {statusLabels[apt.status as keyof typeof statusLabels]}
+                                      </Badge>
+                                    </div>
+                                    <p className="font-medium text-foreground">{apt.patient?.full_name}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {apt.title} • {apt.duration_minutes} min
+                                    </p>
+                                  </div>
+                                  <Button variant="outline" size="sm">
+                                    Ver Detalhes
+                                  </Button>
+                                </div>
+                              );
+                            })}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
+          </div>
         </TabsContent>
       </Tabs>
     </div>
