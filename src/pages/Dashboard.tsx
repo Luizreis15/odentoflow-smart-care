@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import Navbar from "@/components/Navbar";
+import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Users, DollarSign, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -51,24 +51,20 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar user={profile} />
-        <div className="container mx-auto px-4 py-8">
-          <Skeleton className="h-10 w-64 mb-8" />
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-32" />
-            ))}
-          </div>
+      <DashboardLayout user={profile}>
+        <Skeleton className="h-10 w-64 mb-8" />
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-32" />
+          ))}
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar user={profile} />
-      <div className="container mx-auto px-4 py-8">
+    <DashboardLayout user={profile}>
+      
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
             Bem-vindo, {profile?.full_name || "Usuário"}!
@@ -194,8 +190,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
-      </div>
-    </div>
+    </DashboardLayout>
   );
 };
 
