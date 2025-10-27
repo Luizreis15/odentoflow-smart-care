@@ -155,14 +155,13 @@ export const InviteUserModal = ({ open, onClose, clinicaId }: InviteUserModalPro
           <div className="space-y-2">
             <Label htmlFor="profissional">Vincular a Profissional (opcional)</Label>
             <Select
-              value={formData.profissional_id}
+              value={formData.profissional_id || undefined}
               onValueChange={(value) => setFormData({ ...formData, profissional_id: value })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecione um profissional" />
+                <SelectValue placeholder="Nenhum profissional vinculado" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Nenhum</SelectItem>
                 {profissionais.map((prof) => (
                   <SelectItem key={prof.id} value={prof.id}>
                     {prof.nome} {prof.especialidade && `- ${prof.especialidade}`}
