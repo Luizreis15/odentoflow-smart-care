@@ -88,34 +88,22 @@ export const InviteUserModal = ({ open, onClose, clinicaId }: InviteUserModalPro
 
       if (insertError) throw insertError;
 
-      // Enviar Magic Link via Supabase Auth
-      const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
-        formData.email.toLowerCase(),
-        {
-          data: {
-            full_name: formData.nome,
-            clinic_id: clinicaId,
-            perfil: formData.perfil
-          }
-        }
-      );
-
-      if (inviteError) {
-        console.error("Erro ao enviar convite:", inviteError);
-        toast.warning("Usuário criado, mas não foi possível enviar o convite por e-mail.");
-      }
+      // Nota: O envio do Magic Link requer acesso admin da API
+      // Por enquanto, o usuário será criado e poderá usar "Esqueci minha senha"
+      // para definir sua senha e acessar o sistema
+      
+      toast.success("Usuário criado com sucesso! Use 'Esqueci minha senha' na tela de login para acessar.");
 
       // Registrar auditoria
       await supabase
         .from("audit_log" as any)
         .insert({
           entidade: "usuarios",
-          entidade_id: newUser.id,
+          entidade_id: newUser?.id || "",
           acao: "invite",
           dif: formData
         });
 
-      toast.success("Convite enviado com sucesso!");
       onClose();
     } catch (error: any) {
       toast.error("Erro ao enviar convite: " + error.message);
@@ -128,7 +116,7 @@ export const InviteUserModal = ({ open, onClose, clinicaId }: InviteUserModalPro
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Convidar Usuário</DialogTitle>
+          <DialogTitle>Criar Novo Usuário</DialogTitle>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
@@ -195,7 +183,7 @@ export const InviteUserModal = ({ open, onClose, clinicaId }: InviteUserModalPro
             Cancelar
           </Button>
           <Button onClick={handleInvite} disabled={sending}>
-            {sending ? "Enviando..." : "Enviar Convite"}
+            {sending ? "Criando..." : "Criar Usuário"}
           </Button>
         </DialogFooter>
       </DialogContent>

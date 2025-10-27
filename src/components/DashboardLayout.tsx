@@ -12,6 +12,7 @@ import {
   Menu,
   X,
   LayoutDashboard,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Navbar from "./Navbar";
@@ -65,6 +66,12 @@ const navigation = [
     href: "/dashboard/ia-assistente",
     icon: Sparkles,
     description: "Inteligência artificial",
+  },
+  {
+    name: "Configurações",
+    href: "/configuracoes",
+    icon: Settings,
+    description: "Profissionais e usuários",
   },
 ];
 

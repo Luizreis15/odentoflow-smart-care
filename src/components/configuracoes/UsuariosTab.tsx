@@ -137,7 +137,7 @@ export const UsuariosTab = ({ clinicaId }: UsuariosTabProps) => {
         </div>
         <Button onClick={() => setInviteModalOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Convidar Usuário
+          Novo Usuário
         </Button>
       </div>
 

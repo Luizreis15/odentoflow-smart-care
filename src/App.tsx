@@ -18,6 +18,7 @@ import CRMWrapper from "./pages/dashboard/CRMWrapper";
 import PortalPacienteWrapper from "./pages/dashboard/PortalPacienteWrapper";
 import IAAssistenteWrapper from "./pages/dashboard/IAAssistenteWrapper";
 import NotFound from "./pages/NotFound";
+import Configuracoes from "./pages/Configuracoes";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/dashboard/crm" element={<CRMWrapper />} />
             <Route path="/dashboard/portal-paciente" element={<PortalPacienteWrapper />} />
             <Route path="/dashboard/ia-assistente" element={<IAAssistenteWrapper />} />
+            <Route path="/configuracoes" element={<Configuracoes />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
