@@ -13,8 +13,6 @@ interface Usuario {
   nome: string;
   email: string;
   perfil: string;
-  profissional_id: string | null;
-  last_login_at: string | null;
   created_at: string;
   clinica_id?: string;
   updated_at?: string;
@@ -57,8 +55,6 @@ export const UsuariosTab = ({ clinicaId }: UsuariosTabProps) => {
         nome: u.nome || "",
         email: u.email || "",
         perfil: u.perfil || "recepcionista",
-        profissional_id: u.profissional_id || null,
-        last_login_at: u.last_login_at || null,
         created_at: u.created_at || "",
         clinica_id: u.clinica_id,
         updated_at: u.updated_at

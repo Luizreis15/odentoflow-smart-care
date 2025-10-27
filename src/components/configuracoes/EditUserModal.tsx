@@ -16,23 +16,19 @@ interface EditUserModalProps {
 export const EditUserModal = ({ open, onClose, usuario, clinicaId }: EditUserModalProps) => {
   const [formData, setFormData] = useState<{
     perfil: string;
-    profissional_id: string;
   }>({
-    perfil: "",
-    profissional_id: ""
+    perfil: ""
   });
   const [profissionais, setProfissionais] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open && usuario) {
-      loadProfissionais();
       setFormData({
-        perfil: usuario.perfil || "",
-        profissional_id: usuario.profissional_id || ""
+        perfil: usuario.perfil || ""
       });
     }
-  }, [open, usuario, clinicaId]);
+  }, [open, usuario]);
 
   const loadProfissionais = async () => {
     try {
@@ -59,8 +55,7 @@ export const EditUserModal = ({ open, onClose, usuario, clinicaId }: EditUserMod
       const { error } = await supabase
         .from("usuarios" as any)
         .update({
-          perfil: formData.perfil,
-          profissional_id: formData.profissional_id || null
+          perfil: formData.perfil
         })
         .eq("id", usuario.id);
 
@@ -129,25 +124,6 @@ export const EditUserModal = ({ open, onClose, usuario, clinicaId }: EditUserMod
                 <SelectItem value="recepcionista">Recepcionista</SelectItem>
                 <SelectItem value="cirurgiao_dentista">Cirurgião-Dentista</SelectItem>
                 <SelectItem value="asb">ASB</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="profissional">Vincular a Profissional</Label>
-            <Select
-              value={formData.profissional_id || undefined}
-              onValueChange={(value) => setFormData({ ...formData, profissional_id: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Nenhum profissional vinculado" />
-              </SelectTrigger>
-              <SelectContent>
-                {profissionais.map((prof) => (
-                  <SelectItem key={prof.id} value={prof.id}>
-                    {prof.nome} {prof.especialidade && `- ${prof.especialidade}`}
-                  </SelectItem>
-                ))}
               </SelectContent>
             </Select>
           </div>

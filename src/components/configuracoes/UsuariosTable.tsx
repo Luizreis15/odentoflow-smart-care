@@ -3,16 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 interface Usuario {
   id: string;
   nome: string;
   email: string;
   perfil: string;
-  profissional_id: string | null;
-  last_login_at: string | null;
 }
 
 interface UsuariosTableProps {
@@ -69,7 +65,6 @@ export const UsuariosTable = ({ usuarios, loading, onEdit, onToggleStatus }: Usu
             <TableHead>Nome</TableHead>
             <TableHead>E-mail</TableHead>
             <TableHead>Perfil</TableHead>
-            <TableHead>Último Acesso</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -82,14 +77,6 @@ export const UsuariosTable = ({ usuarios, loading, onEdit, onToggleStatus }: Usu
                 <Badge className={perfilColors[user.perfil] || ""}>
                   {perfilLabels[user.perfil] || user.perfil}
                 </Badge>
-              </TableCell>
-              <TableCell className="text-sm text-muted-foreground">
-                {user.last_login_at
-                  ? formatDistanceToNow(new Date(user.last_login_at), {
-                      addSuffix: true,
-                      locale: ptBR
-                    })
-                  : "Nunca acessou"}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">

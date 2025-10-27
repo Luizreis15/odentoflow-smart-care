@@ -17,23 +17,20 @@ export const InviteUserModal = ({ open, onClose, clinicaId }: InviteUserModalPro
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
-    perfil: "recepcionista",
-    profissional_id: ""
+    perfil: "recepcionista"
   });
   const [profissionais, setProfissionais] = useState<any[]>([]);
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
     if (open) {
-      loadProfissionais();
       setFormData({
         nome: "",
         email: "",
-        perfil: "recepcionista",
-        profissional_id: ""
+        perfil: "recepcionista"
       });
     }
-  }, [open, clinicaId]);
+  }, [open]);
 
   const loadProfissionais = async () => {
     try {
@@ -79,8 +76,7 @@ export const InviteUserModal = ({ open, onClose, clinicaId }: InviteUserModalPro
               clinica_id: clinicaId,
               nome: formData.nome,
               email: formData.email.toLowerCase(),
-              perfil: formData.perfil,
-              profissional_id: formData.profissional_id || null
+              perfil: formData.perfil
             })
             .select()
             .single() as any;
@@ -148,25 +144,6 @@ export const InviteUserModal = ({ open, onClose, clinicaId }: InviteUserModalPro
                 <SelectItem value="recepcionista">Recepcionista</SelectItem>
                 <SelectItem value="cirurgiao_dentista">Cirurgião-Dentista</SelectItem>
                 <SelectItem value="asb">ASB</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="profissional">Vincular a Profissional (opcional)</Label>
-            <Select
-              value={formData.profissional_id || undefined}
-              onValueChange={(value) => setFormData({ ...formData, profissional_id: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Nenhum profissional vinculado" />
-              </SelectTrigger>
-              <SelectContent>
-                {profissionais.map((prof) => (
-                  <SelectItem key={prof.id} value={prof.id}>
-                    {prof.nome} {prof.especialidade && `- ${prof.especialidade}`}
-                  </SelectItem>
-                ))}
               </SelectContent>
             </Select>
           </div>
