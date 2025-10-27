@@ -66,6 +66,13 @@ export type Database = {
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_appointments_dentist"
+            columns: ["dentist_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
         ]
       }
       automated_messages: {
