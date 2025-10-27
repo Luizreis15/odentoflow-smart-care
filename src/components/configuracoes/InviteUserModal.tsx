@@ -69,28 +69,40 @@ export const InviteUserModal = ({ open, onClose, clinicaId }: InviteUserModalPro
         return;
       }
 
+      // Gerar ID temporário para o usuário
+      const tempUserId = crypto.randomUUID();
+      
       // Criar usuário placeholder
-          const { error: userError } = await (supabase as any)
-            .from("usuarios")
-            .insert({
-              clinica_id: clinicaId,
-              nome: formData.nome,
-              email: formData.email.toLowerCase(),
-              perfil: formData.perfil
-            })
-            .select()
-            .single() as any;
+      const { data: newUser, error: userError } = await (supabase as any)
+        .from("usuarios")
+        .insert({
+          id: tempUserId,
+          clinica_id: clinicaId,
+          nome: formData.nome,
+          email: formData.email.toLowerCase(),
+          perfil: formData.perfil
+        })
+        .select()
+        .single() as any;
 
-          if (userError) throw userError;
+      if (userError) throw userError;
 
       toast.success("Usuário criado com sucesso! Use 'Esqueci minha senha' na tela de login para acessar.");
+
+      // Criar role para o usuário
+      await supabase
+        .from("user_roles" as any)
+        .insert({
+          user_id: newUser.id,
+          role: formData.perfil
+        });
 
       // Registrar auditoria
       await supabase
         .from("audit_log" as any)
         .insert({
           entidade: "usuarios",
-          entidade_id: userError?.id || "",
+          entidade_id: newUser.id,
           acao: "invite",
           dif: formData
         });
