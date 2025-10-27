@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-type PerfilUsuario = "admin" | "recepcionista" | "asb" | "cirurgiao_dentista" | "dentista" | "recepcao" | "assistente";
+type PerfilUsuario = "admin" | "dentista" | "assistente" | "recepcao";
 
 interface Permission {
   recurso: string;

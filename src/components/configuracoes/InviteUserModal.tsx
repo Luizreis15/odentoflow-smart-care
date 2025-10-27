@@ -17,7 +17,7 @@ export const InviteUserModal = ({ open, onClose, clinicaId }: InviteUserModalPro
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
-    perfil: "recepcionista"
+    perfil: "recepcao"
   });
   const [profissionais, setProfissionais] = useState<any[]>([]);
   const [sending, setSending] = useState(false);
@@ -27,7 +27,7 @@ export const InviteUserModal = ({ open, onClose, clinicaId }: InviteUserModalPro
       setFormData({
         nome: "",
         email: "",
-        perfil: "recepcionista"
+        perfil: "recepcao"
       });
     }
   }, [open]);
@@ -141,9 +141,9 @@ export const InviteUserModal = ({ open, onClose, clinicaId }: InviteUserModalPro
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="admin">Administrador</SelectItem>
-                <SelectItem value="recepcionista">Recepcionista</SelectItem>
-                <SelectItem value="cirurgiao_dentista">Cirurgião-Dentista</SelectItem>
-                <SelectItem value="asb">ASB</SelectItem>
+                <SelectItem value="recepcao">Recepcionista</SelectItem>
+                <SelectItem value="dentista">Cirurgião-Dentista</SelectItem>
+                <SelectItem value="assistente">Assistente</SelectItem>
               </SelectContent>
             </Select>
           </div>
