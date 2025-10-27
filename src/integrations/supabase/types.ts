@@ -56,7 +56,7 @@ export type Database = {
             foreignKeyName: "appointments_dentist_id_fkey"
             columns: ["dentist_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "profissionais"
             referencedColumns: ["id"]
           },
           {
@@ -64,13 +64,6 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_appointments_dentist"
-            columns: ["dentist_id"]
-            isOneToOne: false
-            referencedRelation: "profissionais"
             referencedColumns: ["id"]
           },
         ]
