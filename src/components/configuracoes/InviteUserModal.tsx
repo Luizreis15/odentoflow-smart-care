@@ -87,8 +87,6 @@ export const InviteUserModal = ({ open, onClose, clinicaId }: InviteUserModalPro
 
       if (userError) throw userError;
 
-      toast.success("Usuário criado com sucesso! Use 'Esqueci minha senha' na tela de login para acessar.");
-
       // Criar role para o usuário
       await supabase
         .from("user_roles" as any)
@@ -106,6 +104,22 @@ export const InviteUserModal = ({ open, onClose, clinicaId }: InviteUserModalPro
           acao: "invite",
           dif: formData
         });
+
+      // Enviar email de boas-vindas
+      try {
+        await supabase.functions.invoke("send-welcome-email", {
+          body: {
+            name: formData.nome,
+            email: formData.email.toLowerCase(),
+            role: formData.perfil,
+          },
+        });
+        
+        toast.success("Usuário criado com sucesso! Um email de boas-vindas foi enviado.");
+      } catch (emailError: any) {
+        console.error("Erro ao enviar email:", emailError);
+        toast.success("Usuário criado! Use 'Esqueci minha senha' na tela de login para acessar.");
+      }
 
       onClose();
     } catch (error: any) {
