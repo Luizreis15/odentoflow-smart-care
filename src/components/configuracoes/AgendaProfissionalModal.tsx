@@ -95,7 +95,19 @@ export const AgendaProfissionalModal = ({
             duracao_consulta_minutos: existing.duracao_consulta_minutos,
           };
         }
-        // Padrão: seg-sex ativo, sáb-dom inativo
+        // Padrão: seg-sex ativo com almoço, sáb meio período sem almoço, dom inativo
+        if (dia.value === 6) {
+          // Sábado: meio período sem almoço
+          return {
+            dia_semana: dia.value,
+            ativo: true,
+            hora_inicio: "09:00",
+            hora_fim: "13:00",
+            almoco_inicio: null,
+            almoco_fim: null,
+            duracao_consulta_minutos: 30,
+          };
+        }
         return {
           ...DEFAULT_CONFIG,
           dia_semana: dia.value,
@@ -162,11 +174,25 @@ export const AgendaProfissionalModal = ({
 
   const resetDefaults = () => {
     setConfigs(
-      diasSemana.map((dia) => ({
-        ...DEFAULT_CONFIG,
-        dia_semana: dia.value,
-        ativo: dia.value >= 1 && dia.value <= 5,
-      }))
+      diasSemana.map((dia) => {
+        // Sábado: meio período sem almoço
+        if (dia.value === 6) {
+          return {
+            dia_semana: dia.value,
+            ativo: true,
+            hora_inicio: "09:00",
+            hora_fim: "13:00",
+            almoco_inicio: null,
+            almoco_fim: null,
+            duracao_consulta_minutos: 30,
+          };
+        }
+        return {
+          ...DEFAULT_CONFIG,
+          dia_semana: dia.value,
+          ativo: dia.value >= 1 && dia.value <= 5,
+        };
+      })
     );
     toast.success("Configurações resetadas para o padrão");
   };
