@@ -11,14 +11,14 @@ import { UsuariosTab } from "@/components/configuracoes/UsuariosTab";
 
 const Configuracoes = () => {
   const navigate = useNavigate();
-  const { isAdmin, loading: permLoading } = usePermissions();
   const [profile, setProfile] = useState<any>(null);
   const [clinica, setClinica] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     checkAccess();
-  }, [isAdmin, permLoading]);
+  }, []);
 
   const checkAccess = async () => {
     try {
@@ -40,6 +40,22 @@ const Configuracoes = () => {
         return;
       }
 
+      // Verificar se é admin ANTES de prosseguir
+      const { data: userData } = await supabase
+        .from("usuarios")
+        .select("perfil")
+        .eq("id", session.user.id)
+        .single();
+
+      console.log("Perfil do usuário:", userData?.perfil);
+
+      if (!userData || userData.perfil !== "admin") {
+        console.log("Usuário não é admin, redirecionando...");
+        navigate("/dashboard");
+        return;
+      }
+
+      setIsAdmin(true);
       setProfile(profileData);
 
       // Buscar dados da clínica
@@ -50,13 +66,6 @@ const Configuracoes = () => {
         .single();
 
       setClinica(clinicData);
-
-      // Verificar se é admin
-      if (!permLoading && !isAdmin) {
-        navigate("/dashboard");
-        return;
-      }
-
       setLoading(false);
     } catch (error) {
       console.error("Erro ao verificar acesso:", error);
@@ -64,7 +73,17 @@ const Configuracoes = () => {
     }
   };
 
-  if (loading || permLoading) {
+  if (loading) {
+    return (
+      <DashboardLayout user={profile}>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-muted-foreground">Carregando...</div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!isAdmin) {
     return null;
   }
 

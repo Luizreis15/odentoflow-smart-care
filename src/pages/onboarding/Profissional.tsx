@@ -76,7 +76,7 @@ const Profissional = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
-      const { data: profile } = await supabase.from("profiles").select("clinic_id").eq("id", user.id).single();
+      const { data: profile } = await supabase.from("profiles").select("clinic_id, full_name").eq("id", user.id).single();
       if (!profile?.clinic_id) throw new Error("Clínica não encontrada");
 
       const { error, data: profData } = await (supabase as any).from("profissionais").insert({
@@ -97,6 +97,33 @@ const Profissional = () => {
 
       if (!profData || profData.length === 0) {
         throw new Error("Profissional não foi cadastrado corretamente");
+      }
+
+      // Garantir que o usuário atual está cadastrado na tabela usuarios como admin
+      if (user) {
+        const { data: existingUser } = await supabase
+          .from("usuarios")
+          .select("id")
+          .eq("id", user.id)
+          .single();
+
+        if (!existingUser) {
+          // Criar registro do usuário logado na tabela usuarios como admin
+          const { error: userError } = await (supabase as any)
+            .from("usuarios")
+            .insert({
+              id: user.id,
+              clinica_id: profile.clinic_id,
+              nome: profile.full_name || "Administrador",
+              email: user.email,
+              perfil: "admin",
+              ativo: true
+            });
+
+          if (userError) {
+            console.error("Erro ao criar usuário admin:", userError);
+          }
+        }
       }
 
       await (supabase as any).from("clinicas").update({ onboarding_status: "completed" }).eq("id", profile.clinic_id);
