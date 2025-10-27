@@ -385,53 +385,6 @@ export type Database = {
         }
         Relationships: []
       }
-      professionals: {
-        Row: {
-          clinic_id: string
-          created_at: string | null
-          cro: string | null
-          email: string
-          full_name: string
-          id: string
-          phone: string | null
-          specialty: string | null
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          clinic_id: string
-          created_at?: string | null
-          cro?: string | null
-          email: string
-          full_name: string
-          id?: string
-          phone?: string | null
-          specialty?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          clinic_id?: string
-          created_at?: string | null
-          cro?: string | null
-          email?: string
-          full_name?: string
-          id?: string
-          phone?: string | null
-          specialty?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "professionals_clinic_id_fkey"
-            columns: ["clinic_id"]
-            isOneToOne: false
-            referencedRelation: "clinicas"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           clinic_id: string | null
@@ -464,6 +417,59 @@ export type Database = {
           {
             foreignKeyName: "profiles_clinic_id_fkey"
             columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profissionais: {
+        Row: {
+          ativo: boolean | null
+          clinica_id: string
+          created_at: string | null
+          cro: string | null
+          email: string
+          especialidade: string | null
+          id: string
+          nome: string
+          perfil: string | null
+          telefone: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          clinica_id: string
+          created_at?: string | null
+          cro?: string | null
+          email: string
+          especialidade?: string | null
+          id?: string
+          nome: string
+          perfil?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          clinica_id?: string
+          created_at?: string | null
+          cro?: string | null
+          email?: string
+          especialidade?: string | null
+          id?: string
+          nome?: string
+          perfil?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profissionais_clinica_id_fkey"
+            columns: ["clinica_id"]
             isOneToOne: false
             referencedRelation: "clinicas"
             referencedColumns: ["id"]
@@ -591,7 +597,7 @@ export type Database = {
             foreignKeyName: "treatments_professional_id_fkey"
             columns: ["professional_id"]
             isOneToOne: false
-            referencedRelation: "professionals"
+            referencedRelation: "profissionais"
             referencedColumns: ["id"]
           },
         ]

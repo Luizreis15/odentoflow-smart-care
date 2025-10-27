@@ -31,9 +31,9 @@ const AgendaWrapper = () => {
 
       // Check if clinic has at least one professional
       const { data: professionals, error } = await supabase
-        .from("professionals")
+        .from("profissionais")
         .select("id")
-        .eq("clinic_id", profileData.clinic_id)
+        .eq("clinica_id", profileData.clinic_id)
         .limit(1);
 
       if (error) {

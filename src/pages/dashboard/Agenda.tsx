@@ -57,9 +57,9 @@ const Agenda = () => {
 
       // Load dentists
       const { data: dentistsData, error: dentistsError } = await supabase
-        .from("professionals")
-        .select("id, full_name")
-        .order("full_name");
+        .from("profissionais")
+        .select("id, nome")
+        .order("nome");
       
       if (dentistsError) throw dentistsError;
       setDentists(dentistsData || []);
@@ -94,7 +94,7 @@ const Agenda = () => {
           duration_minutes,
           status,
           patient:patients(id, full_name),
-          dentist:professionals(id, full_name)
+          dentist:profissionais(id, nome)
         `)
         .order("appointment_date");
       
@@ -232,7 +232,7 @@ const Agenda = () => {
                     <SelectContent>
                       {dentists.map((dentist) => (
                         <SelectItem key={dentist.id} value={dentist.id}>
-                          {dentist.full_name}
+                          {dentist.nome}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -401,7 +401,7 @@ const Agenda = () => {
                           </div>
                           <p className="font-medium text-foreground">{apt.patient?.full_name}</p>
                           <p className="text-sm text-muted-foreground">
-                            {apt.title} • {apt.dentist?.full_name} • {apt.duration_minutes} min
+                            {apt.title} • {apt.dentist?.nome} • {apt.duration_minutes} min
                           </p>
                         </div>
                         <Button variant="outline" size="sm">
