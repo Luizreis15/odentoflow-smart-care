@@ -119,13 +119,13 @@ export type Database = {
           nome: string
           onboarding_status: string | null
           owner_user_id: string | null
-          phone: string | null
           plano: Database["public"]["Enums"]["plano_tipo"] | null
           status_assinatura:
             | Database["public"]["Enums"]["status_assinatura"]
             | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
+          telefone: string | null
           tipo: string
           updated_at: string | null
         }
@@ -138,13 +138,13 @@ export type Database = {
           nome: string
           onboarding_status?: string | null
           owner_user_id?: string | null
-          phone?: string | null
           plano?: Database["public"]["Enums"]["plano_tipo"] | null
           status_assinatura?:
             | Database["public"]["Enums"]["status_assinatura"]
             | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          telefone?: string | null
           tipo?: string
           updated_at?: string | null
         }
@@ -157,13 +157,13 @@ export type Database = {
           nome?: string
           onboarding_status?: string | null
           owner_user_id?: string | null
-          phone?: string | null
           plano?: Database["public"]["Enums"]["plano_tipo"] | null
           status_assinatura?:
             | Database["public"]["Enums"]["status_assinatura"]
             | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          telefone?: string | null
           tipo?: string
           updated_at?: string | null
         }
