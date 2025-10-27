@@ -676,6 +676,7 @@ export type Database = {
         }
         Returns: Json
       }
+      get_user_clinic_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["perfil_usuario"]
