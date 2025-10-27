@@ -70,7 +70,7 @@ const Index = () => {
                 onClick={() => navigate("/auth")}
                 className="bg-card text-primary hover:bg-card/90 shadow-xl text-lg px-8"
               >
-                Iniciar Cadastro da Clínica
+                Inicie Gratuitamente
               </Button>
               <Button
                 size="lg"
@@ -135,7 +135,7 @@ const Index = () => {
             onClick={() => navigate("/auth")}
             className="bg-card text-primary hover:bg-card/90 shadow-2xl text-lg px-8"
           >
-            Criar Minha Conta Grátis
+            Inicie Gratuitamente
           </Button>
         </div>
       </section>

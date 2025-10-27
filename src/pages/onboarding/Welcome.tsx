@@ -1,4 +1,6 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, Building2, UserCog, Sparkles } from "lucide-react";
@@ -6,6 +8,23 @@ import Navbar from "@/components/Navbar";
 
 const Welcome = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+      setLoading(false);
+    };
+    checkAuth();
+  }, [navigate]);
+
+  if (loading) {
+    return null;
+  }
 
   const steps = [
     {
