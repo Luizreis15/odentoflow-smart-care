@@ -476,6 +476,91 @@ export type Database = {
           },
         ]
       }
+      profissional_agenda_audit: {
+        Row: {
+          action: string
+          changed_by: string
+          changes: Json | null
+          created_at: string | null
+          id: string
+          profissional_id: string
+        }
+        Insert: {
+          action: string
+          changed_by: string
+          changes?: Json | null
+          created_at?: string | null
+          id?: string
+          profissional_id: string
+        }
+        Update: {
+          action?: string
+          changed_by?: string
+          changes?: Json | null
+          created_at?: string | null
+          id?: string
+          profissional_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profissional_agenda_audit_profissional_id_fkey"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profissional_agenda_config: {
+        Row: {
+          almoco_fim: string | null
+          almoco_inicio: string | null
+          ativo: boolean
+          created_at: string | null
+          dia_semana: number
+          duracao_consulta_minutos: number
+          hora_fim: string
+          hora_inicio: string
+          id: string
+          profissional_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          almoco_fim?: string | null
+          almoco_inicio?: string | null
+          ativo?: boolean
+          created_at?: string | null
+          dia_semana: number
+          duracao_consulta_minutos?: number
+          hora_fim: string
+          hora_inicio: string
+          id?: string
+          profissional_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          almoco_fim?: string | null
+          almoco_inicio?: string | null
+          ativo?: boolean
+          created_at?: string | null
+          dia_semana?: number
+          duracao_consulta_minutos?: number
+          hora_fim?: string
+          hora_inicio?: string
+          id?: string
+          profissional_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profissional_agenda_config_profissional_id_fkey"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           clinic_id: string

@@ -1,7 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Power, PowerOff } from "lucide-react";
+import { Edit, Power, PowerOff, Calendar } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Profissional {
@@ -21,6 +21,7 @@ interface ProfissionaisTableProps {
   loading: boolean;
   onEdit: (profissional: Profissional) => void;
   onToggleStatus: (profissional: Profissional) => void;
+  onConfigAgenda: (profissional: Profissional) => void;
 }
 
 const perfilLabels: Record<string, string> = {
@@ -34,7 +35,8 @@ export const ProfissionaisTable = ({
   profissionais,
   loading,
   onEdit,
-  onToggleStatus
+  onToggleStatus,
+  onConfigAgenda
 }: ProfissionaisTableProps) => {
   if (loading) {
     return (
@@ -98,13 +100,23 @@ export const ProfissionaisTable = ({
                     variant="outline"
                     size="sm"
                     onClick={() => onEdit(prof)}
+                    title="Editar profissional"
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={() => onConfigAgenda(prof)}
+                    title="Configurar agenda"
+                  >
+                    <Calendar className="h-4 w-4 text-primary" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => onToggleStatus(prof)}
+                    title={prof.ativo ? "Desativar" : "Ativar"}
                   >
                     {prof.ativo ? (
                       <PowerOff className="h-4 w-4" />

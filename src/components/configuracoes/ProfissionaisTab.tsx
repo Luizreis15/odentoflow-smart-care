@@ -6,6 +6,7 @@ import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { ProfissionaisTable } from "./ProfissionaisTable";
 import { ProfissionalModal } from "./ProfissionalModal";
+import { AgendaProfissionalModal } from "./AgendaProfissionalModal";
 
 interface Profissional {
   id: string;
@@ -33,6 +34,8 @@ export const ProfissionaisTab = ({ clinicaId }: ProfissionaisTabProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProfissional, setEditingProfissional] = useState<Profissional | null>(null);
+  const [agendaModalOpen, setAgendaModalOpen] = useState(false);
+  const [configuringProfissional, setConfiguringProfissional] = useState<Profissional | null>(null);
 
   useEffect(() => {
     loadProfissionais();
@@ -116,6 +119,16 @@ export const ProfissionaisTab = ({ clinicaId }: ProfissionaisTabProps) => {
     loadProfissionais();
   };
 
+  const handleConfigAgenda = (profissional: Profissional) => {
+    setConfiguringProfissional(profissional);
+    setAgendaModalOpen(true);
+  };
+
+  const handleAgendaModalClose = () => {
+    setAgendaModalOpen(false);
+    setConfiguringProfissional(null);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
@@ -139,6 +152,7 @@ export const ProfissionaisTab = ({ clinicaId }: ProfissionaisTabProps) => {
         loading={loading}
         onEdit={handleEdit}
         onToggleStatus={handleToggleStatus}
+        onConfigAgenda={handleConfigAgenda}
       />
 
       <ProfissionalModal
@@ -146,6 +160,12 @@ export const ProfissionaisTab = ({ clinicaId }: ProfissionaisTabProps) => {
         onClose={handleModalClose}
         profissional={editingProfissional}
         clinicaId={clinicaId}
+      />
+
+      <AgendaProfissionalModal
+        open={agendaModalOpen}
+        onClose={handleAgendaModalClose}
+        profissional={configuringProfissional}
       />
     </div>
   );
