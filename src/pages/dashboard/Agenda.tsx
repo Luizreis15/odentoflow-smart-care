@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,57 +9,94 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
+
+const appointmentSchema = z.object({
+  patientId: z.string().uuid("Selecione um paciente válido"),
+  dentistId: z.string().uuid("Selecione um dentista válido"),
+  title: z.string().min(1, "Tipo de consulta é obrigatório"),
+  date: z.string().min(1, "Data é obrigatória"),
+  time: z.string().min(1, "Horário é obrigatório"),
+  duration: z.string().min(1, "Duração é obrigatória"),
+});
 
 const Agenda = () => {
   const [selectedDate] = useState(new Date());
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [patients, setPatients] = useState<any[]>([]);
+  const [dentists, setDentists] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
   const [formData, setFormData] = useState({
-    patient: "",
-    dentist: "",
-    type: "",
+    patientId: "",
+    dentistId: "",
+    title: "",
     date: "",
     time: "",
     duration: "30",
   });
 
-  const appointments = [
-    {
-      id: 1,
-      time: "09:00",
-      patient: "Maria Silva",
-      dentist: "Dr. João Santos",
-      type: "Limpeza",
-      status: "confirmed",
-      duration: 60,
-    },
-    {
-      id: 2,
-      time: "10:30",
-      patient: "Carlos Mendes",
-      dentist: "Dra. Ana Paula",
-      type: "Consulta",
-      status: "scheduled",
-      duration: 30,
-    },
-    {
-      id: 3,
-      time: "14:00",
-      patient: "Pedro Oliveira",
-      dentist: "Dr. João Santos",
-      type: "Canal",
-      status: "confirmed",
-      duration: 90,
-    },
-    {
-      id: 4,
-      time: "16:00",
-      patient: "Julia Costa",
-      dentist: "Dra. Ana Paula",
-      type: "Clareamento",
-      status: "scheduled",
-      duration: 60,
-    },
-  ];
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      
+      // Load patients
+      const { data: patientsData, error: patientsError } = await supabase
+        .from("patients")
+        .select("id, full_name")
+        .order("full_name");
+      
+      if (patientsError) throw patientsError;
+      setPatients(patientsData || []);
+
+      // Load dentists
+      const { data: dentistsData, error: dentistsError } = await supabase
+        .from("professionals")
+        .select("id, full_name")
+        .order("full_name");
+      
+      if (dentistsError) throw dentistsError;
+      setDentists(dentistsData || []);
+
+      // Load appointments
+      await loadAppointments();
+    } catch (error: any) {
+      console.error("Erro ao carregar dados:", error);
+      toast.error("Erro ao carregar dados: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadAppointments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("appointments")
+        .select(`
+          id,
+          title,
+          description,
+          appointment_date,
+          duration_minutes,
+          status,
+          patient:patients(id, full_name),
+          dentist:professionals(id, full_name)
+        `)
+        .order("appointment_date");
+      
+      if (error) throw error;
+      setAppointments(data || []);
+    } catch (error: any) {
+      console.error("Erro ao carregar agendamentos:", error);
+      toast.error("Erro ao carregar agendamentos: " + error.message);
+    }
+  };
 
   const statusColors = {
     confirmed: "bg-secondary text-secondary-foreground",
@@ -75,25 +112,62 @@ const Agenda = () => {
     cancelled: "Cancelado",
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.patient || !formData.dentist || !formData.type || !formData.date || !formData.time) {
-      toast.error("Por favor, preencha todos os campos obrigatórios");
-      return;
-    }
+    try {
+      // Validate form data
+      const validatedData = appointmentSchema.parse({
+        patientId: formData.patientId,
+        dentistId: formData.dentistId,
+        title: formData.title,
+        date: formData.date,
+        time: formData.time,
+        duration: formData.duration,
+      });
 
-    // Aqui você pode adicionar a lógica para salvar no banco de dados
-    toast.success("Agendamento criado com sucesso!");
-    setIsSheetOpen(false);
-    setFormData({
-      patient: "",
-      dentist: "",
-      type: "",
-      date: "",
-      time: "",
-      duration: "30",
-    });
+      setSaving(true);
+
+      // Combine date and time into timestamp
+      const appointmentDateTime = new Date(`${validatedData.date}T${validatedData.time}`);
+
+      // Save to database
+      const { error } = await supabase
+        .from("appointments")
+        .insert({
+          patient_id: validatedData.patientId,
+          dentist_id: validatedData.dentistId,
+          title: validatedData.title,
+          appointment_date: appointmentDateTime.toISOString(),
+          duration_minutes: parseInt(validatedData.duration),
+          status: "scheduled",
+        });
+
+      if (error) throw error;
+
+      toast.success("Agendamento criado com sucesso!");
+      setIsSheetOpen(false);
+      setFormData({
+        patientId: "",
+        dentistId: "",
+        title: "",
+        date: "",
+        time: "",
+        duration: "30",
+      });
+
+      // Reload appointments
+      await loadAppointments();
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      } else {
+        console.error("Erro ao criar agendamento:", error);
+        toast.error("Erro ao criar agendamento: " + error.message);
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -127,30 +201,39 @@ const Agenda = () => {
               <form onSubmit={handleSubmit} className="space-y-4 mt-6">
                 <div className="space-y-2">
                   <Label htmlFor="patient">Paciente *</Label>
-                  <Input
-                    id="patient"
-                    placeholder="Nome do paciente"
-                    value={formData.patient}
-                    onChange={(e) => setFormData({ ...formData, patient: e.target.value })}
-                  />
+                  <Select value={formData.patientId} onValueChange={(value) => setFormData({ ...formData, patientId: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o paciente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {patients.map((patient) => (
+                        <SelectItem key={patient.id} value={patient.id}>
+                          {patient.full_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="dentist">Dentista *</Label>
-                  <Select value={formData.dentist} onValueChange={(value) => setFormData({ ...formData, dentist: value })}>
+                  <Select value={formData.dentistId} onValueChange={(value) => setFormData({ ...formData, dentistId: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o dentista" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Dr. João Santos">Dr. João Santos</SelectItem>
-                      <SelectItem value="Dra. Ana Paula">Dra. Ana Paula</SelectItem>
+                      {dentists.map((dentist) => (
+                        <SelectItem key={dentist.id} value={dentist.id}>
+                          {dentist.full_name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="type">Tipo de Consulta *</Label>
-                  <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
+                  <Select value={formData.title} onValueChange={(value) => setFormData({ ...formData, title: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
@@ -202,11 +285,11 @@ const Agenda = () => {
                 </div>
 
                 <div className="flex gap-3 pt-4">
-                  <Button type="button" variant="outline" className="flex-1" onClick={() => setIsSheetOpen(false)}>
+                  <Button type="button" variant="outline" className="flex-1" onClick={() => setIsSheetOpen(false)} disabled={saving}>
                     Cancelar
                   </Button>
-                  <Button type="submit" className="flex-1">
-                    Criar Agendamento
+                  <Button type="submit" className="flex-1" disabled={saving}>
+                    {saving ? "Salvando..." : "Criar Agendamento"}
                   </Button>
                 </div>
               </form>
@@ -279,33 +362,48 @@ const Agenda = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {appointments.map((apt) => (
-                  <div
-                    key={apt.id}
-                    className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-primary/10">
-                      <Clock className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-lg">{apt.time}</span>
-                        <Badge className={statusColors[apt.status as keyof typeof statusColors]}>
-                          {statusLabels[apt.status as keyof typeof statusLabels]}
-                        </Badge>
+              {loading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Carregando agendamentos...
+                </div>
+              ) : appointments.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhum agendamento encontrado
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {appointments.map((apt) => {
+                    const aptDate = new Date(apt.appointment_date);
+                    const aptTime = aptDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+                    
+                    return (
+                      <div
+                        key={apt.id}
+                        className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-center justify-center w-16 h-16 rounded-lg bg-primary/10">
+                          <Clock className="h-6 w-6 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-lg">{aptTime}</span>
+                            <Badge className={statusColors[apt.status as keyof typeof statusColors]}>
+                              {statusLabels[apt.status as keyof typeof statusLabels]}
+                            </Badge>
+                          </div>
+                          <p className="font-medium text-foreground">{apt.patient?.full_name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {apt.title} • {apt.dentist?.full_name} • {apt.duration_minutes} min
+                          </p>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          Ver Detalhes
+                        </Button>
                       </div>
-                      <p className="font-medium text-foreground">{apt.patient}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {apt.type} • {apt.dentist} • {apt.duration} min
-                      </p>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      Ver Detalhes
-                    </Button>
-                  </div>
-                ))}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
