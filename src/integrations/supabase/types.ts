@@ -512,6 +512,33 @@ export type Database = {
           },
         ]
       }
+      role_audit_log: {
+        Row: {
+          changed_by: string
+          created_at: string | null
+          id: string
+          new_role: Database["public"]["Enums"]["perfil_usuario"]
+          old_role: Database["public"]["Enums"]["perfil_usuario"] | null
+          user_id: string
+        }
+        Insert: {
+          changed_by: string
+          created_at?: string | null
+          id?: string
+          new_role: Database["public"]["Enums"]["perfil_usuario"]
+          old_role?: Database["public"]["Enums"]["perfil_usuario"] | null
+          user_id: string
+        }
+        Update: {
+          changed_by?: string
+          created_at?: string | null
+          id?: string
+          new_role?: Database["public"]["Enums"]["perfil_usuario"]
+          old_role?: Database["public"]["Enums"]["perfil_usuario"] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       treatments: {
         Row: {
           created_at: string | null
@@ -567,19 +594,19 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
-          role: Database["public"]["Enums"]["app_role"]
+          role: Database["public"]["Enums"]["perfil_usuario"]
           user_id: string
         }
         Insert: {
           created_at?: string | null
           id?: string
-          role: Database["public"]["Enums"]["app_role"]
+          role?: Database["public"]["Enums"]["perfil_usuario"]
           user_id: string
         }
         Update: {
           created_at?: string | null
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
+          role?: Database["public"]["Enums"]["perfil_usuario"]
           user_id?: string
         }
         Relationships: [
@@ -643,13 +670,21 @@ export type Database = {
         }
         Returns: Json
       }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
+      has_role:
+        | {
+            Args: {
+              _role: Database["public"]["Enums"]["app_role"]
+              _user_id: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              _role: Database["public"]["Enums"]["perfil_usuario"]
+              _user_id: string
+            }
+            Returns: boolean
+          }
     }
     Enums: {
       app_role: "admin" | "dentist" | "receptionist"
