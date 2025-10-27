@@ -51,7 +51,7 @@ const Index = () => {
         <div className="absolute inset-0">
           <img 
             src={heroImage} 
-            alt="OdontoFlow Hero" 
+            alt="Flowdent Hero" 
             className="w-full h-full object-cover opacity-20"
           />
         </div>
@@ -61,7 +61,7 @@ const Index = () => {
               Transforme a Gestão da Sua Clínica Odontológica
             </h1>
             <p className="text-xl md:text-2xl mb-8 opacity-95">
-              OdontoFlow une tecnologia e praticidade para organizar agendamentos, 
+              Flowdent une tecnologia e praticidade para organizar agendamentos, 
               prontuários e relacionamento com pacientes em uma única plataforma.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -128,7 +128,7 @@ const Index = () => {
             Pronto para modernizar sua clínica?
           </h2>
           <p className="text-xl text-primary-foreground/90 mb-8 max-w-2xl mx-auto">
-            Junte-se a centenas de clínicas que já otimizaram sua gestão com OdontoFlow.
+            Junte-se a centenas de clínicas que já otimizaram sua gestão com Flowdent.
           </p>
           <Button
             size="lg"
@@ -146,12 +146,12 @@ const Index = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-gradient-hero flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">O</span>
+                <span className="text-primary-foreground font-bold">F</span>
               </div>
-              <span className="font-bold text-lg">OdontoFlow</span>
+              <span className="font-bold text-lg">Flowdent</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2024 OdontoFlow. Todos os direitos reservados.
+              © 2024 Flowdent. Todos os direitos reservados.
             </p>
           </div>
         </div>

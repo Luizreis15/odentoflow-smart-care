@@ -178,7 +178,7 @@ const Auth = () => {
       <div className="container mx-auto px-4 py-16 flex items-center justify-center">
         <Card className="w-full max-w-md shadow-xl">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">OdontoFlow</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">Flowdent</CardTitle>
             <CardDescription className="text-center">
               Gerencie sua clínica odontológica com eficiência
             </CardDescription>

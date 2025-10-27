@@ -45,9 +45,9 @@ const Navbar = ({ user }: NavbarProps) => {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-hero flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-lg">O</span>
+            <span className="text-primary-foreground font-bold text-lg">F</span>
           </div>
-          <span className="font-bold text-xl text-foreground">OdontoFlow</span>
+          <span className="font-bold text-xl text-foreground">Flowdent</span>
         </Link>
 
         {user ? (

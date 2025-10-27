@@ -215,7 +215,7 @@ const PortalPaciente = () => {
         <CardContent>
           <div className="flex gap-2">
             <div className="flex-1 px-4 py-2 rounded-lg border bg-muted text-sm font-mono">
-              https://odontoflow.app/portal
+              https://flowdent.app/portal
             </div>
             <Button variant="outline">Copiar Link</Button>
           </div>

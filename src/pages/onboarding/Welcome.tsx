@@ -57,7 +57,7 @@ const Welcome = () => {
                 </div>
               </div>
               <CardTitle className="text-3xl font-bold">
-                Bem-vindo ao OdontoFlow! 🎉
+                Bem-vindo ao Flowdent! 🎉
               </CardTitle>
               <CardDescription className="text-lg">
                 Seu teste gratuito de 14 dias começou. Vamos configurar sua clínica em 3 passos simples.

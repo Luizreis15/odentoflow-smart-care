@@ -66,7 +66,7 @@ serve(async (req) => {
       customer: customerId,
       items: [
         {
-          price: "price_1SMtYEC0BlmmmqSH5o79iJkb", // OdontoFlow Starter
+          price: "price_1SMtYEC0BlmmmqSH5o79iJkb", // Flowdent Starter
         },
       ],
       trial_period_days: 14,
