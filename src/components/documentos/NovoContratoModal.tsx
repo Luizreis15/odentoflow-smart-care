@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, X } from "lucide-react";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface NovoContratoModalProps {
   open: boolean;
@@ -217,9 +218,12 @@ export const NovoContratoModal = ({ open, onOpenChange, patientId }: NovoContrat
   }, [patientName, patientBirthDate, patientCpf, patientAddress, professionalName, professionalCpf, contractValue, procedures, contractType, clinicName, clinicCnpj, clinicAddress, professionalAddress]);
 
   const generateContractTemplate = () => {
-    const today = format(new Date(), "dd/MM/yyyy");
+    const today = new Date();
+    const contractNumber = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}${String(today.getHours()).padStart(2, '0')}${String(today.getMinutes()).padStart(2, '0')}`;
+    const contractDate = format(today, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    const contractTime = format(today, "HH:mm", { locale: ptBR });
+    const simpleDate = format(today, "dd/MM/yyyy");
     
-    // Determinar contratado baseado no tipo
     const contratadoNome = contractType === "clinica" 
       ? (clinicName || "[Nome da Clínica]")
       : (professionalName || "[Nome do Profissional]");
@@ -231,95 +235,152 @@ export const NovoContratoModal = ({ open, onOpenChange, patientId }: NovoContrat
     const contratadoEndereco = contractType === "clinica"
       ? (clinicAddress || "[Endereço da Clínica]")
       : (professionalAddress || "[Endereço do Profissional]");
-    
-    const responsavelTecnico = professionalName 
-      ? `\n\nResponsável Técnico: ${professionalName} - CRO: ${professionalCpf || "[CRO]"}`
+
+    const responsavelTecnico = contractType === "clinica" && professionalName
+      ? `\n\nRESPONSÁVEL TÉCNICO: ${professionalName}, CRO nº ${professionalCpf || "[CRO]"}`
       : "";
+
+    const cidade = patientAddress?.split(',').pop()?.trim() || "[Cidade]";
+
+    return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 CONTRATO Nº ${contractNumber}
+Paciente: ${patientName || "[Nome do Paciente]"}
+Gerado em: ${contractDate} às ${contractTime}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+CONTRATO DE PRESTAÇÃO DE SERVIÇOS ODONTOLÓGICOS
+
+
+CONTRATANTE: ${patientName || "[Nome do Paciente]"}, ${patientCpf ? `portador(a) do CPF nº ${patientCpf}` : "[CPF não informado]"}, residente e domiciliado(a) em ${patientAddress || "[Endereço não informado]"}.
+
+CONTRATADA: ${contratadoNome}, inscrita sob o ${contratadoDoc}, estabelecida em ${contratadoEndereco}.${responsavelTecnico}
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLÁUSULA PRIMEIRA — DO OBJETO DO CONTRATO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    O presente contrato tem por objeto a prestação de serviços odontológicos pela CONTRATADA ao(à) CONTRATANTE, conforme descrito nos procedimentos a seguir:
+
+${procedures || "Procedimentos a serem definidos"}
+
+    Parágrafo Primeiro: Os serviços odontológicos contratados compreendem a realização dos procedimentos nas datas e horários conforme agendamento prévio.
+
+    Parágrafo Segundo: A CONTRATADA poderá realizar procedimentos adicionais não previstos nesta cláusula, desde que, durante o planejamento ou execução, verifique-se sua necessidade técnica, mediante prévia anuência do(a) CONTRATANTE.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLÁUSULA SEGUNDA — DO VALOR E FORMA DE PAGAMENTO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    O valor total dos serviços contratados é de R$ ${contractValue || "0,00"}, correspondente aos materiais utilizados, descartáveis e mão de obra especializada, a ser pago conforme condições acordadas entre as partes.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLÁUSULA TERCEIRA — DAS OBRIGAÇÕES DA CONTRATADA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    A CONTRATADA obriga-se a:
+
+    a) Realizar todos os procedimentos descritos na Cláusula Primeira com zelo, qualidade técnica e observância das normas éticas da profissão odontológica;
     
-    return `CONTRATO DE PRESTAÇÃO DE SERVIÇOS ODONTOLÓGICOS
+    b) Utilizar materiais odontológicos de primeira qualidade e equipamentos adequados e devidamente esterilizados;
+    
+    c) Fornecer orientações claras ao(à) CONTRATANTE sobre os cuidados pré e pós-tratamento, riscos, benefícios e alternativas disponíveis;
+    
+    d) Manter sigilo absoluto sobre todas as informações do(a) CONTRATANTE, conforme determina o Código de Ética Odontológica;
+    
+    e) Garantir os serviços prestados pelo período de 12 (doze) meses, exceto em casos de má higienização, acidentes, trauma ou uso inadequado pelo(a) CONTRATANTE;
+    
+    f) Executar o tratamento em ambiente seguro, observando os padrões de higiene e normas sanitárias aplicáveis;
+    
+    g) Tomar todas as providências necessárias ao atendimento, incluindo encaminhamento a outros profissionais quando tecnicamente necessário.
 
-São partes do presente instrumento:
 
-${patientName || "[Nome do Paciente]"}, portador do documento ${patientCpf || "[CPF]"} residente e domiciliado em ${patientAddress || "[Endereço]"}, doravante denominado CONTRATANTE e de outro lado ${contratadoNome}, ${contratadoDoc}, com endereço em ${contratadoEndereco}, doravante denominada CONTRATADA, resolvem de comum acordo celebrar o presente Contrato para Prestação de Serviços Odontológicos, com fulcro no Código Civil, Código de Defesa do Consumidor e no Código de Ética Odontológico o qual se regerá pelas seguintes cláusulas e condições:${contractType === "clinica" ? responsavelTecnico : ""}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLÁUSULA QUARTA — DAS OBRIGAÇÕES DO(A) CONTRATANTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-DO OBJETO DO CONTRATO:
+    O(A) CONTRATANTE obriga-se a:
 
-CLÁUSULA 1ª: O presente instrumento tem por objeto a prestação de serviços pela CONTRATADA(O) apta(o) e habilitada(o) à realização plena e segura dos procedimento(s) abaixo descriminado(s) no(a) paciente ${patientName || "[Nome do Paciente]"}.
+    a) Comparecer pontualmente às consultas agendadas ou comunicar ausências com antecedência mínima de 24 (vinte e quatro) horas;
+    
+    b) Efetuar o pagamento nas datas e condições acordadas, sob pena de suspensão do tratamento;
+    
+    c) Seguir rigorosamente as orientações fornecidas pela CONTRATADA quanto aos cuidados com o tratamento, higiene bucal e uso de medicamentos prescritos;
+    
+    d) Informar imediatamente qualquer desconforto, dor, reação adversa ou intercorrência aos procedimentos realizados;
+    
+    e) Comunicar alterações em seu estado de saúde, histórico de alergias, uso de medicamentos e tratamentos anteriores que possam interferir no procedimento;
+    
+    f) Realizar todos os exames complementares solicitados pela CONTRATADA para subsidiar o diagnóstico e tratamento adequado;
+    
+    g) Manter atualizado seu cadastro junto à CONTRATADA para eficiência na comunicação e agendamentos;
+    
+    h) Reconhecer sua posição de corresponsável no tratamento, seguindo as instruções profissionais em âmbito pré e pós-procedimental.
 
-Descrição dos tratamentos:
-${procedures || "[Procedimentos a serem realizados]"}
+    Parágrafo Único: O abandono do tratamento, caracterizado por ausências não justificadas superior a 30 (trinta) dias, isenta a CONTRATADA de responsabilidade quanto aos resultados esperados, restando rescindido o presente contrato, sendo devidos os valores integrais contratados.
 
-Parágrafo Primeiro: Os serviços odontológicos contratados compreendem na realização dos procedimentos contratados nas datas e horários de acordo com agendamento prévio.
 
-Parágrafo Segundo: A CONTRATADA resta também autorizada a realizar procedimentos não referidos na Cláusula Primeira, desde que no decorrer do ato odontológico (planejamento e execução) verifique-se a sua viabilidade para o procedimento ou para qualquer outra situação que seja tecnicamente realizável ao(à) CONTRATANTE, desde que, por óbvio, haja anuência por ele(a).
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLÁUSULA QUINTA — DA GARANTIA E REVISÕES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Parágrafo Terceiro: A CONTRATANTE, a partir deste instrumento se declara ciente do produto e materiais utilizados em todos os seus detalhamentos, bem como tem plena consciência que, apesar de uma previsão industrial de durabilidade, tal prazo tende a sofrer latentes oscilações em razão de todos os vetores imponderáveis que passarão a influenciar no tratamento, especialmente a conduta da(o) CONTRATANTE frente aos serviços prestados e sua postura enquanto paciente.
+    A CONTRATADA garante os serviços realizados pelo prazo de 12 (doze) meses, contados da conclusão de cada procedimento, desde que o(a) CONTRATANTE cumpra as orientações de higiene, manutenção e compareça às revisões periódicas.
 
-CLÁUSULA 2ª: O paciente declara, a partir deste contrato travado de boa fé e plena autonomia, que A(O) CONTRATADO(A) foi claro, didático e transparente no que se refere ao procedimento a ser realizado, informando a sua necessidade, conceito, dores, riscos, desconfortos, efeitos colaterais possíveis, alternativas, expectativas em relação ao potencial resultado, entre outras situações que podem gerar modificações no cenário. Além disso, que o(s) procedimento(s) gerará(ão) os resultados alinhados com as condições fisiológicas, anatômicas e orgânicas do paciente.
+    As revisões são gratuitas e devem ser agendadas conforme orientação profissional, sendo essenciais para o sucesso e durabilidade do tratamento.
 
-Parágrafo Único. Declara, ademais, que tem consciência de que não há garantia de satisfação ou felicidade com o procedimento e sim o dever do profissional da saúde de seguir o roteiro técnico mais adequado e fazer o melhor possível dentro das condições e circunstâncias presentes.
 
-DOS CUSTOS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLÁUSULA SEXTA — DO CANCELAMENTO E RESCISÃO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-CLÁUSULA 3ª: As partes ajustam que, o valor cobrado corresponde aos custos dos materiais utilizados, bem como os materiais descartáveis e a mão de obra, totalizando o valor de R$ ${contractValue || "[Valor]"}.
+    O presente contrato poderá ser rescindido por qualquer das partes mediante comunicação formal com antecedência mínima de 7 (sete) dias.
 
-OBRIGAÇÕES DO(A) PACIENTE CONTRATANTE:
+    Em caso de rescisão por parte do(a) CONTRATANTE, serão devidos os valores proporcionais aos serviços já executados, sem devolução de parcelas pagas.
 
-CLÁUSULA 4ª: São obrigações do(a) PACIENTE:
+    A inadimplência superior a 30 (trinta) dias autoriza a CONTRATADA a suspender o tratamento e considerar o contrato rescindido de pleno direito, sendo devidos os valores remanescentes.
 
-a. Compreender sua posição de corresponsável no tratamento e seguir rigorosamente todas as orientações do profissional relacionadas ao tratamento/procedimento(s) efetuado(s), em âmbito pré e pós-procedimental e informar ao profissional qualquer desconforto sentido, de qualquer natureza, sob pena de incorrer em responsabilidade pelo potencial insucesso do tratamento;
 
-b. Manter atualizado o cadastro junto à CONTRATADA, para que se tenha a máxima eficiência na comunicação e também agilidade dos agendamentos das consultas;
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CLÁUSULA SÉTIMA — DAS DISPOSIÇÕES GERAIS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-c. Honrar com o pagamento dos honorários profissionais do(a) CONTRATADO(A), de acordo com as condições ajustadas, sob pena de suspensão do tratamento, com os devidos cuidados de saúde;
+    O(A) CONTRATANTE declara ter sido devidamente informado(a) sobre os procedimentos, riscos, benefícios, alternativas e expectativas de resultados, firmando o presente de boa-fé e plena autonomia.
 
-d. Informar ao(à) CONTRATADO(A), sobre seu histórico em relação à sensibilidade e alergias para medicamentos e anestésicos, e ainda a respeito de problemas de sangramento, alergias, infecções recentes, bem como fornecer documentos e informações acerca de seus anteriores tratamentos equivalentes ou assemelhados;
+    O presente contrato é celebrado em caráter irrevogável e irretratável, obrigando as partes, seus herdeiros e sucessores.
 
-e. Comparecer pontualmente às consultas agendadas, buscando desmarcá-las apenas em casos justificados e com antecedência;
+    Qualquer alteração do presente contrato deverá ser feita por escrito e assinada por ambas as partes.
 
-f. Caso a CONTRATANTE não compareça nas datas e horários pré-definidos, abandonando o tratamento, A(O) CONTRATADO(A) exime-se de qualquer responsabilidade no que diz respeito a resultados esperados dos procedimentos, restando rescindido o presente contrato de pleno direito, sem necessidade de qualquer outra formalidade, sendo devido pagamento os valores contratados A(O) CONTRATADO(A) em sua integralidade como forma de compensação por perdas e danos;
+    As partes elegem o foro da comarca de ${cidade} para dirimir quaisquer controvérsias oriundas deste contrato.
 
-g. Acatar todas as recomendações e prescrições efetuadas pelo(a) CONTRATADO(A), seja em relação a medicamentos, controles e cuidados antes, durante e após o tratamento, conforme instruções repassadas por escrito a cada procedimento realizado;
+    Este contrato é emitido em 2 (duas) vias de igual teor e forma, ficando uma com cada parte.
 
-h. Realizar todos os exames solicitados pelo(a) CONTRATADO(A), de modo a propiciar condições para o perfeito diagnóstico e desenrolar do tratamento, ficando o profissional livre para negar-se a efetuar os procedimentos dos quais não tenha os subsídios necessários à realização do tratamento em razão de desídia ou negligência do(a) paciente;
 
-i. Comparecer às consultas agendadas, em especial naquelas marcadas para continuidade de tratamento já iniciado ou que se mostre urgente, sob risco de comprometer o sucesso dos serviços contratados;
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ÁREA DE ASSINATURAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-j. Nos casos em que os serviços foram integralmente prestados ou, se parcialmente prestados, superarem os honorários já pagos, fica ciente desde já o paciente que deverá arcar com os custos remanescentes dos procedimentos que foram realizados e não adimplidos, sob pena de cobranças extrajudiciais e judiciais, se necessário;
+${cidade}, ${contractDate}
 
-k. Avisar imediatamente qualquer sinal, indício ou fato que denote uma reação adversa, intercorrência ou complicação, devendo a(o) paciente ir diretamente ao encontro da(o) contratante e não de outro profissional sem o devido conhecimento do histórico odontológico.
 
-OBRIGAÇÕES DO(A) CONTRATADO(A):
-
-CLÁUSULA 5ª: São obrigações da(o) CONTRATADO(A):
-
-a. Executar o tratamento indicado em ambiente de trabalho seguro ao paciente, observando os padrões de higiene e sanitários em geral aplicáveis ao caso;
-
-b. Prestar à CONTRATANTE todas as informações necessárias e úteis ao êxito do tratamento;
-
-c. Atuar com toda a diligência, prudência, perícia e zelo profissional que se espera de um profissional da área de saúde, empregando todos os meios técnicos, científicos e tecnológicos disponíveis que sejam adequados e necessários ao eficaz tratamento do paciente, sempre respeitando a sua dignidade;
-
-d. Tomar todas as providências necessárias ao atendimento, inclusive o contato e coordenação para encaminhamento a outros profissionais de saúde, caso não seja possível a prestação de determinado serviço pela(o) CONTRATADA(O), sempre buscando indicar profissionais capacitados e com boa reputação no mercado.
-
-DISPOSIÇÕES GERAIS:
-
-CLÁUSULA 6ª: O presente contrato é celebrado em caráter irrevogável e irretratável, obrigando as partes, seus herdeiros e sucessores.
-
-CLÁUSULA 7ª: Qualquer alteração do presente contrato deverá ser feita por escrito e assinada por ambas as partes.
-
-CLÁUSULA 8ª: Fica eleito o foro da comarca de [Cidade/Estado] para dirimir quaisquer questões oriundas do presente contrato.
-
-E por estarem assim justos e contratados, firmam o presente instrumento em 2 (duas) vias de igual teor e forma.
-
-${patientAddress ? patientAddress.split(',')[patientAddress.split(',').length - 1] : "[Cidade]"}, ${today}
-
-_________________________________
+________________________________________
 ${patientName || "[Nome do Paciente]"}
 CONTRATANTE
+${patientCpf ? `CPF: ${patientCpf}` : ""}
 
-_________________________________
+
+________________________________________
 ${professionalName || "[Nome do Profissional]"}
-CONTRATADO(A)`;
+CRO nº ${professionalCpf || "[CRO]"}
+CONTRATADO(A)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Documento gerado eletronicamente via Sistema Veramo
+Sem necessidade de reconhecimento de firma
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
   };
 
   const handleSave = async (status: "rascunho" | "finalizado") => {
