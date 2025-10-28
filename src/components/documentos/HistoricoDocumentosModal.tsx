@@ -125,28 +125,89 @@ export const HistoricoDocumentosModal = ({
   const handlePrintDoc = (doc: Document) => {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
+      // Formatação especial para receituários
+      const isReceituario = doc.title.toLowerCase().includes('receituário') || doc.title.toLowerCase().includes('receituario');
+      
       printWindow.document.write(`
         <!DOCTYPE html>
         <html>
           <head>
             <title>${doc.title}</title>
             <style>
-              body { font-family: Arial, sans-serif; padding: 40px; }
-              h1 { font-size: 24px; margin-bottom: 20px; }
-              .content { white-space: pre-wrap; line-height: 1.6; }
-              .meta { color: #666; margin-bottom: 20px; font-size: 14px; }
+              @media print {
+                @page {
+                  margin: 2cm;
+                }
+                body {
+                  -webkit-print-color-adjust: exact;
+                  print-color-adjust: exact;
+                }
+              }
+              body { 
+                font-family: Arial, sans-serif; 
+                padding: ${isReceituario ? '20px' : '40px'}; 
+                line-height: 1.6;
+                color: #000;
+                max-width: 800px;
+                margin: 0 auto;
+              }
+              h1 { 
+                font-size: 24px; 
+                margin-bottom: 20px; 
+                text-align: ${isReceituario ? 'center' : 'left'};
+                border-bottom: ${isReceituario ? '2px solid #000' : 'none'};
+                padding-bottom: ${isReceituario ? '10px' : '0'};
+              }
+              .content { 
+                white-space: pre-wrap; 
+                line-height: 1.8;
+                font-size: ${isReceituario ? '12pt' : '11pt'};
+              }
+              .meta { 
+                color: #666; 
+                margin-bottom: 20px; 
+                font-size: 14px; 
+              }
+              ${isReceituario ? `
+              .signature-area {
+                margin-top: 80px;
+                text-align: center;
+              }
+              .signature-line {
+                border-top: 1px solid #000;
+                width: 300px;
+                margin: 60px auto 10px;
+              }
+              @media print {
+                button {
+                  display: none;
+                }
+              }
+              ` : ''}
             </style>
           </head>
           <body>
             <h1>${doc.title}</h1>
             <div class="meta">Criado em ${format(new Date(doc.created_at), "dd/MM/yyyy 'às' HH:mm")}</div>
             ${doc.signed_at ? `<div class="meta" style="color: green;">Assinado em ${format(new Date(doc.signed_at), "dd/MM/yyyy 'às' HH:mm")}</div>` : ''}
-            <div class="content">${doc.content}</div>
+            <div class="content">${doc.content.replace(/\n/g, '<br>')}</div>
+            ${isReceituario ? `
+            <div class="signature-area">
+              <div class="signature-line"></div>
+              <p>Assinatura do Profissional</p>
+            </div>
+            ` : ''}
+            <script>
+              window.onload = function() {
+                setTimeout(function() {
+                  window.print();
+                }, 250);
+              }
+            </script>
           </body>
         </html>
       `);
       printWindow.document.close();
-      printWindow.print();
     }
   };
 

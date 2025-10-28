@@ -62,6 +62,8 @@ export const NovoReceituarioModal = ({
         return;
       }
 
+      console.log("Carregando dados do receituário para user:", user.id);
+
       // Buscar dados do paciente com todos os campos
       const { data: patient, error: patientError } = await supabase
         .from("patients")
@@ -73,24 +75,52 @@ export const NovoReceituarioModal = ({
         console.error("Erro ao buscar paciente:", patientError);
         toast.error("Erro ao buscar dados do paciente");
       } else if (patient) {
+        console.log("Paciente carregado:", patient);
         setPatientData(patient);
       } else {
         toast.error("Paciente não encontrado");
       }
 
-      // Buscar dados do profissional logado
-      const { data: professional, error: professionalError } = await supabase
-        .from("profissionais")
+      // Buscar dados do usuário primeiro (tem user_id vinculado corretamente)
+      const { data: usuario, error: usuarioError } = await supabase
+        .from("usuarios")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("id", user.id)
         .maybeSingle();
 
-      if (professionalError) {
-        console.error("Erro ao buscar profissional:", professionalError);
-        toast.error("Erro ao buscar dados do profissional");
-      } else if (professional) {
-        setProfessionalData(professional);
+      if (usuarioError) {
+        console.error("Erro ao buscar usuário:", usuarioError);
+      }
+
+      // Tentar buscar dados mais completos da tabela profissionais (tem CRO e especialidade)
+      // Buscar pelo email do usuário já que user_id pode estar null
+      let professionalInfo = null;
+      if (user.email) {
+        const { data: profissional, error: profissionalError } = await supabase
+          .from("profissionais")
+          .select("*")
+          .eq("email", user.email.toUpperCase())
+          .maybeSingle();
+
+        if (!profissionalError && profissional) {
+          console.log("Profissional encontrado:", profissional);
+          professionalInfo = profissional;
+        }
+      }
+
+      // Usar dados do profissional se existir, senão usar dados do usuário
+      if (professionalInfo) {
+        setProfessionalData(professionalInfo);
+      } else if (usuario) {
+        console.log("Usando dados do usuário:", usuario);
+        setProfessionalData({
+          nome: usuario.nome,
+          email: usuario.email,
+          cro: "[Não cadastrado]",
+          especialidade: "",
+        });
       } else {
+        console.error("Nenhum dado de profissional encontrado");
         toast.error("Dados do profissional não encontrados");
       }
 
@@ -113,6 +143,7 @@ export const NovoReceituarioModal = ({
         if (clinicError) {
           console.error("Erro ao buscar clínica:", clinicError);
         } else if (clinic) {
+          console.log("Clínica carregada:", clinic);
           setClinicData(clinic);
         }
       }
