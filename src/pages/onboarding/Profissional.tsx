@@ -76,8 +76,36 @@ const Profissional = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
-      const { data: profile } = await supabase.from("profiles").select("clinic_id, full_name").eq("id", user.id).single();
-      if (!profile?.clinic_id) throw new Error("Clínica não encontrada");
+      // Buscar ou garantir que clinic_id existe
+      let { data: profile } = await supabase.from("profiles").select("clinic_id, full_name").eq("id", user.id).single();
+      
+      // Se não tem clinic_id, criar clínica agora
+      if (!profile?.clinic_id) {
+        const { data: clinicData, error: clinicError } = await (supabase as any)
+          .from("clinicas")
+          .insert({
+            nome: `Consultório ${user.user_metadata?.full_name || "Profissional"}`,
+            tipo: isLiberal ? "liberal" : "clinica",
+            owner_user_id: user.id,
+            onboarding_status: "in_progress",
+            plano: "starter",
+            status_assinatura: "trialing",
+          })
+          .select()
+          .single();
+
+        if (clinicError) throw new Error("Erro ao criar clínica: " + clinicError.message);
+        
+        // Atualizar profile com clinic_id
+        await supabase.from("profiles").update({ clinic_id: clinicData.id }).eq("id", user.id);
+        
+        // Atualizar variável local
+        profile = { ...profile, clinic_id: clinicData.id, full_name: profile?.full_name };
+      }
+
+      if (!profile?.clinic_id) throw new Error("Erro: Clínica não pôde ser associada");
+
+      console.log("Tentando inserir profissional com clinic_id:", profile.clinic_id);
 
       const { error, data: profData } = await (supabase as any).from("profissionais").insert({
         clinica_id: profile.clinic_id,
@@ -91,7 +119,11 @@ const Profissional = () => {
       }).select();
 
       if (error) {
-        console.error("Erro ao inserir profissional:", error);
+        console.error("Erro detalhado ao inserir profissional:", {
+          error,
+          clinic_id: profile.clinic_id,
+          user_id: user.id
+        });
         throw new Error(error.message || "Erro ao cadastrar profissional");
       }
 
