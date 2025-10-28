@@ -140,7 +140,7 @@ export const NovoContratoModal = ({ open, onOpenChange, patientId }: NovoContrat
 
       const { data, error } = await supabase
         .from("profissionais")
-        .select("id, nome, cro, cpf")
+        .select("id, nome, cro, email")
         .eq("clinica_id", profile.clinic_id)
         .eq("ativo", true)
         .order("nome");
@@ -151,6 +151,7 @@ export const NovoContratoModal = ({ open, onOpenChange, patientId }: NovoContrat
       setProfissionais(data || []);
     } catch (error) {
       console.error("Erro ao carregar profissionais:", error);
+      toast.error("Erro ao carregar profissionais");
     }
   };
 
@@ -184,10 +185,9 @@ export const NovoContratoModal = ({ open, onOpenChange, patientId }: NovoContrat
     setSelectedProfessional(professionalId);
     const prof = profissionais.find(p => p.id === professionalId);
     if (prof) {
-      setProfessionalCpf(prof.cpf || prof.cro || "");
+      setProfessionalCpf(prof.cro || "");
       setProfessionalName(prof.nome || "");
-      // Se for contrato em nome do profissional, podemos usar o endereço da clínica como padrão
-      // mas permitir edição
+      // Se for contrato em nome do profissional, usar endereço da clínica como padrão
       if (contractType === "profissional") {
         setProfessionalAddress(clinicAddress);
       }
@@ -226,7 +226,7 @@ export const NovoContratoModal = ({ open, onOpenChange, patientId }: NovoContrat
     
     const contratadoDoc = contractType === "clinica"
       ? `CNPJ nº ${clinicCnpj || "[CNPJ]"}`
-      : `CPF/CRO nº ${professionalCpf || "[CPF/CRO]"}`;
+      : `CRO nº ${professionalCpf || "[CRO]"}`;
     
     const contratadoEndereco = contractType === "clinica"
       ? (clinicAddress || "[Endereço da Clínica]")
@@ -503,7 +503,7 @@ CONTRATADO(A)`;
                     </Select>
                   </div>
                   <div>
-                    <Label>CPF/CRO</Label>
+                    <Label>CRO</Label>
                     <Input value={professionalCpf} disabled className="bg-muted" />
                   </div>
                   {contractType === "profissional" && (
