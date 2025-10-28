@@ -592,6 +592,62 @@ export type Database = {
           },
         ]
       }
+      patient_documents: {
+        Row: {
+          clinic_id: string
+          content: string
+          created_at: string
+          created_by: string
+          document_type: string
+          id: string
+          metadata: Json | null
+          patient_id: string
+          signature_hash: string | null
+          signed_at: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          clinic_id: string
+          content: string
+          created_at?: string
+          created_by: string
+          document_type: string
+          id?: string
+          metadata?: Json | null
+          patient_id: string
+          signature_hash?: string | null
+          signed_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          clinic_id?: string
+          content?: string
+          created_at?: string
+          created_by?: string
+          document_type?: string
+          id?: string
+          metadata?: Json | null
+          patient_id?: string
+          signature_hash?: string | null
+          signed_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_documents_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_files: {
         Row: {
           created_at: string

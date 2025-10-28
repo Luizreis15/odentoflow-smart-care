@@ -16,6 +16,7 @@ import { TratamentosTab } from "@/components/tratamentos/TratamentosTab";
 import { OrcamentosTab } from "@/components/orcamentos/OrcamentosTab";
 import AnamnesesTab from "@/components/anamnese/AnamnesesTab";
 import ImagensTab from "@/components/imagens/ImagensTab";
+import { DocumentosTab } from "@/components/documentos/DocumentosTab";
 
 interface Patient {
   id: string;
@@ -387,12 +388,8 @@ const PatientDetails = () => {
               <ImagensTab patientId={id!} />
             </TabsContent>
 
-            <TabsContent value="documentos">
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <p className="text-muted-foreground">Nenhum documento cadastrado</p>
-                </CardContent>
-              </Card>
+            <TabsContent value="documentos" className="mt-0">
+              <DocumentosTab patientId={id!} />
             </TabsContent>
 
             <TabsContent value="debitos">
