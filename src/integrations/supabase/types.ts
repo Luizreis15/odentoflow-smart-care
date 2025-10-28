@@ -121,7 +121,9 @@ export type Database = {
           quantity: number
           status: string | null
           tooth_number: string | null
+          tooth_region: string | null
           total_price: number
+          treatment_status: string | null
           unit_price: number
           updated_at: string | null
         }
@@ -136,7 +138,9 @@ export type Database = {
           quantity?: number
           status?: string | null
           tooth_number?: string | null
+          tooth_region?: string | null
           total_price: number
+          treatment_status?: string | null
           unit_price: number
           updated_at?: string | null
         }
@@ -151,7 +155,9 @@ export type Database = {
           quantity?: number
           status?: string | null
           tooth_number?: string | null
+          tooth_region?: string | null
           total_price?: number
+          treatment_status?: string | null
           unit_price?: number
           updated_at?: string | null
         }
@@ -903,6 +909,67 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      treatment_evolutions: {
+        Row: {
+          budget_item_id: string
+          created_at: string | null
+          description: string
+          evolution_date: string
+          id: string
+          image_url: string | null
+          patient_id: string
+          professional_id: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          budget_item_id: string
+          created_at?: string | null
+          description: string
+          evolution_date?: string
+          id?: string
+          image_url?: string | null
+          patient_id: string
+          professional_id: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          budget_item_id?: string
+          created_at?: string | null
+          description?: string
+          evolution_date?: string
+          id?: string
+          image_url?: string | null
+          patient_id?: string
+          professional_id?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_evolutions_budget_item_id_fkey"
+            columns: ["budget_item_id"]
+            isOneToOne: false
+            referencedRelation: "budget_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_evolutions_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_evolutions_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       treatments: {
         Row: {

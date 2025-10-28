@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 interface OdontogramaProps {
   dentesSelecionados: string[];
   onDentesChange: (dentes: string[]) => void;
+  statusDentes?: Record<string, string>; // Para mostrar status visual dos dentes
 }
 
 // Dentes permanentes FDI
@@ -21,48 +22,55 @@ const DENTES_DECIDUOS = {
 };
 
 // Ícone SVG de dente simplificado
-const ToothIcon = ({ selected, onClick }: { selected: boolean; onClick: () => void }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={cn(
-      "relative w-8 h-10 transition-all hover:scale-110",
-      selected && "scale-110"
-    )}
-  >
-    <svg
-      viewBox="0 0 24 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
+const ToothIcon = ({ selected, onClick, status }: { selected: boolean; onClick: () => void; status?: string }) => {
+  const getStatusColor = () => {
+    if (selected) return "fill-primary stroke-primary";
+    switch (status) {
+      case "completed": return "fill-green-500 stroke-green-600";
+      case "in_progress": return "fill-yellow-500 stroke-yellow-600";
+      case "pending": return "fill-gray-400 stroke-gray-500";
+      default: return "fill-background stroke-muted-foreground";
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
       className={cn(
-        "w-full h-full transition-all",
-        selected ? "drop-shadow-lg" : "opacity-70 hover:opacity-100"
+        "relative w-8 h-10 transition-all hover:scale-110",
+        selected && "scale-110"
       )}
     >
-      <path
-        d="M12 2C8 2 4 4 4 8C4 10 4 14 4 18C4 22 6 30 12 30C18 30 20 22 20 18C20 14 20 10 20 8C20 4 16 2 12 2Z"
+      <svg
+        viewBox="0 0 24 32"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
         className={cn(
-          "transition-all",
-          selected
-            ? "fill-primary stroke-primary"
-            : "fill-background stroke-muted-foreground"
+          "w-full h-full transition-all",
+          selected ? "drop-shadow-lg" : "opacity-70 hover:opacity-100"
         )}
-        strokeWidth="2"
-      />
-      <path
-        d="M10 8C10 8 10 12 10 14M14 8C14 8 14 12 14 14"
-        className={cn(
-          "transition-all",
-          selected ? "stroke-primary-foreground" : "stroke-muted-foreground"
-        )}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
-  </button>
-);
+      >
+        <path
+          d="M12 2C8 2 4 4 4 8C4 10 4 14 4 18C4 22 6 30 12 30C18 30 20 22 20 18C20 14 20 10 20 8C20 4 16 2 12 2Z"
+          className={cn("transition-all", getStatusColor())}
+          strokeWidth="2"
+        />
+        <path
+          d="M10 8C10 8 10 12 10 14M14 8C14 8 14 12 14 14"
+          className={cn(
+            "transition-all",
+            selected ? "stroke-primary-foreground" : "stroke-muted-foreground"
+          )}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+      </svg>
+    </button>
+  );
+};
 
-export const Odontograma = ({ dentesSelecionados, onDentesChange }: OdontogramaProps) => {
+export const Odontograma = ({ dentesSelecionados, onDentesChange, statusDentes }: OdontogramaProps) => {
   const [activeTab, setActiveTab] = useState("permanentes");
 
   const toggleDente = (dente: number) => {
@@ -126,10 +134,11 @@ export const Odontograma = ({ dentesSelecionados, onDentesChange }: OdontogramaP
         {dentes.map(dente => (
           <div key={dente} className="flex flex-col items-center">
             <span className="text-xs text-muted-foreground mb-1">{dente}</span>
-            <ToothIcon
-              selected={dentesSelecionados.includes(dente.toString())}
-              onClick={() => toggleDente(dente)}
-            />
+                        <ToothIcon
+                          selected={dentesSelecionados.includes(dente.toString())}
+                          onClick={() => toggleDente(dente)}
+                          status={statusDentes?.[dente.toString()]}
+                        />
           </div>
         ))}
       </div>

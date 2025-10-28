@@ -12,6 +12,7 @@ import { ArrowLeft, Edit, Copy, MessageCircle, MoreVertical, Check } from "lucid
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { NovoOrcamentoModal } from "@/components/orcamentos/NovoOrcamentoModal";
+import { TratamentosTab } from "@/components/tratamentos/TratamentosTab";
 
 interface Patient {
   id: string;
@@ -468,12 +469,8 @@ const PatientDetails = () => {
               )}
             </TabsContent>
 
-            <TabsContent value="tratamentos">
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <p className="text-muted-foreground">Nenhum tratamento cadastrado</p>
-                </CardContent>
-              </Card>
+            <TabsContent value="tratamentos" className="mt-0">
+              <TratamentosTab patientId={id!} />
             </TabsContent>
 
             <TabsContent value="anamnese">

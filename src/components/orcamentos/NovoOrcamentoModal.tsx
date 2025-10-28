@@ -181,7 +181,7 @@ export const NovoOrcamentoModal = ({
         quantity: 1,
         total_price: t.valor,
         discount: 0,
-        tooth_number: t.dente_regiao,
+        tooth_region: t.dente_regiao,
         status: "pending",
       }));
 
