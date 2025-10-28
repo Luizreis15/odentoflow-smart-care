@@ -7,6 +7,7 @@ import { NovoContratoModal } from "./NovoContratoModal";
 import { HistoricoDocumentosModal } from "./HistoricoDocumentosModal";
 import { TipoReceituarioModal } from "./TipoReceituarioModal";
 import { NovoReceituarioModal } from "./NovoReceituarioModal";
+import { ImprimirReceituarioModal } from "./ImprimirReceituarioModal";
 
 interface DocumentosTabProps {
   patientId: string;
@@ -47,6 +48,8 @@ export const DocumentosTab = ({ patientId }: DocumentosTabProps) => {
   const [novoReceituarioOpen, setNovoReceituarioOpen] = useState(false);
   const [selectedDocType, setSelectedDocType] = useState<string | null>(null);
   const [tipoReceituario, setTipoReceituario] = useState<"impresso" | "digital" | null>(null);
+  const [imprimirReceituarioOpen, setImprimirReceituarioOpen] = useState(false);
+  const [selectedReceituario, setSelectedReceituario] = useState<any>(null);
 
   const handleNovoClick = (type: string) => {
     setSelectedDocType(type);
@@ -169,6 +172,12 @@ export const DocumentosTab = ({ patientId }: DocumentosTabProps) => {
         onOpenChange={setHistoricoOpen}
         patientId={patientId}
         documentType={selectedDocType}
+      />
+
+      <ImprimirReceituarioModal
+        open={imprimirReceituarioOpen}
+        onOpenChange={setImprimirReceituarioOpen}
+        document={selectedReceituario}
       />
     </>
   );

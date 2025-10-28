@@ -62,7 +62,7 @@ export const NovoReceituarioModal = ({
         return;
       }
 
-      // Buscar dados do paciente
+      // Buscar dados do paciente com todos os campos
       const { data: patient, error: patientError } = await supabase
         .from("patients")
         .select("*")
@@ -71,11 +71,14 @@ export const NovoReceituarioModal = ({
 
       if (patientError) {
         console.error("Erro ao buscar paciente:", patientError);
+        toast.error("Erro ao buscar dados do paciente");
       } else if (patient) {
         setPatientData(patient);
+      } else {
+        toast.error("Paciente não encontrado");
       }
 
-      // Buscar dados do profissional
+      // Buscar dados do profissional logado
       const { data: professional, error: professionalError } = await supabase
         .from("profissionais")
         .select("*")
@@ -84,8 +87,11 @@ export const NovoReceituarioModal = ({
 
       if (professionalError) {
         console.error("Erro ao buscar profissional:", professionalError);
+        toast.error("Erro ao buscar dados do profissional");
       } else if (professional) {
         setProfessionalData(professional);
+      } else {
+        toast.error("Dados do profissional não encontrados");
       }
 
       // Buscar dados da clínica
@@ -175,16 +181,31 @@ export const NovoReceituarioModal = ({
 
   const gerarConteudoReceituario = (): string => {
     const dataFormatada = format(new Date(data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    const dataNascimento = patientData?.birth_date 
+      ? format(new Date(patientData.birth_date), "dd/MM/yyyy")
+      : "[Data de Nascimento]";
 
     let conteudo = `RECEITUÁRIO ${tipo?.toUpperCase()}\n\n`;
     conteudo += `${clinicData?.nome || "[Nome da Clínica]"}\n`;
     if (clinicData?.cnpj) conteudo += `CNPJ: ${clinicData.cnpj}\n`;
+    if (clinicData?.telefone) conteudo += `Telefone: ${clinicData.telefone}\n`;
+    if (clinicData?.address) {
+      const address = typeof clinicData.address === 'string' 
+        ? clinicData.address 
+        : JSON.stringify(clinicData.address);
+      conteudo += `Endereço: ${address}\n`;
+    }
     conteudo += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-    conteudo += `Paciente: ${patientData?.full_name || "[Nome do Paciente]"}\n`;
-    conteudo += `Data: ${dataFormatada}\n\n`;
+    conteudo += `DADOS DO PACIENTE\n`;
+    conteudo += `Nome: ${patientData?.full_name || "[Nome do Paciente]"}\n`;
+    conteudo += `Data de Nascimento: ${dataNascimento}\n`;
+    if (patientData?.cpf) conteudo += `CPF: ${patientData.cpf}\n`;
+    if (patientData?.address) conteudo += `Endereço: ${patientData.address}\n`;
+    conteudo += `\nData da Prescrição: ${dataFormatada}\n\n`;
 
     conteudo += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    conteudo += `MEDICAMENTOS PRESCRITOS\n\n`;
 
     medicamentosSelecionados.forEach((med, index) => {
       conteudo += `${index + 1}. ${med.medicamento.nome} ${med.medicamento.concentracao}\n`;
@@ -197,8 +218,10 @@ export const NovoReceituarioModal = ({
 
     conteudo += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
+    conteudo += `PROFISSIONAL RESPONSÁVEL\n`;
     conteudo += `${professionalData?.nome || "[Nome do Profissional]"}\n`;
     conteudo += `CRO: ${professionalData?.cro || "[CRO]"}\n`;
+    if (professionalData?.especialidade) conteudo += `Especialidade: ${professionalData.especialidade}\n`;
 
     return conteudo;
   };
