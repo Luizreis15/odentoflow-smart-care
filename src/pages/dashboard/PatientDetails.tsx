@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Edit, Copy, MessageCircle, MoreVertical, Check } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { NovoOrcamentoModal } from "@/components/orcamentos/NovoOrcamentoModal";
 
 interface Patient {
   id: string;
@@ -40,6 +41,8 @@ const PatientDetails = () => {
   const [loading, setLoading] = useState(true);
   const [loadingBudgets, setLoadingBudgets] = useState(false);
   const [activeTab, setActiveTab] = useState("sobre");
+  const [showNovoOrcamento, setShowNovoOrcamento] = useState(false);
+  const [clinicaId, setClinicaId] = useState<string>("");
 
   useEffect(() => {
     if (id) {
@@ -64,6 +67,20 @@ const PatientDetails = () => {
 
       if (error) throw error;
       setPatient(data);
+      
+      // Carregar clinic_id
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("clinic_id")
+          .eq("id", user.id)
+          .single();
+        
+        if (profile) {
+          setClinicaId(profile.clinic_id);
+        }
+      }
     } catch (error: any) {
       console.error("Erro ao carregar paciente:", error);
       toast.error("Erro ao carregar dados do paciente");
@@ -347,7 +364,10 @@ const PatientDetails = () => {
                 </Card>
               ) : budgets.length === 0 ? (
                 <div className="space-y-6">
-                  <Button className="bg-[#4ade80] hover:bg-[#4ade80]/90">
+                  <Button 
+                    className="bg-[#4ade80] hover:bg-[#4ade80]/90"
+                    onClick={() => setShowNovoOrcamento(true)}
+                  >
                     NOVO ORÇAMENTO
                   </Button>
 
@@ -538,6 +558,16 @@ const PatientDetails = () => {
           </div>
         </div>
       </Tabs>
+
+      {patient && clinicaId && (
+        <NovoOrcamentoModal
+          open={showNovoOrcamento}
+          onOpenChange={setShowNovoOrcamento}
+          patientId={patient.id}
+          clinicaId={clinicaId}
+          onSuccess={loadBudgets}
+        />
+      )}
     </div>
   );
 };
