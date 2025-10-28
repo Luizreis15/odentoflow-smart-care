@@ -319,15 +319,15 @@ export default function NovaAnamneseModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>
             {duplicateFromId ? "Duplicar Anamnese" : "Nova Anamnese"}
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4">
-          <div className="space-y-6">
+        <div className="flex-1 overflow-y-auto pr-4 -mr-4">
+          <div className="space-y-6 pb-4">
             {/* Cabeçalho */}
             <div className="grid grid-cols-3 gap-4">
               <div>
@@ -445,9 +445,9 @@ export default function NovaAnamneseModal({
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="gap-2 border-t pt-4 mt-4">
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
