@@ -1,8 +1,12 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Calendar, FileText, MessageCircle, CreditCard } from "lucide-react";
+import { Users, Calendar, FileText, MessageCircle, CreditCard, Mail } from "lucide-react";
+import EnviarConviteModal from "@/components/portal/EnviarConviteModal";
 
 const PortalPaciente = () => {
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  
   const portalStats = {
     activeUsers: 182,
     monthlyLogins: 456,
@@ -73,10 +77,16 @@ const PortalPaciente = () => {
             Área exclusiva para pacientes gerenciarem seus atendimentos
           </p>
         </div>
-        <Button size="sm">
-          <Users className="mr-2 h-4 w-4" />
-          Gerenciar Acessos
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" onClick={() => setShowInviteModal(true)}>
+            <Mail className="mr-2 h-4 w-4" />
+            Enviar Convite
+          </Button>
+          <Button size="sm" variant="outline">
+            <Users className="mr-2 h-4 w-4" />
+            Gerenciar Acessos
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-4">
@@ -225,6 +235,11 @@ const PortalPaciente = () => {
           </p>
         </CardContent>
       </Card>
+
+      <EnviarConviteModal 
+        open={showInviteModal}
+        onOpenChange={setShowInviteModal}
+      />
     </div>
   );
 };

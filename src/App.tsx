@@ -18,6 +18,8 @@ import PatientDetails from "./pages/dashboard/PatientDetails";
 import FinanceiroWrapper from "./pages/dashboard/FinanceiroWrapper";
 import CRMWrapper from "./pages/dashboard/CRMWrapper";
 import PortalPacienteWrapper from "./pages/dashboard/PortalPacienteWrapper";
+import PortalAuth from "./pages/portal/PortalAuth";
+import PortalDashboard from "./pages/portal/PortalDashboard";
 import IAAssistenteWrapper from "./pages/dashboard/IAAssistenteWrapper";
 import ProtesesWrapper from "./pages/dashboard/ProtesesWrapper";
 import EstoqueWrapper from "./pages/dashboard/EstoqueWrapper";
@@ -67,6 +69,11 @@ function App() {
               <Route path="/dashboard/movimentacoes" element={<MovimentacoesWrapper />} />
               <Route path="/dashboard/profile" element={<PerfilWrapper />} />
               <Route path="/configuracoes" element={<Configuracoes />} />
+              
+              {/* Portal do Paciente - Rotas Públicas */}
+              <Route path="/portal/auth" element={<PortalAuth />} />
+              <Route path="/portal/dashboard" element={<PortalDashboard />} />
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
