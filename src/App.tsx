@@ -26,8 +26,8 @@ import EstoqueWrapper from "./pages/dashboard/EstoqueWrapper";
 import ProdutosWrapper from "./pages/dashboard/ProdutosWrapper";
 import MovimentacoesWrapper from "./pages/dashboard/MovimentacoesWrapper";
 import PerfilWrapper from "./pages/dashboard/PerfilWrapper";
+import ConfiguracoesWrapper from "./pages/dashboard/ConfiguracoesWrapper";
 import NotFound from "./pages/NotFound";
-import Configuracoes from "./pages/Configuracoes";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 
 function App() {
@@ -68,8 +68,7 @@ function App() {
               <Route path="/dashboard/produtos" element={<ProdutosWrapper />} />
               <Route path="/dashboard/movimentacoes" element={<MovimentacoesWrapper />} />
               <Route path="/dashboard/profile" element={<PerfilWrapper />} />
-              <Route path="/dashboard/configuracoes" element={<Configuracoes />} />
-              <Route path="/configuracoes" element={<Configuracoes />} />
+              <Route path="/dashboard/configuracoes" element={<ConfiguracoesWrapper />} />
               
               {/* Portal do Paciente - Rotas Públicas */}
               <Route path="/portal/auth" element={<PortalAuth />} />
