@@ -102,9 +102,7 @@ export const HistoricoDocumentosModal = ({
     window.print();
   };
 
-  const handleSign = async () => {
-    if (!selectedDoc) return;
-
+  const handleSign = async (docId: string) => {
     try {
       const { error } = await supabase
         .from("patient_documents")
@@ -112,17 +110,43 @@ export const HistoricoDocumentosModal = ({
           status: "assinado",
           signed_at: new Date().toISOString(),
         })
-        .eq("id", selectedDoc.id);
+        .eq("id", docId);
 
       if (error) throw error;
 
       toast.success("Documento assinado com sucesso");
-      setViewMode(false);
-      setSelectedDoc(null);
       loadDocuments();
     } catch (error: any) {
       console.error("Erro ao assinar documento:", error);
       toast.error("Erro ao assinar documento");
+    }
+  };
+
+  const handlePrintDoc = (doc: Document) => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>${doc.title}</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 40px; }
+              h1 { font-size: 24px; margin-bottom: 20px; }
+              .content { white-space: pre-wrap; line-height: 1.6; }
+              .meta { color: #666; margin-bottom: 20px; font-size: 14px; }
+            </style>
+          </head>
+          <body>
+            <h1>${doc.title}</h1>
+            <div class="meta">Criado em ${format(new Date(doc.created_at), "dd/MM/yyyy 'às' HH:mm")}</div>
+            ${doc.signed_at ? `<div class="meta" style="color: green;">Assinado em ${format(new Date(doc.signed_at), "dd/MM/yyyy 'às' HH:mm")}</div>` : ''}
+            <div class="content">${doc.content}</div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
     }
   };
 
@@ -179,7 +203,7 @@ export const HistoricoDocumentosModal = ({
               Imprimir
             </Button>
             {selectedDoc.status !== "assinado" && (
-              <Button onClick={handleSign}>
+              <Button onClick={() => handleSign(selectedDoc.id)}>
                 <FileSignature className="h-4 w-4 mr-2" />
                 Assinar Documento
               </Button>
@@ -235,13 +259,33 @@ export const HistoricoDocumentosModal = ({
                         size="sm"
                         variant="outline"
                         onClick={() => handleView(doc)}
+                        title="Visualizar"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
+                        onClick={() => handlePrintDoc(doc)}
+                        title="Imprimir"
+                      >
+                        <Printer className="h-4 w-4" />
+                      </Button>
+                      {doc.status !== "assinado" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleSign(doc.id)}
+                          title="Assinar"
+                        >
+                          <FileSignature className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
                         onClick={() => handleDelete(doc.id)}
+                        title="Excluir"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
