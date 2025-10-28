@@ -1,9 +1,17 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, AlertTriangle, TrendingDown, DollarSign } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Package, AlertTriangle, TrendingDown, DollarSign, Plus, Upload, ArrowDown, ArrowUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { EntradaEstoqueModal } from "@/components/estoque/EntradaEstoqueModal";
+import { SaidaEstoqueModal } from "@/components/estoque/SaidaEstoqueModal";
+import { UploadXMLModal } from "@/components/estoque/UploadXMLModal";
 
 export default function Estoque() {
+  const [entradaOpen, setEntradaOpen] = useState(false);
+  const [saidaOpen, setSaidaOpen] = useState(false);
+  const [xmlOpen, setXmlOpen] = useState(false);
   const { data: profile } = useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
@@ -86,9 +94,25 @@ export default function Estoque() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard - Estoque</h1>
-        <p className="text-muted-foreground">Visão geral do controle de estoque</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard - Estoque</h1>
+          <p className="text-muted-foreground">Visão geral do controle de estoque</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setSaidaOpen(true)}>
+            <ArrowDown className="mr-2 h-4 w-4" />
+            Saída
+          </Button>
+          <Button variant="outline" onClick={() => setEntradaOpen(true)}>
+            <ArrowUp className="mr-2 h-4 w-4" />
+            Entrada
+          </Button>
+          <Button onClick={() => setXmlOpen(true)}>
+            <Upload className="mr-2 h-4 w-4" />
+            Upload XML NFe
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -189,6 +213,10 @@ export default function Estoque() {
           </div>
         </CardContent>
       </Card>
+
+      <EntradaEstoqueModal open={entradaOpen} onOpenChange={setEntradaOpen} />
+      <SaidaEstoqueModal open={saidaOpen} onOpenChange={setSaidaOpen} />
+      <UploadXMLModal open={xmlOpen} onOpenChange={setXmlOpen} />
     </div>
   );
 }
