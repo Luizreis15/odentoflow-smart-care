@@ -141,30 +141,30 @@ const Financeiro = () => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-4 rounded-t-lg">
+        <div className="bg-primary text-primary-foreground px-6 py-4 rounded-t-lg shadow-lg">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">Fluxo de Caixa</h1>
             <div className="flex gap-2">
-              <Button variant="secondary" size="sm">
+              <Button variant="secondary" size="sm" className="bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground border-none">
                 <Search className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
-          <TabsList className="mt-4 bg-white/10 border-none">
-            <TabsTrigger value="fluxo" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">
+          <TabsList className="mt-4 bg-primary-foreground/10 border-none">
+            <TabsTrigger value="fluxo" className="data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
               FLUXO DE CAIXA
             </TabsTrigger>
-            <TabsTrigger value="transacoes" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">
+            <TabsTrigger value="transacoes" className="data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
               TRANSAÇÕES
             </TabsTrigger>
-            <TabsTrigger value="nota" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">
+            <TabsTrigger value="nota" className="data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
               NOTA FISCAL
             </TabsTrigger>
-            <TabsTrigger value="comissoes" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">
+            <TabsTrigger value="comissoes" className="data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
               COMISSÕES
             </TabsTrigger>
-            <TabsTrigger value="carteira" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">
+            <TabsTrigger value="carteira" className="data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
               CARTEIRA DIGITAL
             </TabsTrigger>
           </TabsList>
