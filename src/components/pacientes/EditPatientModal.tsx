@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import InputMask from "react-input-mask";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -147,12 +148,19 @@ export function EditPatientModal({ open, onOpenChange, patient, onSuccess }: Edi
 
               <div>
                 <Label htmlFor="phone">Telefone *</Label>
-                <Input
-                  id="phone"
+                <InputMask
+                  mask="(99) 99999-9999"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  required
-                />
+                >
+                  {(inputProps: any) => (
+                    <Input
+                      {...inputProps}
+                      id="phone"
+                      required
+                    />
+                  )}
+                </InputMask>
               </div>
 
               <div>
@@ -167,11 +175,18 @@ export function EditPatientModal({ open, onOpenChange, patient, onSuccess }: Edi
 
               <div>
                 <Label htmlFor="cpf">CPF</Label>
-                <Input
-                  id="cpf"
+                <InputMask
+                  mask="999.999.999-99"
                   value={formData.cpf}
                   onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
-                />
+                >
+                  {(inputProps: any) => (
+                    <Input
+                      {...inputProps}
+                      id="cpf"
+                    />
+                  )}
+                </InputMask>
               </div>
 
               <div>
@@ -257,20 +272,34 @@ export function EditPatientModal({ open, onOpenChange, patient, onSuccess }: Edi
 
               <div>
                 <Label htmlFor="responsible_cpf">CPF</Label>
-                <Input
-                  id="responsible_cpf"
+                <InputMask
+                  mask="999.999.999-99"
                   value={formData.responsible_cpf}
                   onChange={(e) => setFormData({ ...formData, responsible_cpf: e.target.value })}
-                />
+                >
+                  {(inputProps: any) => (
+                    <Input
+                      {...inputProps}
+                      id="responsible_cpf"
+                    />
+                  )}
+                </InputMask>
               </div>
 
               <div>
                 <Label htmlFor="responsible_phone">Telefone</Label>
-                <Input
-                  id="responsible_phone"
+                <InputMask
+                  mask="(99) 99999-9999"
                   value={formData.responsible_phone}
                   onChange={(e) => setFormData({ ...formData, responsible_phone: e.target.value })}
-                />
+                >
+                  {(inputProps: any) => (
+                    <Input
+                      {...inputProps}
+                      id="responsible_phone"
+                    />
+                  )}
+                </InputMask>
               </div>
 
               <div>
