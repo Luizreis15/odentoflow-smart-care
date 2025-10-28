@@ -222,11 +222,23 @@ const PatientDetails = () => {
             <TabsContent value="sobre" className="mt-0">
               <Card>
                 <CardContent className="pt-6">
-                  <h3 className="font-semibold mb-4">Dados pessoais</h3>
+                  {/* Header com botão WhatsApp */}
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="font-semibold text-lg">Dados pessoais</h3>
+                    <Button 
+                      onClick={handleWhatsApp}
+                      className="gap-2"
+                      size="sm"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      WhatsApp
+                    </Button>
+                  </div>
                   
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-4">
-                      <span className="text-muted-foreground min-w-[180px]">Código do paciente</span>
+                  {/* Grid de dados */}
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                    <div>
+                      <span className="text-sm text-muted-foreground block mb-1">Código do paciente</span>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{patientCode}</span>
                         <Button
@@ -240,99 +252,101 @@ const PatientDetails = () => {
                       </div>
                     </div>
 
+                    <div>
+                      <span className="text-sm text-muted-foreground block mb-1">Número paciente</span>
+                      <span className="font-medium">
+                        {patient.created_at 
+                          ? Math.floor(new Date(patient.created_at).getTime() / 1000000)
+                          : "-"}
+                      </span>
+                    </div>
+
                     {patient.cpf && (
-                      <div className="flex items-center gap-4">
-                        <span className="text-muted-foreground min-w-[180px]">CPF do paciente</span>
+                      <div>
+                        <span className="text-sm text-muted-foreground block mb-1">CPF do paciente</span>
                         <span className="font-medium">{patient.cpf}</span>
                       </div>
                     )}
 
-                    {patient.rg && (
-                      <div className="flex items-center gap-4">
-                        <span className="text-muted-foreground min-w-[180px]">RG</span>
-                        <span className="font-medium">{patient.rg}</span>
+                    {patient.birth_date && (
+                      <div>
+                        <span className="text-sm text-muted-foreground block mb-1">Data de nascimento</span>
+                        <span className="font-medium">
+                          {new Date(patient.birth_date).toLocaleDateString("pt-BR")}
+                        </span>
                       </div>
                     )}
 
                     {patient.birth_date && (
-                      <>
-                        <div className="flex items-center gap-4">
-                          <span className="text-muted-foreground min-w-[180px]">Data de nascimento</span>
-                          <span className="font-medium">
-                            {new Date(patient.birth_date).toLocaleDateString("pt-BR")}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-4">
-                          <span className="text-muted-foreground min-w-[180px]">Idade do paciente</span>
-                          <span className="font-medium">{calculateAge(patient.birth_date)} anos</span>
-                        </div>
-                      </>
+                      <div>
+                        <span className="text-sm text-muted-foreground block mb-1">Idade do paciente</span>
+                        <span className="font-medium">{calculateAge(patient.birth_date)} anos</span>
+                      </div>
                     )}
 
                     {patient.gender && (
-                      <div className="flex items-center gap-4">
-                        <span className="text-muted-foreground min-w-[180px]">Sexo</span>
+                      <div>
+                        <span className="text-sm text-muted-foreground block mb-1">Sexo</span>
                         <span className="font-medium">
                           {patient.gender === "masculino" ? "Masculino" : "Feminino"}
                         </span>
                       </div>
                     )}
 
-                    <div className="flex items-center gap-4">
-                      <span className="text-muted-foreground min-w-[180px]">Celular</span>
+                    <div>
+                      <span className="text-sm text-muted-foreground block mb-1">Celular</span>
                       <span className="font-medium">{patient.phone}</span>
                     </div>
 
                     {patient.email && (
-                      <div className="flex items-center gap-4">
-                        <span className="text-muted-foreground min-w-[180px]">Email</span>
+                      <div>
+                        <span className="text-sm text-muted-foreground block mb-1">Email</span>
                         <span className="font-medium">{patient.email}</span>
                       </div>
                     )}
 
                     {patient.how_found && (
-                      <div className="flex items-center gap-4">
-                        <span className="text-muted-foreground min-w-[180px]">Como chegou na clínica</span>
+                      <div className="col-span-2">
+                        <span className="text-sm text-muted-foreground block mb-1">Como chegou na clínica</span>
                         <span className="font-medium capitalize">{patient.how_found.replace("_", " ")}</span>
-                      </div>
-                    )}
-
-                    {patient.tags && patient.tags.length > 0 && (
-                      <div className="flex items-start gap-4">
-                        <span className="text-muted-foreground min-w-[180px]">Etiquetas</span>
-                        <div className="flex flex-wrap gap-2">
-                          {patient.tags.map((tag, index) => (
-                            <Badge key={index} variant="secondary">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
                       </div>
                     )}
                   </div>
 
+                  {patient.tags && patient.tags.length > 0 && (
+                    <div className="mt-6">
+                      <span className="text-sm text-muted-foreground block mb-2">Etiquetas</span>
+                      <div className="flex flex-wrap gap-2">
+                        {patient.tags.map((tag, index) => (
+                          <Badge key={index} variant="secondary">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {patient.responsible_name && (
                     <>
                       <Separator className="my-6" />
-                      <h3 className="font-semibold mb-4">Dados do responsável</h3>
+                      <h3 className="font-semibold text-lg mb-4">Dados do responsável</h3>
                       
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-4">
-                          <span className="text-muted-foreground min-w-[180px]">Nome do responsável</span>
+                      <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                        <div>
+                          <span className="text-sm text-muted-foreground block mb-1">Nome do responsável</span>
                           <span className="font-medium">{patient.responsible_name}</span>
                         </div>
 
                         {patient.responsible_cpf && (
-                          <div className="flex items-center gap-4">
-                            <span className="text-muted-foreground min-w-[180px]">CPF</span>
+                          <div>
+                            <span className="text-sm text-muted-foreground block mb-1">CPF</span>
                             <span className="font-medium">{patient.responsible_cpf}</span>
                           </div>
                         )}
 
                         {patient.responsible_birth_date && (
-                          <div className="flex items-center gap-4">
-                            <span className="text-muted-foreground min-w-[180px]">Data de nascimento</span>
+                          <div>
+                            <span className="text-sm text-muted-foreground block mb-1">Data de nascimento</span>
                             <span className="font-medium">
                               {new Date(patient.responsible_birth_date).toLocaleDateString("pt-BR")}
                             </span>
@@ -340,8 +354,8 @@ const PatientDetails = () => {
                         )}
 
                         {patient.responsible_phone && (
-                          <div className="flex items-center gap-4">
-                            <span className="text-muted-foreground min-w-[180px]">Celular</span>
+                          <div>
+                            <span className="text-sm text-muted-foreground block mb-1">Celular</span>
                             <span className="font-medium">{patient.responsible_phone}</span>
                           </div>
                         )}
@@ -352,7 +366,7 @@ const PatientDetails = () => {
                   {patient.notes && (
                     <>
                       <Separator className="my-6" />
-                      <h3 className="font-semibold mb-4">Observações</h3>
+                      <h3 className="font-semibold text-lg mb-4">Observações</h3>
                       <p className="text-muted-foreground">{patient.notes}</p>
                     </>
                   )}
