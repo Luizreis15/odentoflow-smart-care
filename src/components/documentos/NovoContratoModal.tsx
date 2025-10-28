@@ -51,10 +51,17 @@ export const NovoContratoModal = ({ open, onOpenChange, patientId }: NovoContrat
 
   useEffect(() => {
     if (open) {
+      console.log("Modal aberto - carregando dados...");
       loadPatientData();
       loadClinicData();
       loadProfissionais();
       loadOrcamentos();
+    } else {
+      // Reset ao fechar
+      setSelectedProfessional("");
+      setProfessionalName("");
+      setProfessionalCpf("");
+      setSelectedBudget("");
     }
   }, [open, patientId]);
 
@@ -135,9 +142,12 @@ export const NovoContratoModal = ({ open, onOpenChange, patientId }: NovoContrat
         .from("profissionais")
         .select("id, nome, cro, cpf")
         .eq("clinica_id", profile.clinic_id)
-        .eq("ativo", true);
+        .eq("ativo", true)
+        .order("nome");
 
       if (error) throw error;
+      
+      console.log("Profissionais carregados:", data);
       setProfissionais(data || []);
     } catch (error) {
       console.error("Erro ao carregar profissionais:", error);
@@ -389,9 +399,9 @@ CONTRATADO(A)`;
                 <h3 className="font-semibold mb-3">Tipo de Contrato</h3>
                 <div className="space-y-3">
                   <div>
-                    <Label>O contrato será em nome de:*</Label>
+                    <Label htmlFor="contract-type">O contrato será em nome de:*</Label>
                     <Select value={contractType} onValueChange={(value: "clinica" | "profissional") => setContractType(value)}>
-                      <SelectTrigger>
+                      <SelectTrigger id="contract-type" className="w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -472,17 +482,23 @@ CONTRATADO(A)`;
                 </h3>
                 <div className="space-y-3">
                   <div>
-                    <Label>Dentista Responsável*</Label>
+                    <Label htmlFor="dentista-select">Dentista Responsável*</Label>
                     <Select value={selectedProfessional} onValueChange={handleProfessionalChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o dentista" />
+                      <SelectTrigger id="dentista-select" className="w-full">
+                        <SelectValue placeholder={profissionais.length > 0 ? "Selecione o dentista" : "Carregando..."} />
                       </SelectTrigger>
                       <SelectContent>
-                        {profissionais.map((prof) => (
-                          <SelectItem key={prof.id} value={prof.id}>
-                            {prof.nome} - CRO: {prof.cro}
+                        {profissionais.length === 0 ? (
+                          <SelectItem value="none" disabled>
+                            Nenhum dentista cadastrado
                           </SelectItem>
-                        ))}
+                        ) : (
+                          profissionais.map((prof) => (
+                            <SelectItem key={prof.id} value={prof.id}>
+                              {prof.nome} {prof.cro ? `- CRO: ${prof.cro}` : ""}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -508,17 +524,23 @@ CONTRATADO(A)`;
                 <h3 className="font-semibold mb-3">Orçamento</h3>
                 <div className="space-y-3">
                   <div>
-                    <Label>Orçamento Aprovado</Label>
+                    <Label htmlFor="budget-select">Orçamento Aprovado</Label>
                     <Select value={selectedBudget} onValueChange={handleBudgetChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um orçamento" />
+                      <SelectTrigger id="budget-select" className="w-full">
+                        <SelectValue placeholder={orcamentos.length > 0 ? "Selecione um orçamento" : "Nenhum orçamento aprovado"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {orcamentos.map((orc) => (
-                          <SelectItem key={orc.id} value={orc.id}>
-                            {orc.title} - R$ {orc.total_value?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        {orcamentos.length === 0 ? (
+                          <SelectItem value="none" disabled>
+                            Nenhum orçamento aprovado disponível
                           </SelectItem>
-                        ))}
+                        ) : (
+                          orcamentos.map((orc) => (
+                            <SelectItem key={orc.id} value={orc.id}>
+                              {orc.title} - R$ {orc.total_value?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
