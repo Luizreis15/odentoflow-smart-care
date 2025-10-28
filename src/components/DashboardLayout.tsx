@@ -98,7 +98,7 @@ const navigation = [
   },
   {
     name: "Ajustes",
-    href: "/configuracoes",
+    href: "/dashboard/configuracoes",
     icon: Settings,
     description: "Configurações da clínica",
   },
