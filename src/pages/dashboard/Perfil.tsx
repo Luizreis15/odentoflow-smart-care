@@ -64,17 +64,17 @@ const Perfil = () => {
 
       <Card className="p-6">
         <Tabs defaultValue="dados" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 gap-2 h-auto">
-            <TabsTrigger value="dados" className="text-xs">Dados da Conta</TabsTrigger>
-            <TabsTrigger value="email" className="text-xs">E-mail & Notificações</TabsTrigger>
-            <TabsTrigger value="seguranca" className="text-xs">Segurança</TabsTrigger>
-            <TabsTrigger value="plano" className="text-xs">Plano & Cobrança</TabsTrigger>
-            <TabsTrigger value="contratos" className="text-xs">Contratos</TabsTrigger>
-            <TabsTrigger value="preferencias" className="text-xs">Preferências</TabsTrigger>
-            <TabsTrigger value="privacidade" className="text-xs">Privacidade</TabsTrigger>
-            <TabsTrigger value="integracoes" className="text-xs">Integrações</TabsTrigger>
-            <TabsTrigger value="logs" className="text-xs">Logs</TabsTrigger>
-            <TabsTrigger value="encerramento" className="text-xs">Encerramento</TabsTrigger>
+          <TabsList className="flex flex-wrap w-full h-auto gap-2 bg-muted/50 p-2">
+            <TabsTrigger value="dados" className="text-xs whitespace-nowrap">Dados da Conta</TabsTrigger>
+            <TabsTrigger value="email" className="text-xs whitespace-nowrap">E-mail & Notificações</TabsTrigger>
+            <TabsTrigger value="seguranca" className="text-xs whitespace-nowrap">Segurança</TabsTrigger>
+            <TabsTrigger value="plano" className="text-xs whitespace-nowrap">Plano & Cobrança</TabsTrigger>
+            <TabsTrigger value="contratos" className="text-xs whitespace-nowrap">Contratos</TabsTrigger>
+            <TabsTrigger value="preferencias" className="text-xs whitespace-nowrap">Preferências</TabsTrigger>
+            <TabsTrigger value="privacidade" className="text-xs whitespace-nowrap">Privacidade</TabsTrigger>
+            <TabsTrigger value="integracoes" className="text-xs whitespace-nowrap">Integrações</TabsTrigger>
+            <TabsTrigger value="logs" className="text-xs whitespace-nowrap">Logs</TabsTrigger>
+            <TabsTrigger value="encerramento" className="text-xs whitespace-nowrap">Encerramento</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dados" className="mt-6">
