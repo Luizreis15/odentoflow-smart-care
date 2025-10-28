@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Upload, FileSpreadsheet, AlertCircle } from "lucide-react";
+import * as XLSX from "xlsx";
 
 interface ImportProcedimentosModalProps {
   open: boolean;
@@ -34,30 +35,63 @@ export const ImportProcedimentosModal = ({
     }
   };
 
-  const parseCSV = (text: string): any[] => {
-    const lines = text.split("\n").filter(l => l.trim());
-    const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
-    
-    const data = lines.slice(1).map(line => {
-      const values = line.split(",").map(v => v.trim());
-      const obj: any = {};
-      
-      headers.forEach((header, idx) => {
-        if (header.includes("codigo") || header.includes("código")) {
-          obj.codigo_sistema = values[idx];
-        } else if (header.includes("especialidade")) {
-          obj.especialidade = values[idx];
-        } else if (header.includes("descri") || header.includes("descrição")) {
-          obj.descricao = values[idx];
-        } else if (header.includes("valor") || header.includes("preço") || header.includes("preco")) {
-          obj.valor = parseFloat(values[idx].replace(/[^\d.,]/g, "").replace(",", "."));
-        }
-      });
-      
-      return obj;
-    });
+  const parseFile = async (file: File): Promise<any[]> => {
+    const ext = file.name.split(".").pop()?.toLowerCase();
 
-    return data.filter(d => d.codigo_sistema && d.especialidade && d.descricao && d.valor);
+    if (ext === "xlsx" || ext === "xls") {
+      // Parse XLSX
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: "array" });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+      return jsonData.map((row: any) => {
+        // Normalizar nomes das colunas
+        const normalizedRow: any = {};
+        
+        Object.keys(row).forEach(key => {
+          const lowerKey = key.toLowerCase().trim();
+          if (lowerKey.includes("codigo") || lowerKey.includes("código")) {
+            normalizedRow.codigo_sistema = String(row[key]).trim();
+          } else if (lowerKey.includes("especialidade")) {
+            normalizedRow.especialidade = String(row[key]).trim();
+          } else if (lowerKey.includes("descri") || lowerKey.includes("descrição")) {
+            normalizedRow.descricao = String(row[key]).trim();
+          } else if (lowerKey.includes("valor") || lowerKey.includes("preço") || lowerKey.includes("preco")) {
+            const valorStr = String(row[key]).replace(/[^\d.,]/g, "").replace(",", ".");
+            normalizedRow.valor = parseFloat(valorStr);
+          }
+        });
+
+        return normalizedRow;
+      }).filter(d => d.codigo_sistema && d.especialidade && d.descricao && !isNaN(d.valor));
+    } else {
+      // Parse CSV
+      const text = await file.text();
+      const lines = text.split("\n").filter(l => l.trim());
+      const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+      
+      const data = lines.slice(1).map(line => {
+        const values = line.split(",").map(v => v.trim());
+        const obj: any = {};
+        
+        headers.forEach((header, idx) => {
+          if (header.includes("codigo") || header.includes("código")) {
+            obj.codigo_sistema = values[idx];
+          } else if (header.includes("especialidade")) {
+            obj.especialidade = values[idx];
+          } else if (header.includes("descri") || header.includes("descrição")) {
+            obj.descricao = values[idx];
+          } else if (header.includes("valor") || header.includes("preço") || header.includes("preco")) {
+            obj.valor = parseFloat(values[idx].replace(/[^\d.,]/g, "").replace(",", "."));
+          }
+        });
+        
+        return obj;
+      });
+
+      return data.filter(d => d.codigo_sistema && d.especialidade && d.descricao && d.valor);
+    }
   };
 
   const handleImport = async () => {
@@ -69,8 +103,7 @@ export const ImportProcedimentosModal = ({
     setLoading(true);
 
     try {
-      const text = await file.text();
-      const procedimentos = parseCSV(text);
+      const procedimentos = await parseFile(file);
 
       if (procedimentos.length === 0) {
         toast.error("Nenhum procedimento válido encontrado no arquivo");
