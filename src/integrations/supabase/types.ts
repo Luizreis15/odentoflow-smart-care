@@ -482,6 +482,132 @@ export type Database = {
           },
         ]
       }
+      cadeiras: {
+        Row: {
+          ativo: boolean | null
+          clinica_id: string
+          created_at: string | null
+          id: string
+          localizacao: string | null
+          nome: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          clinica_id: string
+          created_at?: string | null
+          id?: string
+          localizacao?: string | null
+          nome: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          clinica_id?: string
+          created_at?: string | null
+          id?: string
+          localizacao?: string | null
+          nome?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cadeiras_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caixas: {
+        Row: {
+          ativo: boolean | null
+          clinica_id: string
+          created_at: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          saldo_inicial: number | null
+          tipo: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          clinica_id: string
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          saldo_inicial?: number | null
+          tipo?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          clinica_id?: string
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          saldo_inicial?: number | null
+          tipo?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caixas_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      categorias_procedimentos: {
+        Row: {
+          ativo: boolean | null
+          clinica_id: string
+          cor: string | null
+          created_at: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          ordem: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          clinica_id: string
+          cor?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          ordem?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          clinica_id?: string
+          cor?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          ordem?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categorias_procedimentos_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinicas: {
         Row: {
           address: Json | null
@@ -782,6 +908,94 @@ export type Database = {
             columns: ["profissional_id"]
             isOneToOne: false
             referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      configuracoes_clinica: {
+        Row: {
+          clinica_id: string
+          created_at: string | null
+          email_contato: string | null
+          horario_funcionamento: Json | null
+          id: string
+          imprimir_papel_timbrado: boolean | null
+          logotipo_url: string | null
+          updated_at: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          clinica_id: string
+          created_at?: string | null
+          email_contato?: string | null
+          horario_funcionamento?: Json | null
+          id?: string
+          imprimir_papel_timbrado?: boolean | null
+          logotipo_url?: string | null
+          updated_at?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          clinica_id?: string
+          created_at?: string | null
+          email_contato?: string | null
+          horario_funcionamento?: Json | null
+          id?: string
+          imprimir_papel_timbrado?: boolean | null
+          logotipo_url?: string | null
+          updated_at?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "configuracoes_clinica_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: true
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      configuracoes_nf: {
+        Row: {
+          clinica_id: string
+          created_at: string | null
+          csc: string | null
+          id: string
+          inscricao_estadual: string | null
+          inscricao_municipal: string | null
+          regime_tributario: string | null
+          serie_nf: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          clinica_id: string
+          created_at?: string | null
+          csc?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
+          regime_tributario?: string | null
+          serie_nf?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          clinica_id?: string
+          created_at?: string | null
+          csc?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
+          regime_tributario?: string | null
+          serie_nf?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "configuracoes_nf_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: true
+            referencedRelation: "clinicas"
             referencedColumns: ["id"]
           },
         ]
@@ -2665,6 +2879,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "suppliers_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      templates_contratos: {
+        Row: {
+          ativo: boolean | null
+          clinica_id: string
+          conteudo: string
+          created_at: string | null
+          id: string
+          nome: string
+          tipo: string
+          updated_at: string | null
+          variaveis_disponiveis: string[] | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          clinica_id: string
+          conteudo: string
+          created_at?: string | null
+          id?: string
+          nome: string
+          tipo: string
+          updated_at?: string | null
+          variaveis_disponiveis?: string[] | null
+        }
+        Update: {
+          ativo?: boolean | null
+          clinica_id?: string
+          conteudo?: string
+          created_at?: string | null
+          id?: string
+          nome?: string
+          tipo?: string
+          updated_at?: string | null
+          variaveis_disponiveis?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "templates_contratos_clinica_id_fkey"
             columns: ["clinica_id"]
             isOneToOne: false
             referencedRelation: "clinicas"

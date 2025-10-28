@@ -96,10 +96,10 @@ const navigation = [
     description: "Inteligência artificial",
   },
   {
-    name: "Configurações",
+    name: "Ajustes",
     href: "/configuracoes",
     icon: Settings,
-    description: "Profissionais e usuários",
+    description: "Configurações da clínica",
   },
 ];
 

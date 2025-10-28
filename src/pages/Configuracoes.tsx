@@ -9,6 +9,12 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { ProfissionaisTab } from "@/components/configuracoes/ProfissionaisTab";
 import { UsuariosTab } from "@/components/configuracoes/UsuariosTab";
 import { ProcedimentosTab } from "@/components/configuracoes/ProcedimentosTab";
+import { ClinicaTab } from "@/components/configuracoes/ClinicaTab";
+import { NotaFiscalTab } from "@/components/configuracoes/NotaFiscalTab";
+import { CategoriasTab } from "@/components/configuracoes/CategoriasTab";
+import { ContratosTab } from "@/components/configuracoes/ContratosTab";
+import { CaixasTab } from "@/components/configuracoes/CaixasTab";
+import { CadeirasTab } from "@/components/configuracoes/CadeirasTab";
 
 const Configuracoes = () => {
   const navigate = useNavigate();
@@ -79,9 +85,9 @@ const Configuracoes = () => {
     <DashboardLayout user={profile}>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Configurações</h1>
+          <h1 className="text-3xl font-bold">Ajustes</h1>
           <p className="text-muted-foreground mt-2">
-            Gerencie profissionais, usuários e permissões da clínica
+            Configure todos os aspectos da sua clínica
           </p>
         </div>
 
@@ -94,37 +100,55 @@ const Configuracoes = () => {
           </Alert>
         )}
 
-        <Tabs defaultValue="profissionais" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="profissionais">Profissionais</TabsTrigger>
-            <TabsTrigger value="usuarios">Usuários & Permissões</TabsTrigger>
-            <TabsTrigger value="procedimentos">Procedimentos</TabsTrigger>
-            <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
-            <TabsTrigger value="integracoes">Integrações</TabsTrigger>
+        <Tabs defaultValue="clinica" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-9 h-auto">
+            <TabsTrigger value="clinica">Clínica</TabsTrigger>
+            <TabsTrigger value="equipe">Equipe</TabsTrigger>
+            <TabsTrigger value="nota-fiscal">Nota Fiscal</TabsTrigger>
+            <TabsTrigger value="planos">Planos</TabsTrigger>
+            <TabsTrigger value="anamnese">Anamnese</TabsTrigger>
+            <TabsTrigger value="contratos">Contratos</TabsTrigger>
+            <TabsTrigger value="categorias">Categorias</TabsTrigger>
+            <TabsTrigger value="caixas">Caixas</TabsTrigger>
+            <TabsTrigger value="cadeiras">Cadeiras</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="profissionais">
+          <TabsContent value="clinica">
+            <ClinicaTab clinicaId={profile.clinic_id} />
+          </TabsContent>
+
+          <TabsContent value="equipe">
             <ProfissionaisTab clinicaId={profile.clinic_id} />
           </TabsContent>
 
-          <TabsContent value="usuarios">
-            <UsuariosTab clinicaId={profile.clinic_id} />
+          <TabsContent value="nota-fiscal">
+            <NotaFiscalTab clinicaId={profile.clinic_id} />
           </TabsContent>
 
-          <TabsContent value="procedimentos">
+          <TabsContent value="planos">
             <ProcedimentosTab clinicaId={profile.clinic_id} />
           </TabsContent>
 
-          <TabsContent value="faturamento">
+          <TabsContent value="anamnese">
             <div className="text-center py-12 text-muted-foreground">
-              Em desenvolvimento
+              Modelos de anamnese em desenvolvimento
             </div>
           </TabsContent>
 
-          <TabsContent value="integracoes">
-            <div className="text-center py-12 text-muted-foreground">
-              Em desenvolvimento
-            </div>
+          <TabsContent value="contratos">
+            <ContratosTab clinicaId={profile.clinic_id} />
+          </TabsContent>
+
+          <TabsContent value="categorias">
+            <CategoriasTab clinicaId={profile.clinic_id} />
+          </TabsContent>
+
+          <TabsContent value="caixas">
+            <CaixasTab clinicaId={profile.clinic_id} />
+          </TabsContent>
+
+          <TabsContent value="cadeiras">
+            <CadeirasTab clinicaId={profile.clinic_id} />
           </TabsContent>
         </Tabs>
       </div>
