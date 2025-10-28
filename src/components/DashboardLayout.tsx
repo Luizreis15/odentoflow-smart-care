@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   Settings,
   FlaskConical,
+  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Navbar from "./Navbar";
@@ -61,6 +62,22 @@ const navigation = [
     href: "/dashboard/proteses",
     icon: FlaskConical,
     description: "Gestão do fluxo protético",
+  },
+  {
+    name: "Estoque",
+    href: "/dashboard/estoque",
+    icon: Package,
+    description: "Controle de produtos",
+    subItems: [
+      {
+        name: "Dashboard",
+        href: "/dashboard/estoque",
+      },
+      {
+        name: "Produtos",
+        href: "/dashboard/produtos",
+      },
+    ],
   },
   {
     name: "Portal do Paciente",

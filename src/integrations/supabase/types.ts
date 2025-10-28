@@ -316,6 +316,38 @@ export type Database = {
           },
         ]
       }
+      batches: {
+        Row: {
+          codigo: string
+          created_at: string
+          data_validade: string | null
+          id: string
+          product_id: string
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          data_validade?: string | null
+          id?: string
+          product_id: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          data_validade?: string | null
+          id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batches_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_items: {
         Row: {
           budget_id: string
@@ -1426,6 +1458,156 @@ export type Database = {
           },
         ]
       }
+      product_suppliers: {
+        Row: {
+          created_at: string
+          id: string
+          lead_time_dias: number | null
+          preco_melhor: number | null
+          preco_ultimo: number | null
+          product_id: string
+          supplier_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lead_time_dias?: number | null
+          preco_melhor?: number | null
+          preco_ultimo?: number | null
+          product_id: string
+          supplier_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lead_time_dias?: number | null
+          preco_melhor?: number | null
+          preco_ultimo?: number | null
+          product_id?: string
+          supplier_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_suppliers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_suppliers_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          ativo: boolean
+          categoria: string | null
+          cfop_padrao: string | null
+          clinica_id: string
+          codigo_interno: string
+          controle_lote: boolean
+          controle_validade: boolean
+          created_at: string
+          ean: string | null
+          estoque_maximo: number | null
+          estoque_minimo: number | null
+          fator_conversao: number | null
+          foto_url: string | null
+          id: string
+          lead_time_dias: number | null
+          local_padrao_id: string | null
+          marca: string | null
+          margem_alvo: number | null
+          metodo_custeio: Database["public"]["Enums"]["metodo_custeio"]
+          ncm: string | null
+          nome: string
+          preco_venda: number | null
+          sku: string | null
+          subcategoria: string | null
+          unidade: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string | null
+          cfop_padrao?: string | null
+          clinica_id: string
+          codigo_interno: string
+          controle_lote?: boolean
+          controle_validade?: boolean
+          created_at?: string
+          ean?: string | null
+          estoque_maximo?: number | null
+          estoque_minimo?: number | null
+          fator_conversao?: number | null
+          foto_url?: string | null
+          id?: string
+          lead_time_dias?: number | null
+          local_padrao_id?: string | null
+          marca?: string | null
+          margem_alvo?: number | null
+          metodo_custeio?: Database["public"]["Enums"]["metodo_custeio"]
+          ncm?: string | null
+          nome: string
+          preco_venda?: number | null
+          sku?: string | null
+          subcategoria?: string | null
+          unidade?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string | null
+          cfop_padrao?: string | null
+          clinica_id?: string
+          codigo_interno?: string
+          controle_lote?: boolean
+          controle_validade?: boolean
+          created_at?: string
+          ean?: string | null
+          estoque_maximo?: number | null
+          estoque_minimo?: number | null
+          fator_conversao?: number | null
+          foto_url?: string | null
+          id?: string
+          lead_time_dias?: number | null
+          local_padrao_id?: string | null
+          marca?: string | null
+          margem_alvo?: number | null
+          metodo_custeio?: Database["public"]["Enums"]["metodo_custeio"]
+          ncm?: string | null
+          nome?: string
+          preco_venda?: number | null
+          sku?: string | null
+          subcategoria?: string | null
+          unidade?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_local_padrao_id_fkey"
+            columns: ["local_padrao_id"]
+            isOneToOne: false
+            referencedRelation: "stock_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           clinic_id: string | null
@@ -1876,6 +2058,161 @@ export type Database = {
           },
         ]
       }
+      purchase_invoices: {
+        Row: {
+          chave_acesso: string | null
+          clinica_id: string
+          created_at: string
+          created_by: string
+          data_emissao: string
+          id: string
+          numero: string
+          observacoes: string | null
+          serie: string | null
+          status: Database["public"]["Enums"]["status_nfe"]
+          supplier_id: string | null
+          updated_at: string
+          valor_desconto: number | null
+          valor_frete: number | null
+          valor_seguro: number | null
+          valor_total: number
+          xml_file_path: string | null
+        }
+        Insert: {
+          chave_acesso?: string | null
+          clinica_id: string
+          created_at?: string
+          created_by: string
+          data_emissao: string
+          id?: string
+          numero: string
+          observacoes?: string | null
+          serie?: string | null
+          status?: Database["public"]["Enums"]["status_nfe"]
+          supplier_id?: string | null
+          updated_at?: string
+          valor_desconto?: number | null
+          valor_frete?: number | null
+          valor_seguro?: number | null
+          valor_total: number
+          xml_file_path?: string | null
+        }
+        Update: {
+          chave_acesso?: string | null
+          clinica_id?: string
+          created_at?: string
+          created_by?: string
+          data_emissao?: string
+          id?: string
+          numero?: string
+          observacoes?: string | null
+          serie?: string | null
+          status?: Database["public"]["Enums"]["status_nfe"]
+          supplier_id?: string | null
+          updated_at?: string
+          valor_desconto?: number | null
+          valor_frete?: number | null
+          valor_seguro?: number | null
+          valor_total?: number
+          xml_file_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_invoices_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_invoices_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_items: {
+        Row: {
+          batch_id: string | null
+          created_at: string
+          custo_total: number
+          custo_unitario: number
+          data_validade: string | null
+          desconto_rateado: number | null
+          descricao_nfe: string
+          frete_rateado: number | null
+          id: string
+          invoice_id: string
+          location_id: string | null
+          product_id: string | null
+          quantidade: number
+          seguro_rateado: number | null
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string
+          custo_total: number
+          custo_unitario: number
+          data_validade?: string | null
+          desconto_rateado?: number | null
+          descricao_nfe: string
+          frete_rateado?: number | null
+          id?: string
+          invoice_id: string
+          location_id?: string | null
+          product_id?: string | null
+          quantidade: number
+          seguro_rateado?: number | null
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string
+          custo_total?: number
+          custo_unitario?: number
+          data_validade?: string | null
+          desconto_rateado?: number | null
+          descricao_nfe?: string
+          frete_rateado?: number | null
+          id?: string
+          invoice_id?: string
+          location_id?: string | null
+          product_id?: string | null
+          quantidade?: number
+          seguro_rateado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_items_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_items_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "stock_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       repasse_regras: {
         Row: {
           ativo: boolean | null
@@ -2003,6 +2340,337 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      stock_kit_items: {
+        Row: {
+          created_at: string
+          id: string
+          kit_id: string
+          product_id: string
+          quantidade: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kit_id: string
+          product_id: string
+          quantidade: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kit_id?: string
+          product_id?: string
+          quantidade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_kit_items_kit_id_fkey"
+            columns: ["kit_id"]
+            isOneToOne: false
+            referencedRelation: "stock_kits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_kit_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_kits: {
+        Row: {
+          ativo: boolean
+          clinica_id: string
+          codigo_procedimento: string
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          clinica_id: string
+          codigo_procedimento: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          clinica_id?: string
+          codigo_procedimento?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_kits_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_locations: {
+        Row: {
+          ativo: boolean
+          clinica_id: string
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          clinica_id: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          clinica_id?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_locations_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_moves: {
+        Row: {
+          batch_id: string | null
+          clinica_id: string
+          created_at: string
+          custo_total: number
+          custo_unitario: number
+          doc_id: string | null
+          doc_tipo: string | null
+          id: string
+          location_from_id: string | null
+          location_to_id: string | null
+          observacoes: string | null
+          product_id: string
+          quantidade: number
+          tipo: Database["public"]["Enums"]["tipo_movimentacao_estoque"]
+          usuario_id: string
+        }
+        Insert: {
+          batch_id?: string | null
+          clinica_id: string
+          created_at?: string
+          custo_total: number
+          custo_unitario: number
+          doc_id?: string | null
+          doc_tipo?: string | null
+          id?: string
+          location_from_id?: string | null
+          location_to_id?: string | null
+          observacoes?: string | null
+          product_id: string
+          quantidade: number
+          tipo: Database["public"]["Enums"]["tipo_movimentacao_estoque"]
+          usuario_id: string
+        }
+        Update: {
+          batch_id?: string | null
+          clinica_id?: string
+          created_at?: string
+          custo_total?: number
+          custo_unitario?: number
+          doc_id?: string | null
+          doc_tipo?: string | null
+          id?: string
+          location_from_id?: string | null
+          location_to_id?: string | null
+          observacoes?: string | null
+          product_id?: string
+          quantidade?: number
+          tipo?: Database["public"]["Enums"]["tipo_movimentacao_estoque"]
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_moves_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_moves_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_moves_location_from_id_fkey"
+            columns: ["location_from_id"]
+            isOneToOne: false
+            referencedRelation: "stock_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_moves_location_to_id_fkey"
+            columns: ["location_to_id"]
+            isOneToOne: false
+            referencedRelation: "stock_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_moves_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stocks: {
+        Row: {
+          batch_id: string | null
+          created_at: string
+          custo_medio: number
+          fifo_layers: Json | null
+          id: string
+          location_id: string
+          product_id: string
+          quantidade: number
+          updated_at: string
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string
+          custo_medio?: number
+          fifo_layers?: Json | null
+          id?: string
+          location_id: string
+          product_id: string
+          quantidade?: number
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string
+          custo_medio?: number
+          fifo_layers?: Json | null
+          id?: string
+          location_id?: string
+          product_id?: string
+          quantidade?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stocks_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stocks_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "stock_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stocks_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          ativo: boolean
+          clinica_id: string
+          cnpj: string | null
+          condicoes_pagamento: string | null
+          contato_email: string | null
+          contato_nome: string | null
+          contato_telefone: string | null
+          contato_whatsapp: string | null
+          created_at: string
+          endereco: Json | null
+          id: string
+          ie: string | null
+          lead_time_medio_dias: number | null
+          nome_fantasia: string | null
+          razao_social: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          clinica_id: string
+          cnpj?: string | null
+          condicoes_pagamento?: string | null
+          contato_email?: string | null
+          contato_nome?: string | null
+          contato_telefone?: string | null
+          contato_whatsapp?: string | null
+          created_at?: string
+          endereco?: Json | null
+          id?: string
+          ie?: string | null
+          lead_time_medio_dias?: number | null
+          nome_fantasia?: string | null
+          razao_social: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          clinica_id?: string
+          cnpj?: string | null
+          condicoes_pagamento?: string | null
+          contato_email?: string | null
+          contato_nome?: string | null
+          contato_telefone?: string | null
+          contato_whatsapp?: string | null
+          created_at?: string
+          endereco?: Json | null
+          id?: string
+          ie?: string | null
+          lead_time_medio_dias?: number | null
+          nome_fantasia?: string | null
+          razao_social?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       treatment_evolutions: {
         Row: {
@@ -2211,6 +2879,7 @@ export type Database = {
     }
     Enums: {
       base_calculo_repasse: "valor_bruto" | "valor_liquido" | "valor_recebido"
+      metodo_custeio: "media_ponderada" | "fifo"
       modelo_repasse:
         | "percentual_unico"
         | "por_procedimento"
@@ -2226,6 +2895,7 @@ export type Database = {
         | "canceled"
         | "incomplete"
       status_comissao: "provisionado" | "aprovado" | "pago" | "cancelado"
+      status_nfe: "pendente" | "conferida" | "lancada" | "cancelada"
       status_protese:
         | "moldagem"
         | "enviado_lab"
@@ -2233,6 +2903,12 @@ export type Database = {
         | "pronto_instalacao"
         | "instalado"
       tipo_laboratorio: "interno" | "externo"
+      tipo_movimentacao_estoque:
+        | "entrada"
+        | "saida"
+        | "transferencia"
+        | "ajuste"
+        | "devolucao"
       tipo_remuneracao: "fixo_mensal" | "repasse_producao" | "hibrido"
     }
     CompositeTypes: {
@@ -2362,6 +3038,7 @@ export const Constants = {
   public: {
     Enums: {
       base_calculo_repasse: ["valor_bruto", "valor_liquido", "valor_recebido"],
+      metodo_custeio: ["media_ponderada", "fifo"],
       modelo_repasse: [
         "percentual_unico",
         "por_procedimento",
@@ -2379,6 +3056,7 @@ export const Constants = {
         "incomplete",
       ],
       status_comissao: ["provisionado", "aprovado", "pago", "cancelado"],
+      status_nfe: ["pendente", "conferida", "lancada", "cancelada"],
       status_protese: [
         "moldagem",
         "enviado_lab",
@@ -2387,6 +3065,13 @@ export const Constants = {
         "instalado",
       ],
       tipo_laboratorio: ["interno", "externo"],
+      tipo_movimentacao_estoque: [
+        "entrada",
+        "saida",
+        "transferencia",
+        "ajuste",
+        "devolucao",
+      ],
       tipo_remuneracao: ["fixo_mensal", "repasse_producao", "hibrido"],
     },
   },
