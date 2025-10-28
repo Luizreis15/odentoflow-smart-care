@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -25,27 +26,33 @@ export function ClinicaTab({ clinicaId }: ClinicaTabProps) {
   const loadConfig = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Carregar dados da clínica
+      const { data: clinicaData, error: clinicaError } = await supabase
+        .from("clinicas")
+        .select("*")
+        .eq("id", clinicaId)
+        .single();
+
+      if (clinicaError) throw clinicaError;
+
+      // Carregar configurações adicionais
+      const { data: configData, error: configError } = await supabase
         .from("configuracoes_clinica")
         .select("*")
         .eq("clinica_id", clinicaId)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
-      setConfig(data || {
+      if (configError && configError.code !== 'PGRST116') throw configError;
+
+      setConfig({
+        ...clinicaData,
+        ...configData,
         clinica_id: clinicaId,
-        email_contato: "",
-        whatsapp: "",
-        imprimir_papel_timbrado: false,
-        horario_funcionamento: {
-          seg: { inicio: "08:00", fim: "18:00" },
-          ter: { inicio: "08:00", fim: "18:00" },
-          qua: { inicio: "08:00", fim: "18:00" },
-          qui: { inicio: "08:00", fim: "18:00" },
-          sex: { inicio: "08:00", fim: "18:00" },
-          sab: { inicio: "08:00", fim: "12:00" },
-          dom: { fechado: true }
-        }
+        email_contato: configData?.email_contato || "",
+        whatsapp: configData?.whatsapp || "",
+        telefone: clinicaData?.telefone || "",
+        imprimir_papel_timbrado: configData?.imprimir_papel_timbrado || false,
       });
     } catch (error) {
       console.error("Erro ao carregar configurações:", error);
@@ -62,14 +69,32 @@ export function ClinicaTab({ clinicaId }: ClinicaTabProps) {
   const handleSave = async () => {
     try {
       setSaving(true);
-      const { error } = await supabase
+
+      // Atualizar dados da clínica
+      const { error: clinicaError } = await supabase
+        .from("clinicas")
+        .update({
+          nome: config.nome,
+          cnpj: config.cnpj,
+          telefone: config.telefone,
+          address: config.address
+        })
+        .eq("id", clinicaId);
+
+      if (clinicaError) throw clinicaError;
+
+      // Atualizar configurações adicionais
+      const { error: configError } = await supabase
         .from("configuracoes_clinica")
         .upsert({
-          ...config,
-          clinica_id: clinicaId
+          clinica_id: clinicaId,
+          email_contato: config.email_contato,
+          whatsapp: config.whatsapp,
+          imprimir_papel_timbrado: config.imprimir_papel_timbrado,
+          horario_funcionamento: config.horario_funcionamento
         });
 
-      if (error) throw error;
+      if (configError) throw configError;
 
       toast({
         title: "Sucesso",
@@ -99,27 +124,152 @@ export function ClinicaTab({ clinicaId }: ClinicaTabProps) {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Dados Gerais</CardTitle>
-          <CardDescription>
-            Informações básicas e contato da clínica
-          </CardDescription>
+          <CardTitle>Dados da Clínica</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="email">E-mail de Contato</Label>
+              <Label htmlFor="nome">Nome da clínica *</Label>
+              <Input
+                id="nome"
+                value={config?.nome || ""}
+                onChange={(e) => setConfig({ ...config, nome: e.target.value })}
+                placeholder="Nome da clínica"
+                maxLength={150}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cnpj">CNPJ da clínica</Label>
+              <Input
+                id="cnpj"
+                value={config?.cnpj || ""}
+                onChange={(e) => setConfig({ ...config, cnpj: e.target.value })}
+                placeholder="00.000.000/0000-00"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="nome_comunicacao">Nome utilizado nas comunicações *</Label>
+              <Input
+                id="nome_comunicacao"
+                value={config?.nome || ""}
+                onChange={(e) => setConfig({ ...config, nome: e.target.value })}
+                maxLength={30}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="responsavel">Responsável pela clínica *</Label>
+              <Input
+                id="responsavel"
+                value={config?.owner_user_id || ""}
+                disabled
+                maxLength={150}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Horário de Funcionamento</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Horário inicial da clínica *</Label>
+              <Select defaultValue="7">
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <SelectItem key={i} value={String(i)}>{i}:00</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Horário final da clínica *</Label>
+              <Select defaultValue="22">
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <SelectItem key={i} value={String(i)}>{i}:00</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Fuso horário *</Label>
+              <Select defaultValue="brasilia">
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="brasilia">Brasília/São Paulo</SelectItem>
+                  <SelectItem value="manaus">Manaus</SelectItem>
+                  <SelectItem value="rio-branco">Rio Branco</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Fiscal</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <Label>Emitir recibo em nome de</Label>
+            <Select defaultValue="clinica">
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="clinica">Clínica</SelectItem>
+                <SelectItem value="profissional">Profissional</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Informações da clínica</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email *</Label>
               <Input
                 id="email"
                 type="email"
                 value={config?.email_contato || ""}
                 onChange={(e) => setConfig({ ...config, email_contato: e.target.value })}
-                placeholder="contato@clinica.com"
+                placeholder="email@clinica.com"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="whatsapp">WhatsApp</Label>
+              <Label htmlFor="telefone">Telefone</Label>
               <Input
-                id="whatsapp"
+                id="telefone"
+                value={config?.telefone || ""}
+                onChange={(e) => setConfig({ ...config, telefone: e.target.value })}
+                placeholder="(00) 0000-0000"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="celular">Celular *</Label>
+              <Input
+                id="celular"
                 value={config?.whatsapp || ""}
                 onChange={(e) => setConfig({ ...config, whatsapp: e.target.value })}
                 placeholder="(00) 00000-0000"
@@ -136,7 +286,7 @@ export function ClinicaTab({ clinicaId }: ClinicaTabProps) {
               }
             />
             <Label htmlFor="papel-timbrado">
-              Imprimir em papel timbrado
+              Imprimir com papel timbrado
             </Label>
           </div>
         </CardContent>
@@ -144,14 +294,36 @@ export function ClinicaTab({ clinicaId }: ClinicaTabProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Horário de Funcionamento</CardTitle>
-          <CardDescription>
-            Configure os horários de atendimento da clínica
-          </CardDescription>
+          <CardTitle>Localização</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-sm text-muted-foreground">
-            Configuração de horários em desenvolvimento
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <Label>CEP</Label>
+              <Input placeholder="00000-000" />
+            </div>
+            <div className="space-y-2 col-span-2">
+              <Label>Rua</Label>
+              <Input />
+            </div>
+            <div className="space-y-2">
+              <Label>Número</Label>
+              <Input />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Complemento</Label>
+              <Input />
+            </div>
+            <div className="space-y-2">
+              <Label>Cidade</Label>
+              <Input />
+            </div>
+            <div className="space-y-2">
+              <Label>Estado</Label>
+              <Input />
+            </div>
           </div>
         </CardContent>
       </Card>
