@@ -540,6 +540,116 @@ export type Database = {
         }
         Relationships: []
       }
+      planos_procedimentos: {
+        Row: {
+          clinica_id: string
+          created_at: string | null
+          id: string
+          is_padrao: boolean | null
+          nome: string
+          percentual_ajuste: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          clinica_id: string
+          created_at?: string | null
+          id?: string
+          is_padrao?: boolean | null
+          nome: string
+          percentual_ajuste?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          clinica_id?: string
+          created_at?: string | null
+          id?: string
+          is_padrao?: boolean | null
+          nome?: string
+          percentual_ajuste?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planos_procedimentos_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planos_procedimentos_itens: {
+        Row: {
+          created_at: string | null
+          id: string
+          plano_id: string
+          procedimento_id: string
+          updated_at: string | null
+          valor_customizado: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          plano_id: string
+          procedimento_id: string
+          updated_at?: string | null
+          valor_customizado: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          plano_id?: string
+          procedimento_id?: string
+          updated_at?: string | null
+          valor_customizado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planos_procedimentos_itens_plano_id_fkey"
+            columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "planos_procedimentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planos_procedimentos_itens_procedimento_id_fkey"
+            columns: ["procedimento_id"]
+            isOneToOne: false
+            referencedRelation: "procedimentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      procedimentos: {
+        Row: {
+          codigo_sistema: string
+          created_at: string | null
+          descricao: string
+          especialidade: string
+          id: string
+          updated_at: string | null
+          valor: number
+        }
+        Insert: {
+          codigo_sistema: string
+          created_at?: string | null
+          descricao: string
+          especialidade: string
+          id?: string
+          updated_at?: string | null
+          valor: number
+        }
+        Update: {
+          codigo_sistema?: string
+          created_at?: string | null
+          descricao?: string
+          especialidade?: string
+          id?: string
+          updated_at?: string | null
+          valor?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           clinic_id: string | null

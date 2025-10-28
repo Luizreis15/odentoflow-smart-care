@@ -8,6 +8,7 @@ import { InfoIcon } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ProfissionaisTab } from "@/components/configuracoes/ProfissionaisTab";
 import { UsuariosTab } from "@/components/configuracoes/UsuariosTab";
+import { ProcedimentosTab } from "@/components/configuracoes/ProcedimentosTab";
 
 const Configuracoes = () => {
   const navigate = useNavigate();
@@ -94,9 +95,10 @@ const Configuracoes = () => {
         )}
 
         <Tabs defaultValue="profissionais" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="profissionais">Profissionais</TabsTrigger>
             <TabsTrigger value="usuarios">Usuários & Permissões</TabsTrigger>
+            <TabsTrigger value="procedimentos">Procedimentos</TabsTrigger>
             <TabsTrigger value="faturamento">Faturamento</TabsTrigger>
             <TabsTrigger value="integracoes">Integrações</TabsTrigger>
           </TabsList>
@@ -107,6 +109,10 @@ const Configuracoes = () => {
 
           <TabsContent value="usuarios">
             <UsuariosTab clinicaId={profile.clinic_id} />
+          </TabsContent>
+
+          <TabsContent value="procedimentos">
+            <ProcedimentosTab clinicaId={profile.clinic_id} />
           </TabsContent>
 
           <TabsContent value="faturamento">
