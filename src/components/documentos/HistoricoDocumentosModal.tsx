@@ -125,8 +125,10 @@ export const HistoricoDocumentosModal = ({
   const handlePrintDoc = (doc: Document) => {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      // Formatação especial para receituários
+      // Formatação especial para receituários e atestados
       const isReceituario = doc.title.toLowerCase().includes('receituário') || doc.title.toLowerCase().includes('receituario');
+      const isAtestado = doc.title.toLowerCase().includes('atestado');
+      const needsSpecialFormat = isReceituario || isAtestado;
       
       printWindow.document.write(`
         <!DOCTYPE html>
@@ -145,7 +147,7 @@ export const HistoricoDocumentosModal = ({
               }
               body { 
                 font-family: Arial, sans-serif; 
-                padding: ${isReceituario ? '20px' : '40px'}; 
+                padding: ${needsSpecialFormat ? '20px' : '40px'}; 
                 line-height: 1.6;
                 color: #000;
                 max-width: 800px;
@@ -154,21 +156,21 @@ export const HistoricoDocumentosModal = ({
               h1 { 
                 font-size: 24px; 
                 margin-bottom: 20px; 
-                text-align: ${isReceituario ? 'center' : 'left'};
-                border-bottom: ${isReceituario ? '2px solid #000' : 'none'};
-                padding-bottom: ${isReceituario ? '10px' : '0'};
+                text-align: ${needsSpecialFormat ? 'center' : 'left'};
+                border-bottom: ${needsSpecialFormat ? '2px solid #000' : 'none'};
+                padding-bottom: ${needsSpecialFormat ? '10px' : '0'};
               }
               .content { 
                 white-space: pre-wrap; 
                 line-height: 1.8;
-                font-size: ${isReceituario ? '12pt' : '11pt'};
+                font-size: ${needsSpecialFormat ? '12pt' : '11pt'};
               }
               .meta { 
                 color: #666; 
                 margin-bottom: 20px; 
                 font-size: 14px; 
               }
-              ${isReceituario ? `
+              ${needsSpecialFormat ? `
               .signature-area {
                 margin-top: 80px;
                 text-align: center;
@@ -191,7 +193,7 @@ export const HistoricoDocumentosModal = ({
             <div class="meta">Criado em ${format(new Date(doc.created_at), "dd/MM/yyyy 'às' HH:mm")}</div>
             ${doc.signed_at ? `<div class="meta" style="color: green;">Assinado em ${format(new Date(doc.signed_at), "dd/MM/yyyy 'às' HH:mm")}</div>` : ''}
             <div class="content">${doc.content.replace(/\n/g, '<br>')}</div>
-            ${isReceituario ? `
+            ${needsSpecialFormat ? `
             <div class="signature-area">
               <div class="signature-line"></div>
               <p>Assinatura do Profissional</p>

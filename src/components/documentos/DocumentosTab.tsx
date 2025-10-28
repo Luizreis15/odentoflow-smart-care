@@ -7,6 +7,8 @@ import { NovoContratoModal } from "./NovoContratoModal";
 import { HistoricoDocumentosModal } from "./HistoricoDocumentosModal";
 import { TipoReceituarioModal } from "./TipoReceituarioModal";
 import { NovoReceituarioModal } from "./NovoReceituarioModal";
+import { TipoAtestadoModal } from "./TipoAtestadoModal";
+import { NovoAtestadoModal } from "./NovoAtestadoModal";
 
 interface DocumentosTabProps {
   patientId: string;
@@ -45,8 +47,11 @@ export const DocumentosTab = ({ patientId }: DocumentosTabProps) => {
   const [historicoOpen, setHistoricoOpen] = useState(false);
   const [tipoReceituarioOpen, setTipoReceituarioOpen] = useState(false);
   const [novoReceituarioOpen, setNovoReceituarioOpen] = useState(false);
+  const [tipoAtestadoOpen, setTipoAtestadoOpen] = useState(false);
+  const [novoAtestadoOpen, setNovoAtestadoOpen] = useState(false);
   const [selectedDocType, setSelectedDocType] = useState<string | null>(null);
   const [tipoReceituario, setTipoReceituario] = useState<"impresso" | "digital" | null>(null);
+  const [tipoAtestado, setTipoAtestado] = useState<"impresso" | "digital" | null>(null);
 
   const handleNovoClick = (type: string) => {
     setSelectedDocType(type);
@@ -54,6 +59,8 @@ export const DocumentosTab = ({ patientId }: DocumentosTabProps) => {
       setNovoContratoOpen(true);
     } else if (type === "receituario") {
       setTipoReceituarioOpen(true);
+    } else if (type === "atestado") {
+      setTipoAtestadoOpen(true);
     } else {
       setNovoDocumentoOpen(true);
     }
@@ -62,6 +69,11 @@ export const DocumentosTab = ({ patientId }: DocumentosTabProps) => {
   const handleSelectTipoReceituario = (tipo: "impresso" | "digital") => {
     setTipoReceituario(tipo);
     setNovoReceituarioOpen(true);
+  };
+
+  const handleSelectTipoAtestado = (tipo: "impresso" | "digital") => {
+    setTipoAtestado(tipo);
+    setNovoAtestadoOpen(true);
   };
 
   const handleHistoricoClick = (type: string) => {
@@ -162,6 +174,24 @@ export const DocumentosTab = ({ patientId }: DocumentosTabProps) => {
         }}
         patientId={patientId}
         tipo={tipoReceituario}
+      />
+
+      <TipoAtestadoModal
+        open={tipoAtestadoOpen}
+        onOpenChange={setTipoAtestadoOpen}
+        onSelectTipo={handleSelectTipoAtestado}
+      />
+
+      <NovoAtestadoModal
+        open={novoAtestadoOpen}
+        onOpenChange={(open) => {
+          setNovoAtestadoOpen(open);
+          if (!open) {
+            setTipoAtestado(null);
+          }
+        }}
+        patientId={patientId}
+        tipo={tipoAtestado}
       />
 
       <HistoricoDocumentosModal
