@@ -58,10 +58,15 @@ export default function Produtos() {
           <h1 className="text-3xl font-bold">Produtos</h1>
           <p className="text-muted-foreground">Cadastro e controle de produtos</p>
         </div>
-        <Button onClick={() => setModalOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Produto
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => window.location.href = '/dashboard/movimentacoes'}>
+            Movimentações
+          </Button>
+          <Button onClick={() => setModalOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Produto
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-4">

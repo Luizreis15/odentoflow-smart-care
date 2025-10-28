@@ -77,6 +77,10 @@ const navigation = [
         name: "Produtos",
         href: "/dashboard/produtos",
       },
+      {
+        name: "Movimentações",
+        href: "/dashboard/movimentacoes",
+      },
     ],
   },
   {
