@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { NovaTransacaoModal } from "@/components/financeiro/NovaTransacaoModal";
+import { ComissoesTab } from "@/components/financeiro/ComissoesTab";
 
 interface Transaction {
   id: string;
@@ -323,9 +324,7 @@ const Financeiro = () => {
           </TabsContent>
 
           <TabsContent value="comissoes" className="m-0 p-6">
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Módulo de comissões em desenvolvimento</p>
-            </div>
+            {clinicId && <ComissoesTab clinicId={clinicId} />}
           </TabsContent>
 
           <TabsContent value="carteira" className="m-0 p-6">

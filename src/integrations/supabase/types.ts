@@ -510,6 +510,250 @@ export type Database = {
         }
         Relationships: []
       }
+      comissoes_adiantamentos: {
+        Row: {
+          abatimentos: Json | null
+          clinic_id: string
+          concedido_por: string
+          created_at: string | null
+          data_adiantamento: string
+          forma_pagamento: string | null
+          id: string
+          observacoes: string | null
+          profissional_id: string
+          quitado: boolean | null
+          saldo: number
+          updated_at: string | null
+          valor: number
+          valor_abatido: number | null
+        }
+        Insert: {
+          abatimentos?: Json | null
+          clinic_id: string
+          concedido_por: string
+          created_at?: string | null
+          data_adiantamento?: string
+          forma_pagamento?: string | null
+          id?: string
+          observacoes?: string | null
+          profissional_id: string
+          quitado?: boolean | null
+          saldo: number
+          updated_at?: string | null
+          valor: number
+          valor_abatido?: number | null
+        }
+        Update: {
+          abatimentos?: Json | null
+          clinic_id?: string
+          concedido_por?: string
+          created_at?: string | null
+          data_adiantamento?: string
+          forma_pagamento?: string | null
+          id?: string
+          observacoes?: string | null
+          profissional_id?: string
+          quitado?: boolean | null
+          saldo?: number
+          updated_at?: string | null
+          valor?: number
+          valor_abatido?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comissoes_adiantamentos_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comissoes_adiantamentos_concedido_por_fkey"
+            columns: ["concedido_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comissoes_adiantamentos_profissional_id_fkey"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comissoes_ajustes: {
+        Row: {
+          created_at: string | null
+          criado_por: string
+          id: string
+          justificativa: string
+          provisao_id: string
+          tipo_ajuste: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string | null
+          criado_por: string
+          id?: string
+          justificativa: string
+          provisao_id: string
+          tipo_ajuste: string
+          valor: number
+        }
+        Update: {
+          created_at?: string | null
+          criado_por?: string
+          id?: string
+          justificativa?: string
+          provisao_id?: string
+          tipo_ajuste?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comissoes_ajustes_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comissoes_ajustes_provisao_id_fkey"
+            columns: ["provisao_id"]
+            isOneToOne: false
+            referencedRelation: "comissoes_provisoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comissoes_provisoes: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          clinic_id: string
+          competencia: string
+          conta_pagar_id: string | null
+          created_at: string | null
+          fechado_em: string | null
+          fechado_por: string | null
+          financial_transaction_id: string | null
+          id: string
+          observacoes: string | null
+          profissional_id: string
+          status: Database["public"]["Enums"]["status_comissao"] | null
+          updated_at: string | null
+          valor_adiantamentos: number | null
+          valor_ajustes: number | null
+          valor_devido: number
+          valor_inss: number | null
+          valor_irrf: number | null
+          valor_iss: number | null
+          valor_liquido_pagar: number | null
+          valor_minimo_garantido: number | null
+          valor_producao_bruta: number | null
+          valor_producao_liquida: number | null
+          valor_producao_recebida: number | null
+          valor_provisionado: number
+          valor_teto_aplicado: number | null
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          clinic_id: string
+          competencia: string
+          conta_pagar_id?: string | null
+          created_at?: string | null
+          fechado_em?: string | null
+          fechado_por?: string | null
+          financial_transaction_id?: string | null
+          id?: string
+          observacoes?: string | null
+          profissional_id: string
+          status?: Database["public"]["Enums"]["status_comissao"] | null
+          updated_at?: string | null
+          valor_adiantamentos?: number | null
+          valor_ajustes?: number | null
+          valor_devido: number
+          valor_inss?: number | null
+          valor_irrf?: number | null
+          valor_iss?: number | null
+          valor_liquido_pagar?: number | null
+          valor_minimo_garantido?: number | null
+          valor_producao_bruta?: number | null
+          valor_producao_liquida?: number | null
+          valor_producao_recebida?: number | null
+          valor_provisionado: number
+          valor_teto_aplicado?: number | null
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          clinic_id?: string
+          competencia?: string
+          conta_pagar_id?: string | null
+          created_at?: string | null
+          fechado_em?: string | null
+          fechado_por?: string | null
+          financial_transaction_id?: string | null
+          id?: string
+          observacoes?: string | null
+          profissional_id?: string
+          status?: Database["public"]["Enums"]["status_comissao"] | null
+          updated_at?: string | null
+          valor_adiantamentos?: number | null
+          valor_ajustes?: number | null
+          valor_devido?: number
+          valor_inss?: number | null
+          valor_irrf?: number | null
+          valor_iss?: number | null
+          valor_liquido_pagar?: number | null
+          valor_minimo_garantido?: number | null
+          valor_producao_bruta?: number | null
+          valor_producao_liquida?: number | null
+          valor_producao_recebida?: number | null
+          valor_provisionado?: number
+          valor_teto_aplicado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comissoes_provisoes_aprovado_por_fkey"
+            columns: ["aprovado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comissoes_provisoes_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comissoes_provisoes_fechado_por_fkey"
+            columns: ["fechado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comissoes_provisoes_financial_transaction_id_fkey"
+            columns: ["financial_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "financial_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comissoes_provisoes_profissional_id_fkey"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_transactions: {
         Row: {
           category: string | null
@@ -1007,6 +1251,125 @@ export type Database = {
         }
         Relationships: []
       }
+      producao_eventos: {
+        Row: {
+          budget_item_id: string | null
+          clinic_id: string
+          coautores: Json | null
+          convenio: string | null
+          created_at: string | null
+          data_execucao: string
+          data_recebimento: string | null
+          forma_pagamento: string | null
+          id: string
+          orcamento_id: string | null
+          origem: string | null
+          paciente_id: string
+          procedimento_codigo: string | null
+          procedimento_nome: string
+          processado: boolean | null
+          profissional_id: string
+          regra_base_calculo:
+            | Database["public"]["Enums"]["base_calculo_repasse"]
+            | null
+          regra_percentual: number | null
+          status_recebimento: string | null
+          taxas_descontos: number | null
+          updated_at: string | null
+          valor_bruto: number
+          valor_liquido: number
+          valor_recebido: number | null
+          valor_repasse_calculado: number | null
+        }
+        Insert: {
+          budget_item_id?: string | null
+          clinic_id: string
+          coautores?: Json | null
+          convenio?: string | null
+          created_at?: string | null
+          data_execucao: string
+          data_recebimento?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          orcamento_id?: string | null
+          origem?: string | null
+          paciente_id: string
+          procedimento_codigo?: string | null
+          procedimento_nome: string
+          processado?: boolean | null
+          profissional_id: string
+          regra_base_calculo?:
+            | Database["public"]["Enums"]["base_calculo_repasse"]
+            | null
+          regra_percentual?: number | null
+          status_recebimento?: string | null
+          taxas_descontos?: number | null
+          updated_at?: string | null
+          valor_bruto: number
+          valor_liquido: number
+          valor_recebido?: number | null
+          valor_repasse_calculado?: number | null
+        }
+        Update: {
+          budget_item_id?: string | null
+          clinic_id?: string
+          coautores?: Json | null
+          convenio?: string | null
+          created_at?: string | null
+          data_execucao?: string
+          data_recebimento?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          orcamento_id?: string | null
+          origem?: string | null
+          paciente_id?: string
+          procedimento_codigo?: string | null
+          procedimento_nome?: string
+          processado?: boolean | null
+          profissional_id?: string
+          regra_base_calculo?:
+            | Database["public"]["Enums"]["base_calculo_repasse"]
+            | null
+          regra_percentual?: number | null
+          status_recebimento?: string | null
+          taxas_descontos?: number | null
+          updated_at?: string | null
+          valor_bruto?: number
+          valor_liquido?: number
+          valor_recebido?: number | null
+          valor_repasse_calculado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "producao_eventos_budget_item_id_fkey"
+            columns: ["budget_item_id"]
+            isOneToOne: false
+            referencedRelation: "budget_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "producao_eventos_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "producao_eventos_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "producao_eventos_profissional_id_fkey"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           clinic_id: string | null
@@ -1179,6 +1542,181 @@ export type Database = {
             columns: ["profissional_id"]
             isOneToOne: false
             referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profissional_remuneracao: {
+        Row: {
+          adiantamento_permitido: boolean | null
+          agencia: string | null
+          ativo: boolean | null
+          banco: string | null
+          base_calculo_padrao:
+            | Database["public"]["Enums"]["base_calculo_repasse"]
+            | null
+          chave_pix: string | null
+          conta: string | null
+          created_at: string | null
+          dia_pagamento_fixo: number | null
+          gerar_rpa: boolean | null
+          id: string
+          limite_adiantamento: number | null
+          minimo_garantido_mensal: number | null
+          modelo_repasse: Database["public"]["Enums"]["modelo_repasse"] | null
+          percentual_inss: number | null
+          percentual_irrf: number | null
+          percentual_iss: number | null
+          percentual_unico: number | null
+          profissional_id: string
+          rateio_centros_custo: Json | null
+          responsavel_tributario:
+            | Database["public"]["Enums"]["responsavel_tributario"]
+            | null
+          reter_inss: boolean | null
+          reter_irrf: boolean | null
+          reter_iss: boolean | null
+          teto_repasse_mensal: number | null
+          tipo_conta: string | null
+          tipo_remuneracao: Database["public"]["Enums"]["tipo_remuneracao"]
+          updated_at: string | null
+          valor_fixo_mensal: number | null
+          vigencia_fim: string | null
+          vigencia_inicio: string
+        }
+        Insert: {
+          adiantamento_permitido?: boolean | null
+          agencia?: string | null
+          ativo?: boolean | null
+          banco?: string | null
+          base_calculo_padrao?:
+            | Database["public"]["Enums"]["base_calculo_repasse"]
+            | null
+          chave_pix?: string | null
+          conta?: string | null
+          created_at?: string | null
+          dia_pagamento_fixo?: number | null
+          gerar_rpa?: boolean | null
+          id?: string
+          limite_adiantamento?: number | null
+          minimo_garantido_mensal?: number | null
+          modelo_repasse?: Database["public"]["Enums"]["modelo_repasse"] | null
+          percentual_inss?: number | null
+          percentual_irrf?: number | null
+          percentual_iss?: number | null
+          percentual_unico?: number | null
+          profissional_id: string
+          rateio_centros_custo?: Json | null
+          responsavel_tributario?:
+            | Database["public"]["Enums"]["responsavel_tributario"]
+            | null
+          reter_inss?: boolean | null
+          reter_irrf?: boolean | null
+          reter_iss?: boolean | null
+          teto_repasse_mensal?: number | null
+          tipo_conta?: string | null
+          tipo_remuneracao: Database["public"]["Enums"]["tipo_remuneracao"]
+          updated_at?: string | null
+          valor_fixo_mensal?: number | null
+          vigencia_fim?: string | null
+          vigencia_inicio?: string
+        }
+        Update: {
+          adiantamento_permitido?: boolean | null
+          agencia?: string | null
+          ativo?: boolean | null
+          banco?: string | null
+          base_calculo_padrao?:
+            | Database["public"]["Enums"]["base_calculo_repasse"]
+            | null
+          chave_pix?: string | null
+          conta?: string | null
+          created_at?: string | null
+          dia_pagamento_fixo?: number | null
+          gerar_rpa?: boolean | null
+          id?: string
+          limite_adiantamento?: number | null
+          minimo_garantido_mensal?: number | null
+          modelo_repasse?: Database["public"]["Enums"]["modelo_repasse"] | null
+          percentual_inss?: number | null
+          percentual_irrf?: number | null
+          percentual_iss?: number | null
+          percentual_unico?: number | null
+          profissional_id?: string
+          rateio_centros_custo?: Json | null
+          responsavel_tributario?:
+            | Database["public"]["Enums"]["responsavel_tributario"]
+            | null
+          reter_inss?: boolean | null
+          reter_irrf?: boolean | null
+          reter_iss?: boolean | null
+          teto_repasse_mensal?: number | null
+          tipo_conta?: string | null
+          tipo_remuneracao?: Database["public"]["Enums"]["tipo_remuneracao"]
+          updated_at?: string | null
+          valor_fixo_mensal?: number | null
+          vigencia_fim?: string | null
+          vigencia_inicio?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profissional_remuneracao_profissional_id_fkey"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repasse_regras: {
+        Row: {
+          ativo: boolean | null
+          base_calculo: Database["public"]["Enums"]["base_calculo_repasse"]
+          convenio: string | null
+          created_at: string | null
+          id: string
+          origem: string | null
+          percentual: number
+          prioridade: number | null
+          procedimento_codigo: string | null
+          procedimento_nome: string | null
+          remuneracao_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          base_calculo: Database["public"]["Enums"]["base_calculo_repasse"]
+          convenio?: string | null
+          created_at?: string | null
+          id?: string
+          origem?: string | null
+          percentual: number
+          prioridade?: number | null
+          procedimento_codigo?: string | null
+          procedimento_nome?: string | null
+          remuneracao_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          base_calculo?: Database["public"]["Enums"]["base_calculo_repasse"]
+          convenio?: string | null
+          created_at?: string | null
+          id?: string
+          origem?: string | null
+          percentual?: number
+          prioridade?: number | null
+          procedimento_codigo?: string | null
+          procedimento_nome?: string | null
+          remuneracao_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repasse_regras_remuneracao_id_fkey"
+            columns: ["remuneracao_id"]
+            isOneToOne: false
+            referencedRelation: "profissional_remuneracao"
             referencedColumns: ["id"]
           },
         ]
@@ -1464,14 +2002,23 @@ export type Database = {
       }
     }
     Enums: {
+      base_calculo_repasse: "valor_bruto" | "valor_liquido" | "valor_recebido"
+      modelo_repasse:
+        | "percentual_unico"
+        | "por_procedimento"
+        | "por_convenio"
+        | "por_origem"
       perfil_usuario: "admin" | "dentista" | "assistente" | "recepcao"
       plano_tipo: "starter" | "pro" | "enterprise"
+      responsavel_tributario: "profissional" | "clinica"
       status_assinatura:
         | "trialing"
         | "active"
         | "past_due"
         | "canceled"
         | "incomplete"
+      status_comissao: "provisionado" | "aprovado" | "pago" | "cancelado"
+      tipo_remuneracao: "fixo_mensal" | "repasse_producao" | "hibrido"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1599,8 +2146,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      base_calculo_repasse: ["valor_bruto", "valor_liquido", "valor_recebido"],
+      modelo_repasse: [
+        "percentual_unico",
+        "por_procedimento",
+        "por_convenio",
+        "por_origem",
+      ],
       perfil_usuario: ["admin", "dentista", "assistente", "recepcao"],
       plano_tipo: ["starter", "pro", "enterprise"],
+      responsavel_tributario: ["profissional", "clinica"],
       status_assinatura: [
         "trialing",
         "active",
@@ -1608,6 +2163,8 @@ export const Constants = {
         "canceled",
         "incomplete",
       ],
+      status_comissao: ["provisionado", "aprovado", "pago", "cancelado"],
+      tipo_remuneracao: ["fixo_mensal", "repasse_producao", "hibrido"],
     },
   },
 } as const

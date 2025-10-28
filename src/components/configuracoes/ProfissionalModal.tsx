@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { RemuneracaoTab } from "./RemuneracaoTab";
 
 interface ProfissionalModalProps {
   open: boolean;
@@ -115,93 +117,104 @@ export const ProfissionalModal = ({ open, onClose, profissional, clinicaId }: Pr
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {profissional ? "Editar Profissional" : "Novo Profissional"}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="nome">Nome *</Label>
-              <Input
-                id="nome"
-                value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-              />
+        <Tabs defaultValue="dados" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="dados">Dados Cadastrais</TabsTrigger>
+            <TabsTrigger value="remuneracao" disabled={!profissional}>Remuneração</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dados" className="space-y-4 mt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="nome">Nome *</Label>
+                <Input
+                  id="nome"
+                  value={formData.nome}
+                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cro">CRO</Label>
+                <Input
+                  id="cro"
+                  value={formData.cro}
+                  onChange={(e) => setFormData({ ...formData, cro: e.target.value })}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="cro">CRO</Label>
-              <Input
-                id="cro"
-                value={formData.cro}
-                onChange={(e) => setFormData({ ...formData, cro: e.target.value })}
-              />
-            </div>
-          </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="especialidade">Especialidade</Label>
+                <Input
+                  id="especialidade"
+                  value={formData.especialidade}
+                  onChange={(e) => setFormData({ ...formData, especialidade: e.target.value })}
+                />
+              </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="especialidade">Especialidade</Label>
-              <Input
-                id="especialidade"
-                value={formData.especialidade}
-                onChange={(e) => setFormData({ ...formData, especialidade: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="perfil">Perfil *</Label>
-              <Select
-                value={formData.perfil}
-                onValueChange={(value) => setFormData({ ...formData, perfil: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="responsavel">Responsável</SelectItem>
-                  <SelectItem value="dentista">Dentista</SelectItem>
-                  <SelectItem value="asb">ASB</SelectItem>
-                  <SelectItem value="recepcao">Recepção</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
+              <div className="space-y-2">
+                <Label htmlFor="perfil">Perfil *</Label>
+                <Select
+                  value={formData.perfil}
+                  onValueChange={(value) => setFormData({ ...formData, perfil: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="responsavel">Responsável</SelectItem>
+                    <SelectItem value="dentista">Dentista</SelectItem>
+                    <SelectItem value="asb">ASB</SelectItem>
+                    <SelectItem value="recepcao">Recepção</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="telefone">Telefone</Label>
-              <Input
-                id="telefone"
-                value={formData.telefone}
-                onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-              />
-            </div>
-          </div>
-        </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+              </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={saving}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? "Salvando..." : "Salvar"}
-          </Button>
-        </DialogFooter>
+              <div className="space-y-2">
+                <Label htmlFor="telefone">Telefone</Label>
+                <Input
+                  id="telefone"
+                  value={formData.telefone}
+                  onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="outline" onClick={onClose} disabled={saving}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="remuneracao">
+            {profissional && <RemuneracaoTab profissionalId={profissional.id} />}
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
