@@ -27,10 +27,19 @@ export const NovoContratoModal = ({ open, onOpenChange, patientId }: NovoContrat
   const [patientCpf, setPatientCpf] = useState("");
   const [patientAddress, setPatientAddress] = useState("");
   
+  // Tipo de contrato: "clinica" ou "profissional"
+  const [contractType, setContractType] = useState<"clinica" | "profissional">("clinica");
+  
+  // Dados da clínica
+  const [clinicName, setClinicName] = useState("");
+  const [clinicCnpj, setClinicCnpj] = useState("");
+  const [clinicAddress, setClinicAddress] = useState("");
+  
   // Dados do profissional
   const [selectedProfessional, setSelectedProfessional] = useState("");
   const [professionalCpf, setProfessionalCpf] = useState("");
   const [professionalName, setProfessionalName] = useState("");
+  const [professionalAddress, setProfessionalAddress] = useState("");
   
   // Dados do contrato
   const [contractValue, setContractValue] = useState("");
@@ -43,10 +52,50 @@ export const NovoContratoModal = ({ open, onOpenChange, patientId }: NovoContrat
   useEffect(() => {
     if (open) {
       loadPatientData();
+      loadClinicData();
       loadProfissionais();
       loadOrcamentos();
     }
   }, [open, patientId]);
+
+  const loadClinicData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("clinic_id")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile?.clinic_id) return;
+
+      const { data: clinic, error } = await supabase
+        .from("clinicas")
+        .select("nome, cnpj, address")
+        .eq("id", profile.clinic_id)
+        .single();
+
+      if (error) throw error;
+
+      if (clinic) {
+        setClinicName(clinic.nome || "");
+        setClinicCnpj(clinic.cnpj || "");
+        
+        // Formatar endereço se for JSON
+        if (clinic.address && typeof clinic.address === 'object') {
+          const addr = clinic.address as any;
+          const fullAddress = `${addr.street || ""}, ${addr.number || ""}, ${addr.neighborhood || ""}, ${addr.city || ""} - ${addr.state || ""}, CEP: ${addr.zipCode || ""}`;
+          setClinicAddress(fullAddress.trim());
+        } else if (typeof clinic.address === 'string') {
+          setClinicAddress(clinic.address);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao carregar dados da clínica:", error);
+    }
+  };
 
   const loadPatientData = async () => {
     try {
@@ -127,6 +176,11 @@ export const NovoContratoModal = ({ open, onOpenChange, patientId }: NovoContrat
     if (prof) {
       setProfessionalCpf(prof.cpf || prof.cro || "");
       setProfessionalName(prof.nome || "");
+      // Se for contrato em nome do profissional, podemos usar o endereço da clínica como padrão
+      // mas permitir edição
+      if (contractType === "profissional") {
+        setProfessionalAddress(clinicAddress);
+      }
     }
   };
 
@@ -150,16 +204,33 @@ export const NovoContratoModal = ({ open, onOpenChange, patientId }: NovoContrat
     // Atualizar template do contrato em tempo real
     const template = generateContractTemplate();
     setContractContent(template);
-  }, [patientName, patientBirthDate, patientCpf, patientAddress, professionalName, professionalCpf, contractValue, procedures]);
+  }, [patientName, patientBirthDate, patientCpf, patientAddress, professionalName, professionalCpf, contractValue, procedures, contractType, clinicName, clinicCnpj, clinicAddress, professionalAddress]);
 
   const generateContractTemplate = () => {
     const today = format(new Date(), "dd/MM/yyyy");
+    
+    // Determinar contratado baseado no tipo
+    const contratadoNome = contractType === "clinica" 
+      ? (clinicName || "[Nome da Clínica]")
+      : (professionalName || "[Nome do Profissional]");
+    
+    const contratadoDoc = contractType === "clinica"
+      ? `CNPJ nº ${clinicCnpj || "[CNPJ]"}`
+      : `CPF/CRO nº ${professionalCpf || "[CPF/CRO]"}`;
+    
+    const contratadoEndereco = contractType === "clinica"
+      ? (clinicAddress || "[Endereço da Clínica]")
+      : (professionalAddress || "[Endereço do Profissional]");
+    
+    const responsavelTecnico = professionalName 
+      ? `\n\nResponsável Técnico: ${professionalName} - CRO: ${professionalCpf || "[CRO]"}`
+      : "";
     
     return `CONTRATO DE PRESTAÇÃO DE SERVIÇOS ODONTOLÓGICOS
 
 São partes do presente instrumento:
 
-${patientName || "[Nome do Paciente]"}, portador do documento ${patientCpf || "[CPF]"} residente e domiciliado em ${patientAddress || "[Endereço]"}, doravante denominado CONTRATANTE e de outro lado ${professionalName || "[Nome do Profissional]"}, CPF/CNPJ nº ${professionalCpf || "[CPF/CNPJ]"} doravante denominada CONTRATADA, resolvem de comum acordo celebrar o presente Contrato para Prestação de Serviços Odontológicos, com fulcro no Código Civil, Código de Defesa do Consumidor e no Código de Ética Odontológico o qual se regerá pelas seguintes cláusulas e condições:
+${patientName || "[Nome do Paciente]"}, portador do documento ${patientCpf || "[CPF]"} residente e domiciliado em ${patientAddress || "[Endereço]"}, doravante denominado CONTRATANTE e de outro lado ${contratadoNome}, ${contratadoDoc}, com endereço em ${contratadoEndereco}, doravante denominada CONTRATADA, resolvem de comum acordo celebrar o presente Contrato para Prestação de Serviços Odontológicos, com fulcro no Código Civil, Código de Defesa do Consumidor e no Código de Ética Odontológico o qual se regerá pelas seguintes cláusulas e condições:${contractType === "clinica" ? responsavelTecnico : ""}
 
 DO OBJETO DO CONTRATO:
 
@@ -315,6 +386,48 @@ CONTRATADO(A)`;
 
             <div className="space-y-4">
               <div>
+                <h3 className="font-semibold mb-3">Tipo de Contrato</h3>
+                <div className="space-y-3">
+                  <div>
+                    <Label>O contrato será em nome de:*</Label>
+                    <Select value={contractType} onValueChange={(value: "clinica" | "profissional") => setContractType(value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="clinica">Clínica (Pessoa Jurídica)</SelectItem>
+                        <SelectItem value="profissional">Profissional (Pessoa Física)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {contractType === "clinica" && (
+                <div>
+                  <h3 className="font-semibold mb-3">Dados da Clínica</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <Label>Nome da Clínica</Label>
+                      <Input value={clinicName} disabled className="bg-muted" />
+                    </div>
+                    <div>
+                      <Label>CNPJ</Label>
+                      <Input value={clinicCnpj} disabled className="bg-muted" />
+                    </div>
+                    <div>
+                      <Label>Endereço</Label>
+                      <Textarea 
+                        value={clinicAddress} 
+                        disabled 
+                        className="bg-muted min-h-[60px]" 
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div>
                 <h3 className="font-semibold mb-3">Dados do Paciente</h3>
                 <div className="space-y-3">
                   <div>
@@ -354,7 +467,9 @@ CONTRATADO(A)`;
               </div>
 
               <div>
-                <h3 className="font-semibold mb-3">Profissional</h3>
+                <h3 className="font-semibold mb-3">
+                  {contractType === "clinica" ? "Responsável Técnico" : "Profissional"}
+                </h3>
                 <div className="space-y-3">
                   <div>
                     <Label>Dentista Responsável*</Label>
@@ -373,8 +488,19 @@ CONTRATADO(A)`;
                   </div>
                   <div>
                     <Label>CPF/CRO</Label>
-                    <Input value={professionalCpf} disabled />
+                    <Input value={professionalCpf} disabled className="bg-muted" />
                   </div>
+                  {contractType === "profissional" && (
+                    <div>
+                      <Label>Endereço do Profissional</Label>
+                      <Textarea
+                        value={professionalAddress}
+                        onChange={(e) => setProfessionalAddress(e.target.value)}
+                        placeholder="Endereço completo do consultório"
+                        className="min-h-[60px]"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
