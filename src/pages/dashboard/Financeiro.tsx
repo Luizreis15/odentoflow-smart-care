@@ -152,19 +152,19 @@ const Financeiro = () => {
           </div>
 
           <TabsList className="mt-4 bg-primary-foreground/10 border-none">
-            <TabsTrigger value="fluxo" className="data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
+            <TabsTrigger value="fluxo" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
               FLUXO DE CAIXA
             </TabsTrigger>
-            <TabsTrigger value="transacoes" className="data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
+            <TabsTrigger value="transacoes" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
               TRANSAÇÕES
             </TabsTrigger>
-            <TabsTrigger value="nota" className="data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
+            <TabsTrigger value="nota" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
               NOTA FISCAL
             </TabsTrigger>
-            <TabsTrigger value="comissoes" className="data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
+            <TabsTrigger value="comissoes" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
               COMISSÕES
             </TabsTrigger>
-            <TabsTrigger value="carteira" className="data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
+            <TabsTrigger value="carteira" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
               CARTEIRA DIGITAL
             </TabsTrigger>
           </TabsList>
