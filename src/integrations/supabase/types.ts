@@ -14,6 +14,213 @@ export type Database = {
   }
   public: {
     Tables: {
+      anamnese_modelos: {
+        Row: {
+          ativo: boolean
+          clinica_id: string
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          clinica_id: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          clinica_id?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anamnese_modelos_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      anamnese_perguntas: {
+        Row: {
+          condicao_resposta: string | null
+          created_at: string
+          id: string
+          modelo_id: string
+          obrigatoria: boolean
+          ordem: number
+          pergunta_pai_id: string | null
+          texto: string
+          tipo_resposta: string
+          updated_at: string
+        }
+        Insert: {
+          condicao_resposta?: string | null
+          created_at?: string
+          id?: string
+          modelo_id: string
+          obrigatoria?: boolean
+          ordem: number
+          pergunta_pai_id?: string | null
+          texto: string
+          tipo_resposta?: string
+          updated_at?: string
+        }
+        Update: {
+          condicao_resposta?: string | null
+          created_at?: string
+          id?: string
+          modelo_id?: string
+          obrigatoria?: boolean
+          ordem?: number
+          pergunta_pai_id?: string | null
+          texto?: string
+          tipo_resposta?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anamnese_perguntas_modelo_id_fkey"
+            columns: ["modelo_id"]
+            isOneToOne: false
+            referencedRelation: "anamnese_modelos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "anamnese_perguntas_pergunta_pai_id_fkey"
+            columns: ["pergunta_pai_id"]
+            isOneToOne: false
+            referencedRelation: "anamnese_perguntas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      anamnese_respostas: {
+        Row: {
+          anamnese_id: string
+          created_at: string
+          id: string
+          observacoes: string | null
+          pergunta_id: string
+          resposta: string | null
+          updated_at: string
+        }
+        Insert: {
+          anamnese_id: string
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+          pergunta_id: string
+          resposta?: string | null
+          updated_at?: string
+        }
+        Update: {
+          anamnese_id?: string
+          created_at?: string
+          id?: string
+          observacoes?: string | null
+          pergunta_id?: string
+          resposta?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anamnese_respostas_anamnese_id_fkey"
+            columns: ["anamnese_id"]
+            isOneToOne: false
+            referencedRelation: "anamneses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "anamnese_respostas_pergunta_id_fkey"
+            columns: ["pergunta_id"]
+            isOneToOne: false
+            referencedRelation: "anamnese_perguntas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      anamneses: {
+        Row: {
+          alerta_clinico: boolean
+          alerta_descricao: string | null
+          assinatura_data: string | null
+          assinatura_hash: string | null
+          created_at: string
+          data: string
+          finalizada_em: string | null
+          id: string
+          modelo_id: string
+          paciente_id: string
+          profissional_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          alerta_clinico?: boolean
+          alerta_descricao?: string | null
+          assinatura_data?: string | null
+          assinatura_hash?: string | null
+          created_at?: string
+          data?: string
+          finalizada_em?: string | null
+          id?: string
+          modelo_id: string
+          paciente_id: string
+          profissional_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          alerta_clinico?: boolean
+          alerta_descricao?: string | null
+          assinatura_data?: string | null
+          assinatura_hash?: string | null
+          created_at?: string
+          data?: string
+          finalizada_em?: string | null
+          id?: string
+          modelo_id?: string
+          paciente_id?: string
+          profissional_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anamneses_modelo_id_fkey"
+            columns: ["modelo_id"]
+            isOneToOne: false
+            referencedRelation: "anamnese_modelos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "anamneses_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "anamneses_profissional_id_fkey"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           appointment_date: string

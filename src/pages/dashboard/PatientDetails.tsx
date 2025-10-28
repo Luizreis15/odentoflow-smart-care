@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { NovoOrcamentoModal } from "@/components/orcamentos/NovoOrcamentoModal";
 import { TratamentosTab } from "@/components/tratamentos/TratamentosTab";
 import { OrcamentosTab } from "@/components/orcamentos/OrcamentosTab";
+import AnamnesesTab from "@/components/anamnese/AnamnesesTab";
 
 interface Patient {
   id: string;
@@ -377,12 +378,8 @@ const PatientDetails = () => {
               <TratamentosTab patientId={id!} />
             </TabsContent>
 
-            <TabsContent value="anamnese">
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <p className="text-muted-foreground">Anamnese não preenchida</p>
-                </CardContent>
-              </Card>
+            <TabsContent value="anamnese" className="mt-0">
+              <AnamnesesTab patientId={id!} />
             </TabsContent>
 
             <TabsContent value="imagens">
