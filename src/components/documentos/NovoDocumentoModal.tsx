@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -725,52 +725,65 @@ export const NovoDocumentoModal = ({
   const loadData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        console.error("Usuário não autenticado");
+        return;
+      }
 
       // Buscar dados do paciente
-      const { data: patient } = await supabase
+      const { data: patient, error: patientError } = await supabase
         .from("patients")
         .select("*")
         .eq("id", patientId)
-        .single();
+        .maybeSingle();
 
-      if (patient) setPatientData(patient);
+      if (patientError) {
+        console.error("Erro ao buscar paciente:", patientError);
+      } else if (patient) {
+        console.log("Dados do paciente carregados:", patient);
+        setPatientData(patient);
+      }
 
       // Buscar dados do profissional
-      const { data: usuarios } = await supabase
-        .from("usuarios")
+      const { data: professional, error: professionalError } = await supabase
+        .from("profissionais")
         .select("*")
-        .eq("id", user.id)
-        .single();
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-      if (usuarios) {
-        const { data: professional } = await supabase
-          .from("profissionais")
-          .select("*")
-          .eq("user_id", user.id)
-          .single();
-
-        if (professional) setProfessionalData(professional);
+      if (professionalError) {
+        console.error("Erro ao buscar profissional:", professionalError);
+      } else if (professional) {
+        console.log("Dados do profissional carregados:", professional);
+        setProfessionalData(professional);
       }
 
       // Buscar dados da clínica
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("clinic_id")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (profile?.clinic_id) {
-        const { data: clinic } = await supabase
+      if (profileError) {
+        console.error("Erro ao buscar profile:", profileError);
+      } else if (profile?.clinic_id) {
+        const { data: clinic, error: clinicError } = await supabase
           .from("clinicas")
           .select("*")
           .eq("id", profile.clinic_id)
-          .single();
+          .maybeSingle();
 
-        if (clinic) setClinicData(clinic);
+        if (clinicError) {
+          console.error("Erro ao buscar clínica:", clinicError);
+        } else if (clinic) {
+          console.log("Dados da clínica carregados:", clinic);
+          setClinicData(clinic);
+        }
       }
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
+      toast.error("Erro ao carregar dados para o termo de consentimento");
     }
   };
 
@@ -779,10 +792,20 @@ export const NovoDocumentoModal = ({
     setSearchTerm("");
     
     // Gerar termo automaticamente
-    if (patientData && professionalData && clinicData) {
+    if (!patientData || !professionalData || !clinicData) {
+      console.error("Dados faltando:", { patientData, professionalData, clinicData });
+      toast.error("Dados incompletos. Aguarde o carregamento ou reabra o formulário.");
+      return;
+    }
+    
+    try {
       const termo = generateConsentTerm(procKey, patientData, professionalData, clinicData);
       setContent(termo);
       setTitle(`Termo de Consentimento - ${procedimentos[procKey].nome}`);
+      console.log("Termo gerado com sucesso");
+    } catch (error) {
+      console.error("Erro ao gerar termo:", error);
+      toast.error("Erro ao gerar termo de consentimento");
     }
   };
 
@@ -866,6 +889,9 @@ export const NovoDocumentoModal = ({
         <DialogContent className="max-w-4xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>Termo de Consentimento Informado e Esclarecido</DialogTitle>
+            <DialogDescription>
+              Selecione o procedimento para gerar automaticamente o termo de consentimento
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 overflow-y-auto max-h-[60vh] px-1">
@@ -985,6 +1011,9 @@ export const NovoDocumentoModal = ({
           <DialogTitle>
             Novo {documentType ? documentTitles[documentType] : "Documento"}
           </DialogTitle>
+          <DialogDescription>
+            Preencha os campos abaixo para criar o documento
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 overflow-y-auto max-h-[60vh] px-1">
