@@ -68,6 +68,7 @@ function App() {
               <Route path="/dashboard/produtos" element={<ProdutosWrapper />} />
               <Route path="/dashboard/movimentacoes" element={<MovimentacoesWrapper />} />
               <Route path="/dashboard/profile" element={<PerfilWrapper />} />
+              <Route path="/dashboard/configuracoes" element={<Configuracoes />} />
               <Route path="/configuracoes" element={<Configuracoes />} />
               
               {/* Portal do Paciente - Rotas Públicas */}
