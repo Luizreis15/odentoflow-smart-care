@@ -17,6 +17,7 @@ import { OrcamentosTab } from "@/components/orcamentos/OrcamentosTab";
 import AnamnesesTab from "@/components/anamnese/AnamnesesTab";
 import ImagensTab from "@/components/imagens/ImagensTab";
 import { DocumentosTab } from "@/components/documentos/DocumentosTab";
+import { EditPatientModal } from "@/components/pacientes/EditPatientModal";
 
 interface Patient {
   id: string;
@@ -47,6 +48,7 @@ const PatientDetails = () => {
   const [loadingBudgets, setLoadingBudgets] = useState(false);
   const [activeTab, setActiveTab] = useState("sobre");
   const [showNovoOrcamento, setShowNovoOrcamento] = useState(false);
+  const [showEditPatient, setShowEditPatient] = useState(false);
   const [clinicaId, setClinicaId] = useState<string>("");
 
   useEffect(() => {
@@ -186,7 +188,7 @@ const PatientDetails = () => {
             </div>
 
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => setShowEditPatient(true)}>
                 <Edit className="h-4 w-4 mr-2" />
                 EDITAR
               </Button>
@@ -472,6 +474,15 @@ const PatientDetails = () => {
           patientId={patient.id}
           clinicaId={clinicaId}
           onSuccess={loadBudgets}
+        />
+      )}
+
+      {patient && (
+        <EditPatientModal
+          open={showEditPatient}
+          onOpenChange={setShowEditPatient}
+          patient={patient}
+          onSuccess={loadPatient}
         />
       )}
     </div>
