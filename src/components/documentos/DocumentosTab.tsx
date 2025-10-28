@@ -5,6 +5,8 @@ import { FileText, Plus } from "lucide-react";
 import { NovoDocumentoModal } from "./NovoDocumentoModal";
 import { NovoContratoModal } from "./NovoContratoModal";
 import { HistoricoDocumentosModal } from "./HistoricoDocumentosModal";
+import { TipoReceituarioModal } from "./TipoReceituarioModal";
+import { NovoReceituarioModal } from "./NovoReceituarioModal";
 
 interface DocumentosTabProps {
   patientId: string;
@@ -41,15 +43,25 @@ export const DocumentosTab = ({ patientId }: DocumentosTabProps) => {
   const [novoDocumentoOpen, setNovoDocumentoOpen] = useState(false);
   const [novoContratoOpen, setNovoContratoOpen] = useState(false);
   const [historicoOpen, setHistoricoOpen] = useState(false);
+  const [tipoReceituarioOpen, setTipoReceituarioOpen] = useState(false);
+  const [novoReceituarioOpen, setNovoReceituarioOpen] = useState(false);
   const [selectedDocType, setSelectedDocType] = useState<string | null>(null);
+  const [tipoReceituario, setTipoReceituario] = useState<"impresso" | "digital" | null>(null);
 
   const handleNovoClick = (type: string) => {
     setSelectedDocType(type);
     if (type === "contrato") {
       setNovoContratoOpen(true);
+    } else if (type === "receituario") {
+      setTipoReceituarioOpen(true);
     } else {
       setNovoDocumentoOpen(true);
     }
+  };
+
+  const handleSelectTipoReceituario = (tipo: "impresso" | "digital") => {
+    setTipoReceituario(tipo);
+    setNovoReceituarioOpen(true);
   };
 
   const handleHistoricoClick = (type: string) => {
@@ -132,6 +144,24 @@ export const DocumentosTab = ({ patientId }: DocumentosTabProps) => {
         open={novoContratoOpen}
         onOpenChange={setNovoContratoOpen}
         patientId={patientId}
+      />
+
+      <TipoReceituarioModal
+        open={tipoReceituarioOpen}
+        onOpenChange={setTipoReceituarioOpen}
+        onSelectTipo={handleSelectTipoReceituario}
+      />
+
+      <NovoReceituarioModal
+        open={novoReceituarioOpen}
+        onOpenChange={(open) => {
+          setNovoReceituarioOpen(open);
+          if (!open) {
+            setTipoReceituario(null);
+          }
+        }}
+        patientId={patientId}
+        tipo={tipoReceituario}
       />
 
       <HistoricoDocumentosModal
