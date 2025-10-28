@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { FileText, Trash2, Eye, Loader2 } from "lucide-react";
+import { FileText, Trash2, Eye, Loader2, Printer, FileSignature } from "lucide-react";
 
 interface HistoricoDocumentosModalProps {
   open: boolean;
@@ -98,6 +98,34 @@ export const HistoricoDocumentosModal = ({
     setViewMode(true);
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleSign = async () => {
+    if (!selectedDoc) return;
+
+    try {
+      const { error } = await supabase
+        .from("patient_documents")
+        .update({
+          status: "assinado",
+          signed_at: new Date().toISOString(),
+        })
+        .eq("id", selectedDoc.id);
+
+      if (error) throw error;
+
+      toast.success("Documento assinado com sucesso");
+      setViewMode(false);
+      setSelectedDoc(null);
+      loadDocuments();
+    } catch (error: any) {
+      console.error("Erro ao assinar documento:", error);
+      toast.error("Erro ao assinar documento");
+    }
+  };
+
   if (viewMode && selectedDoc) {
     return (
       <Dialog open={open} onOpenChange={(isOpen) => {
@@ -143,8 +171,16 @@ export const HistoricoDocumentosModal = ({
             >
               Voltar
             </Button>
+            <Button
+              variant="outline"
+              onClick={handlePrint}
+            >
+              <Printer className="h-4 w-4 mr-2" />
+              Imprimir
+            </Button>
             {selectedDoc.status !== "assinado" && (
-              <Button>
+              <Button onClick={handleSign}>
+                <FileSignature className="h-4 w-4 mr-2" />
                 Assinar Documento
               </Button>
             )}
