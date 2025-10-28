@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -25,6 +26,8 @@ export const NovoAtestadoModal = ({
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [patientData, setPatientData] = useState<any>(null);
+  const [profissionais, setProfissionais] = useState<any[]>([]);
+  const [selectedProfissional, setSelectedProfissional] = useState<string>("");
   const [professionalData, setProfessionalData] = useState<any>(null);
   const [clinicData, setClinicData] = useState<any>(null);
   
@@ -32,6 +35,7 @@ export const NovoAtestadoModal = ({
   const [dataAtestado, setDataAtestado] = useState(format(new Date(), "yyyy-MM-dd"));
   const [quantidadeDias, setQuantidadeDias] = useState("");
   const [cid, setCid] = useState("");
+  const [observacoes, setObservacoes] = useState("");
 
   useEffect(() => {
     if (open && patientId) {
@@ -50,7 +54,7 @@ export const NovoAtestadoModal = ({
       
       setPatientData(patient);
 
-      // Load professional data
+      // Load clinic data and professionals
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: usuario } = await supabase
@@ -60,20 +64,6 @@ export const NovoAtestadoModal = ({
           .single();
 
         if (usuario) {
-          // Try to get additional professional details
-          const { data: profissional } = await supabase
-            .from("profissionais")
-            .select("*")
-            .eq("email", usuario.email)
-            .single();
-
-          setProfessionalData({
-            nome: usuario.nome,
-            email: usuario.email,
-            cro: profissional?.cro || "Não cadastrado",
-            especialidade: profissional?.especialidade || "Odontologia",
-          });
-
           // Load clinic data
           const { data: clinica } = await supabase
             .from("clinicas")
@@ -82,6 +72,27 @@ export const NovoAtestadoModal = ({
             .single();
           
           setClinicData(clinica);
+
+          // Load all professionals from the clinic
+          const { data: profissionaisList } = await supabase
+            .from("profissionais")
+            .select("*")
+            .eq("clinica_id", usuario.clinica_id)
+            .eq("ativo", true)
+            .order("nome");
+
+          setProfissionais(profissionaisList || []);
+
+          // Try to find current user as professional and set as default
+          const currentProfissional = profissionaisList?.find(p => p.email === usuario.email);
+          if (currentProfissional) {
+            setSelectedProfissional(currentProfissional.id);
+            setProfessionalData({
+              nome: currentProfissional.nome,
+              cro: currentProfissional.cro || "Não cadastrado",
+              especialidade: currentProfissional.especialidade || "Odontologia",
+            });
+          }
         }
       }
     } catch (error) {
@@ -93,6 +104,20 @@ export const NovoAtestadoModal = ({
       });
     }
   };
+
+  // Update professional data when selection changes
+  useEffect(() => {
+    if (selectedProfissional) {
+      const profissional = profissionais.find(p => p.id === selectedProfissional);
+      if (profissional) {
+        setProfessionalData({
+          nome: profissional.nome,
+          cro: profissional.cro || "Não cadastrado",
+          especialidade: profissional.especialidade || "Odontologia",
+        });
+      }
+    }
+  }, [selectedProfissional, profissionais]);
 
   const gerarConteudoAtestado = () => {
     if (!patientData || !professionalData || !clinicData) return "";
@@ -136,6 +161,10 @@ export const NovoAtestadoModal = ({
       conteudo += `CID: ${cid}\n\n`;
     }
 
+    if (observacoes) {
+      conteudo += `Observações: ${observacoes}\n\n`;
+    }
+
     conteudo += `\n`;
     conteudo += `${clinicData.address?.cidade || "São Paulo"}, ${hoje}\n\n`;
     conteudo += `\n\n`;
@@ -148,7 +177,7 @@ export const NovoAtestadoModal = ({
   };
 
   const handleSalvar = async () => {
-    if (!patientData || !professionalData) {
+    if (!patientData || !professionalData || !selectedProfissional) {
       toast({
         title: "Erro",
         description: "Dados do paciente ou profissional não encontrados",
@@ -179,6 +208,7 @@ export const NovoAtestadoModal = ({
         title: `Atestado - ${format(new Date(), "dd/MM/yyyy")}`,
         content: content,
         created_by: user?.id,
+        professional_id: selectedProfissional,
         status: "finalizado",
         signed_at: new Date().toISOString(),
         metadata: {
@@ -187,6 +217,7 @@ export const NovoAtestadoModal = ({
           data_atestado: dataAtestado,
           quantidade_dias: tipoAtestado === "dias" ? quantidadeDias : null,
           cid: cid || null,
+          observacoes: observacoes || null,
         },
       });
 
@@ -204,6 +235,7 @@ export const NovoAtestadoModal = ({
       setDataAtestado(format(new Date(), "yyyy-MM-dd"));
       setQuantidadeDias("");
       setCid("");
+      setObservacoes("");
     } catch (error) {
       console.error("Erro ao salvar atestado:", error);
       toast({
@@ -228,17 +260,36 @@ export const NovoAtestadoModal = ({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Professional Info */}
-          <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
-            <div>
-              <Label className="text-sm text-muted-foreground">Profissional</Label>
-              <p className="font-medium">{professionalData?.nome || "Carregando..."}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Inscrição no Conselho</Label>
-              <p className="font-medium">{professionalData?.cro || "Não cadastrado"}</p>
-            </div>
+          {/* Professional Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="profissional">Profissional*</Label>
+            <Select value={selectedProfissional} onValueChange={setSelectedProfissional}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o profissional" />
+              </SelectTrigger>
+              <SelectContent>
+                {profissionais.map((prof) => (
+                  <SelectItem key={prof.id} value={prof.id}>
+                    {prof.nome} - CRO: {prof.cro || "Não cadastrado"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+
+          {/* Professional Info Display */}
+          {professionalData && (
+            <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
+              <div>
+                <Label className="text-sm text-muted-foreground">Profissional</Label>
+                <p className="font-medium">{professionalData.nome}</p>
+              </div>
+              <div>
+                <Label className="text-sm text-muted-foreground">Inscrição no Conselho</Label>
+                <p className="font-medium">{professionalData.cro}</p>
+              </div>
+            </div>
+          )}
 
           {/* Certificate Type */}
           <div className="space-y-3">
@@ -291,10 +342,26 @@ export const NovoAtestadoModal = ({
               onChange={(e) => setCid(e.target.value)}
               placeholder="Código Internacional de Doenças (opcional)"
               maxLength={100}
-              rows={3}
+              rows={2}
             />
             <p className="text-xs text-muted-foreground text-right">
               {cid.length}/100
+            </p>
+          </div>
+
+          {/* Observações */}
+          <div className="space-y-2">
+            <Label htmlFor="observacoes">Observações</Label>
+            <Textarea
+              id="observacoes"
+              value={observacoes}
+              onChange={(e) => setObservacoes(e.target.value)}
+              placeholder="Observações adicionais (opcional)"
+              maxLength={500}
+              rows={3}
+            />
+            <p className="text-xs text-muted-foreground text-right">
+              {observacoes.length}/500
             </p>
           </div>
 
