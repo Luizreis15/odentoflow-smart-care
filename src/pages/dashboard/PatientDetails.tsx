@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { NovoOrcamentoModal } from "@/components/orcamentos/NovoOrcamentoModal";
 import { TratamentosTab } from "@/components/tratamentos/TratamentosTab";
+import { OrcamentosTab } from "@/components/orcamentos/OrcamentosTab";
 
 interface Patient {
   id: string;
@@ -363,109 +364,12 @@ const PatientDetails = () => {
                     <p className="text-muted-foreground">Carregando orçamentos...</p>
                   </CardContent>
                 </Card>
-              ) : budgets.length === 0 ? (
-                <div className="space-y-6">
-                  <Button 
-                    className="bg-[#4ade80] hover:bg-[#4ade80]/90"
-                    onClick={() => setShowNovoOrcamento(true)}
-                  >
-                    NOVO ORÇAMENTO
-                  </Button>
-
-                  <Card className="border-none shadow-none">
-                    <CardContent className="py-12 flex flex-col items-center justify-center text-center space-y-6">
-                      {/* Empty state illustration */}
-                      <div className="relative w-48 h-48 mb-4">
-                        <svg viewBox="0 0 200 200" className="w-full h-full">
-                          {/* Document illustration */}
-                          <rect x="50" y="30" width="100" height="140" fill="#f0f0f0" stroke="#d0d0d0" strokeWidth="2" rx="4"/>
-                          <rect x="60" y="50" width="80" height="8" fill="#3b82f6" rx="2"/>
-                          <rect x="60" y="70" width="60" height="6" fill="#d0d0d0" rx="2"/>
-                          <rect x="60" y="85" width="70" height="6" fill="#d0d0d0" rx="2"/>
-                          <rect x="60" y="100" width="50" height="6" fill="#d0d0d0" rx="2"/>
-                          <circle cx="90" cy="130" r="15" fill="#3b82f6" opacity="0.2"/>
-                          <path d="M 85 130 L 88 133 L 95 125" stroke="#3b82f6" strokeWidth="2" fill="none" strokeLinecap="round"/>
-                        </svg>
-                      </div>
-
-                      <div>
-                        <h3 className="text-xl font-semibold text-[#3b82f6] mb-2">
-                          Crie o primeiro orçamento
-                        </h3>
-                        <p className="text-lg font-semibold text-[#3b82f6]">
-                          para este paciente
-                        </p>
-                      </div>
-
-                      <div className="max-w-2xl space-y-3 text-left">
-                        <div className="flex items-start gap-3">
-                          <Check className="h-5 w-5 text-[#4ade80] mt-0.5 flex-shrink-0" />
-                          <p className="text-sm text-muted-foreground">
-                            Transforme o orçamento em <span className="font-semibold text-foreground">tratamentos e débitos</span>
-                          </p>
-                        </div>
-
-                        <div className="flex items-start gap-3">
-                          <Check className="h-5 w-5 text-[#4ade80] mt-0.5 flex-shrink-0" />
-                          <p className="text-sm text-muted-foreground">
-                            Orçamento especializado para <span className="font-semibold text-foreground">planejamento de HOF</span>
-                          </p>
-                        </div>
-
-                        <div className="flex items-start gap-3">
-                          <Check className="h-5 w-5 text-[#4ade80] mt-0.5 flex-shrink-0" />
-                          <p className="text-sm text-muted-foreground">
-                            Fácil e completo, com <span className="font-semibold text-foreground">odontograma</span> e <span className="font-semibold text-foreground">aprovação parcial</span>
-                          </p>
-                        </div>
-
-                        <div className="flex items-start gap-3">
-                          <Check className="h-5 w-5 text-[#4ade80] mt-0.5 flex-shrink-0" />
-                          <p className="text-sm text-muted-foreground">
-                            Orçamentos em aberto viram automaticamente <span className="font-semibold text-foreground">oportunidades</span> no menu <span className="text-[#3b82f6]">Vendas</span>
-                          </p>
-                        </div>
-
-                        <div className="flex items-start gap-3">
-                          <Check className="h-5 w-5 text-[#4ade80] mt-0.5 flex-shrink-0" />
-                          <p className="text-sm text-muted-foreground">
-                            <span className="font-semibold text-foreground">Acompanhe</span> os orçamentos em aberto e aprovados no menu <span className="text-[#3b82f6]">Inteligência</span>
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="pt-4">
-                        <p className="text-sm text-muted-foreground">
-                          💡 Dúvidas? Saiba tudo sobre{" "}
-                          <a href="#" className="text-[#3b82f6] hover:underline">
-                            Orçamentos
-                          </a>
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
               ) : (
-                <Card>
-                  <CardContent className="py-6">
-                    <div className="space-y-3">
-                      {budgets.map((budget) => (
-                        <div
-                          key={budget.id}
-                          className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
-                        >
-                          <div className="flex-1">
-                            <p className="font-semibold">{budget.title}</p>
-                            <p className="text-sm text-muted-foreground">{budget.description}</p>
-                          </div>
-                          <Badge variant={budget.status === 'approved' ? 'default' : 'secondary'}>
-                            {budget.status}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                <OrcamentosTab 
+                  budgets={budgets}
+                  onRefresh={loadBudgets}
+                  onNewBudget={() => setShowNovoOrcamento(true)}
+                />
               )}
             </TabsContent>
 
