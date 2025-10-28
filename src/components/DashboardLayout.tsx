@@ -104,7 +104,7 @@ const navigation = [
   },
   {
     name: "Perfil",
-    href: "/dashboard/perfil",
+    href: "/dashboard/profile",
     icon: User,
     description: "Minha conta e preferências",
   },
