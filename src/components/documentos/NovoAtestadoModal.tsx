@@ -6,9 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { cidsOdontologicos } from "@/data/cids";
 
 interface NovoAtestadoModalProps {
   open: boolean;
@@ -36,6 +41,7 @@ export const NovoAtestadoModal = ({
   const [quantidadeDias, setQuantidadeDias] = useState("");
   const [cid, setCid] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const [openCidCombobox, setOpenCidCombobox] = useState(false);
 
   useEffect(() => {
     if (open && patientId) {
@@ -335,18 +341,63 @@ export const NovoAtestadoModal = ({
 
           {/* CID */}
           <div className="space-y-2">
-            <Label htmlFor="cid">CID</Label>
-            <Textarea
-              id="cid"
-              value={cid}
-              onChange={(e) => setCid(e.target.value)}
-              placeholder="Código Internacional de Doenças (opcional)"
-              maxLength={100}
-              rows={2}
-            />
-            <p className="text-xs text-muted-foreground text-right">
-              {cid.length}/100
-            </p>
+            <Label htmlFor="cid">CID (Classificação Internacional de Doenças)</Label>
+            <Popover open={openCidCombobox} onOpenChange={setOpenCidCombobox}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={openCidCombobox}
+                  className="w-full justify-between"
+                >
+                  {cid
+                    ? cidsOdontologicos.find((c) => c.code === cid)?.code + " - " + cidsOdontologicos.find((c) => c.code === cid)?.description
+                    : "Selecione o CID (opcional)"}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Pesquisar CID..." />
+                  <CommandList>
+                    <CommandEmpty>Nenhum CID encontrado.</CommandEmpty>
+                    <CommandGroup>
+                      {cidsOdontologicos.map((cidItem) => (
+                        <CommandItem
+                          key={cidItem.code}
+                          value={`${cidItem.code} ${cidItem.description}`}
+                          onSelect={() => {
+                            setCid(cidItem.code);
+                            setOpenCidCombobox(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              cid === cidItem.code ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          <div className="flex flex-col">
+                            <span className="font-medium">{cidItem.code}</span>
+                            <span className="text-sm text-muted-foreground">{cidItem.description}</span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            {cid && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCid("")}
+                className="h-8 text-xs"
+              >
+                Limpar seleção
+              </Button>
+            )}
           </div>
 
           {/* Observações */}
