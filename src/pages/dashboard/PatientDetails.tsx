@@ -15,6 +15,7 @@ import { NovoOrcamentoModal } from "@/components/orcamentos/NovoOrcamentoModal";
 import { TratamentosTab } from "@/components/tratamentos/TratamentosTab";
 import { OrcamentosTab } from "@/components/orcamentos/OrcamentosTab";
 import AnamnesesTab from "@/components/anamnese/AnamnesesTab";
+import ImagensTab from "@/components/imagens/ImagensTab";
 
 interface Patient {
   id: string;
@@ -382,12 +383,8 @@ const PatientDetails = () => {
               <AnamnesesTab patientId={id!} />
             </TabsContent>
 
-            <TabsContent value="imagens">
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <p className="text-muted-foreground">Nenhuma imagem cadastrada</p>
-                </CardContent>
-              </Card>
+            <TabsContent value="imagens" className="mt-0">
+              <ImagensTab patientId={id!} />
             </TabsContent>
 
             <TabsContent value="documentos">
