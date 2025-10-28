@@ -798,6 +798,62 @@ export type Database = {
           },
         ]
       }
+      laboratorios: {
+        Row: {
+          ativo: boolean | null
+          clinica_id: string
+          condicoes_comerciais: string | null
+          created_at: string | null
+          forma_pagamento: string | null
+          id: string
+          nome: string
+          prazo_medio_dias: number | null
+          responsavel: string | null
+          tabela_procedimentos: Json | null
+          telefone: string | null
+          updated_at: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          clinica_id: string
+          condicoes_comerciais?: string | null
+          created_at?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          nome: string
+          prazo_medio_dias?: number | null
+          responsavel?: string | null
+          tabela_procedimentos?: Json | null
+          telefone?: string | null
+          updated_at?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          clinica_id?: string
+          condicoes_comerciais?: string | null
+          created_at?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          nome?: string
+          prazo_medio_dias?: number | null
+          responsavel?: string | null
+          tabela_procedimentos?: Json | null
+          telefone?: string | null
+          updated_at?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "laboratorios_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       limites_uso: {
         Row: {
           clinica_id: string
@@ -1668,6 +1724,158 @@ export type Database = {
           },
         ]
       }
+      protese_movimentacoes: {
+        Row: {
+          created_at: string | null
+          id: string
+          observacao: string | null
+          protese_id: string
+          status_anterior: Database["public"]["Enums"]["status_protese"] | null
+          status_novo: Database["public"]["Enums"]["status_protese"]
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          observacao?: string | null
+          protese_id: string
+          status_anterior?: Database["public"]["Enums"]["status_protese"] | null
+          status_novo: Database["public"]["Enums"]["status_protese"]
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          observacao?: string | null
+          protese_id?: string
+          status_anterior?: Database["public"]["Enums"]["status_protese"] | null
+          status_novo?: Database["public"]["Enums"]["status_protese"]
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "protese_movimentacoes_protese_id_fkey"
+            columns: ["protese_id"]
+            isOneToOne: false
+            referencedRelation: "proteses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "protese_movimentacoes_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proteses: {
+        Row: {
+          atrasado: boolean | null
+          clinica_id: string
+          created_at: string | null
+          custo_laboratorial: number | null
+          data_entrega_prevista: string | null
+          data_entrega_real: string | null
+          data_envio_prevista: string | null
+          data_envio_real: string | null
+          data_instalacao_prevista: string | null
+          data_instalacao_real: string | null
+          despesa_id: string | null
+          forma_pagamento: string | null
+          id: string
+          laboratorio_id: string | null
+          observacoes: string | null
+          orcamento_id: string | null
+          paciente_id: string
+          procedimento_nome: string
+          procedimento_tipo: string
+          profissional_id: string
+          status: Database["public"]["Enums"]["status_protese"]
+          tipo_laboratorio: Database["public"]["Enums"]["tipo_laboratorio"]
+          updated_at: string | null
+        }
+        Insert: {
+          atrasado?: boolean | null
+          clinica_id: string
+          created_at?: string | null
+          custo_laboratorial?: number | null
+          data_entrega_prevista?: string | null
+          data_entrega_real?: string | null
+          data_envio_prevista?: string | null
+          data_envio_real?: string | null
+          data_instalacao_prevista?: string | null
+          data_instalacao_real?: string | null
+          despesa_id?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          laboratorio_id?: string | null
+          observacoes?: string | null
+          orcamento_id?: string | null
+          paciente_id: string
+          procedimento_nome: string
+          procedimento_tipo: string
+          profissional_id: string
+          status?: Database["public"]["Enums"]["status_protese"]
+          tipo_laboratorio?: Database["public"]["Enums"]["tipo_laboratorio"]
+          updated_at?: string | null
+        }
+        Update: {
+          atrasado?: boolean | null
+          clinica_id?: string
+          created_at?: string | null
+          custo_laboratorial?: number | null
+          data_entrega_prevista?: string | null
+          data_entrega_real?: string | null
+          data_envio_prevista?: string | null
+          data_envio_real?: string | null
+          data_instalacao_prevista?: string | null
+          data_instalacao_real?: string | null
+          despesa_id?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          laboratorio_id?: string | null
+          observacoes?: string | null
+          orcamento_id?: string | null
+          paciente_id?: string
+          procedimento_nome?: string
+          procedimento_tipo?: string
+          profissional_id?: string
+          status?: Database["public"]["Enums"]["status_protese"]
+          tipo_laboratorio?: Database["public"]["Enums"]["tipo_laboratorio"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proteses_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proteses_laboratorio_id_fkey"
+            columns: ["laboratorio_id"]
+            isOneToOne: false
+            referencedRelation: "laboratorios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proteses_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proteses_profissional_id_fkey"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       repasse_regras: {
         Row: {
           ativo: boolean | null
@@ -2018,6 +2226,13 @@ export type Database = {
         | "canceled"
         | "incomplete"
       status_comissao: "provisionado" | "aprovado" | "pago" | "cancelado"
+      status_protese:
+        | "moldagem"
+        | "enviado_lab"
+        | "em_execucao"
+        | "pronto_instalacao"
+        | "instalado"
+      tipo_laboratorio: "interno" | "externo"
       tipo_remuneracao: "fixo_mensal" | "repasse_producao" | "hibrido"
     }
     CompositeTypes: {
@@ -2164,6 +2379,14 @@ export const Constants = {
         "incomplete",
       ],
       status_comissao: ["provisionado", "aprovado", "pago", "cancelado"],
+      status_protese: [
+        "moldagem",
+        "enviado_lab",
+        "em_execucao",
+        "pronto_instalacao",
+        "instalado",
+      ],
+      tipo_laboratorio: ["interno", "externo"],
       tipo_remuneracao: ["fixo_mensal", "repasse_producao", "hibrido"],
     },
   },

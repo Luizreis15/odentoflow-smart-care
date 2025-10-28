@@ -13,6 +13,7 @@ import {
   X,
   LayoutDashboard,
   Settings,
+  FlaskConical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Navbar from "./Navbar";
@@ -54,6 +55,12 @@ const navigation = [
     href: "/dashboard/crm",
     icon: MessageSquare,
     description: "Relacionamento automático",
+  },
+  {
+    name: "Controle de Prótese",
+    href: "/dashboard/proteses",
+    icon: FlaskConical,
+    description: "Gestão do fluxo protético",
   },
   {
     name: "Portal do Paciente",

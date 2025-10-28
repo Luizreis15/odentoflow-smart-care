@@ -19,6 +19,7 @@ import FinanceiroWrapper from "./pages/dashboard/FinanceiroWrapper";
 import CRMWrapper from "./pages/dashboard/CRMWrapper";
 import PortalPacienteWrapper from "./pages/dashboard/PortalPacienteWrapper";
 import IAAssistenteWrapper from "./pages/dashboard/IAAssistenteWrapper";
+import ProtesesWrapper from "./pages/dashboard/ProtesesWrapper";
 import NotFound from "./pages/NotFound";
 import Configuracoes from "./pages/Configuracoes";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
@@ -56,6 +57,7 @@ function App() {
               <Route path="/dashboard/crm" element={<CRMWrapper />} />
               <Route path="/dashboard/portal-paciente" element={<PortalPacienteWrapper />} />
               <Route path="/dashboard/ia-assistente" element={<IAAssistenteWrapper />} />
+              <Route path="/dashboard/proteses" element={<ProtesesWrapper />} />
               <Route path="/configuracoes" element={<Configuracoes />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
