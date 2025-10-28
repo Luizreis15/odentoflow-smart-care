@@ -542,6 +542,7 @@ export type Database = {
       }
       planos_procedimentos: {
         Row: {
+          ativo: boolean | null
           clinica_id: string
           created_at: string | null
           id: string
@@ -551,6 +552,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          ativo?: boolean | null
           clinica_id: string
           created_at?: string | null
           id?: string
@@ -560,6 +562,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          ativo?: boolean | null
           clinica_id?: string
           created_at?: string | null
           id?: string

@@ -49,14 +49,23 @@ export const PlanosTable = ({ planos, onSetPadrao, onDelete, onEdit }: PlanosTab
                 )}
               </TableCell>
               <TableCell>
-                {plano.is_padrao ? (
-                  <Badge variant="default" className="gap-1">
-                    <Star className="h-3 w-3" />
-                    Padrão
-                  </Badge>
-                ) : (
-                  <Badge variant="outline">Inativo</Badge>
-                )}
+                <div className="flex gap-2">
+                  {plano.is_padrao && (
+                    <Badge variant="default" className="gap-1">
+                      <Star className="h-3 w-3" />
+                      Padrão
+                    </Badge>
+                  )}
+                  {plano.ativo ? (
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      Ativo
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-gray-50 text-gray-600">
+                      Inativo
+                    </Badge>
+                  )}
+                </div>
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {format(new Date(plano.updated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
