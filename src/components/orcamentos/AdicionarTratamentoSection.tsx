@@ -8,6 +8,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { supabase } from "@/integrations/supabase/client";
 import { X, Plus, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Odontograma } from "./Odontograma";
+import { toast } from "sonner";
 
 interface AdicionarTratamentoSectionProps {
   planos: any[];
@@ -30,6 +32,7 @@ export const AdicionarTratamentoSection = ({
   const [valor, setValor] = useState("");
   const [dentistas, setDentistas] = useState<any[]>([]);
   const [dentistaSelecionado, setDentistaSelecionado] = useState("");
+  const [dentesSelecionados, setDentesSelecionados] = useState<string[]>([]);
 
   useEffect(() => {
     if (planoSelecionado) {
@@ -84,6 +87,17 @@ export const AdicionarTratamentoSection = ({
 
   const handleAdicionar = () => {
     if (!procedimentoSelecionado || !valor) {
+      toast.error("Selecione um procedimento e informe o valor");
+      return;
+    }
+
+    if (!dentistaSelecionado) {
+      toast.error("Selecione um dentista");
+      return;
+    }
+
+    if (dentesSelecionados.length === 0) {
+      toast.error("Selecione pelo menos um dente ou região");
       return;
     }
 
@@ -95,12 +109,15 @@ export const AdicionarTratamentoSection = ({
       valor: parseFloat(valor),
       dentista_id: dentistaSelecionado,
       dentista_nome: dentista?.nome,
+      dente_regiao: dentesSelecionados.sort((a, b) => parseInt(a) - parseInt(b)).join(", "),
     });
 
     // Limpar campos
     setProcedimentoSelecionado(null);
     setValor("");
     setDentistaSelecionado("");
+    setDentesSelecionados([]);
+    toast.success("Tratamento adicionado");
   };
 
   return (
@@ -213,8 +230,9 @@ export const AdicionarTratamentoSection = ({
 
         <div className="flex items-end">
           <Button
+            type="button"
             onClick={handleAdicionar}
-            disabled={!procedimentoSelecionado || !valor || !dentistaSelecionado}
+            disabled={!procedimentoSelecionado || !valor || !dentistaSelecionado || dentesSelecionados.length === 0}
             className="w-full"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -223,9 +241,10 @@ export const AdicionarTratamentoSection = ({
         </div>
       </div>
 
-      <Button variant="outline" className="w-full">
-        Selecionar Dente/Região
-      </Button>
+      <Odontograma
+        dentesSelecionados={dentesSelecionados}
+        onDentesChange={setDentesSelecionados}
+      />
     </div>
   );
 };
