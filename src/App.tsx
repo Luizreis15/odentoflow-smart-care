@@ -23,6 +23,7 @@ import ProtesesWrapper from "./pages/dashboard/ProtesesWrapper";
 import EstoqueWrapper from "./pages/dashboard/EstoqueWrapper";
 import ProdutosWrapper from "./pages/dashboard/ProdutosWrapper";
 import MovimentacoesWrapper from "./pages/dashboard/MovimentacoesWrapper";
+import PerfilWrapper from "./pages/dashboard/PerfilWrapper";
 import NotFound from "./pages/NotFound";
 import Configuracoes from "./pages/Configuracoes";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
@@ -64,6 +65,7 @@ function App() {
               <Route path="/dashboard/estoque" element={<EstoqueWrapper />} />
               <Route path="/dashboard/produtos" element={<ProdutosWrapper />} />
               <Route path="/dashboard/movimentacoes" element={<MovimentacoesWrapper />} />
+              <Route path="/dashboard/perfil" element={<PerfilWrapper />} />
               <Route path="/configuracoes" element={<Configuracoes />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

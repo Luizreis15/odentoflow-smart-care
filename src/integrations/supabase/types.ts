@@ -275,6 +275,42 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          acao: string
+          created_at: string | null
+          detalhes: Json | null
+          dispositivo: string | null
+          id: string
+          ip_address: string | null
+          modulo: string | null
+          resultado: string | null
+          user_id: string
+        }
+        Insert: {
+          acao: string
+          created_at?: string | null
+          detalhes?: Json | null
+          dispositivo?: string | null
+          id?: string
+          ip_address?: string | null
+          modulo?: string | null
+          resultado?: string | null
+          user_id: string
+        }
+        Update: {
+          acao?: string
+          created_at?: string | null
+          detalhes?: Json | null
+          dispositivo?: string | null
+          id?: string
+          ip_address?: string | null
+          modulo?: string | null
+          resultado?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       automated_messages: {
         Row: {
           channel: string
@@ -1824,30 +1860,75 @@ export type Database = {
       }
       profiles: {
         Row: {
+          atualizado_por: string | null
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
           clinic_id: string | null
+          complemento: string | null
+          cpf: string | null
           created_at: string | null
+          data_nascimento: string | null
           email: string
+          foto_perfil_url: string | null
           full_name: string
+          fuso_horario: string | null
           id: string
+          numero: string | null
           phone: string | null
+          rua: string | null
+          telefone: string | null
+          telefone_fixo: string | null
+          uf: string | null
+          ultima_atualizacao: string | null
           updated_at: string | null
         }
         Insert: {
+          atualizado_por?: string | null
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
           clinic_id?: string | null
+          complemento?: string | null
+          cpf?: string | null
           created_at?: string | null
+          data_nascimento?: string | null
           email: string
+          foto_perfil_url?: string | null
           full_name: string
+          fuso_horario?: string | null
           id: string
+          numero?: string | null
           phone?: string | null
+          rua?: string | null
+          telefone?: string | null
+          telefone_fixo?: string | null
+          uf?: string | null
+          ultima_atualizacao?: string | null
           updated_at?: string | null
         }
         Update: {
+          atualizado_por?: string | null
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
           clinic_id?: string | null
+          complemento?: string | null
+          cpf?: string | null
           created_at?: string | null
+          data_nascimento?: string | null
           email?: string
+          foto_perfil_url?: string | null
           full_name?: string
+          fuso_horario?: string | null
           id?: string
+          numero?: string | null
           phone?: string | null
+          rua?: string | null
+          telefone?: string | null
+          telefone_fixo?: string | null
+          uf?: string | null
+          ultima_atualizacao?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -3042,6 +3123,194 @@ export type Database = {
           },
         ]
       }
+      user_consents: {
+        Row: {
+          consentido: boolean | null
+          created_at: string | null
+          data_consentimento: string | null
+          data_revogacao: string | null
+          id: string
+          revogado: boolean | null
+          tipo_consentimento: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          consentido?: boolean | null
+          created_at?: string | null
+          data_consentimento?: string | null
+          data_revogacao?: string | null
+          id?: string
+          revogado?: boolean | null
+          tipo_consentimento: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          consentido?: boolean | null
+          created_at?: string | null
+          data_consentimento?: string | null
+          data_revogacao?: string | null
+          id?: string
+          revogado?: boolean | null
+          tipo_consentimento?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_integrations: {
+        Row: {
+          clinic_id: string
+          configuracoes: Json | null
+          created_at: string | null
+          id: string
+          resultado_ultimo_teste: string | null
+          status: string | null
+          tipo_integracao: string
+          ultimo_teste: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          clinic_id: string
+          configuracoes?: Json | null
+          created_at?: string | null
+          id?: string
+          resultado_ultimo_teste?: string | null
+          status?: string | null
+          tipo_integracao: string
+          ultimo_teste?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          clinic_id?: string
+          configuracoes?: Json | null
+          created_at?: string | null
+          id?: string
+          resultado_ultimo_teste?: string | null
+          status?: string | null
+          tipo_integracao?: string
+          ultimo_teste?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_integrations_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_notifications_settings: {
+        Row: {
+          agenda_alteracoes: boolean | null
+          agenda_lembretes: boolean | null
+          agenda_novas_marcacoes: boolean | null
+          canal_email: boolean | null
+          canal_in_app: boolean | null
+          canal_whatsapp: boolean | null
+          created_at: string | null
+          financeiro_falha_pagamento: boolean | null
+          financeiro_faturas: boolean | null
+          financeiro_repasses: boolean | null
+          id: string
+          operacao_estoque_baixo: boolean | null
+          operacao_integracoes_erro: boolean | null
+          operacao_protese_pronta: boolean | null
+          pacientes_consentimentos: boolean | null
+          pacientes_novos_documentos: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          agenda_alteracoes?: boolean | null
+          agenda_lembretes?: boolean | null
+          agenda_novas_marcacoes?: boolean | null
+          canal_email?: boolean | null
+          canal_in_app?: boolean | null
+          canal_whatsapp?: boolean | null
+          created_at?: string | null
+          financeiro_falha_pagamento?: boolean | null
+          financeiro_faturas?: boolean | null
+          financeiro_repasses?: boolean | null
+          id?: string
+          operacao_estoque_baixo?: boolean | null
+          operacao_integracoes_erro?: boolean | null
+          operacao_protese_pronta?: boolean | null
+          pacientes_consentimentos?: boolean | null
+          pacientes_novos_documentos?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          agenda_alteracoes?: boolean | null
+          agenda_lembretes?: boolean | null
+          agenda_novas_marcacoes?: boolean | null
+          canal_email?: boolean | null
+          canal_in_app?: boolean | null
+          canal_whatsapp?: boolean | null
+          created_at?: string | null
+          financeiro_falha_pagamento?: boolean | null
+          financeiro_faturas?: boolean | null
+          financeiro_repasses?: boolean | null
+          id?: string
+          operacao_estoque_baixo?: boolean | null
+          operacao_integracoes_erro?: boolean | null
+          operacao_protese_pronta?: boolean | null
+          pacientes_consentimentos?: boolean | null
+          pacientes_novos_documentos?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          created_at: string | null
+          densidade_tabela: string | null
+          formato_data: string | null
+          formato_hora: string | null
+          id: string
+          idioma: string | null
+          moeda: string | null
+          tamanho_maximo_anexo: number | null
+          tema: string | null
+          tipos_arquivo_permitidos: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          densidade_tabela?: string | null
+          formato_data?: string | null
+          formato_hora?: string | null
+          id?: string
+          idioma?: string | null
+          moeda?: string | null
+          tamanho_maximo_anexo?: number | null
+          tema?: string | null
+          tipos_arquivo_permitidos?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          densidade_tabela?: string | null
+          formato_data?: string | null
+          formato_hora?: string | null
+          id?: string
+          idioma?: string | null
+          moeda?: string | null
+          tamanho_maximo_anexo?: number | null
+          tema?: string | null
+          tipos_arquivo_permitidos?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -3070,6 +3339,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_sessions: {
+        Row: {
+          created_at: string | null
+          dispositivo: string | null
+          id: string
+          ip_address: string | null
+          localizacao: string | null
+          navegador: string | null
+          ultima_atividade: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          dispositivo?: string | null
+          id?: string
+          ip_address?: string | null
+          localizacao?: string | null
+          navegador?: string | null
+          ultima_atividade?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          dispositivo?: string | null
+          id?: string
+          ip_address?: string | null
+          localizacao?: string | null
+          navegador?: string | null
+          ultima_atividade?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       usuarios: {
         Row: {

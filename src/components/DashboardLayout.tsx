@@ -15,6 +15,7 @@ import {
   Settings,
   FlaskConical,
   Package,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Navbar from "./Navbar";
@@ -100,6 +101,12 @@ const navigation = [
     href: "/configuracoes",
     icon: Settings,
     description: "Configurações da clínica",
+  },
+  {
+    name: "Perfil",
+    href: "/dashboard/perfil",
+    icon: User,
+    description: "Minha conta e preferências",
   },
 ];
 
