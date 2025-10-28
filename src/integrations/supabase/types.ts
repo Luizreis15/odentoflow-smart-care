@@ -594,14 +594,22 @@ export type Database = {
       }
       patient_documents: {
         Row: {
+          budget_id: string | null
           clinic_id: string
           content: string
+          contract_value: number | null
           created_at: string
           created_by: string
           document_type: string
           id: string
           metadata: Json | null
+          patient_address: string | null
+          patient_birth_date: string | null
+          patient_cpf: string | null
           patient_id: string
+          procedures_list: string | null
+          professional_cpf: string | null
+          professional_id: string | null
           signature_hash: string | null
           signed_at: string | null
           status: string
@@ -609,14 +617,22 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          budget_id?: string | null
           clinic_id: string
           content: string
+          contract_value?: number | null
           created_at?: string
           created_by: string
           document_type: string
           id?: string
           metadata?: Json | null
+          patient_address?: string | null
+          patient_birth_date?: string | null
+          patient_cpf?: string | null
           patient_id: string
+          procedures_list?: string | null
+          professional_cpf?: string | null
+          professional_id?: string | null
           signature_hash?: string | null
           signed_at?: string | null
           status?: string
@@ -624,14 +640,22 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          budget_id?: string | null
           clinic_id?: string
           content?: string
+          contract_value?: number | null
           created_at?: string
           created_by?: string
           document_type?: string
           id?: string
           metadata?: Json | null
+          patient_address?: string | null
+          patient_birth_date?: string | null
+          patient_cpf?: string | null
           patient_id?: string
+          procedures_list?: string | null
+          professional_cpf?: string | null
+          professional_id?: string | null
           signature_hash?: string | null
           signed_at?: string | null
           status?: string
@@ -640,10 +664,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "patient_documents_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "patient_documents_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_documents_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
             referencedColumns: ["id"]
           },
         ]

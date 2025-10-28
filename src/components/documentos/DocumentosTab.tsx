@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Plus } from "lucide-react";
 import { NovoDocumentoModal } from "./NovoDocumentoModal";
+import { NovoContratoModal } from "./NovoContratoModal";
 import { HistoricoDocumentosModal } from "./HistoricoDocumentosModal";
 
 interface DocumentosTabProps {
@@ -38,12 +39,17 @@ const documentTypes = [
 
 export const DocumentosTab = ({ patientId }: DocumentosTabProps) => {
   const [novoDocumentoOpen, setNovoDocumentoOpen] = useState(false);
+  const [novoContratoOpen, setNovoContratoOpen] = useState(false);
   const [historicoOpen, setHistoricoOpen] = useState(false);
   const [selectedDocType, setSelectedDocType] = useState<string | null>(null);
 
   const handleNovoClick = (type: string) => {
     setSelectedDocType(type);
-    setNovoDocumentoOpen(true);
+    if (type === "contrato") {
+      setNovoContratoOpen(true);
+    } else {
+      setNovoDocumentoOpen(true);
+    }
   };
 
   const handleHistoricoClick = (type: string) => {
@@ -120,6 +126,12 @@ export const DocumentosTab = ({ patientId }: DocumentosTabProps) => {
         onOpenChange={setNovoDocumentoOpen}
         patientId={patientId}
         documentType={selectedDocType}
+      />
+
+      <NovoContratoModal
+        open={novoContratoOpen}
+        onOpenChange={setNovoContratoOpen}
+        patientId={patientId}
       />
 
       <HistoricoDocumentosModal
