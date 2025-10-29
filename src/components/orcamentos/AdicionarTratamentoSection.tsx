@@ -50,7 +50,7 @@ export const AdicionarTratamentoSection = ({
         .from("planos_procedimentos_itens")
         .select(`
           *,
-          procedimentos:procedimento_id (*)
+          procedimentos!planos_procedimentos_itens_procedimento_id_fkey (*)
         `)
         .eq("plano_id", planoSelecionado);
 
@@ -59,6 +59,7 @@ export const AdicionarTratamentoSection = ({
       setProcedimentos(data || []);
     } catch (error) {
       console.error("Erro ao carregar procedimentos:", error);
+      toast.error("Erro ao carregar procedimentos do plano");
     }
   };
 
@@ -68,8 +69,7 @@ export const AdicionarTratamentoSection = ({
         .from("profissionais")
         .select("*")
         .eq("clinica_id", clinicaId)
-        .eq("ativo", true)
-        .eq("perfil", "dentista");
+        .eq("ativo", true);
 
       if (error) throw error;
 
