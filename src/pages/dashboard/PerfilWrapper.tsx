@@ -22,11 +22,26 @@ const PerfilWrapper = () => {
         return;
       }
 
+      // Check if user is super admin
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "super_admin")
+        .maybeSingle();
+
       const { data: profileData } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
         .single();
+
+      // Super admins can access without clinic
+      if (userRole) {
+        setProfile(profileData);
+        setLoading(false);
+        return;
+      }
 
       if (!profileData?.clinic_id) {
         navigate("/onboarding");
