@@ -70,24 +70,70 @@ export default function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           <Link to="/super-admin">
             <Button
               variant={isActive("/super-admin") ? "default" : "ghost"}
               className="w-full justify-start"
+              size="sm"
             >
               <LayoutDashboard className="mr-2 h-4 w-4" />
-              Dashboard
+              Visão Geral
             </Button>
           </Link>
           
+          <Link to="/super-admin/planos">
+            <Button
+              variant={isActive("/super-admin/planos") ? "default" : "ghost"}
+              className="w-full justify-start"
+              size="sm"
+            >
+              <Shield className="mr-2 h-4 w-4" />
+              Planos & Assinaturas
+            </Button>
+          </Link>
+
+          <Link to="/super-admin/modulos">
+            <Button
+              variant={isActive("/super-admin/modulos") ? "default" : "ghost"}
+              className="w-full justify-start"
+              size="sm"
+            >
+              <Shield className="mr-2 h-4 w-4" />
+              Módulos & Feature Flags
+            </Button>
+          </Link>
+
           <Link to="/super-admin/anamnese">
             <Button
               variant={isActive("/super-admin/anamnese") ? "default" : "ghost"}
               className="w-full justify-start"
+              size="sm"
             >
               <FileText className="mr-2 h-4 w-4" />
-              Modelos de Anamnese
+              Modelos & Templates
+            </Button>
+          </Link>
+
+          <Link to="/super-admin/locatarios">
+            <Button
+              variant={isActive("/super-admin/locatarios") ? "default" : "ghost"}
+              className="w-full justify-start"
+              size="sm"
+            >
+              <Shield className="mr-2 h-4 w-4" />
+              Locatários (Clínicas)
+            </Button>
+          </Link>
+
+          <Link to="/super-admin/auditoria">
+            <Button
+              variant={isActive("/super-admin/auditoria") ? "default" : "ghost"}
+              className="w-full justify-start"
+              size="sm"
+            >
+              <Shield className="mr-2 h-4 w-4" />
+              Auditoria
             </Button>
           </Link>
 
@@ -97,6 +143,7 @@ export default function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
             <Button
               variant="ghost"
               className="w-full justify-start text-muted-foreground hover:text-primary"
+              size="sm"
             >
               <LayoutDashboard className="mr-2 h-4 w-4" />
               Acessar Sistema Principal

@@ -1036,6 +1036,53 @@ export type Database = {
           },
         ]
       }
+      feature_flags: {
+        Row: {
+          allowlist_tenants: Json | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_enabled: boolean | null
+          key: string
+          module_id: string | null
+          name: string
+          rollout_percentage: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          allowlist_tenants?: Json | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          key: string
+          module_id?: string | null
+          name: string
+          rollout_percentage?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          allowlist_tenants?: Json | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          key?: string
+          module_id?: string | null
+          name?: string
+          rollout_percentage?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_flags_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "system_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_transactions: {
         Row: {
           category: string | null
@@ -3046,6 +3093,131 @@ export type Database = {
           },
         ]
       }
+      system_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          payload_diff: Json | null
+          resource: string
+          tenant_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          payload_diff?: Json | null
+          resource: string
+          tenant_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          payload_diff?: Json | null
+          resource?: string
+          tenant_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_audit_log_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system_modules: {
+        Row: {
+          category: string | null
+          code: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          category?: string | null
+          code: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          category?: string | null
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
+      system_plans: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          included_modules: Json | null
+          is_active: boolean | null
+          limits: Json | null
+          metered_items: Json | null
+          monthly_price: number | null
+          name: string
+          slug: string
+          trial_days: number | null
+          updated_at: string | null
+          yearly_price: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          included_modules?: Json | null
+          is_active?: boolean | null
+          limits?: Json | null
+          metered_items?: Json | null
+          monthly_price?: number | null
+          name: string
+          slug: string
+          trial_days?: number | null
+          updated_at?: string | null
+          yearly_price?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          included_modules?: Json | null
+          is_active?: boolean | null
+          limits?: Json | null
+          metered_items?: Json | null
+          monthly_price?: number | null
+          name?: string
+          slug?: string
+          trial_days?: number | null
+          updated_at?: string | null
+          yearly_price?: number | null
+        }
+        Relationships: []
+      }
       templates_contratos: {
         Row: {
           ativo: boolean | null
@@ -3084,6 +3256,48 @@ export type Database = {
           {
             foreignKeyName: "templates_contratos_clinica_id_fkey"
             columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_feature_overrides: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          feature_flag_id: string | null
+          id: string
+          is_enabled: boolean
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          feature_flag_id?: string | null
+          id?: string
+          is_enabled: boolean
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          feature_flag_id?: string | null
+          id?: string
+          is_enabled?: boolean
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_feature_overrides_feature_flag_id_fkey"
+            columns: ["feature_flag_id"]
+            isOneToOne: false
+            referencedRelation: "feature_flags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_feature_overrides_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "clinicas"
             referencedColumns: ["id"]

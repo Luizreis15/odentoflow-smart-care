@@ -29,6 +29,10 @@ import PerfilWrapper from "./pages/dashboard/PerfilWrapper";
 import ConfiguracoesWrapper from "./pages/dashboard/ConfiguracoesWrapper";
 import SuperAdminDashboardWrapper from "./pages/superadmin/DashboardWrapper";
 import GlobalAnamneseWrapper from "./pages/superadmin/GlobalAnamneseWrapper";
+import PlanosWrapper from "./pages/superadmin/PlanosWrapper";
+import ModulosWrapper from "./pages/superadmin/ModulosWrapper";
+import LocatariosWrapper from "./pages/superadmin/LocatariosWrapper";
+import AuditoriaWrapper from "./pages/superadmin/AuditoriaWrapper";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
@@ -84,7 +88,11 @@ function App() {
               
               {/* Super Admin Routes */}
               <Route path="/super-admin" element={<SuperAdminDashboardWrapper />} />
+              <Route path="/super-admin/planos" element={<PlanosWrapper />} />
+              <Route path="/super-admin/modulos" element={<ModulosWrapper />} />
               <Route path="/super-admin/anamnese" element={<GlobalAnamneseWrapper />} />
+              <Route path="/super-admin/locatarios" element={<LocatariosWrapper />} />
+              <Route path="/super-admin/auditoria" element={<AuditoriaWrapper />} />
               
               {/* Portal do Paciente - Rotas Públicas */}
               <Route path="/portal/auth" element={<PortalAuth />} />
