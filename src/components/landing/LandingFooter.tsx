@@ -1,141 +1,152 @@
-import { Facebook, Instagram, Linkedin, Youtube, Mail, Phone, MapPin, FileText } from 'lucide-react';
+import { Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
 
 export default function LandingFooter() {
   return (
-    <footer className="bg-[#2C3E50] text-white">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
-          {/* Coluna 1 - Informações da Empresa */}
-          <div className="space-y-4">
-            <h3 className="text-2xl font-bold">Flowdent</h3>
-            <p className="text-sm font-semibold text-[hsl(var(--flow-turquoise))]">
-              Gestão Inteligente para Clínicas Odontológicas
-            </p>
-            <p className="text-sm text-gray-300">
-              Desenvolvido pela Hera Digital, o Flowdent é a solução completa para transformar a gestão da sua clínica odontológica.
-            </p>
-            
-            <div className="space-y-2 text-sm pt-2">
-              <div className="flex items-start gap-2">
-                <MapPin size={16} className="mt-0.5 text-[hsl(var(--flow-turquoise))] flex-shrink-0" />
-                <span className="text-gray-300">Av. Dom Pedro II, 1107 - Sala 01, Santo André/SP</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone size={16} className="text-[hsl(var(--flow-turquoise))]" />
-                <span className="text-gray-300">(11) 91551-9060</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Mail size={16} className="text-[hsl(var(--flow-turquoise))]" />
-                <span className="text-gray-300">contato@flowdent.com.br</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <FileText size={16} className="mt-0.5 text-[hsl(var(--flow-turquoise))] flex-shrink-0" />
-                <span className="text-gray-300 text-xs">CNPJ: 57.025.353/0001-63</span>
-              </div>
+    <footer className="bg-white border-t border-gray-200">
+      {/* Seção Superior */}
+      <div className="bg-gray-50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            {/* Logo e Descrição */}
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-[hsl(var(--flow-turquoise))] mb-2">Flowdent</h3>
+              <p className="text-sm text-gray-600">
+                Desenvolvido pela Hera Digital em Santo André - São Paulo.<br />
+                Gestão inteligente para clínicas odontológicas.
+              </p>
             </div>
 
-            <div className="flex gap-3 pt-4">
+            {/* Badges */}
+            <div className="flex items-center gap-4">
+              <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200">
+                <p className="text-xs text-gray-500 mb-1">Verificado por</p>
+                <p className="text-sm font-semibold text-gray-700">ReclameAQUI</p>
+              </div>
+              <a 
+                href="#app-store" 
+                className="bg-black text-white px-4 py-2 rounded-lg text-xs font-medium hover:bg-gray-800 transition"
+              >
+                Baixe na App Store
+              </a>
+              <a 
+                href="#google-play" 
+                className="bg-black text-white px-4 py-2 rounded-lg text-xs font-medium hover:bg-gray-800 transition"
+              >
+                Baixe na Google Play
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Seção de Links */}
+      <div className="container mx-auto px-4 py-12">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
+          {/* Suporte */}
+          <div>
+            <h4 className="font-semibold text-gray-900 mb-4 text-sm">Suporte</h4>
+            <ul className="space-y-2.5">
+              <li><a href="#demo" className="text-sm text-gray-600 hover:text-[hsl(var(--flow-turquoise))] transition">Pedir demonstração</a></li>
+              <li><a href="#duvidas" className="text-sm text-gray-600 hover:text-[hsl(var(--flow-turquoise))] transition">Tire suas dúvidas</a></li>
+              <li><a href="#ajuda" className="text-sm text-gray-600 hover:text-[hsl(var(--flow-turquoise))] transition">Central de ajuda</a></li>
+            </ul>
+          </div>
+
+          {/* Institucional */}
+          <div>
+            <h4 className="font-semibold text-gray-900 mb-4 text-sm">Institucional</h4>
+            <ul className="space-y-2.5">
+              <li><a href="#sobre" className="text-sm text-gray-600 hover:text-[hsl(var(--flow-turquoise))] transition">Sobre nós</a></li>
+              <li><a href="#blog" className="text-sm text-gray-600 hover:text-[hsl(var(--flow-turquoise))] transition">Blog Flowdent</a></li>
+            </ul>
+          </div>
+
+          {/* Produto */}
+          <div>
+            <h4 className="font-semibold text-gray-900 mb-4 text-sm">Produto</h4>
+            <ul className="space-y-2.5">
+              <li><a href="#planos" className="text-sm text-gray-600 hover:text-[hsl(var(--flow-turquoise))] transition">Planos e preços</a></li>
+              <li><a href="#contrato" className="text-sm text-gray-600 hover:text-[hsl(var(--flow-turquoise))] transition">Contrato Odontológico</a></li>
+              <li><a href="#depoimentos" className="text-sm text-gray-600 hover:text-[hsl(var(--flow-turquoise))] transition">Depoimentos</a></li>
+              <li><a href="#clube" className="text-sm text-gray-600 hover:text-[hsl(var(--flow-turquoise))] transition">Flowdent Clube</a></li>
+            </ul>
+          </div>
+
+          {/* Recursos 1 */}
+          <div>
+            <h4 className="font-semibold text-gray-900 mb-4 text-sm">Recursos</h4>
+            <ul className="space-y-2.5">
+              <li><a href="#agenda" className="text-sm text-gray-600 hover:text-[hsl(var(--flow-turquoise))] transition">Agenda odontológica</a></li>
+              <li><a href="#prontuario" className="text-sm text-gray-600 hover:text-[hsl(var(--flow-turquoise))] transition">Prontuário digital</a></li>
+              <li><a href="#anamnese" className="text-sm text-gray-600 hover:text-[hsl(var(--flow-turquoise))] transition">Anamnese inteligente</a></li>
+            </ul>
+          </div>
+
+          {/* Recursos 2 */}
+          <div>
+            <h4 className="font-semibold text-gray-900 mb-4 text-sm">Recursos</h4>
+            <ul className="space-y-2.5">
+              <li><a href="#receita" className="text-sm text-gray-600 hover:text-[hsl(var(--flow-turquoise))] transition">Receita digital</a></li>
+              <li><a href="#financeiro" className="text-sm text-gray-600 hover:text-[hsl(var(--flow-turquoise))] transition">Gestão financeira</a></li>
+            </ul>
+          </div>
+
+          {/* Compare */}
+          <div>
+            <h4 className="font-semibold text-gray-900 mb-4 text-sm">Compare</h4>
+            <ul className="space-y-2.5">
+              <li><a href="#vs-simples" className="text-sm text-gray-600 hover:text-[hsl(var(--flow-turquoise))] transition">vs Simples Dental</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Barra Inferior */}
+      <div className="border-t border-gray-200">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            {/* Copyright e Links */}
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 text-xs text-gray-500">
+              <span>© 2025 Flowdent - Todos os direitos reservados</span>
+              <span className="hidden md:inline">|</span>
+              <a href="#termos" className="hover:text-[hsl(var(--flow-turquoise))] transition">Termos de uso</a>
+              <span className="hidden md:inline">|</span>
+              <a href="#privacidade" className="hover:text-[hsl(var(--flow-turquoise))] transition">Política de Privacidade</a>
+            </div>
+
+            {/* Redes Sociais */}
+            <div className="flex gap-4">
               <a 
                 href="https://facebook.com/flowdent" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-full bg-white/10 hover:bg-[hsl(var(--flow-turquoise))] transition-colors flex items-center justify-center"
+                className="text-gray-400 hover:text-[hsl(var(--flow-turquoise))] transition"
                 aria-label="Facebook"
               >
-                <Facebook size={16} />
+                <Facebook size={20} />
               </a>
               <a 
                 href="https://instagram.com/flowdent" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-full bg-white/10 hover:bg-[hsl(var(--flow-turquoise))] transition-colors flex items-center justify-center"
+                className="text-gray-400 hover:text-[hsl(var(--flow-turquoise))] transition"
                 aria-label="Instagram"
               >
-                <Instagram size={16} />
+                <Instagram size={20} />
               </a>
               <a 
                 href="#" 
-                className="w-9 h-9 rounded-full bg-white/10 hover:bg-[hsl(var(--flow-turquoise))] transition-colors flex items-center justify-center"
-                aria-label="LinkedIn"
-              >
-                <Linkedin size={16} />
-              </a>
-              <a 
-                href="#" 
-                className="w-9 h-9 rounded-full bg-white/10 hover:bg-[hsl(var(--flow-turquoise))] transition-colors flex items-center justify-center"
+                className="text-gray-400 hover:text-[hsl(var(--flow-turquoise))] transition"
                 aria-label="YouTube"
               >
-                <Youtube size={16} />
-              </a>
-            </div>
-          </div>
-
-          {/* Coluna 2 - Produto */}
-          <div>
-            <h4 className="font-semibold mb-4 text-[hsl(var(--flow-turquoise))] text-sm uppercase tracking-wider">Produto</h4>
-            <ul className="space-y-2.5 text-sm">
-              <li><a href="#recursos" className="text-gray-300 hover:text-white transition">Recursos</a></li>
-              <li><a href="#planos" className="text-gray-300 hover:text-white transition">Planos e Preços</a></li>
-              <li><a href="#integracoes" className="text-gray-300 hover:text-white transition">Integrações</a></li>
-              <li><a href="#atualizacoes" className="text-gray-300 hover:text-white transition">Atualizações</a></li>
-            </ul>
-          </div>
-
-          {/* Coluna 3 - Suporte */}
-          <div>
-            <h4 className="font-semibold mb-4 text-[hsl(var(--flow-turquoise))] text-sm uppercase tracking-wider">Suporte</h4>
-            <ul className="space-y-2.5 text-sm">
-              <li><a href="#ajuda" className="text-gray-300 hover:text-white transition">Central de Ajuda</a></li>
-              <li><a href="#especialista" className="text-gray-300 hover:text-white transition">Falar com Especialista</a></li>
-              <li><a href="#tutoriais" className="text-gray-300 hover:text-white transition">Tutoriais em Vídeo</a></li>
-              <li><a href="#status" className="text-gray-300 hover:text-white transition">Status do Sistema</a></li>
-            </ul>
-          </div>
-
-          {/* Coluna 4 - Empresa */}
-          <div>
-            <h4 className="font-semibold mb-4 text-[hsl(var(--flow-turquoise))] text-sm uppercase tracking-wider">Empresa</h4>
-            <ul className="space-y-2.5 text-sm">
-              <li><a href="#sobre" className="text-gray-300 hover:text-white transition">Sobre</a></li>
-              <li><a href="#blog" className="text-gray-300 hover:text-white transition">Blog</a></li>
-              <li><a href="#cases" className="text-gray-300 hover:text-white transition">Cases de Sucesso</a></li>
-              <li><a href="#contato" className="text-gray-300 hover:text-white transition">Contato</a></li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Barra inferior */}
-        <div className="border-t border-white/10 mt-10 pt-6">
-          <div className="flex flex-col lg:flex-row justify-between items-center gap-4 text-xs">
-            {/* Esquerda */}
-            <p className="text-gray-400 text-center lg:text-left">
-              © 2025 Flowdent by Hera Digital. Todos os direitos reservados.
-            </p>
-
-            {/* Centro */}
-            <div className="flex flex-wrap justify-center gap-3 text-gray-400">
-              <a href="#privacidade" className="hover:text-white transition">Política de Privacidade</a>
-              <span className="hidden sm:inline">|</span>
-              <a href="#termos" className="hover:text-white transition">Termos de Uso</a>
-              <span className="hidden sm:inline">|</span>
-              <a href="#lgpd" className="hover:text-white transition">LGPD</a>
-              <span className="hidden sm:inline">|</span>
-              <a href="#cookies" className="hover:text-white transition">Cookies</a>
-            </div>
-
-            {/* Direita - Badges */}
-            <div className="flex gap-2">
-              <a 
-                href="#app-store" 
-                className="bg-white/10 hover:bg-white/20 transition px-3 py-1.5 rounded text-xs"
-              >
-                App Store
+                <Youtube size={20} />
               </a>
               <a 
-                href="#google-play" 
-                className="bg-white/10 hover:bg-white/20 transition px-3 py-1.5 rounded text-xs"
+                href="#" 
+                className="text-gray-400 hover:text-[hsl(var(--flow-turquoise))] transition"
+                aria-label="LinkedIn"
               >
-                Google Play
+                <Linkedin size={20} />
               </a>
             </div>
           </div>
