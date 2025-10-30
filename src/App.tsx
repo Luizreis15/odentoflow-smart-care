@@ -29,6 +29,7 @@ import PerfilWrapper from "./pages/dashboard/PerfilWrapper";
 import ConfiguracoesWrapper from "./pages/dashboard/ConfiguracoesWrapper";
 import SuperAdminDashboardWrapper from "./pages/superadmin/DashboardWrapper";
 import GlobalAnamneseWrapper from "./pages/superadmin/GlobalAnamneseWrapper";
+import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 
@@ -51,6 +52,7 @@ function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/landing" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/onboarding/welcome" element={<Welcome />} />
