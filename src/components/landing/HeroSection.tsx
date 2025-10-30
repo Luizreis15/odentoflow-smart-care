@@ -72,7 +72,7 @@ export default function HeroSection() {
                 asChild
                 className="bg-[hsl(var(--flowdent-blue))] text-white hover:bg-[hsl(var(--flow-turquoise))] transition-all duration-300 text-lg px-8 py-6 shadow-lg hover:shadow-xl"
               >
-                <Link to="/auth">
+                <Link to="/auth?signup=true">
                   Comece Agora!
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>

@@ -27,7 +27,7 @@ export default function AgendaRecurso() {
                   size="lg"
                   className="bg-[hsl(var(--flowdent-blue))] text-white hover:bg-[hsl(var(--flow-turquoise))]"
                 >
-                  <Link to="/auth">Começar Agora</Link>
+                  <Link to="/auth?signup=true">Começar Agora</Link>
                 </Button>
               </div>
               <div>
@@ -155,7 +155,7 @@ export default function AgendaRecurso() {
               size="lg"
               className="bg-[hsl(var(--flowdent-blue))] text-white hover:bg-[hsl(var(--flow-turquoise))]"
             >
-              <Link to="/auth">Experimentar Grátis por 7 Dias</Link>
+              <Link to="/auth?signup=true">Experimentar Grátis por 7 Dias</Link>
             </Button>
           </div>
         </section>
