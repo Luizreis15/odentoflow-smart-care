@@ -14,6 +14,11 @@ const logStep = (step: string, details?: any) => {
 
 // Price IDs for each plan
 const PRICE_MAP: Record<string, string> = {
+  // Novos planos
+  "solo": "price_1SMtYEC0BlmmmqSH5o79iJkb",
+  "crescimento": "price_1SMtZoC0BlmmmqSHCw3wx9XG",
+  "premium": "price_1SMtbqC0BlmmmqSHAJZCvlyA",
+  // Planos antigos (manter para compatibilidade)
   "starter": "price_1SMtYEC0BlmmmqSH5o79iJkb",
   "professional": "price_1SMtZoC0BlmmmqSHCw3wx9XG",
   "enterprise": "price_1SMtbqC0BlmmmqSHAJZCvlyA",

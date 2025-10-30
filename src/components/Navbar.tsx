@@ -64,6 +64,9 @@ const Navbar = ({ user }: NavbarProps) => {
               <DropdownMenuItem onClick={() => navigate("/dashboard/profile")}>
                 Perfil
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/dashboard/assinatura")}>
+                Assinatura e Planos
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                 <LogOut className="mr-2 h-4 w-4" />
                 Sair

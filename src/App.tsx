@@ -27,6 +27,7 @@ import ProdutosWrapper from "./pages/dashboard/ProdutosWrapper";
 import MovimentacoesWrapper from "./pages/dashboard/MovimentacoesWrapper";
 import PerfilWrapper from "./pages/dashboard/PerfilWrapper";
 import ConfiguracoesWrapper from "./pages/dashboard/ConfiguracoesWrapper";
+import AssinaturaWrapper from "./pages/dashboard/AssinaturaWrapper";
 import SuperAdminDashboardWrapper from "./pages/superadmin/DashboardWrapper";
 import GlobalAnamneseWrapper from "./pages/superadmin/GlobalAnamneseWrapper";
 import PlanosWrapper from "./pages/superadmin/PlanosWrapper";
@@ -86,6 +87,7 @@ function App() {
               <Route path="/dashboard/produtos" element={<ProdutosWrapper />} />
               <Route path="/dashboard/movimentacoes" element={<MovimentacoesWrapper />} />
               <Route path="/dashboard/profile" element={<PerfilWrapper />} />
+              <Route path="/dashboard/assinatura" element={<AssinaturaWrapper />} />
               <Route path="/dashboard/configuracoes" element={<ConfiguracoesWrapper />} />
               
               {/* Super Admin Routes */}
