@@ -31,6 +31,9 @@ export function EntradaEstoqueModal({ open, onOpenChange }: EntradaEstoqueModalP
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [items, setItems] = useState<ItemEntrada[]>([]);
+  const [isNewProduct, setIsNewProduct] = useState(false);
+  const [newProductName, setNewProductName] = useState("");
+  const [newProductBrand, setNewProductBrand] = useState("");
 
   const { data: profile } = useQuery({
     queryKey: ["profile"],
@@ -75,32 +78,106 @@ export function EntradaEstoqueModal({ open, onOpenChange }: EntradaEstoqueModalP
     enabled: !!profile?.clinic_id,
   });
 
-  const addItem = (data: any) => {
-    if (!data.product_id || !data.quantidade || !data.custo_unitario || !data.location_id) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos obrigatórios",
-        variant: "destructive",
-      });
-      return;
+  const addItem = async (data: any) => {
+    if (isNewProduct) {
+      // Validate new product fields
+      if (!newProductName.trim() || !data.quantidade || !data.custo_unitario || !data.location_id) {
+        toast({
+          title: "Campos obrigatórios",
+          description: "Preencha nome do produto, quantidade, custo e local",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create new product first
+      setIsSubmitting(true);
+      try {
+        const { count } = await supabase
+          .from("products")
+          .select("*", { count: "exact", head: true })
+          .eq("clinica_id", profile?.clinic_id);
+
+        const codigoInterno = `PROD-${String((count || 0) + 1).padStart(6, "0")}`;
+
+        const { data: newProduct, error } = await supabase
+          .from("products")
+          .insert({
+            clinica_id: profile?.clinic_id,
+            codigo_interno: codigoInterno,
+            nome: newProductName,
+            marca: newProductBrand || null,
+            unidade: "un",
+            estoque_minimo: 0,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        const newItem: ItemEntrada = {
+          product_id: newProduct.id,
+          quantidade: Number(data.quantidade),
+          custo_unitario: Number(data.custo_unitario),
+          batch_codigo: data.batch_codigo || undefined,
+          data_validade: data.data_validade || undefined,
+          location_id: data.location_id,
+        };
+
+        setItems([...items, newItem]);
+        
+        // Reset fields
+        setNewProductName("");
+        setNewProductBrand("");
+        setValue("quantidade", "");
+        setValue("custo_unitario", "");
+        setValue("batch_codigo", "");
+        setValue("data_validade", "");
+        
+        // Invalidate products query to refresh the list
+        queryClient.invalidateQueries({ queryKey: ["products"] });
+
+        toast({
+          title: "Produto cadastrado",
+          description: "Produto adicionado com sucesso",
+        });
+      } catch (error: any) {
+        toast({
+          title: "Erro ao cadastrar produto",
+          description: error.message,
+          variant: "destructive",
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+    } else {
+      // Existing product selection
+      if (!data.product_id || !data.quantidade || !data.custo_unitario || !data.location_id) {
+        toast({
+          title: "Campos obrigatórios",
+          description: "Preencha todos os campos obrigatórios",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const newItem: ItemEntrada = {
+        product_id: data.product_id,
+        quantidade: Number(data.quantidade),
+        custo_unitario: Number(data.custo_unitario),
+        batch_codigo: data.batch_codigo || undefined,
+        data_validade: data.data_validade || undefined,
+        location_id: data.location_id,
+      };
+
+      setItems([...items, newItem]);
+      
+      // Reset form fields
+      setValue("quantidade", "");
+      setValue("custo_unitario", "");
+      setValue("batch_codigo", "");
+      setValue("data_validade", "");
     }
-
-    const newItem: ItemEntrada = {
-      product_id: data.product_id,
-      quantidade: Number(data.quantidade),
-      custo_unitario: Number(data.custo_unitario),
-      batch_codigo: data.batch_codigo || undefined,
-      data_validade: data.data_validade || undefined,
-      location_id: data.location_id,
-    };
-
-    setItems([...items, newItem]);
-    
-    // Reset form fields
-    setValue("quantidade", "");
-    setValue("custo_unitario", "");
-    setValue("batch_codigo", "");
-    setValue("data_validade", "");
   };
 
   const removeItem = (index: number) => {
@@ -239,22 +316,65 @@ export function EntradaEstoqueModal({ open, onOpenChange }: EntradaEstoqueModalP
           <div className="border rounded-lg p-4 space-y-4">
             <h3 className="font-semibold">Adicionar Item</h3>
             
+            {/* Toggle between new product and existing product */}
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <Button
+                type="button"
+                variant={!isNewProduct ? "default" : "outline"}
+                onClick={() => setIsNewProduct(false)}
+                className="w-full"
+              >
+                Selecionar Produto
+              </Button>
+              <Button
+                type="button"
+                variant={isNewProduct ? "default" : "outline"}
+                onClick={() => setIsNewProduct(true)}
+                className="w-full"
+              >
+                Cadastrar Produto
+              </Button>
+            </div>
+            
             <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <Label htmlFor="product_id">Produto *</Label>
-                <Select onValueChange={(value) => setValue("product_id", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o produto" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products?.map((product) => (
-                      <SelectItem key={product.id} value={product.id}>
-                        {product.nome} {product.marca && `- ${product.marca}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {isNewProduct ? (
+                <>
+                  <div className="col-span-2">
+                    <Label htmlFor="new_product_name">Nome do Produto *</Label>
+                    <Input
+                      id="new_product_name"
+                      value={newProductName}
+                      onChange={(e) => setNewProductName(e.target.value)}
+                      placeholder="Digite o nome do produto"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="new_product_brand">Fabricante/Marca</Label>
+                    <Input
+                      id="new_product_brand"
+                      value={newProductBrand}
+                      onChange={(e) => setNewProductBrand(e.target.value)}
+                      placeholder="Digite o fabricante"
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="col-span-2">
+                  <Label htmlFor="product_id">Produto *</Label>
+                  <Select onValueChange={(value) => setValue("product_id", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o produto" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {products?.map((product) => (
+                        <SelectItem key={product.id} value={product.id}>
+                          {product.nome} {product.marca && `- ${product.marca}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div>
                 <Label htmlFor="quantidade">Quantidade *</Label>
