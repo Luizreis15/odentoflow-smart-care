@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Package, AlertTriangle, TrendingDown, DollarSign, Plus, Upload, ArrowDown, ArrowUp } from "lucide-react";
+import { Package, AlertTriangle, TrendingDown, DollarSign, Plus, Upload, ArrowDown, ArrowUp, List } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { EntradaEstoqueModal } from "@/components/estoque/EntradaEstoqueModal";
 import { SaidaEstoqueModal } from "@/components/estoque/SaidaEstoqueModal";
 import { UploadXMLModal } from "@/components/estoque/UploadXMLModal";
+import { VisaoEstoqueModal } from "@/components/estoque/VisaoEstoqueModal";
 
 export default function Estoque() {
   const [entradaOpen, setEntradaOpen] = useState(false);
   const [saidaOpen, setSaidaOpen] = useState(false);
   const [xmlOpen, setXmlOpen] = useState(false);
+  const [visaoOpen, setVisaoOpen] = useState(false);
   const { data: profile } = useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
@@ -100,6 +102,10 @@ export default function Estoque() {
           <p className="text-muted-foreground">Visão geral do controle de estoque</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setVisaoOpen(true)}>
+            <List className="mr-2 h-4 w-4" />
+            Visão do Estoque
+          </Button>
           <Button variant="outline" onClick={() => setSaidaOpen(true)}>
             <ArrowDown className="mr-2 h-4 w-4" />
             Saída
@@ -217,6 +223,7 @@ export default function Estoque() {
       <EntradaEstoqueModal open={entradaOpen} onOpenChange={setEntradaOpen} />
       <SaidaEstoqueModal open={saidaOpen} onOpenChange={setSaidaOpen} />
       <UploadXMLModal open={xmlOpen} onOpenChange={setXmlOpen} />
+      <VisaoEstoqueModal open={visaoOpen} onOpenChange={setVisaoOpen} />
     </div>
   );
 }
