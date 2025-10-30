@@ -4,7 +4,7 @@ import { MessageCircle } from 'lucide-react';
 export default function WhatsAppButton() {
   const handleWhatsAppClick = () => {
     window.open(
-      'https://wa.me/5531999999999?text=Olá! Gostaria de saber mais sobre o Flowdent.',
+      'https://wa.me/5511915519060?text=Olá! Gostaria de saber mais sobre o Flowdent.',
       '_blank'
     );
   };

@@ -71,7 +71,7 @@ export default function LandingFooter() {
               </li>
               <li className="flex items-start gap-2">
                 <Phone size={16} className="mt-1 text-[hsl(var(--flow-turquoise))]" />
-                <span>(31) 99999-9999</span>
+                <span>(11) 91551-9060</span>
               </li>
               <li className="flex items-start gap-2">
                 <MapPin size={16} className="mt-1 text-[hsl(var(--flow-turquoise))]" />
