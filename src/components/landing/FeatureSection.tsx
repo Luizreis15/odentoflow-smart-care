@@ -93,7 +93,7 @@ export default function FeatureSection({
                 size="lg"
               >
                 <Link to="/auth">
-                  {ctaText}
+                  Experimente Grátis
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>

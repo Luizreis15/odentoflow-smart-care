@@ -63,7 +63,7 @@ export default function CTASection() {
                 className="bg-white text-[hsl(var(--flowdent-blue))] hover:bg-white/90 transition-all duration-300 text-lg px-8 py-6 shadow-xl"
               >
                 <Link to="/auth">
-                  Mude Já Sua Gestão!
+                  Comece Grátis Agora
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
@@ -73,13 +73,10 @@ export default function CTASection() {
               <Button 
                 size="lg"
                 variant="outline"
-                asChild
                 className="border-2 border-white bg-white text-[hsl(var(--flow-turquoise))] hover:bg-white/10 hover:text-white transition-all duration-300 text-lg px-8 py-6"
               >
-                <Link to="/auth">
-                  <Play className="mr-2 h-5 w-5" />
-                  Inicie de Graça
-                </Link>
+                <Play className="mr-2 h-5 w-5" />
+                Agendar Demonstração
               </Button>
             </motion.div>
           </motion.div>

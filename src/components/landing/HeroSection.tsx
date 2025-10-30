@@ -81,13 +81,10 @@ export default function HeroSection() {
               <Button 
                 size="lg"
                 variant="outline"
-                asChild
                 className="border-2 border-[hsl(var(--flow-turquoise))] text-[hsl(var(--flow-turquoise))] hover:bg-[hsl(var(--flow-turquoise))] hover:text-white transition-all duration-300 text-lg px-8 py-6"
               >
-                <Link to="/auth">
-                  <Play className="mr-2 h-5 w-5" />
-                  Comece Sem Cartão!
-                </Link>
+                <Play className="mr-2 h-5 w-5" />
+                Agendar Demonstração
               </Button>
             </motion.div>
 
