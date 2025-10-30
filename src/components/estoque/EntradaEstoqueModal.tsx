@@ -172,31 +172,38 @@ export function EntradaEstoqueModal({ open, onOpenChange }: EntradaEstoqueModalP
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Get or create default location
-      const { data: defaultLocation } = await supabase
+      // Get default location
+      const { data: locations, error: locError } = await supabase
         .from("stock_locations")
         .select("id")
         .eq("clinica_id", profile.clinic_id)
         .eq("ativo", true)
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
 
-      let locationId = defaultLocation?.id;
+      if (locError) throw locError;
 
-      if (!locationId) {
-        const { data: newLocation } = await supabase
+      let locationId: string;
+
+      if (!locations || locations.length === 0) {
+        // Create default location
+        const { data: newLocation, error: createError } = await supabase
           .from("stock_locations")
           .insert({
             clinica_id: profile.clinic_id,
             nome: "Estoque Principal",
             tipo: "deposito",
+            ativo: true,
           })
           .select("id")
           .single();
-        locationId = newLocation?.id;
-      }
 
-      if (!locationId) throw new Error("Não foi possível criar local de estoque");
+        if (createError) throw createError;
+        if (!newLocation) throw new Error("Não foi possível criar local de estoque");
+        
+        locationId = newLocation.id;
+      } else {
+        locationId = locations[0].id;
+      }
 
       // Process each item
       for (const item of items) {
