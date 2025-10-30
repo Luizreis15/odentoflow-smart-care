@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
@@ -32,18 +33,22 @@ const Auth = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [signupStep, setSignupStep] = useState(1); // 1 = Suas informações, 2 = Dados da clínica
   
   // Login fields
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   
-  // Signup fields
+  // Signup fields - Step 1
   const [signupEmail, setSignupEmail] = useState("");
-  const [signupPassword, setSignupPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [clinicName, setClinicName] = useState("");
-  const [clinicCNPJ, setClinicCNPJ] = useState("");
   const [clinicPhone, setClinicPhone] = useState("");
+  
+  // Signup fields - Step 2
+  const [clinicName, setClinicName] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [userRole, setUserRole] = useState("");
+  const [howDidYouKnow, setHowDidYouKnow] = useState("");
 
   useEffect(() => {
     const checkUser = async () => {
@@ -133,6 +138,32 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  const handleContinueStep1 = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate step 1 fields
+    if (!signupEmail.trim() || !fullName.trim() || !clinicPhone.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Erro de Validação",
+        description: "Por favor, preencha todos os campos obrigatórios",
+      });
+      return;
+    }
+
+    const emailValidation = z.string().email("Email inválido").safeParse(signupEmail);
+    if (!emailValidation.success) {
+      toast({
+        variant: "destructive",
+        title: "Erro de Validação",
+        description: "Por favor, insira um email válido",
+      });
+      return;
+    }
+
+    setSignupStep(2);
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -160,6 +191,15 @@ const Auth = () => {
       return;
     }
 
+    if (!userRole) {
+      toast({
+        variant: "destructive",
+        title: "Erro de Validação",
+        description: "Por favor, selecione sua função/atuação",
+      });
+      return;
+    }
+
     setLoading(true);
 
     const { error } = await supabase.auth.signUp({
@@ -170,8 +210,9 @@ const Auth = () => {
         data: {
           full_name: validation.data.fullName,
           clinic_name: clinicName,
-          clinic_cnpj: clinicCNPJ,
           clinic_phone: clinicPhone,
+          user_role: userRole,
+          how_did_you_know: howDidYouKnow,
         },
       },
     });
@@ -190,6 +231,7 @@ const Auth = () => {
         description: "Você já pode fazer login.",
       });
       setIsSignUp(false);
+      setSignupStep(1);
     }
   };
 
@@ -307,38 +349,52 @@ const Auth = () => {
               // SIGNUP FORM
               <>
                 <div className="text-center">
-                  <h1 className="text-3xl font-bold text-[hsl(var(--flowdent-blue))] mb-2">
-                    Criar sua conta
+                  <h1 className="text-2xl font-bold text-[hsl(var(--flowdent-blue))] mb-2">
+                    Flowdent
                   </h1>
-                  <p className="text-[hsl(var(--slate-gray))]">
-                    Preencha os dados para começar
+                  <p className="text-[hsl(var(--slate-gray))] mb-6">
+                    {signupStep === 1 
+                      ? "Teste de graça por 7 dias. Não é necessário informar um cartão de crédito para começar, pague somente se gostar."
+                      : "Quase lá! Precisamos de mais algumas informações para personalizar sua experiência."
+                    }
                   </p>
                 </div>
 
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  {/* Dados Pessoais */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-[hsl(var(--slate-gray))] uppercase">
-                      Seus dados
-                    </h3>
+                {/* Tabs */}
+                <div className="flex gap-2 mb-6">
+                  <button
+                    type="button"
+                    className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
+                      signupStep === 1
+                        ? "bg-[hsl(var(--flowdent-blue)/0.1)] text-[hsl(var(--flowdent-blue))]"
+                        : "bg-gray-100 text-gray-400"
+                    }`}
+                    onClick={() => setSignupStep(1)}
+                  >
+                    Suas informações
+                  </button>
+                  <button
+                    type="button"
+                    className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
+                      signupStep === 2
+                        ? "bg-[hsl(var(--flowdent-blue)/0.1)] text-[hsl(var(--flowdent-blue))]"
+                        : "bg-gray-100 text-gray-400"
+                    }`}
+                    disabled={signupStep === 1}
+                  >
+                    Dados da clínica
+                  </button>
+                </div>
+
+                {signupStep === 1 ? (
+                  // STEP 1 - Suas informações
+                  <form onSubmit={handleContinueStep1} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-name">Nome Completo *</Label>
-                      <Input
-                        id="signup-name"
-                        type="text"
-                        placeholder="Dr. João Silva"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        required
-                        className="h-12"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email *</Label>
+                      <Label htmlFor="signup-email">E-mail</Label>
                       <Input
                         id="signup-email"
                         type="email"
-                        placeholder="seu@email.com"
+                        placeholder="email@email.com"
                         value={signupEmail}
                         onChange={(e) => setSignupEmail(e.target.value)}
                         required
@@ -346,31 +402,59 @@ const Auth = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-password">Senha *</Label>
+                      <Label htmlFor="signup-name">Seu nome</Label>
                       <Input
-                        id="signup-password"
-                        type="password"
-                        placeholder="Mínimo 8 caracteres"
-                        value={signupPassword}
-                        onChange={(e) => setSignupPassword(e.target.value)}
+                        id="signup-name"
+                        type="text"
+                        placeholder="Ex: Leandro Martins"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
                         required
-                        minLength={8}
                         className="h-12"
                       />
                     </div>
-                  </div>
-
-                  {/* Dados da Clínica */}
-                  <div className="space-y-4 pt-4 border-t">
-                    <h3 className="text-sm font-semibold text-[hsl(var(--slate-gray))] uppercase">
-                      Dados da clínica
-                    </h3>
                     <div className="space-y-2">
-                      <Label htmlFor="clinic-name">Nome da Clínica *</Label>
+                      <Label htmlFor="clinic-phone">WhatsApp ou Celular da clínica</Label>
+                      <Input
+                        id="clinic-phone"
+                        type="tel"
+                        placeholder="(00) 00000-0000"
+                        value={clinicPhone}
+                        onChange={(e) => setClinicPhone(e.target.value)}
+                        required
+                        className="h-12"
+                      />
+                    </div>
+
+                    <Button 
+                      type="submit" 
+                      className="w-full h-12 bg-[hsl(var(--flowdent-blue))] hover:bg-[hsl(var(--flow-turquoise))]"
+                    >
+                      Continuar
+                    </Button>
+
+                    <div className="text-center">
+                      <p className="text-sm text-[hsl(var(--slate-gray))]">
+                        Já tem uma conta?{" "}
+                        <button
+                          type="button"
+                          onClick={() => setIsSignUp(false)}
+                          className="text-[hsl(var(--flowdent-blue))] font-semibold hover:underline"
+                        >
+                          Entrar
+                        </button>
+                      </p>
+                    </div>
+                  </form>
+                ) : (
+                  // STEP 2 - Dados da clínica
+                  <form onSubmit={handleSignUp} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="clinic-name">Nome da clínica</Label>
                       <Input
                         id="clinic-name"
                         type="text"
-                        placeholder="Clínica Odonto Saúde"
+                        placeholder="Ex: Clínica Odonto Sorrir"
                         value={clinicName}
                         onChange={(e) => setClinicName(e.target.value)}
                         required
@@ -378,61 +462,75 @@ const Auth = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="clinic-cnpj">CNPJ</Label>
+                      <Label htmlFor="signup-password">Senha</Label>
                       <Input
-                        id="clinic-cnpj"
-                        type="text"
-                        placeholder="00.000.000/0000-00"
-                        value={clinicCNPJ}
-                        onChange={(e) => setClinicCNPJ(e.target.value)}
+                        id="signup-password"
+                        type="password"
+                        placeholder="Deve conter no mínimo 6 caracteres"
+                        value={signupPassword}
+                        onChange={(e) => setSignupPassword(e.target.value)}
+                        required
+                        minLength={8}
                         className="h-12"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="clinic-phone">Telefone</Label>
-                      <Input
-                        id="clinic-phone"
-                        type="tel"
-                        placeholder="(11) 99999-9999"
-                        value={clinicPhone}
-                        onChange={(e) => setClinicPhone(e.target.value)}
-                        className="h-12"
-                      />
+                      <Label htmlFor="user-role">Selecione sua função/atuação</Label>
+                      <Select value={userRole} onValueChange={setUserRole} required>
+                        <SelectTrigger className="h-12">
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="dentista">Dentista</SelectItem>
+                          <SelectItem value="secretaria">Secretária(o)</SelectItem>
+                          <SelectItem value="administrador">Administrador</SelectItem>
+                          <SelectItem value="paciente">Paciente</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="how-did-you-know">Como conheceu o Flowdent?</Label>
+                      <Select value={howDidYouKnow} onValueChange={setHowDidYouKnow}>
+                        <SelectTrigger className="h-12">
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="google">Google</SelectItem>
+                          <SelectItem value="instagram">Instagram</SelectItem>
+                          <SelectItem value="facebook">Facebook</SelectItem>
+                          <SelectItem value="indicacao">Indicação</SelectItem>
+                          <SelectItem value="outro">Outro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full h-12 bg-[hsl(var(--flowdent-blue))] hover:bg-[hsl(var(--flow-turquoise))]" 
-                    disabled={loading}
-                  >
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Criar Conta
-                  </Button>
-                </form>
+                    <p className="text-xs text-center text-[hsl(var(--slate-gray))]">
+                      Ao clicar em "Iniciar teste" você está concordando com nossos{" "}
+                      <Link to="/" className="text-[hsl(var(--flowdent-blue))] hover:underline">
+                        termos de uso
+                      </Link>
+                      .
+                    </p>
 
-                <div className="text-center">
-                  <p className="text-sm text-[hsl(var(--slate-gray))]">
-                    Já tem uma conta?{" "}
-                    <button
-                      onClick={() => setIsSignUp(false)}
-                      className="text-[hsl(var(--flowdent-blue))] font-semibold hover:underline"
+                    <Button 
+                      type="submit" 
+                      className="w-full h-12 bg-[hsl(var(--flowdent-blue))] hover:bg-[hsl(var(--flow-turquoise))]" 
+                      disabled={loading}
                     >
-                      Entrar
-                    </button>
-                  </p>
-                </div>
+                      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Iniciar teste
+                    </Button>
 
-                <p className="text-center text-xs text-[hsl(var(--slate-gray))]">
-                  Ao criar uma conta, você concorda com nossos{" "}
-                  <Link to="/" className="text-[hsl(var(--flowdent-blue))] hover:underline">
-                    Termos de Uso
-                  </Link>{" "}
-                  e{" "}
-                  <Link to="/" className="text-[hsl(var(--flowdent-blue))] hover:underline">
-                    Política de Privacidade
-                  </Link>
-                </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full h-12"
+                      onClick={() => setSignupStep(1)}
+                    >
+                      Voltar
+                    </Button>
+                  </form>
+                )}
               </>
             )}
           </div>
