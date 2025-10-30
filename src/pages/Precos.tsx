@@ -139,8 +139,8 @@ export default function Precos() {
       <main className="container mx-auto px-4 py-16 md:py-24">
         {/* Bloco A: Headline Principal */}
         <section className="text-center mb-20">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Flowdent: A Gestão Odontológica que Liberta Você
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            A Gestão Odontológica que Liberta Você
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
             Chega de papelada e estresse. Escolha o plano que vai transformar seu consultório em uma clínica de alto desempenho.
