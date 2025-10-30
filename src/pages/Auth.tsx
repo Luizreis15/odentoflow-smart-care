@@ -31,9 +31,19 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  
+  // Login fields
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  
+  // Signup fields
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [clinicName, setClinicName] = useState("");
+  const [clinicCNPJ, setClinicCNPJ] = useState("");
+  const [clinicPhone, setClinicPhone] = useState("");
 
   useEffect(() => {
     const checkUser = async () => {
@@ -126,12 +136,26 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const validation = signupSchema.safeParse({ email, password, fullName });
+    const validation = signupSchema.safeParse({ 
+      email: signupEmail, 
+      password: signupPassword, 
+      fullName 
+    });
+    
     if (!validation.success) {
       toast({
         variant: "destructive",
-        title: "Validation Error",
+        title: "Erro de Validação",
         description: validation.error.errors[0].message,
+      });
+      return;
+    }
+
+    if (!clinicName.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Erro de Validação",
+        description: "Nome da clínica é obrigatório",
       });
       return;
     }
@@ -142,9 +166,12 @@ const Auth = () => {
       email: validation.data.email,
       password: validation.data.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: `${window.location.origin}/onboarding/welcome`,
         data: {
           full_name: validation.data.fullName,
+          clinic_name: clinicName,
+          clinic_cnpj: clinicCNPJ,
+          clinic_phone: clinicPhone,
         },
       },
     });
@@ -162,17 +189,22 @@ const Auth = () => {
         title: "Conta criada com sucesso!",
         description: "Você já pode fazer login.",
       });
+      setIsSignUp(false);
     }
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const validation = signinSchema.safeParse({ email, password });
+    const validation = signinSchema.safeParse({ 
+      email: loginEmail, 
+      password: loginPassword 
+    });
+    
     if (!validation.success) {
       toast({
         variant: "destructive",
-        title: "Validation Error",
+        title: "Erro de Validação",
         description: validation.error.errors[0].message,
       });
       return;
@@ -212,50 +244,18 @@ const Auth = () => {
         {/* Form Content */}
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="w-full max-w-md space-y-8">
-            <div className="text-center">
-              <h1 className="text-3xl font-bold text-[hsl(var(--flowdent-blue))] mb-2">
-                Bem-vindo de volta
-              </h1>
-              <p className="text-[hsl(var(--slate-gray))]">
-                Gerencie sua clínica com eficiência
-              </p>
-            </div>
+            {!isSignUp ? (
+              // LOGIN FORM
+              <>
+                <div className="text-center">
+                  <h1 className="text-3xl font-bold text-[hsl(var(--flowdent-blue))] mb-2">
+                    Bem-vindo de volta
+                  </h1>
+                  <p className="text-[hsl(var(--slate-gray))]">
+                    Acesse sua conta
+                  </p>
+                </div>
 
-            {/* Tabs for Login/Signup */}
-            <div className="space-y-6">
-              <div className="flex gap-2 p-1 bg-[hsl(var(--cloud-white))] rounded-lg">
-                <button
-                  onClick={() => {
-                    setEmail("");
-                    setPassword("");
-                    setFullName("");
-                  }}
-                  className={`flex-1 py-2 px-4 rounded-md font-medium transition-colors ${
-                    fullName === ""
-                      ? "bg-white text-[hsl(var(--flowdent-blue))] shadow-sm"
-                      : "text-[hsl(var(--slate-gray))] hover:text-[hsl(var(--flowdent-blue))]"
-                  }`}
-                >
-                  Entrar
-                </button>
-                <button
-                  onClick={() => {
-                    setEmail("");
-                    setPassword("");
-                    setFullName(" ");
-                  }}
-                  className={`flex-1 py-2 px-4 rounded-md font-medium transition-colors ${
-                    fullName !== ""
-                      ? "bg-white text-[hsl(var(--flowdent-blue))] shadow-sm"
-                      : "text-[hsl(var(--slate-gray))] hover:text-[hsl(var(--flowdent-blue))]"
-                  }`}
-                >
-                  Cadastrar
-                </button>
-              </div>
-
-              {fullName === "" ? (
-                // Login Form
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="login-email">Email</Label>
@@ -263,8 +263,8 @@ const Auth = () => {
                       id="login-email"
                       type="email"
                       placeholder="seu@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
                       required
                       className="h-12"
                     />
@@ -275,8 +275,8 @@ const Auth = () => {
                       id="login-password"
                       type="password"
                       placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
                       required
                       className="h-12"
                     />
@@ -290,46 +290,117 @@ const Auth = () => {
                     Entrar
                   </Button>
                 </form>
-              ) : (
-                // Signup Form
+
+                <div className="text-center">
+                  <p className="text-sm text-[hsl(var(--slate-gray))]">
+                    Não tem uma conta?{" "}
+                    <button
+                      onClick={() => setIsSignUp(true)}
+                      className="text-[hsl(var(--flowdent-blue))] font-semibold hover:underline"
+                    >
+                      Criar conta
+                    </button>
+                  </p>
+                </div>
+              </>
+            ) : (
+              // SIGNUP FORM
+              <>
+                <div className="text-center">
+                  <h1 className="text-3xl font-bold text-[hsl(var(--flowdent-blue))] mb-2">
+                    Criar sua conta
+                  </h1>
+                  <p className="text-[hsl(var(--slate-gray))]">
+                    Preencha os dados para começar
+                  </p>
+                </div>
+
                 <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">Nome Completo</Label>
-                    <Input
-                      id="signup-name"
-                      type="text"
-                      placeholder="Seu nome completo"
-                      value={fullName.trim()}
-                      onChange={(e) => setFullName(e.target.value)}
-                      required
-                      className="h-12"
-                    />
+                  {/* Dados Pessoais */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-[hsl(var(--slate-gray))] uppercase">
+                      Seus dados
+                    </h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-name">Nome Completo *</Label>
+                      <Input
+                        id="signup-name"
+                        type="text"
+                        placeholder="Dr. João Silva"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        required
+                        className="h-12"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email">Email *</Label>
+                      <Input
+                        id="signup-email"
+                        type="email"
+                        placeholder="seu@email.com"
+                        value={signupEmail}
+                        onChange={(e) => setSignupEmail(e.target.value)}
+                        required
+                        className="h-12"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password">Senha *</Label>
+                      <Input
+                        id="signup-password"
+                        type="password"
+                        placeholder="Mínimo 8 caracteres"
+                        value={signupPassword}
+                        onChange={(e) => setSignupPassword(e.target.value)}
+                        required
+                        minLength={8}
+                        className="h-12"
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      className="h-12"
-                    />
+
+                  {/* Dados da Clínica */}
+                  <div className="space-y-4 pt-4 border-t">
+                    <h3 className="text-sm font-semibold text-[hsl(var(--slate-gray))] uppercase">
+                      Dados da clínica
+                    </h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="clinic-name">Nome da Clínica *</Label>
+                      <Input
+                        id="clinic-name"
+                        type="text"
+                        placeholder="Clínica Odonto Saúde"
+                        value={clinicName}
+                        onChange={(e) => setClinicName(e.target.value)}
+                        required
+                        className="h-12"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="clinic-cnpj">CNPJ</Label>
+                      <Input
+                        id="clinic-cnpj"
+                        type="text"
+                        placeholder="00.000.000/0000-00"
+                        value={clinicCNPJ}
+                        onChange={(e) => setClinicCNPJ(e.target.value)}
+                        className="h-12"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="clinic-phone">Telefone</Label>
+                      <Input
+                        id="clinic-phone"
+                        type="tel"
+                        placeholder="(11) 99999-9999"
+                        value={clinicPhone}
+                        onChange={(e) => setClinicPhone(e.target.value)}
+                        className="h-12"
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Senha</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      minLength={8}
-                      className="h-12"
-                    />
-                  </div>
+
                   <Button 
                     type="submit" 
                     className="w-full h-12 bg-[hsl(var(--flowdent-blue))] hover:bg-[hsl(var(--flow-turquoise))]" 
@@ -339,19 +410,31 @@ const Auth = () => {
                     Criar Conta
                   </Button>
                 </form>
-              )}
-            </div>
 
-            <p className="text-center text-sm text-[hsl(var(--slate-gray))]">
-              Ao continuar, você concorda com nossos{" "}
-              <Link to="/" className="text-[hsl(var(--flowdent-blue))] hover:underline">
-                Termos de Uso
-              </Link>{" "}
-              e{" "}
-              <Link to="/" className="text-[hsl(var(--flowdent-blue))] hover:underline">
-                Política de Privacidade
-              </Link>
-            </p>
+                <div className="text-center">
+                  <p className="text-sm text-[hsl(var(--slate-gray))]">
+                    Já tem uma conta?{" "}
+                    <button
+                      onClick={() => setIsSignUp(false)}
+                      className="text-[hsl(var(--flowdent-blue))] font-semibold hover:underline"
+                    >
+                      Entrar
+                    </button>
+                  </p>
+                </div>
+
+                <p className="text-center text-xs text-[hsl(var(--slate-gray))]">
+                  Ao criar uma conta, você concorda com nossos{" "}
+                  <Link to="/" className="text-[hsl(var(--flowdent-blue))] hover:underline">
+                    Termos de Uso
+                  </Link>{" "}
+                  e{" "}
+                  <Link to="/" className="text-[hsl(var(--flowdent-blue))] hover:underline">
+                    Política de Privacidade
+                  </Link>
+                </p>
+              </>
+            )}
           </div>
         </div>
       </div>
