@@ -18,11 +18,26 @@ const FinanceiroWrapper = () => {
         return;
       }
 
+      // Check if user is super admin
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .eq("role", "super_admin")
+        .maybeSingle();
+
       const { data: profileData } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", session.user.id)
         .single();
+
+      // Super admins can access without clinic
+      if (userRole) {
+        setProfile(profileData);
+        setLoading(false);
+        return;
+      }
 
       if (!profileData?.clinic_id) {
         navigate("/onboarding/welcome");
