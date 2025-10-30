@@ -52,6 +52,13 @@ const Auth = () => {
   const [howDidYouKnow, setHowDidYouKnow] = useState("");
 
   useEffect(() => {
+    // Atualizar isSignUp quando o parâmetro mudar
+    if (searchParams.get('signup') === 'true') {
+      setIsSignUp(true);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
