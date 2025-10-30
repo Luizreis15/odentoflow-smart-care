@@ -31,7 +31,7 @@ export default function Landing() {
             "Bloqueio inteligente de horários",
             "Lembretes personalizados para pacientes"
           ]}
-          ctaText="Conhecer Agenda"
+          ctaText="Comece Grátis Agora"
           imageSrc={agendaMockup}
           imageAlt="Interface de Agenda do Flowdent"
           imagePosition="right"
@@ -49,7 +49,7 @@ export default function Landing() {
             "Histórico completo de tratamentos",
             "Conformidade total com LGPD"
           ]}
-          ctaText="Ver Prontuário"
+          ctaText="Experimente Sem Compromisso"
           imageSrc={prontuarioMockup}
           imageAlt="Prontuário Eletrônico Digital"
           imagePosition="left"
@@ -67,7 +67,7 @@ export default function Landing() {
             "Assinatura digital integrada",
             "Envio direto por WhatsApp ou e-mail"
           ]}
-          ctaText="Criar Documentos"
+          ctaText="Teste Grátis por 7 Dias"
           imageSrc={documentosMockup}
           imageAlt="Sistema de Documentos Digitais"
           imagePosition="right"
@@ -85,7 +85,7 @@ export default function Landing() {
             "Relatórios gerenciais detalhados",
             "Integração com meios de pagamento"
           ]}
-          ctaText="Gerenciar Finanças"
+          ctaText="Comece Sua Transformação"
           imageSrc={financeiroMockup}
           imageAlt="Dashboard Financeiro"
           imagePosition="left"
