@@ -49,7 +49,7 @@ export default function LandingHeader() {
             </button>
             
             <button 
-              onClick={() => scrollToSection('recursos')}
+              onClick={() => scrollToSection('agenda')}
               className="text-[hsl(var(--slate-gray))] hover:text-[hsl(var(--flowdent-blue))] transition"
             >
               Recursos
@@ -112,7 +112,7 @@ export default function LandingHeader() {
                   Home
                 </button>
                 <button 
-                  onClick={() => scrollToSection('recursos')}
+                  onClick={() => scrollToSection('agenda')}
                   className="text-[hsl(var(--slate-gray))] hover:text-[hsl(var(--flowdent-blue))] transition text-left"
                 >
                   Recursos
