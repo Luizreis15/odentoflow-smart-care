@@ -69,7 +69,7 @@ export default function CTASection() {
               <Button 
                 size="lg"
                 variant="outline"
-                className="border-2 border-white text-white hover:bg-white/10 transition-all duration-300 text-lg px-8 py-6"
+                className="border-2 border-white bg-white text-[hsl(var(--flow-turquoise))] hover:bg-white/10 hover:text-white transition-all duration-300 text-lg px-8 py-6"
               >
                 <Play className="mr-2 h-5 w-5" />
                 Agendar Demonstração
