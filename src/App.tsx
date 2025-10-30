@@ -32,6 +32,10 @@ import GlobalAnamneseWrapper from "./pages/superadmin/GlobalAnamneseWrapper";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
+import AgendaRecurso from "./pages/recursos/Agenda";
+import ProntuarioRecurso from "./pages/recursos/Prontuario";
+import DocumentosRecurso from "./pages/recursos/Documentos";
+import FinanceiroRecurso from "./pages/recursos/Financeiro";
 
 function App() {
   const [queryClient] = useState(() => new QueryClient({
@@ -52,6 +56,10 @@ function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Landing />} />
+              <Route path="/recursos/agenda" element={<AgendaRecurso />} />
+              <Route path="/recursos/prontuario" element={<ProntuarioRecurso />} />
+              <Route path="/recursos/documentos" element={<DocumentosRecurso />} />
+              <Route path="/recursos/financeiro" element={<FinanceiroRecurso />} />
               <Route path="/old-dashboard" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/onboarding" element={<Onboarding />} />

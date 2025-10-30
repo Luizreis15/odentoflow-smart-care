@@ -3,6 +3,13 @@ import { Menu, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
 
 export default function LandingHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -48,12 +55,47 @@ export default function LandingHeader() {
               Home
             </button>
             
-            <button 
-              onClick={() => scrollToSection('agenda')}
-              className="text-[hsl(var(--slate-gray))] hover:text-[hsl(var(--flowdent-blue))] transition"
-            >
-              Recursos
-            </button>
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger className="text-[hsl(var(--slate-gray))] hover:text-[hsl(var(--flowdent-blue))] bg-transparent">
+                    Recursos
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <div className="w-[400px] p-4 bg-white">
+                      <Link 
+                        to="/recursos/agenda" 
+                        className="block p-3 hover:bg-[hsl(var(--cloud-white))] rounded-md transition"
+                      >
+                        <h4 className="font-semibold text-[hsl(var(--flowdent-blue))] mb-1">Agenda Inteligente</h4>
+                        <p className="text-sm text-[hsl(var(--slate-gray))]">Organize seus atendimentos com eficiência</p>
+                      </Link>
+                      <Link 
+                        to="/recursos/prontuario" 
+                        className="block p-3 hover:bg-[hsl(var(--cloud-white))] rounded-md transition"
+                      >
+                        <h4 className="font-semibold text-[hsl(var(--flowdent-blue))] mb-1">Prontuário Digital</h4>
+                        <p className="text-sm text-[hsl(var(--slate-gray))]">Histórico completo e seguro dos pacientes</p>
+                      </Link>
+                      <Link 
+                        to="/recursos/documentos" 
+                        className="block p-3 hover:bg-[hsl(var(--cloud-white))] rounded-md transition"
+                      >
+                        <h4 className="font-semibold text-[hsl(var(--flowdent-blue))] mb-1">Gestão de Documentos</h4>
+                        <p className="text-sm text-[hsl(var(--slate-gray))]">Receitas, atestados e contratos automatizados</p>
+                      </Link>
+                      <Link 
+                        to="/recursos/financeiro" 
+                        className="block p-3 hover:bg-[hsl(var(--cloud-white))] rounded-md transition"
+                      >
+                        <h4 className="font-semibold text-[hsl(var(--flowdent-blue))] mb-1">Controle Financeiro</h4>
+                        <p className="text-sm text-[hsl(var(--slate-gray))]">Gerencie pagamentos e faturamento</p>
+                      </Link>
+                    </div>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
 
             <button 
               onClick={() => scrollToSection('depoimentos')}
@@ -111,12 +153,39 @@ export default function LandingHeader() {
                 >
                   Home
                 </button>
-                <button 
-                  onClick={() => scrollToSection('agenda')}
-                  className="text-[hsl(var(--slate-gray))] hover:text-[hsl(var(--flowdent-blue))] transition text-left"
-                >
-                  Recursos
-                </button>
+                
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-[hsl(var(--slate-gray))] mb-2">Recursos</p>
+                  <Link 
+                    to="/recursos/agenda"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block pl-4 text-[hsl(var(--slate-gray))] hover:text-[hsl(var(--flowdent-blue))] transition text-left"
+                  >
+                    Agenda Inteligente
+                  </Link>
+                  <Link 
+                    to="/recursos/prontuario"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block pl-4 text-[hsl(var(--slate-gray))] hover:text-[hsl(var(--flowdent-blue))] transition text-left"
+                  >
+                    Prontuário Digital
+                  </Link>
+                  <Link 
+                    to="/recursos/documentos"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block pl-4 text-[hsl(var(--slate-gray))] hover:text-[hsl(var(--flowdent-blue))] transition text-left"
+                  >
+                    Gestão de Documentos
+                  </Link>
+                  <Link 
+                    to="/recursos/financeiro"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block pl-4 text-[hsl(var(--slate-gray))] hover:text-[hsl(var(--flowdent-blue))] transition text-left"
+                  >
+                    Controle Financeiro
+                  </Link>
+                </div>
+                
                 <button 
                   onClick={() => scrollToSection('depoimentos')}
                   className="text-[hsl(var(--slate-gray))] hover:text-[hsl(var(--flowdent-blue))] transition text-left"
