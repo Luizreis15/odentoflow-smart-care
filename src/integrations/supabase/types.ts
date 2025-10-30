@@ -3454,7 +3454,7 @@ export type Database = {
       }
       usuarios: {
         Row: {
-          clinica_id: string
+          clinica_id: string | null
           created_at: string | null
           email: string
           id: string
@@ -3463,7 +3463,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          clinica_id: string
+          clinica_id?: string | null
           created_at?: string | null
           email: string
           id: string
@@ -3472,7 +3472,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          clinica_id?: string
+          clinica_id?: string | null
           created_at?: string | null
           email?: string
           id?: string
