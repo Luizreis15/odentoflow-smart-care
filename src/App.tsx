@@ -34,6 +34,7 @@ import ModulosWrapper from "./pages/superadmin/ModulosWrapper";
 import LocatariosWrapper from "./pages/superadmin/LocatariosWrapper";
 import AuditoriaWrapper from "./pages/superadmin/AuditoriaWrapper";
 import Landing from "./pages/Landing";
+import Precos from "./pages/Precos";
 import NotFound from "./pages/NotFound";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 import AgendaRecurso from "./pages/recursos/Agenda";
@@ -60,6 +61,7 @@ function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Landing />} />
+              <Route path="/precos" element={<Precos />} />
               <Route path="/recursos/agenda" element={<AgendaRecurso />} />
               <Route path="/recursos/prontuario" element={<ProntuarioRecurso />} />
               <Route path="/recursos/documentos" element={<DocumentosRecurso />} />

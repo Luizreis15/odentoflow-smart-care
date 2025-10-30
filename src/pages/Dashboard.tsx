@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
+import TrialBanner from "@/components/TrialBanner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Users, DollarSign, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 
 interface Profile {
   full_name: string;
@@ -17,6 +19,7 @@ const Dashboard = () => {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const { status, trialEnd } = useSubscription();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -148,6 +151,12 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout user={profile}>
+      {!isSuperAdmin && status === "trialing" && trialEnd && (
+        <TrialBanner 
+          daysLeft={Math.ceil((new Date(trialEnd).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} 
+        />
+      )}
+      
       {isSuperAdmin ? (
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">

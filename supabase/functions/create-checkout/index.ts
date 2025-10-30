@@ -15,7 +15,7 @@ const logStep = (step: string, details?: any) => {
 // Price IDs for each plan
 const PRICE_MAP: Record<string, string> = {
   "starter": "price_1SMtYEC0BlmmmqSH5o79iJkb",
-  "pro": "price_1SMtZoC0BlmmmqSHCw3wx9XG",
+  "professional": "price_1SMtZoC0BlmmmqSHCw3wx9XG",
   "enterprise": "price_1SMtbqC0BlmmmqSHAJZCvlyA",
 };
 
@@ -72,7 +72,7 @@ serve(async (req) => {
       ],
       mode: "subscription",
       success_url: `${req.headers.get("origin")}/dashboard?checkout=success`,
-      cancel_url: `${req.headers.get("origin")}/dashboard?checkout=canceled`,
+      cancel_url: `${req.headers.get("origin")}/precos?checkout=canceled`,
     });
 
     logStep("Checkout session created", { sessionId: session.id, url: session.url });

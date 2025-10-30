@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -97,6 +97,13 @@ export default function LandingHeader() {
               </NavigationMenuList>
             </NavigationMenu>
 
+            <Link 
+              to="/precos"
+              className="text-[hsl(var(--slate-gray))] hover:text-[hsl(var(--flowdent-blue))] transition"
+            >
+              Preços
+            </Link>
+
             <button 
               onClick={() => scrollToSection('depoimentos')}
               className="text-[hsl(var(--slate-gray))] hover:text-[hsl(var(--flowdent-blue))] transition"
@@ -185,6 +192,14 @@ export default function LandingHeader() {
                     Controle Financeiro
                   </Link>
                 </div>
+
+                <Link 
+                  to="/precos"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-[hsl(var(--slate-gray))] hover:text-[hsl(var(--flowdent-blue))] transition text-left"
+                >
+                  Preços
+                </Link>
                 
                 <button 
                   onClick={() => scrollToSection('depoimentos')}
