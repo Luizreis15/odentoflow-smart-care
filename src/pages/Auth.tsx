@@ -1,15 +1,13 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import Navbar from "@/components/Navbar";
 import { z } from "zod";
+import TestimonialCarousel from "@/components/auth/TestimonialCarousel";
 
 const signupSchema = z.object({
   email: z.string().email("Invalid email format").max(255, "Email must be less than 255 characters"),
@@ -199,24 +197,65 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto px-4 py-16 flex items-center justify-center">
-        <Card className="w-full max-w-md shadow-xl">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Flowdent</CardTitle>
-            <CardDescription className="text-center">
-              Gerencie sua clínica odontológica com eficiência
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Entrar</TabsTrigger>
-                <TabsTrigger value="signup">Cadastrar</TabsTrigger>
-              </TabsList>
+    <div className="min-h-screen flex">
+      {/* Left Side - Form */}
+      <div className="w-full lg:w-1/2 flex flex-col bg-white">
+        {/* Header */}
+        <div className="p-6 border-b">
+          <Link to="/" className="flex items-center gap-2">
+            <span className="text-2xl font-bold text-[hsl(var(--flowdent-blue))]">
+              Flowdent
+            </span>
+          </Link>
+        </div>
 
-              <TabsContent value="login">
+        {/* Form Content */}
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="w-full max-w-md space-y-8">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold text-[hsl(var(--flowdent-blue))] mb-2">
+                Bem-vindo de volta
+              </h1>
+              <p className="text-[hsl(var(--slate-gray))]">
+                Gerencie sua clínica com eficiência
+              </p>
+            </div>
+
+            {/* Tabs for Login/Signup */}
+            <div className="space-y-6">
+              <div className="flex gap-2 p-1 bg-[hsl(var(--cloud-white))] rounded-lg">
+                <button
+                  onClick={() => {
+                    setEmail("");
+                    setPassword("");
+                    setFullName("");
+                  }}
+                  className={`flex-1 py-2 px-4 rounded-md font-medium transition-colors ${
+                    fullName === ""
+                      ? "bg-white text-[hsl(var(--flowdent-blue))] shadow-sm"
+                      : "text-[hsl(var(--slate-gray))] hover:text-[hsl(var(--flowdent-blue))]"
+                  }`}
+                >
+                  Entrar
+                </button>
+                <button
+                  onClick={() => {
+                    setEmail("");
+                    setPassword("");
+                    setFullName(" ");
+                  }}
+                  className={`flex-1 py-2 px-4 rounded-md font-medium transition-colors ${
+                    fullName !== ""
+                      ? "bg-white text-[hsl(var(--flowdent-blue))] shadow-sm"
+                      : "text-[hsl(var(--slate-gray))] hover:text-[hsl(var(--flowdent-blue))]"
+                  }`}
+                >
+                  Cadastrar
+                </button>
+              </div>
+
+              {fullName === "" ? (
+                // Login Form
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="login-email">Email</Label>
@@ -227,6 +266,7 @@ const Auth = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      className="h-12"
                     />
                   </div>
                   <div className="space-y-2">
@@ -238,16 +278,20 @@ const Auth = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      className="h-12"
                     />
                   </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  <Button 
+                    type="submit" 
+                    className="w-full h-12 bg-[hsl(var(--flowdent-blue))] hover:bg-[hsl(var(--flow-turquoise))]" 
+                    disabled={loading}
+                  >
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Entrar
                   </Button>
                 </form>
-              </TabsContent>
-
-              <TabsContent value="signup">
+              ) : (
+                // Signup Form
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="signup-name">Nome Completo</Label>
@@ -255,9 +299,10 @@ const Auth = () => {
                       id="signup-name"
                       type="text"
                       placeholder="Seu nome completo"
-                      value={fullName}
+                      value={fullName.trim()}
                       onChange={(e) => setFullName(e.target.value)}
                       required
+                      className="h-12"
                     />
                   </div>
                   <div className="space-y-2">
@@ -269,6 +314,7 @@ const Auth = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      className="h-12"
                     />
                   </div>
                   <div className="space-y-2">
@@ -280,18 +326,39 @@ const Auth = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      minLength={6}
+                      minLength={8}
+                      className="h-12"
                     />
                   </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  <Button 
+                    type="submit" 
+                    className="w-full h-12 bg-[hsl(var(--flowdent-blue))] hover:bg-[hsl(var(--flow-turquoise))]" 
+                    disabled={loading}
+                  >
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Criar Conta
                   </Button>
                 </form>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+              )}
+            </div>
+
+            <p className="text-center text-sm text-[hsl(var(--slate-gray))]">
+              Ao continuar, você concorda com nossos{" "}
+              <Link to="/" className="text-[hsl(var(--flowdent-blue))] hover:underline">
+                Termos de Uso
+              </Link>{" "}
+              e{" "}
+              <Link to="/" className="text-[hsl(var(--flowdent-blue))] hover:underline">
+                Política de Privacidade
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Side - Testimonials */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[hsl(var(--flowdent-blue))] to-[hsl(var(--flow-turquoise))] relative overflow-hidden">
+        <TestimonialCarousel />
       </div>
     </div>
   );
