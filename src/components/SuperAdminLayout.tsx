@@ -90,6 +90,18 @@ export default function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
               Modelos de Anamnese
             </Button>
           </Link>
+
+          <div className="my-4 border-t border-border"></div>
+          
+          <Link to="/dashboard">
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground hover:text-primary"
+            >
+              <LayoutDashboard className="mr-2 h-4 w-4" />
+              Acessar Sistema Principal
+            </Button>
+          </Link>
         </nav>
 
         <div className="p-4 border-t border-border">

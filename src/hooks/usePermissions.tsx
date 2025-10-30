@@ -23,11 +23,26 @@ export const usePermissions = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Check if user is super admin first
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "super_admin")
+        .maybeSingle();
+
+      if (userRole) {
+        setPerfil("super_admin");
+        setPermissions([]);
+        setLoading(false);
+        return;
+      }
+
       const { data: usuario } = await supabase
         .from("usuarios")
         .select("perfil")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       if (usuario) {
         setPerfil(usuario.perfil as PerfilUsuario);

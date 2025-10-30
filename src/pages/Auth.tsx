@@ -66,7 +66,7 @@ const Auth = () => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        // Verificar se é super admin
+        // Verificar se é super admin - redireciona para dashboard com acesso total
         const { data: userRoles } = await supabase
           .from('user_roles')
           .select('role')
@@ -75,7 +75,7 @@ const Auth = () => {
           .maybeSingle();
 
         if (userRoles) {
-          navigate("/super-admin");
+          navigate("/dashboard");
           return;
         }
 
@@ -108,7 +108,7 @@ const Auth = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
-        // Verificar se é super admin
+        // Verificar se é super admin - redireciona para dashboard com acesso total
         const { data: userRoles } = await supabase
           .from('user_roles')
           .select('role')
@@ -117,7 +117,7 @@ const Auth = () => {
           .maybeSingle();
 
         if (userRoles) {
-          navigate("/super-admin");
+          navigate("/dashboard");
           return;
         }
 
