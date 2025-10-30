@@ -20,16 +20,20 @@ const Dashboard = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
+      console.log("[DASHBOARD] Starting auth check");
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
+        console.log("[DASHBOARD] No session, redirecting to auth");
         navigate("/auth");
         return;
       }
 
+      console.log("[DASHBOARD] Session found:", session.user.email);
       setUser(session.user);
 
       // Check if user is super admin
+      console.log("[DASHBOARD] Checking super admin role");
       const { data: userRole } = await supabase
         .from("user_roles")
         .select("role")
@@ -37,14 +41,19 @@ const Dashboard = () => {
         .eq("role", "super_admin")
         .maybeSingle();
 
+      console.log("[DASHBOARD] User role:", userRole);
+
       const { data: profileData } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", session.user.id)
         .single();
 
+      console.log("[DASHBOARD] Profile data:", profileData);
+
       // Super admins can access without clinic
       if (userRole) {
+        console.log("[DASHBOARD] Super admin detected, granting access");
         setProfile(profileData);
         setIsSuperAdmin(true);
         setLoading(false);
@@ -53,10 +62,12 @@ const Dashboard = () => {
 
       // Check if user has completed onboarding
       if (!profileData?.clinic_id) {
+        console.log("[DASHBOARD] No clinic_id, redirecting to onboarding");
         navigate("/onboarding/welcome");
         return;
       }
 
+      console.log("[DASHBOARD] Checking clinic onboarding status");
       // Check if onboarding is completed
       const { data: clinicData } = await supabase
         .from("clinicas")
@@ -64,11 +75,15 @@ const Dashboard = () => {
         .eq("id", profileData.clinic_id)
         .single();
 
+      console.log("[DASHBOARD] Clinic data:", clinicData);
+
       if (clinicData?.onboarding_status !== "completed") {
+        console.log("[DASHBOARD] Onboarding not completed, redirecting");
         navigate("/onboarding/welcome");
         return;
       }
 
+      console.log("[DASHBOARD] All checks passed, setting profile and loading false");
       setProfile(profileData);
       setLoading(false);
     };
