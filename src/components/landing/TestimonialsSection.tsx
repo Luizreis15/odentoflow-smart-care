@@ -86,7 +86,7 @@ function TestimonialCard({ testimonial, index }: { testimonial: Testimonial; ind
 
 export default function TestimonialsSection() {
   return (
-    <section id="depoimentos" className="py-20 bg-white">
+    <section id="depoimentos" className="py-12 bg-white">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 30 }}

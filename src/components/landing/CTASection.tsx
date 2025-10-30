@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 export default function CTASection() {
   return (
-    <section id="contato" className="py-20 relative overflow-hidden">
+    <section id="contato" className="py-12 relative overflow-hidden">
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--flowdent-blue))] via-[hsl(var(--flow-turquoise))] to-[hsl(var(--health-mint))] -z-10"></div>
       

@@ -7,7 +7,7 @@ import heroImage from '@/assets/flowdent-hero.jpg';
 
 export default function HeroSection() {
   return (
-    <section id="home" className="relative min-h-screen flex items-center pt-24 pb-12 overflow-hidden">
+    <section id="home" className="relative min-h-screen flex items-center pt-20 pb-8 overflow-hidden">
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--flow-turquoise)/0.05)] via-white to-[hsl(var(--health-mint)/0.05)] -z-10"></div>
       

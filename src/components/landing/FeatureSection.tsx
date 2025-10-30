@@ -30,7 +30,7 @@ export default function FeatureSection({
   const isImageLeft = imagePosition === 'left';
 
   return (
-    <section id={id} className="py-20 relative overflow-hidden">
+    <section id={id} className="py-12 relative overflow-hidden">
       <div className="container mx-auto px-4">
         <div className={`grid md:grid-cols-2 gap-12 items-center ${isImageLeft ? 'md:flex-row-reverse' : ''}`}>
           {/* Content Column */}

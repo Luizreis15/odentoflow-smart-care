@@ -37,7 +37,7 @@ function StatItem({ value, suffix = '', label, index }: StatItemProps) {
 
 export default function StatsSection() {
   return (
-    <section className="py-20 bg-gradient-to-br from-[hsl(var(--cloud-white))] to-white">
+    <section className="py-12 bg-gradient-to-br from-[hsl(var(--cloud-white))] to-white">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
