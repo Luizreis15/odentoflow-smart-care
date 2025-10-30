@@ -20,9 +20,6 @@ interface ItemEntrada {
   product_id: string;
   quantidade: number;
   custo_unitario: number;
-  batch_codigo?: string;
-  data_validade?: string;
-  location_id: string;
 }
 
 export function EntradaEstoqueModal({ open, onOpenChange }: EntradaEstoqueModalProps) {
@@ -64,27 +61,13 @@ export function EntradaEstoqueModal({ open, onOpenChange }: EntradaEstoqueModalP
     enabled: !!profile?.clinic_id,
   });
 
-  const { data: locations } = useQuery({
-    queryKey: ["stock-locations", profile?.clinic_id],
-    queryFn: async () => {
-      if (!profile?.clinic_id) return [];
-      const { data } = await supabase
-        .from("stock_locations")
-        .select("*")
-        .eq("clinica_id", profile.clinic_id)
-        .eq("ativo", true);
-      return data || [];
-    },
-    enabled: !!profile?.clinic_id,
-  });
-
   const addItem = async (data: any) => {
     if (isNewProduct) {
       // Validate new product fields
-      if (!newProductName.trim() || !data.quantidade || !data.custo_unitario || !data.location_id) {
+      if (!newProductName.trim() || !data.quantidade || !data.custo_unitario) {
         toast({
           title: "Campos obrigatórios",
-          description: "Preencha nome do produto, quantidade, custo e local",
+          description: "Preencha nome do produto, quantidade e custo",
           variant: "destructive",
         });
         return;
@@ -119,9 +102,6 @@ export function EntradaEstoqueModal({ open, onOpenChange }: EntradaEstoqueModalP
           product_id: newProduct.id,
           quantidade: Number(data.quantidade),
           custo_unitario: Number(data.custo_unitario),
-          batch_codigo: data.batch_codigo || undefined,
-          data_validade: data.data_validade || undefined,
-          location_id: data.location_id,
         };
 
         setItems([...items, newItem]);
@@ -131,8 +111,6 @@ export function EntradaEstoqueModal({ open, onOpenChange }: EntradaEstoqueModalP
         setNewProductBrand("");
         setValue("quantidade", "");
         setValue("custo_unitario", "");
-        setValue("batch_codigo", "");
-        setValue("data_validade", "");
         
         // Invalidate products query to refresh the list
         queryClient.invalidateQueries({ queryKey: ["products"] });
@@ -152,7 +130,7 @@ export function EntradaEstoqueModal({ open, onOpenChange }: EntradaEstoqueModalP
       }
     } else {
       // Existing product selection
-      if (!data.product_id || !data.quantidade || !data.custo_unitario || !data.location_id) {
+      if (!data.product_id || !data.quantidade || !data.custo_unitario) {
         toast({
           title: "Campos obrigatórios",
           description: "Preencha todos os campos obrigatórios",
@@ -165,9 +143,6 @@ export function EntradaEstoqueModal({ open, onOpenChange }: EntradaEstoqueModalP
         product_id: data.product_id,
         quantidade: Number(data.quantidade),
         custo_unitario: Number(data.custo_unitario),
-        batch_codigo: data.batch_codigo || undefined,
-        data_validade: data.data_validade || undefined,
-        location_id: data.location_id,
       };
 
       setItems([...items, newItem]);
@@ -175,8 +150,6 @@ export function EntradaEstoqueModal({ open, onOpenChange }: EntradaEstoqueModalP
       // Reset form fields
       setValue("quantidade", "");
       setValue("custo_unitario", "");
-      setValue("batch_codigo", "");
-      setValue("data_validade", "");
     }
   };
 
@@ -199,29 +172,36 @@ export function EntradaEstoqueModal({ open, onOpenChange }: EntradaEstoqueModalP
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Get or create default location
+      const { data: defaultLocation } = await supabase
+        .from("stock_locations")
+        .select("id")
+        .eq("clinica_id", profile.clinic_id)
+        .eq("ativo", true)
+        .limit(1)
+        .maybeSingle();
+
+      let locationId = defaultLocation?.id;
+
+      if (!locationId) {
+        const { data: newLocation } = await supabase
+          .from("stock_locations")
+          .insert({
+            clinica_id: profile.clinic_id,
+            nome: "Estoque Principal",
+            tipo: "deposito",
+          })
+          .select("id")
+          .single();
+        locationId = newLocation?.id;
+      }
+
+      if (!locationId) throw new Error("Não foi possível criar local de estoque");
+
       // Process each item
       for (const item of items) {
         const product = products?.find(p => p.id === item.product_id);
         if (!product) continue;
-
-        // Create batch if needed
-        let batch_id = null;
-        if (product.controle_lote && item.batch_codigo) {
-          const { data: batchData, error: batchError } = await supabase
-            .from("batches")
-            .upsert({
-              product_id: item.product_id,
-              codigo: item.batch_codigo,
-              data_validade: item.data_validade || null,
-            }, {
-              onConflict: "product_id,codigo",
-            })
-            .select()
-            .single();
-
-          if (batchError) throw batchError;
-          batch_id = batchData.id;
-        }
 
         // Create stock move
         const custoTotal = item.quantidade * item.custo_unitario;
@@ -232,8 +212,8 @@ export function EntradaEstoqueModal({ open, onOpenChange }: EntradaEstoqueModalP
           quantidade: item.quantidade,
           custo_unitario: item.custo_unitario,
           custo_total: custoTotal,
-          location_to_id: item.location_id,
-          batch_id: batch_id,
+          location_to_id: locationId,
+          batch_id: null,
           doc_tipo: "entrada_manual",
           usuario_id: user.id,
         });
@@ -245,8 +225,8 @@ export function EntradaEstoqueModal({ open, onOpenChange }: EntradaEstoqueModalP
           .from("stocks")
           .select("*")
           .eq("product_id", item.product_id)
-          .eq("location_id", item.location_id)
-          .eq("batch_id", batch_id || null)
+          .eq("location_id", locationId)
+          .is("batch_id", null)
           .maybeSingle();
 
         if (existingStock) {
@@ -265,8 +245,8 @@ export function EntradaEstoqueModal({ open, onOpenChange }: EntradaEstoqueModalP
           // Create new stock
           await supabase.from("stocks").insert({
             product_id: item.product_id,
-            location_id: item.location_id,
-            batch_id: batch_id,
+            location_id: locationId,
+            batch_id: null,
             quantidade: item.quantidade,
             custo_medio: item.custo_unitario,
           });
@@ -298,10 +278,6 @@ export function EntradaEstoqueModal({ open, onOpenChange }: EntradaEstoqueModalP
 
   const getProductName = (productId: string) => {
     return products?.find(p => p.id === productId)?.nome || "";
-  };
-
-  const getLocationName = (locationId: string) => {
-    return locations?.find(l => l.id === locationId)?.nome || "";
   };
 
   return (
@@ -395,32 +371,6 @@ export function EntradaEstoqueModal({ open, onOpenChange }: EntradaEstoqueModalP
                   {...register("custo_unitario")}
                 />
               </div>
-
-              <div>
-                <Label htmlFor="location_id">Local *</Label>
-                <Select onValueChange={(value) => setValue("location_id", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o local" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locations?.map((location) => (
-                      <SelectItem key={location.id} value={location.id}>
-                        {location.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="batch_codigo">Lote</Label>
-                <Input id="batch_codigo" {...register("batch_codigo")} />
-              </div>
-
-              <div className="col-span-2">
-                <Label htmlFor="data_validade">Data de Validade</Label>
-                <Input id="data_validade" type="date" {...register("data_validade")} />
-              </div>
             </div>
 
             <Button type="button" onClick={handleSubmit(addItem)} className="w-full">
@@ -439,10 +389,7 @@ export function EntradaEstoqueModal({ open, onOpenChange }: EntradaEstoqueModalP
                     <div className="flex-1">
                       <p className="font-medium">{getProductName(item.product_id)}</p>
                       <p className="text-sm text-muted-foreground">
-                        Qtd: {item.quantidade} • Custo: R$ {item.custo_unitario.toFixed(2)} • 
-                        Local: {getLocationName(item.location_id)}
-                        {item.batch_codigo && ` • Lote: ${item.batch_codigo}`}
-                        {item.data_validade && ` • Validade: ${new Date(item.data_validade).toLocaleDateString('pt-BR')}`}
+                        Qtd: {item.quantidade} • Custo: R$ {item.custo_unitario.toFixed(2)}
                       </p>
                       <p className="text-sm font-semibold">
                         Total: R$ {(item.quantidade * item.custo_unitario).toFixed(2)}
