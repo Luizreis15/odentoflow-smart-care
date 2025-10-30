@@ -16,6 +16,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -45,6 +46,7 @@ const Dashboard = () => {
       // Super admins can access without clinic
       if (userRole) {
         setProfile(profileData);
+        setIsSuperAdmin(true);
         setLoading(false);
         return;
       }
@@ -128,26 +130,6 @@ const Dashboard = () => {
       </DashboardLayout>
     );
   }
-
-  // Check if user is super admin
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-
-  useEffect(() => {
-    const checkSuperAdmin = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: userRole } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .eq("role", "super_admin")
-          .maybeSingle();
-        
-        setIsSuperAdmin(!!userRole);
-      }
-    };
-    checkSuperAdmin();
-  }, []);
 
   return (
     <DashboardLayout user={profile}>
