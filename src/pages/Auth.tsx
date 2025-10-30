@@ -34,11 +34,15 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(searchParams.get('signup') === 'true');
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [signupStep, setSignupStep] = useState(1); // 1 = Suas informações, 2 = Dados da clínica
   
   // Login fields
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  
+  // Forgot password field
+  const [resetEmail, setResetEmail] = useState("");
   
   // Signup fields - Step 1
   const [signupEmail, setSignupEmail] = useState("");
@@ -278,6 +282,52 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!resetEmail.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Email obrigatório",
+        description: "Por favor, insira seu email",
+      });
+      return;
+    }
+
+    const emailValidation = z.string().email("Email inválido").safeParse(resetEmail);
+    if (!emailValidation.success) {
+      toast({
+        variant: "destructive",
+        title: "Email inválido",
+        description: "Por favor, insira um email válido",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/auth?reset=true`,
+    });
+
+    setLoading(false);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao enviar email",
+        description: error.message,
+      });
+    } else {
+      toast({
+        title: "Email enviado!",
+        description: "Verifique sua caixa de entrada para redefinir sua senha.",
+      });
+      setIsForgotPassword(false);
+      setResetEmail("");
+    }
+  };
+
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Form */}
@@ -294,7 +344,57 @@ const Auth = () => {
         {/* Form Content */}
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="w-full max-w-md space-y-8">
-            {!isSignUp ? (
+            {isForgotPassword ? (
+              // FORGOT PASSWORD FORM
+              <>
+                <div className="text-center">
+                  <h1 className="text-3xl font-bold text-[hsl(var(--flowdent-blue))] mb-2">
+                    Recuperar senha
+                  </h1>
+                  <p className="text-[hsl(var(--slate-gray))]">
+                    Digite seu email para receber o link de recuperação
+                  </p>
+                </div>
+
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-email">Email</Label>
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      required
+                      className="h-12"
+                    />
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full h-12 bg-[hsl(var(--flowdent-blue))] hover:bg-[hsl(var(--flow-turquoise))]" 
+                    disabled={loading}
+                  >
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Enviar link de recuperação
+                  </Button>
+                </form>
+
+                <div className="text-center">
+                  <p className="text-sm text-[hsl(var(--slate-gray))]">
+                    Lembrou a senha?{" "}
+                    <button
+                      onClick={() => {
+                        setIsForgotPassword(false);
+                        setResetEmail("");
+                      }}
+                      className="text-[hsl(var(--flowdent-blue))] font-semibold hover:underline"
+                    >
+                      Voltar ao login
+                    </button>
+                  </p>
+                </div>
+              </>
+            ) : !isSignUp ? (
               // LOGIN FORM
               <>
                 <div className="text-center">
@@ -320,7 +420,16 @@ const Auth = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="login-password">Senha</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="login-password">Senha</Label>
+                      <button
+                        type="button"
+                        onClick={() => setIsForgotPassword(true)}
+                        className="text-sm text-[hsl(var(--flowdent-blue))] hover:underline"
+                      >
+                        Esqueceu a senha?
+                      </button>
+                    </div>
                     <Input
                       id="login-password"
                       type="password"
