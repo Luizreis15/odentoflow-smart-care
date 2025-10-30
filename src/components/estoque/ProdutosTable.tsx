@@ -1,13 +1,57 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, Pencil, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ProdutosTableProps {
   products: any[];
   isLoading: boolean;
+  onEdit: (product: any) => void;
 }
 
-export function ProdutosTable({ products, isLoading }: ProdutosTableProps) {
+export function ProdutosTable({ products, isLoading, onEdit }: ProdutosTableProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("products")
+        .update({ ativo: false })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Produto excluído",
+        description: "Produto inativado com sucesso",
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      setDeleteId(null);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao excluir produto",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
   if (isLoading) {
     return <div className="text-center py-8">Carregando produtos...</div>;
   }
@@ -32,6 +76,7 @@ export function ProdutosTable({ products, isLoading }: ProdutosTableProps) {
             <TableHead>Estoque Mínimo</TableHead>
             <TableHead>Custo Médio</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -69,11 +114,46 @@ export function ProdutosTable({ products, isLoading }: ProdutosTableProps) {
                     <Badge variant="secondary">Inativo</Badge>
                   )}
                 </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onEdit(product)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setDeleteId(product.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
               </TableRow>
             );
           })}
         </TableBody>
       </Table>
+
+      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja inativar este produto? Esta ação pode ser revertida posteriormente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteId && handleDelete(deleteId)}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

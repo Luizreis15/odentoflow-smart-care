@@ -5,11 +5,19 @@ import { Plus, Search } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { NovoProdutoModal } from "@/components/estoque/NovoProdutoModal";
+import { EditProdutoModal } from "@/components/estoque/EditProdutoModal";
 import { ProdutosTable } from "@/components/estoque/ProdutosTable";
 
 export default function Produtos() {
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+
+  const handleEdit = (product: any) => {
+    setSelectedProduct(product);
+    setEditModalOpen(true);
+  };
 
   const { data: profile } = useQuery({
     queryKey: ["profile"],
@@ -81,9 +89,14 @@ export default function Produtos() {
         </div>
       </div>
 
-      <ProdutosTable products={products || []} isLoading={isLoading} />
+      <ProdutosTable products={products || []} isLoading={isLoading} onEdit={handleEdit} />
 
       <NovoProdutoModal open={modalOpen} onOpenChange={setModalOpen} />
+      <EditProdutoModal 
+        open={editModalOpen} 
+        onOpenChange={setEditModalOpen} 
+        product={selectedProduct} 
+      />
     </div>
   );
 }
