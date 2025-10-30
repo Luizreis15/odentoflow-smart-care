@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
@@ -35,20 +34,6 @@ export function NovoProdutoModal({ open, onOpenChange }: NovoProdutoModalProps) 
     },
   });
 
-  const { data: locations } = useQuery({
-    queryKey: ["stock-locations", profile?.clinic_id],
-    queryFn: async () => {
-      if (!profile?.clinic_id) return [];
-      const { data } = await supabase
-        .from("stock_locations")
-        .select("*")
-        .eq("clinica_id", profile.clinic_id)
-        .eq("ativo", true);
-      return data || [];
-    },
-    enabled: !!profile?.clinic_id,
-  });
-
   const onSubmit = async (formData: any) => {
     if (!profile?.clinic_id) return;
     
@@ -71,11 +56,11 @@ export function NovoProdutoModal({ open, onOpenChange }: NovoProdutoModalProps) 
         categoria: formData.categoria || null,
         marca: formData.marca || null,
         unidade: formData.unidade || "un",
-        controle_lote: formData.controle_lote || false,
-        controle_validade: formData.controle_validade || false,
+        controle_lote: false,
+        controle_validade: false,
         estoque_minimo: formData.estoque_minimo || 0,
         estoque_maximo: formData.estoque_maximo || null,
-        local_padrao_id: formData.local_padrao_id || null,
+        local_padrao_id: null,
         metodo_custeio: formData.metodo_custeio || "media_ponderada",
         preco_venda: formData.preco_venda || null,
       });
@@ -154,22 +139,6 @@ export function NovoProdutoModal({ open, onOpenChange }: NovoProdutoModalProps) 
             </div>
 
             <div>
-              <Label htmlFor="local_padrao_id">Local Padrão</Label>
-              <Select onValueChange={(value) => setValue("local_padrao_id", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {locations?.map((loc) => (
-                    <SelectItem key={loc.id} value={loc.id}>
-                      {loc.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
               <Label htmlFor="estoque_minimo">Estoque Mínimo</Label>
               <Input id="estoque_minimo" type="number" step="0.01" {...register("estoque_minimo")} />
             </div>
@@ -195,24 +164,6 @@ export function NovoProdutoModal({ open, onOpenChange }: NovoProdutoModalProps) 
                   <SelectItem value="fifo">FIFO</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="col-span-2 space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="controle_lote">Controlar por Lote</Label>
-                <Switch
-                  id="controle_lote"
-                  onCheckedChange={(checked) => setValue("controle_lote", checked)}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Label htmlFor="controle_validade">Controlar Validade</Label>
-                <Switch
-                  id="controle_validade"
-                  onCheckedChange={(checked) => setValue("controle_validade", checked)}
-                />
-              </div>
             </div>
           </div>
 
