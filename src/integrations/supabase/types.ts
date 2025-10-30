@@ -17,7 +17,7 @@ export type Database = {
       anamnese_modelos: {
         Row: {
           ativo: boolean
-          clinica_id: string
+          clinica_id: string | null
           created_at: string
           descricao: string | null
           id: string
@@ -26,7 +26,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
-          clinica_id: string
+          clinica_id?: string | null
           created_at?: string
           descricao?: string | null
           id?: string
@@ -35,7 +35,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
-          clinica_id?: string
+          clinica_id?: string | null
           created_at?: string
           descricao?: string | null
           id?: string
@@ -3513,6 +3513,7 @@ export type Database = {
         Returns: boolean
       }
       is_portal_patient: { Args: never; Returns: string }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       base_calculo_repasse: "valor_bruto" | "valor_liquido" | "valor_recebido"
@@ -3522,7 +3523,12 @@ export type Database = {
         | "por_procedimento"
         | "por_convenio"
         | "por_origem"
-      perfil_usuario: "admin" | "dentista" | "assistente" | "recepcao"
+      perfil_usuario:
+        | "admin"
+        | "dentista"
+        | "assistente"
+        | "recepcao"
+        | "super_admin"
       plano_tipo: "starter" | "pro" | "enterprise"
       responsavel_tributario: "profissional" | "clinica"
       status_assinatura:
@@ -3682,7 +3688,13 @@ export const Constants = {
         "por_convenio",
         "por_origem",
       ],
-      perfil_usuario: ["admin", "dentista", "assistente", "recepcao"],
+      perfil_usuario: [
+        "admin",
+        "dentista",
+        "assistente",
+        "recepcao",
+        "super_admin",
+      ],
       plano_tipo: ["starter", "pro", "enterprise"],
       responsavel_tributario: ["profissional", "clinica"],
       status_assinatura: [

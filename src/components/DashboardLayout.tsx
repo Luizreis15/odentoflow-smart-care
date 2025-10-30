@@ -16,9 +16,11 @@ import {
   FlaskConical,
   Package,
   User,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Navbar from "./Navbar";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -113,6 +115,7 @@ const navigation = [
 const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isSuperAdmin } = usePermissions();
 
   return (
     <div className="min-h-screen bg-background">
@@ -139,6 +142,22 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
         >
           <ScrollArea className="h-[calc(100vh-4rem)] py-6">
             <nav className="space-y-1 px-3">
+              {isSuperAdmin && (
+                <Link
+                  to="/super-admin"
+                  onClick={() => setSidebarOpen(false)}
+                  className="flex items-start gap-3 rounded-lg px-3 py-3 mb-4 transition-all bg-primary/10 hover:bg-primary/20 border border-primary/20"
+                >
+                  <Shield className="h-5 w-5 mt-0.5 flex-shrink-0 text-primary" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm text-primary">Super Admin</div>
+                    <div className="text-xs text-primary/70 mt-0.5">
+                      Painel administrativo global
+                    </div>
+                  </div>
+                </Link>
+              )}
+              
               {navigation.map((item) => {
                 const isActive = location.pathname === item.href;
                 return (

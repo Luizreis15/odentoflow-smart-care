@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-type PerfilUsuario = "admin" | "dentista" | "assistente" | "recepcao";
+type PerfilUsuario = "super_admin" | "admin" | "dentista" | "assistente" | "recepcao";
 
 interface Permission {
   recurso: string;
@@ -43,7 +43,7 @@ export const usePermissions = () => {
   };
 
   const hasPermission = (recurso: string, acao: string): boolean => {
-    if (perfil === "admin") return true;
+    if (perfil === "super_admin" || perfil === "admin") return true;
     
     const perm = permissions.find(
       p => p.recurso === recurso && p.acao === acao
@@ -53,6 +53,7 @@ export const usePermissions = () => {
   };
 
   const isAdmin = perfil === "admin";
+  const isSuperAdmin = perfil === "super_admin";
 
-  return { perfil, permissions, hasPermission, isAdmin, loading };
+  return { perfil, permissions, hasPermission, isAdmin, isSuperAdmin, loading };
 };

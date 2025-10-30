@@ -27,6 +27,8 @@ import ProdutosWrapper from "./pages/dashboard/ProdutosWrapper";
 import MovimentacoesWrapper from "./pages/dashboard/MovimentacoesWrapper";
 import PerfilWrapper from "./pages/dashboard/PerfilWrapper";
 import ConfiguracoesWrapper from "./pages/dashboard/ConfiguracoesWrapper";
+import SuperAdminDashboardWrapper from "./pages/superadmin/DashboardWrapper";
+import GlobalAnamneseWrapper from "./pages/superadmin/GlobalAnamneseWrapper";
 import NotFound from "./pages/NotFound";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 
@@ -69,6 +71,10 @@ function App() {
               <Route path="/dashboard/movimentacoes" element={<MovimentacoesWrapper />} />
               <Route path="/dashboard/profile" element={<PerfilWrapper />} />
               <Route path="/dashboard/configuracoes" element={<ConfiguracoesWrapper />} />
+              
+              {/* Super Admin Routes */}
+              <Route path="/super-admin" element={<SuperAdminDashboardWrapper />} />
+              <Route path="/super-admin/anamnese" element={<GlobalAnamneseWrapper />} />
               
               {/* Portal do Paciente - Rotas Públicas */}
               <Route path="/portal/auth" element={<PortalAuth />} />
