@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface FeatureSectionProps {
   badge: string;
@@ -87,11 +88,14 @@ export default function FeatureSection({
               whileTap={{ scale: 0.95 }}
             >
               <Button 
+                asChild
                 className="bg-[hsl(var(--flowdent-blue))] text-white hover:bg-[hsl(var(--flow-turquoise))] transition-all duration-300 shadow-lg"
                 size="lg"
               >
-                {ctaText}
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <Link to="/auth">
+                  {ctaText}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
               </Button>
             </motion.div>
           </motion.div>

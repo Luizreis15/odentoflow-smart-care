@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Play, CheckCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function CTASection() {
   return (
@@ -58,10 +59,13 @@ export default function CTASection() {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button 
                 size="lg"
+                asChild
                 className="bg-white text-[hsl(var(--flowdent-blue))] hover:bg-white/90 transition-all duration-300 text-lg px-8 py-6 shadow-xl"
               >
-                Comece seu Teste Grátis
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <Link to="/auth">
+                  Mude Já Sua Gestão!
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
               </Button>
             </motion.div>
             
@@ -69,10 +73,13 @@ export default function CTASection() {
               <Button 
                 size="lg"
                 variant="outline"
+                asChild
                 className="border-2 border-white bg-white text-[hsl(var(--flow-turquoise))] hover:bg-white/10 hover:text-white transition-all duration-300 text-lg px-8 py-6"
               >
-                <Play className="mr-2 h-5 w-5" />
-                Agendar Demonstração
+                <Link to="/auth">
+                  <Play className="mr-2 h-5 w-5" />
+                  Inicie de Graça
+                </Link>
               </Button>
             </motion.div>
           </motion.div>

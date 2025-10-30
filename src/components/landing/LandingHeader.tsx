@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 export default function LandingHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -78,9 +79,10 @@ export default function LandingHeader() {
               Entrar
             </a>
             <Button 
+              asChild
               className="bg-[hsl(var(--flowdent-blue))] text-white hover:bg-[hsl(var(--flow-turquoise))] transition-colors"
             >
-              Testar Grátis
+              <Link to="/auth">Inicie de Graça</Link>
             </Button>
           </div>
 
@@ -131,8 +133,8 @@ export default function LandingHeader() {
                 <a href="/auth" className="text-[hsl(var(--flowdent-blue))] font-semibold">
                   Entrar
                 </a>
-                <Button className="bg-[hsl(var(--flowdent-blue))] text-white w-full">
-                  Testar Grátis
+                <Button asChild className="bg-[hsl(var(--flowdent-blue))] text-white w-full">
+                  <Link to="/auth">Inicie de Graça</Link>
                 </Button>
               </nav>
             </motion.div>

@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Play } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import heroImage from '@/assets/flowdent-hero.jpg';
 
 export default function HeroSection() {
@@ -68,19 +69,25 @@ export default function HeroSection() {
             >
               <Button 
                 size="lg"
+                asChild
                 className="bg-[hsl(var(--flowdent-blue))] text-white hover:bg-[hsl(var(--flow-turquoise))] transition-all duration-300 text-lg px-8 py-6 shadow-lg hover:shadow-xl"
               >
-                Experimente Grátis por 7 Dias
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <Link to="/auth">
+                  Comece Agora!
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
               </Button>
               
               <Button 
                 size="lg"
                 variant="outline"
+                asChild
                 className="border-2 border-[hsl(var(--flow-turquoise))] text-[hsl(var(--flow-turquoise))] hover:bg-[hsl(var(--flow-turquoise))] hover:text-white transition-all duration-300 text-lg px-8 py-6"
               >
-                <Play className="mr-2 h-5 w-5" />
-                Ver Demonstração
+                <Link to="/auth">
+                  <Play className="mr-2 h-5 w-5" />
+                  Comece Sem Cartão!
+                </Link>
               </Button>
             </motion.div>
 
