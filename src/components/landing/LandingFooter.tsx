@@ -41,7 +41,7 @@ export default function LandingFooter() {
 
       {/* Seção de Links */}
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 max-w-5xl mx-auto">
           {/* Suporte */}
           <div>
             <h4 className="font-semibold text-gray-900 mb-4 text-sm">Suporte</h4>
@@ -88,14 +88,6 @@ export default function LandingFooter() {
             <ul className="space-y-2.5">
               <li><a href="#receita" className="text-sm text-gray-600 hover:text-[hsl(var(--flow-turquoise))] transition">Receita digital</a></li>
               <li><a href="#financeiro" className="text-sm text-gray-600 hover:text-[hsl(var(--flow-turquoise))] transition">Gestão financeira</a></li>
-            </ul>
-          </div>
-
-          {/* Compare */}
-          <div>
-            <h4 className="font-semibold text-gray-900 mb-4 text-sm">Compare</h4>
-            <ul className="space-y-2.5">
-              <li><a href="#vs-simples" className="text-sm text-gray-600 hover:text-[hsl(var(--flow-turquoise))] transition">vs Simples Dental</a></li>
             </ul>
           </div>
         </div>
