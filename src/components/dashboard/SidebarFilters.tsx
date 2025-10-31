@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export const SidebarFilters = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const navigate = useNavigate();
 
   const professionals = [
     { name: "Dr. João Silva", avatar: "JS", active: true },
@@ -87,7 +89,11 @@ export const SidebarFilters = () => {
       </Card>
 
       {/* Botão compacto */}
-      <Button size="sm" className="w-full h-9 text-xs font-semibold bg-[hsl(var(--flowdent-blue))] hover:bg-[hsl(var(--flow-turquoise))]">
+      <Button 
+        size="sm" 
+        onClick={() => navigate("/dashboard/agenda")}
+        className="w-full h-9 text-xs font-semibold bg-[hsl(var(--flowdent-blue))] hover:bg-[hsl(var(--flow-turquoise))]"
+      >
         <Plus className="h-3.5 w-3.5 mr-1.5" />
         Novo Agendamento
       </Button>
