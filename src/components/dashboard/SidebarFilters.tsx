@@ -29,12 +29,12 @@ export const SidebarFilters = () => {
         <CardHeader className="p-2 pb-1">
           <CardTitle className="text-xs font-medium">Calendário</CardTitle>
         </CardHeader>
-        <CardContent className="p-2">
+        <CardContent className="p-2 overflow-hidden">
           <Calendar
             mode="single"
             selected={date}
             onSelect={setDate}
-            className="rounded-md border-0 [&_.rdp-months]:w-full [&_.rdp-caption]:text-xs [&_.rdp-day]:h-6 [&_.rdp-day]:w-6 [&_.rdp-day]:text-xs"
+            className="rounded-md border-0 w-full [&_.rdp-months]:w-full [&_.rdp-caption]:text-xs [&_.rdp-day]:h-6 [&_.rdp-day]:w-6 [&_.rdp-day]:text-xs [&_.rdp-table]:w-full"
           />
         </CardContent>
       </Card>
