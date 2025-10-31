@@ -98,9 +98,10 @@ const Configuracoes = () => {
       )}
 
       <Tabs defaultValue="clinica" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-10 h-auto">
+        <TabsList className="grid w-full grid-cols-11 h-auto">
           <TabsTrigger value="clinica">Clínica</TabsTrigger>
           <TabsTrigger value="equipe">Equipe</TabsTrigger>
+          <TabsTrigger value="usuarios">Usuários</TabsTrigger>
           <TabsTrigger value="nota-fiscal">Nota Fiscal</TabsTrigger>
           <TabsTrigger value="planos">Planos</TabsTrigger>
           <TabsTrigger value="anamnese">Anamnese</TabsTrigger>
@@ -117,6 +118,10 @@ const Configuracoes = () => {
 
         <TabsContent value="equipe">
           <ProfissionaisTab clinicaId={profile.clinic_id} />
+        </TabsContent>
+
+        <TabsContent value="usuarios">
+          <UsuariosTab clinicaId={profile.clinic_id} />
         </TabsContent>
 
         <TabsContent value="nota-fiscal">
