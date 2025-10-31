@@ -179,42 +179,27 @@ const Dashboard = () => {
       )}
       
       {isSuperAdmin ? (
-        <div className="mb-6">
-          <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-1">
-            Painel Super Admin
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Acesso completo ao sistema. Use o menu lateral para navegar.
-          </p>
+        <div className="mb-3">
+          <h1 className="text-xl font-bold">Painel Super Admin</h1>
         </div>
       ) : (
-        <div className="mb-6">
-          <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-1">
-            Bem-vindo, {profile?.full_name || "Usuário"}!
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Aqui está um resumo da sua clínica hoje.
-          </p>
+        <div className="mb-4">
+          <h1 className="text-xl lg:text-2xl font-bold">Bem-vindo, {profile?.full_name?.split(' ')[0] || "Usuário"}!</h1>
         </div>
       )}
 
         {!isSuperAdmin && (
-          <div className="flex gap-4 lg:gap-6">
-            {/* Sidebar Esquerda - Filtros e Calendário */}
-            <aside className="hidden xl:block w-64 flex-shrink-0">
+          <div className="flex gap-2.5">
+            <aside className="hidden xl:block w-48 flex-shrink-0">
               <SidebarFilters />
             </aside>
 
-            {/* Área Central - Métricas e Agenda */}
-            <main className="flex-1 min-w-0">
+            <main className="flex-1 min-w-0 space-y-2.5">
               <DashboardMetrics />
-              <div className="mt-6">
-                <AgendaCalendar />
-              </div>
+              <AgendaCalendar />
             </main>
 
-            {/* Sidebar Direita - Ações e Próximas Consultas */}
-            <aside className="hidden lg:block w-72 xl:w-80 flex-shrink-0 space-y-4">
+            <aside className="hidden lg:block w-56 flex-shrink-0 space-y-2.5">
               <QuickActions />
               <UpcomingAppointments />
             </aside>

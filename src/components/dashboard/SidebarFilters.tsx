@@ -23,62 +23,59 @@ export const SidebarFilters = () => {
   ];
 
   return (
-    <div className="space-y-3">
-      {/* Calendário compacto */}
+    <div className="space-y-2.5">
+      {/* Calendário ultra compacto */}
       <Card>
-        <CardHeader className="pb-2">
+        <CardHeader className="p-2 pb-1">
           <CardTitle className="text-xs font-medium">Calendário</CardTitle>
         </CardHeader>
-        <CardContent className="p-2">
+        <CardContent className="p-1.5">
           <Calendar
             mode="single"
             selected={date}
             onSelect={setDate}
-            className="rounded-md border-0 text-xs [&_.rdp-months]:w-full [&_.rdp-caption]:text-xs [&_.rdp-day]:h-7 [&_.rdp-day]:w-7 [&_.rdp-day]:text-xs"
+            className="rounded-md border-0 text-xs scale-90 origin-top-left [&_.rdp-months]:w-full [&_.rdp-caption]:text-xs [&_.rdp-day]:h-6 [&_.rdp-day]:w-6 [&_.rdp-day]:text-xs"
           />
         </CardContent>
       </Card>
 
-      {/* Filtro de Profissionais */}
+      {/* Filtro de Profissionais compacto */}
       <Card>
-        <CardHeader className="pb-2">
+        <CardHeader className="p-2 pb-1">
           <CardTitle className="text-xs font-medium">Profissionais</CardTitle>
         </CardHeader>
-        <CardContent className="p-3">
-          <div className="space-y-2">
+        <CardContent className="p-2">
+          <div className="space-y-1">
             {professionals.map((prof, index) => (
               <div
                 key={index}
-                className={`flex items-center gap-2 p-1.5 rounded transition-colors cursor-pointer ${
+                className={`flex items-center gap-1.5 p-1 rounded text-xs cursor-pointer ${
                   prof.active ? "bg-primary/10 text-primary" : "hover:bg-muted"
                 }`}
               >
-                <Avatar className="h-6 w-6">
+                <Avatar className="h-5 w-5">
                   <AvatarFallback className="text-xs bg-primary text-primary-foreground">
                     {prof.avatar}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-xs font-medium truncate">{prof.name}</span>
+                <span className="font-medium truncate">{prof.name}</span>
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* Filtro por Tipo de Consulta */}
+      {/* Filtro Tipo - mais compacto */}
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xs font-medium">Tipo de Consulta</CardTitle>
+        <CardHeader className="p-2 pb-1">
+          <CardTitle className="text-xs font-medium">Tipo</CardTitle>
         </CardHeader>
-        <CardContent className="p-3">
-          <div className="space-y-2">
+        <CardContent className="p-2">
+          <div className="space-y-1.5">
             {consultTypes.map((type, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <Checkbox id={`type-${index}`} defaultChecked={type.checked} className="h-3.5 w-3.5" />
-                <label
-                  htmlFor={`type-${index}`}
-                  className="text-xs font-medium leading-none cursor-pointer"
-                >
+              <div key={index} className="flex items-center gap-1.5">
+                <Checkbox id={`type-${index}`} defaultChecked={type.checked} className="h-3 w-3" />
+                <label htmlFor={`type-${index}`} className="text-xs cursor-pointer">
                   {type.label}
                 </label>
               </div>
@@ -87,12 +84,9 @@ export const SidebarFilters = () => {
         </CardContent>
       </Card>
 
-      {/* Botão de Novo Agendamento */}
-      <Button
-        size="lg"
-        className="w-full h-12 text-sm font-semibold bg-[hsl(var(--flowdent-blue))] hover:bg-[hsl(var(--flow-turquoise))] shadow-md"
-      >
-        <Plus className="h-4 w-4 mr-2" />
+      {/* Botão compacto */}
+      <Button size="sm" className="w-full h-9 text-xs font-semibold bg-[hsl(var(--flowdent-blue))] hover:bg-[hsl(var(--flow-turquoise))]">
+        <Plus className="h-3.5 w-3.5 mr-1.5" />
         Novo Agendamento
       </Button>
     </div>
