@@ -106,44 +106,51 @@ const Auth = () => {
     };
     checkUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session) {
-        // Verificar se é super admin - redireciona para dashboard com acesso total
-        const { data: userRoles } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .eq('role', 'super_admin')
-          .maybeSingle();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        // Use setTimeout to defer Supabase calls and prevent deadlocks
+        setTimeout(async () => {
+          try {
+            // Verificar se é super admin - redireciona para dashboard com acesso total
+            const { data: userRoles } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', session.user.id)
+              .eq('role', 'super_admin')
+              .maybeSingle();
 
-        if (userRoles) {
-          navigate("/dashboard");
-          return;
-        }
+            if (userRoles) {
+              navigate("/dashboard");
+              return;
+            }
 
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('clinic_id')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (!profile?.clinic_id) {
-          navigate("/onboarding/welcome");
-          return;
-        }
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('clinic_id')
+              .eq('id', session.user.id)
+              .single();
+            
+            if (!profile?.clinic_id) {
+              navigate("/onboarding/welcome");
+              return;
+            }
 
-        const { data: clinica } = await (supabase as any)
-          .from('clinicas')
-          .select('onboarding_status')
-          .eq('id', profile.clinic_id)
-          .single();
+            const { data: clinica } = await (supabase as any)
+              .from('clinicas')
+              .select('onboarding_status')
+              .eq('id', profile.clinic_id)
+              .single();
 
-        if (clinica?.onboarding_status !== 'completed') {
-          navigate("/onboarding/welcome");
-          return;
-        }
+            if (clinica?.onboarding_status !== 'completed') {
+              navigate("/onboarding/welcome");
+              return;
+            }
 
-        navigate("/dashboard");
+            navigate("/dashboard");
+          } catch (error) {
+            console.error("Error checking user data:", error);
+          }
+        }, 0);
       }
     });
 
