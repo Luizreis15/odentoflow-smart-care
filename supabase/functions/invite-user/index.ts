@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.1";
-import { Resend } from "npm:resend@2.0.0";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -24,6 +24,8 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    console.log("=== Invite User Function Started ===");
+    
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -36,12 +38,24 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
     const { name, email, role, clinicaId, clinicName }: InviteUserRequest = await req.json();
+    console.log("Request data:", { name, email, role, clinicaId, clinicName });
 
-    // Verificar se o email já existe
-    const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers();
-    const userExists = existingUser?.users.some(u => u.email === email.toLowerCase());
+    // Verificar se o email já existe no auth E na tabela usuarios
+    console.log("Checking if email exists in auth...");
+    const { data: existingAuthUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const authUserExists = existingAuthUsers?.users.some(u => u.email === email.toLowerCase());
+    
+    console.log("Checking if email exists in usuarios table...");
+    const { data: existingUsuario } = await supabaseAdmin
+      .from("usuarios")
+      .select("id, email")
+      .eq("email", email.toLowerCase())
+      .maybeSingle();
 
-    if (userExists) {
+    console.log("Auth user exists:", authUserExists, "Usuario exists:", !!existingUsuario);
+
+    if (authUserExists || existingUsuario) {
+      console.log("Email already exists, returning error");
       return new Response(
         JSON.stringify({ error: "Este email já está cadastrado" }),
         {
@@ -53,6 +67,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Gerar senha temporária aleatória
     const tempPassword = crypto.randomUUID();
+    console.log("Creating user in auth with email:", email.toLowerCase());
 
     // Criar usuário no Supabase Auth
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -68,8 +83,11 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Erro ao criar usuário no auth:", authError);
       throw new Error("Erro ao criar usuário: " + authError?.message);
     }
+    
+    console.log("User created in auth successfully:", authUser.user.id);
 
     // Criar registro na tabela usuarios
+    console.log("Creating user in usuarios table...");
     const { error: usuarioError } = await supabaseAdmin
       .from("usuarios")
       .insert({
@@ -83,11 +101,15 @@ const handler = async (req: Request): Promise<Response> => {
     if (usuarioError) {
       console.error("Erro ao criar registro em usuarios:", usuarioError);
       // Limpar usuário criado no auth
+      console.log("Rolling back: deleting user from auth");
       await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
       throw new Error("Erro ao criar registro: " + usuarioError.message);
     }
+    
+    console.log("User created in usuarios table successfully");
 
     // Criar role
+    console.log("Creating user role...");
     const { error: roleError } = await supabaseAdmin
       .from("user_roles")
       .insert({
@@ -97,19 +119,28 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (roleError) {
       console.error("Erro ao criar role:", roleError);
+    } else {
+      console.log("Role created successfully");
     }
 
     // Gerar link de redefinição de senha
+    console.log("Generating password reset link...");
+    
+    // Determinar a URL de redirecionamento correta
+    const redirectUrl = Deno.env.get("APP_URL") || "https://flowdent.com.br";
+    
     const { data: resetData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
       email: email.toLowerCase(),
       options: {
-        redirectTo: `${Deno.env.get("SUPABASE_URL")?.replace('supabase.co', 'lovable.app')}/auth?reset=true`
+        redirectTo: `${redirectUrl}/auth?reset=true`
       }
     });
 
     if (resetError) {
       console.error("Erro ao gerar link de reset:", resetError);
+    } else {
+      console.log("Password reset link generated successfully");
     }
 
     // Mapear perfis para nomes amigáveis
@@ -121,6 +152,7 @@ const handler = async (req: Request): Promise<Response> => {
     };
 
     // Enviar email de boas-vindas
+    console.log("Sending welcome email...");
     try {
       const emailResponse = await resend.emails.send({
         from: "Flowdent <noreply@flowdent.com.br>",
@@ -154,6 +186,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Não falhar se o email não for enviado
     }
 
+    console.log("=== Invite User Function Completed Successfully ===");
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -166,9 +199,12 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
   } catch (error: any) {
-    console.error("Error in invite-user function:", error);
+    console.error("=== ERROR in invite-user function ===");
+    console.error("Error details:", error);
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message || "Erro desconhecido ao criar usuário" }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
