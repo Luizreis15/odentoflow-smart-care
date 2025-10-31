@@ -200,7 +200,7 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
         {/* Main content com margem dinâmica baseada no sidebar */}
         <main className={cn(
           "flex-1 transition-all duration-300",
-          "lg:ml-16 px-4 lg:px-6"
+          "lg:ml-16 p-2 lg:p-3"
         )}>
           <div className="w-full mx-auto max-h-[calc(100vh-4rem)] overflow-y-auto">
             {children}
