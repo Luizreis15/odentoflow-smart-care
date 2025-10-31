@@ -179,13 +179,9 @@ const Dashboard = () => {
       )}
       
       {isSuperAdmin ? (
-        <div className="mb-2">
-          <h1 className="text-lg font-bold">Painel Super Admin</h1>
-        </div>
+        <h1 className="text-lg font-bold mb-4">Painel Super Admin</h1>
       ) : (
-        <div className="mb-2">
-          <h1 className="text-lg lg:text-xl font-bold">Bem-vindo, {profile?.full_name?.split(' ')[0] || "Usuário"}!</h1>
-        </div>
+        <h1 className="text-lg lg:text-xl font-bold mb-4">Bem-vindo, {profile?.full_name?.split(' ')[0] || "Usuário"}!</h1>
       )}
 
         {!isSuperAdmin && (
