@@ -217,14 +217,27 @@ export default function CRMAtendimento() {
       <div className="container mx-auto p-6">
         <Card className="p-12 text-center">
           <MessageSquare className="w-20 h-20 mx-auto mb-6 text-muted-foreground" />
-          <h2 className="text-2xl font-bold mb-4">Configure o WhatsApp Business API</h2>
+          <h2 className="text-2xl font-bold mb-4">Configure o WhatsApp Business</h2>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Para começar a usar o sistema de atendimento, conecte sua API do WhatsApp Business.
-            Você precisará das credenciais da Meta/Facebook.
+            Para começar a usar o sistema de atendimento, escolha como deseja conectar seu WhatsApp:
           </p>
+          <div className="flex flex-col gap-4 max-w-md mx-auto mb-6">
+            <div className="p-4 border rounded-lg text-left">
+              <h3 className="font-semibold mb-2">📱 WhatsApp Web (Gratuito)</h3>
+              <p className="text-sm text-muted-foreground">
+                Conecte escaneando um QR Code - Sem custos adicionais
+              </p>
+            </div>
+            <div className="p-4 border rounded-lg text-left">
+              <h3 className="font-semibold mb-2">🏢 API Oficial Meta</h3>
+              <p className="text-sm text-muted-foreground">
+                Conecte usando credenciais da Meta/Facebook (pago)
+              </p>
+            </div>
+          </div>
           <Button onClick={() => setConfigModalOpen(true)} size="lg">
             <Settings className="w-4 h-4 mr-2" />
-            Configurar WhatsApp
+            Configurar Agora
           </Button>
         </Card>
 
@@ -232,8 +245,8 @@ export default function CRMAtendimento() {
           open={configModalOpen}
           onOpenChange={setConfigModalOpen}
           onSuccess={() => {
-            setWhatsappConfigured(true);
-            toast.success("WhatsApp configurado com sucesso!");
+            checkWhatsAppConfig();
+            loadConversations();
           }}
         />
       </div>

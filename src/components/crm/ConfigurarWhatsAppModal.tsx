@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, ExternalLink, CheckCircle2, QrCode, Smartphone } from "lucide-react";
@@ -124,11 +125,25 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
   };
 
   const handleSave = async () => {
+    // Validação para API Oficial
     if (connectionType === 'api_oficial') {
       if (!accessToken || !phoneNumberId || !businessAccountId || !webhookVerifyToken) {
-        toast.error("Preencha todos os campos obrigatórios");
+        toast.error("Preencha todos os campos obrigatórios da API Oficial");
         return;
       }
+    }
+
+    // Validação para QR Code
+    if (connectionType === 'web_qrcode' && !isConnected) {
+      toast.error("Você precisa conectar o WhatsApp via QR Code primeiro");
+      return;
+    }
+
+    // Alertar se não ativar a integração
+    if (!isActive) {
+      toast.warning("⚠️ Atenção: Você não ativou a integração! Ative o switch abaixo para usar o sistema.", {
+        duration: 5000
+      });
     }
 
     setLoading(true);
@@ -160,7 +175,12 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
 
       if (error) throw error;
 
-      toast.success("Configuração salva com sucesso!");
+      if (isActive) {
+        toast.success("✅ WhatsApp configurado e ativado com sucesso!");
+      } else {
+        toast.warning("⚠️ Configuração salva, mas a integração não está ativa. Ative o switch para usar.");
+      }
+      
       onSuccess?.();
       onOpenChange(false);
     } catch (error: any) {
@@ -337,16 +357,32 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
           </TabsContent>
         </Tabs>
 
-        <div className="flex items-center space-x-2 mt-6">
-          <Switch
-            id="is_active"
-            checked={isActive}
-            onCheckedChange={setIsActive}
-          />
-          <Label htmlFor="is_active">
-            Ativar integração WhatsApp
-          </Label>
-        </div>
+        <Alert className={isActive ? "border-green-500 bg-green-50" : "border-yellow-500 bg-yellow-50"}>
+          <AlertDescription>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Switch
+                  id="is_active"
+                  checked={isActive}
+                  onCheckedChange={setIsActive}
+                />
+                <Label htmlFor="is_active" className="cursor-pointer font-semibold">
+                  {isActive ? "✅ Integração ATIVA" : "⚠️ Ativar integração WhatsApp"}
+                </Label>
+              </div>
+              {!isActive && (
+                <Badge variant="outline" className="bg-yellow-100">
+                  INATIVO
+                </Badge>
+              )}
+            </div>
+            <p className="text-xs mt-2 text-muted-foreground">
+              {isActive 
+                ? "O sistema de atendimento WhatsApp está pronto para uso!" 
+                : "Ative este switch para começar a usar o sistema de atendimento."}
+            </p>
+          </AlertDescription>
+        </Alert>
 
         <div className="flex justify-end gap-2 mt-6">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
