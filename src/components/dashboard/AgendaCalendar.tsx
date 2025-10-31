@@ -28,9 +28,9 @@ export const AgendaCalendar = () => {
 
   return (
     <Card>
-      <CardHeader className="p-3 pb-2">
+      <CardHeader className="p-4 pb-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <CardTitle className="text-sm font-medium">Agenda da Semana</CardTitle>
+          <CardTitle className="text-sm font-semibold">Agenda da Semana</CardTitle>
           <div className="flex items-center gap-1">
             <Button variant="outline" size="sm" className="h-7 text-xs hidden sm:inline-flex">Hoje</Button>
             <Button variant="ghost" size="icon" className="h-7 w-7">
@@ -42,7 +42,7 @@ export const AgendaCalendar = () => {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-2">
+      <CardContent className="p-4">
         <div className="overflow-x-auto">
           <div className="min-w-[600px]">
             {/* Header com dias da semana */}
@@ -77,14 +77,14 @@ export const AgendaCalendar = () => {
                       >
                         {apt && (
                           <div
-                            className={`h-full p-1 rounded ${getStatusColor(
+                            className={`h-full p-2 rounded-md ${getStatusColor(
                               apt.status
                             )} text-white transition-all cursor-pointer`}
                           >
-                            <div className="text-xs font-semibold truncate leading-tight">
+                            <div className="text-sm font-semibold truncate leading-snug">
                               {apt.patient}
                             </div>
-                            <div className="text-xs opacity-90 truncate leading-tight">
+                            <div className="text-xs opacity-90 truncate leading-snug mt-0.5">
                               {apt.procedure}
                             </div>
                           </div>

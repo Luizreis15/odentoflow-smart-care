@@ -52,20 +52,20 @@ export const QuickActions = () => {
 
   return (
     <Card>
-      <CardHeader className="p-1.5 pb-0.5">
-        <CardTitle className="text-xs font-medium">Ações Rápidas</CardTitle>
+      <CardHeader className="p-3 pb-2">
+        <CardTitle className="text-sm font-semibold">Ações Rápidas</CardTitle>
       </CardHeader>
-      <CardContent className="p-1.5">
-        <div className="grid grid-cols-2 gap-1.5">
+      <CardContent className="p-3">
+        <div className="grid grid-cols-2 gap-2">
           {actions.map((action, index) => (
             <Button
               key={index}
               variant="outline"
               onClick={action.onClick}
-              className="h-auto flex flex-col items-center justify-center p-2 hover:border-primary hover:bg-accent/10 transition-all cursor-pointer"
+              className="h-auto flex flex-col items-center justify-center p-3 hover:border-primary hover:bg-accent/10 transition-all cursor-pointer"
             >
-              <action.icon className={`h-4 w-4 mb-1 ${action.color}`} />
-              <span className="text-xs font-medium text-center leading-tight">
+              <action.icon className={`h-5 w-5 mb-1.5 ${action.color}`} />
+              <span className="text-xs font-medium text-center leading-snug">
                 {action.label}
               </span>
             </Button>

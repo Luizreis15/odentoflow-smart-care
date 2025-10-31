@@ -11,20 +11,20 @@ export const UpcomingAppointments = () => {
 
   return (
     <Card>
-      <CardHeader className="p-1.5 pb-0.5">
-        <CardTitle className="text-xs font-medium">Próximas Consultas</CardTitle>
+      <CardHeader className="p-3 pb-2">
+        <CardTitle className="text-sm font-semibold">Próximas Consultas</CardTitle>
       </CardHeader>
-      <CardContent className="p-1.5">
-        <div className="space-y-1">
+      <CardContent className="p-3">
+        <div className="space-y-2">
           {appointments.map((apt, index) => (
             <div
               key={index}
-              className="flex items-center gap-2 p-2 rounded bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+              className="flex items-center gap-2 p-2 rounded-md bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
             >
-              <div className={`w-0.5 h-8 rounded-full ${apt.statusColor}`} />
+              <div className={`w-1 h-10 rounded-full ${apt.statusColor}`} />
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-xs truncate">{apt.name}</p>
-                <div className="flex items-center gap-0.5 text-xs text-muted-foreground">
+                <p className="font-semibold text-sm truncate leading-snug">{apt.name}</p>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground leading-relaxed mt-0.5">
                   <Clock className="h-3 w-3" />
                   <span>{apt.time}</span>
                 </div>
