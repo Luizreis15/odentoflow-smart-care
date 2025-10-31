@@ -185,17 +185,17 @@ const Dashboard = () => {
       )}
 
         {!isSuperAdmin && (
-          <div className="flex gap-2 w-full max-w-full overflow-hidden">
-            <aside className="hidden xl:block w-48 flex-shrink-0 min-w-[12rem] max-w-[12rem]">
+          <div className="flex gap-4 w-full">
+            <aside className="hidden xl:block w-64 flex-shrink-0">
               <SidebarFilters />
             </aside>
 
-            <main className="flex-1 min-w-0 space-y-2">
+            <main className="flex-1 min-w-0 space-y-4">
               <DashboardMetrics />
               <AgendaCalendar />
             </main>
 
-            <aside className="hidden lg:block w-56 flex-shrink-0 min-w-[14rem] max-w-[14rem] space-y-2">
+            <aside className="hidden lg:block w-72 flex-shrink-0 space-y-4">
               <QuickActions />
               <UpcomingAppointments />
             </aside>

@@ -28,41 +28,41 @@ export const AgendaCalendar = () => {
 
   return (
     <Card>
-      <CardHeader className="p-3 pb-2">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <CardTitle className="text-sm font-medium">Agenda da Semana</CardTitle>
-          <div className="flex items-center gap-1">
-            <Button variant="outline" size="sm" className="h-7 text-xs hidden sm:inline-flex">Hoje</Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7">
-              <ChevronLeft className="h-3.5 w-3.5" />
+      <CardHeader className="p-4 pb-3">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <CardTitle className="text-base font-semibold">Agenda da Semana</CardTitle>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="h-8 text-sm hidden sm:inline-flex">Hoje</Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7">
-              <ChevronRight className="h-3.5 w-3.5" />
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-2">
-        <div className="overflow-x-auto">
-          <div className="min-w-[600px]">
+      <CardContent className="p-4 pt-0">
+        <div className="overflow-x-auto -mx-2 px-2">
+          <div className="min-w-[700px]">
             {/* Header com dias da semana */}
-            <div className="grid grid-cols-[50px_repeat(5,1fr)] gap-1 mb-1.5">
+            <div className="grid grid-cols-[60px_repeat(5,1fr)] gap-2 mb-3">
               <div></div>
               {weekDays.map((day, index) => (
-                <div key={index} className="text-center py-0.5">
-                  <div className="text-xs font-semibold">{day}</div>
-                  <div className="text-xs text-muted-foreground">
+                <div key={index} className="text-center py-1">
+                  <div className="text-sm font-semibold">{day}</div>
+                  <div className="text-sm text-muted-foreground">
                     {new Date(Date.now() + index * 86400000).getDate()}
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Grid de horários compacto */}
-            <div className="space-y-0.5">
+            {/* Grid de horários */}
+            <div className="space-y-1">
               {hours.map((hour) => (
-                <div key={hour} className="grid grid-cols-[50px_repeat(5,1fr)] gap-1">
-                  <div className="text-xs text-muted-foreground flex items-center justify-end pr-1.5">
+                <div key={hour} className="grid grid-cols-[60px_repeat(5,1fr)] gap-2">
+                  <div className="text-sm text-muted-foreground flex items-center justify-end pr-2">
                     {hour}
                   </div>
                   {weekDays.map((_, dayIndex) => {
@@ -73,18 +73,18 @@ export const AgendaCalendar = () => {
                     return (
                       <div
                         key={dayIndex}
-                        className="min-h-[40px] rounded border border-muted-foreground/10 hover:border-primary/30 transition-colors bg-muted/20"
+                        className="min-h-[48px] rounded border border-muted-foreground/10 hover:border-primary/30 transition-colors bg-muted/20"
                       >
                         {apt && (
                           <div
-                            className={`h-full p-1 rounded ${getStatusColor(
+                            className={`h-full p-2 rounded ${getStatusColor(
                               apt.status
                             )} text-white transition-all cursor-pointer`}
                           >
-                            <div className="text-xs font-semibold truncate leading-tight">
+                            <div className="text-sm font-semibold truncate">
                               {apt.patient}
                             </div>
-                            <div className="text-xs opacity-90 truncate leading-tight">
+                            <div className="text-xs opacity-90 truncate">
                               {apt.procedure}
                             </div>
                           </div>
@@ -98,19 +98,19 @@ export const AgendaCalendar = () => {
           </div>
         </div>
 
-        {/* Legenda compacta */}
-        <div className="flex items-center gap-2.5 mt-2 pt-2 border-t flex-wrap">
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded bg-primary"></div>
-            <span className="text-xs text-muted-foreground">Confirmado</span>
+        {/* Legenda */}
+        <div className="flex items-center gap-4 mt-4 pt-3 border-t flex-wrap">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-primary"></div>
+            <span className="text-sm text-muted-foreground">Confirmado</span>
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded bg-yellow-500"></div>
-            <span className="text-xs text-muted-foreground">Aguardando</span>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-yellow-500"></div>
+            <span className="text-sm text-muted-foreground">Aguardando</span>
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded bg-accent"></div>
-            <span className="text-xs text-muted-foreground">Concluído</span>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-accent"></div>
+            <span className="text-sm text-muted-foreground">Concluído</span>
           </div>
         </div>
       </CardContent>
