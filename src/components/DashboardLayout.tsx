@@ -124,7 +124,7 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
         <TooltipProvider delayDuration={0}>
           <aside
             className={cn(
-              "hidden lg:flex fixed left-0 top-16 bottom-0 z-40 border-r bg-card transition-all duration-300 ease-in-out",
+              "hidden lg:flex fixed left-0 top-16 bottom-0 z-40 border-r bg-card transition-all duration-150 ease-out",
               sidebarExpanded ? "w-64" : "w-16"
             )}
             onMouseEnter={() => setSidebarExpanded(true)}
