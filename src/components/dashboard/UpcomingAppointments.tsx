@@ -11,11 +11,11 @@ export const UpcomingAppointments = () => {
 
   return (
     <Card>
-      <CardHeader className="p-2.5 pb-1.5">
+      <CardHeader className="p-1.5 pb-0.5">
         <CardTitle className="text-xs font-medium">Próximas Consultas</CardTitle>
       </CardHeader>
-      <CardContent className="p-2">
-        <div className="space-y-1.5">
+      <CardContent className="p-1.5">
+        <div className="space-y-1">
           {appointments.map((apt, index) => (
             <div
               key={index}

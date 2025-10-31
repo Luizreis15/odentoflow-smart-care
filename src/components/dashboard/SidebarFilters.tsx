@@ -25,10 +25,10 @@ export const SidebarFilters = () => {
   ];
 
   return (
-    <div className="space-y-2.5 w-full">
+    <div className="space-y-2 w-full">
       {/* Calendário ultra compacto */}
       <Card className="w-full">
-        <CardHeader className="p-2 pb-1">
+        <CardHeader className="p-1.5 pb-0.5">
           <CardTitle className="text-xs font-medium">Calendário</CardTitle>
         </CardHeader>
         <CardContent className="p-2">
@@ -45,11 +45,11 @@ export const SidebarFilters = () => {
 
       {/* Filtro de Profissionais compacto */}
       <Card>
-        <CardHeader className="p-2 pb-1">
+        <CardHeader className="p-1.5 pb-0.5">
           <CardTitle className="text-xs font-medium">Profissionais</CardTitle>
         </CardHeader>
-        <CardContent className="p-2">
-          <div className="space-y-1">
+        <CardContent className="p-1.5">
+          <div className="space-y-0.5">
             {professionals.map((prof, index) => (
               <div
                 key={index}
@@ -71,11 +71,11 @@ export const SidebarFilters = () => {
 
       {/* Filtro Tipo - mais compacto */}
       <Card>
-        <CardHeader className="p-2 pb-1">
+        <CardHeader className="p-1.5 pb-0.5">
           <CardTitle className="text-xs font-medium">Tipo</CardTitle>
         </CardHeader>
-        <CardContent className="p-2">
-          <div className="space-y-1.5">
+        <CardContent className="p-1.5">
+          <div className="space-y-1">
             {consultTypes.map((type, index) => (
               <div key={index} className="flex items-center gap-1.5">
                 <Checkbox id={`type-${index}`} defaultChecked={type.checked} className="h-3 w-3" />

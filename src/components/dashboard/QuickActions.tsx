@@ -52,10 +52,10 @@ export const QuickActions = () => {
 
   return (
     <Card>
-      <CardHeader className="p-2.5 pb-1.5">
+      <CardHeader className="p-1.5 pb-0.5">
         <CardTitle className="text-xs font-medium">Ações Rápidas</CardTitle>
       </CardHeader>
-      <CardContent className="p-2">
+      <CardContent className="p-1.5">
         <div className="grid grid-cols-2 gap-1.5">
           {actions.map((action, index) => (
             <Button
