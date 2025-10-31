@@ -114,10 +114,11 @@ const handler = async (req: Request): Promise<Response> => {
                 Redefinir Senha
               </a>
             </div>
-            <p>Ou copie e cole este link no seu navegador:</p>
-            <p style="word-break: break-all; color: #666;">${resetData?.properties?.action_link || '#'}</p>
             <p style="color: #999; font-size: 14px; margin-top: 30px;">
-              Este link expira em 1 hora.
+              Este link expira em 1 hora. Se o botão não funcionar, 
+              <a href="${resetData?.properties?.action_link || '#'}" style="color: #0EA5E9; text-decoration: underline;">
+                clique aqui
+              </a>.
             </p>
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
             <p style="color: #666; font-size: 14px;">
