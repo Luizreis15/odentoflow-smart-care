@@ -185,8 +185,8 @@ const Dashboard = () => {
       )}
 
         {!isSuperAdmin && (
-          <div className="flex gap-4 w-full">
-            <aside className="hidden xl:block w-64 flex-shrink-0">
+          <div className="flex gap-6 w-full">
+            <aside className="hidden xl:block w-80 flex-shrink-0">
               <SidebarFilters />
             </aside>
 
@@ -195,7 +195,7 @@ const Dashboard = () => {
               <AgendaCalendar />
             </main>
 
-            <aside className="hidden lg:block w-72 flex-shrink-0 space-y-4">
+            <aside className="hidden lg:block w-80 flex-shrink-0 space-y-4">
               <QuickActions />
               <UpcomingAppointments />
             </aside>
