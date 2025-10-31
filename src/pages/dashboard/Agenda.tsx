@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Plus, Filter, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Plus, Filter, X, UserPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { z } from "zod";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths, isSameDay, isSameMonth, parseISO, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { CadastroRapidoPacienteModal } from "@/components/agenda/CadastroRapidoPacienteModal";
 
 const appointmentSchema = z.object({
   patientId: z.string().uuid("Selecione um paciente válido"),
@@ -28,6 +29,7 @@ const Agenda = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [patients, setPatients] = useState<any[]>([]);
@@ -268,6 +270,13 @@ const Agenda = () => {
 
   const selectedDayAppointments = getAppointmentsForDate(selectedDate);
 
+  const handlePatientCreated = async (patientId: string) => {
+    // Recarregar lista de pacientes
+    await loadData();
+    // Selecionar automaticamente o novo paciente
+    setFormData({ ...formData, patientId });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -360,7 +369,19 @@ const Agenda = () => {
               </SheetHeader>
               <form onSubmit={handleSubmit} className="space-y-4 mt-6">
                 <div className="space-y-2">
-                  <Label htmlFor="patient">Paciente *</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="patient">Paciente *</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsNewPatientModalOpen(true)}
+                      className="h-7 text-xs"
+                    >
+                      <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+                      Novo Paciente
+                    </Button>
+                  </div>
                   <Select value={formData.patientId} onValueChange={(value) => setFormData({ ...formData, patientId: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o paciente" />
@@ -674,6 +695,12 @@ const Agenda = () => {
           </Card>
         </div>
       </div>
+
+      <CadastroRapidoPacienteModal
+        open={isNewPatientModalOpen}
+        onOpenChange={setIsNewPatientModalOpen}
+        onPatientCreated={handlePatientCreated}
+      />
     </div>
   );
 };
