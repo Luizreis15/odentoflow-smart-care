@@ -96,43 +96,50 @@ const Dashboard = () => {
 
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
         navigate("/auth");
       } else {
-        // Check if user is super admin
-        const { data: userRole } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", session.user.id)
-          .eq("role", "super_admin")
-          .maybeSingle();
+        // Use setTimeout to defer Supabase calls and prevent deadlocks
+        setTimeout(async () => {
+          try {
+            // Check if user is super admin
+            const { data: userRole } = await supabase
+              .from("user_roles")
+              .select("role")
+              .eq("user_id", session.user.id)
+              .eq("role", "super_admin")
+              .maybeSingle();
 
-        // Super admins can access without clinic
-        if (userRole) {
-          return;
-        }
+            // Super admins can access without clinic
+            if (userRole) {
+              return;
+            }
 
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("clinic_id")
-          .eq("id", session.user.id)
-          .single();
+            const { data: profileData } = await supabase
+              .from("profiles")
+              .select("clinic_id")
+              .eq("id", session.user.id)
+              .single();
 
-        if (!profileData?.clinic_id) {
-          navigate("/onboarding/welcome");
-        } else {
-          // Check if onboarding is completed
-          const { data: clinicData } = await supabase
-            .from("clinicas")
-            .select("onboarding_status")
-            .eq("id", profileData.clinic_id)
-            .single();
+            if (!profileData?.clinic_id) {
+              navigate("/onboarding/welcome");
+            } else {
+              // Check if onboarding is completed
+              const { data: clinicData } = await supabase
+                .from("clinicas")
+                .select("onboarding_status")
+                .eq("id", profileData.clinic_id)
+                .single();
 
-          if (clinicData?.onboarding_status !== "completed") {
-            navigate("/onboarding/welcome");
+              if (clinicData?.onboarding_status !== "completed") {
+                navigate("/onboarding/welcome");
+              }
+            }
+          } catch (error) {
+            console.error("Error checking user data:", error);
           }
-        }
+        }, 0);
       }
     });
 
@@ -172,40 +179,42 @@ const Dashboard = () => {
       )}
       
       {isSuperAdmin ? (
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+        <div className="mb-6">
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-1">
             Painel Super Admin
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Acesso completo ao sistema. Use o menu lateral para navegar.
           </p>
         </div>
       ) : (
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+        <div className="mb-6">
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-1">
             Bem-vindo, {profile?.full_name || "Usuário"}!
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Aqui está um resumo da sua clínica hoje.
           </p>
         </div>
       )}
 
         {!isSuperAdmin && (
-          <div className="flex gap-6">
+          <div className="flex gap-4 lg:gap-6">
             {/* Sidebar Esquerda - Filtros e Calendário */}
-            <aside className="w-80 flex-shrink-0">
+            <aside className="hidden xl:block w-64 flex-shrink-0">
               <SidebarFilters />
             </aside>
 
             {/* Área Central - Métricas e Agenda */}
             <main className="flex-1 min-w-0">
               <DashboardMetrics />
-              <AgendaCalendar />
+              <div className="mt-6">
+                <AgendaCalendar />
+              </div>
             </main>
 
             {/* Sidebar Direita - Ações e Próximas Consultas */}
-            <aside className="w-80 flex-shrink-0 space-y-4">
+            <aside className="hidden lg:block w-72 xl:w-80 flex-shrink-0 space-y-4">
               <QuickActions />
               <UpcomingAppointments />
             </aside>

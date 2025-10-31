@@ -1,7 +1,7 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Calendar,
   FileText,
@@ -9,8 +9,6 @@ import {
   MessageSquare,
   Users,
   Sparkles,
-  Menu,
-  X,
   LayoutDashboard,
   Settings,
   FlaskConical,
@@ -114,95 +112,101 @@ const navigation = [
 
 const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const { isSuperAdmin } = usePermissions();
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar user={user} />
       
-      <div className="flex">
-        {/* Mobile sidebar toggle */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="fixed left-4 top-20 z-50 lg:hidden"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </Button>
-
-        {/* Sidebar */}
-        <aside
-          className={cn(
-            "fixed inset-y-0 left-0 z-40 w-72 transform border-r bg-card transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static",
-            sidebarOpen ? "translate-x-0" : "-translate-x-full",
-            "top-16"
-          )}
-        >
-          <ScrollArea className="h-[calc(100vh-4rem)] py-6">
-            <nav className="space-y-1 px-3">
-              {isSuperAdmin && (
-                <Link
-                  to="/super-admin"
-                  onClick={() => setSidebarOpen(false)}
-                  className="flex items-start gap-3 rounded-lg px-3 py-3 mb-4 transition-all bg-primary/10 hover:bg-primary/20 border border-primary/20"
-                >
-                  <Shield className="h-5 w-5 mt-0.5 flex-shrink-0 text-primary" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm text-primary">Super Admin</div>
-                    <div className="text-xs text-primary/70 mt-0.5">
-                      Painel administrativo global
-                    </div>
-                  </div>
-                </Link>
-              )}
-              
-              {navigation.map((item) => {
-                const isActive = location.pathname === item.href;
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={cn(
-                      "flex items-start gap-3 rounded-lg px-3 py-3 transition-all hover:bg-accent",
-                      isActive
-                        ? "bg-accent text-accent-foreground font-medium"
-                        : "text-muted-foreground hover:text-foreground"
+      <div className="flex pt-16">
+        {/* Sidebar retrátil no desktop - expande ao passar mouse */}
+        <TooltipProvider delayDuration={0}>
+          <aside
+            className={cn(
+              "hidden lg:flex fixed left-0 top-16 bottom-0 z-40 border-r bg-card transition-all duration-300 ease-in-out",
+              sidebarExpanded ? "w-64" : "w-16"
+            )}
+            onMouseEnter={() => setSidebarExpanded(true)}
+            onMouseLeave={() => setSidebarExpanded(false)}
+          >
+            <ScrollArea className="w-full py-4">
+              <nav className="space-y-1 px-2">
+                {isSuperAdmin && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        to="/super-admin"
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-3 py-3 mb-2 transition-all bg-primary/10 hover:bg-primary/20 border border-primary/20",
+                          !sidebarExpanded && "justify-center"
+                        )}
+                      >
+                        <Shield className="h-5 w-5 flex-shrink-0 text-primary" />
+                        {sidebarExpanded && (
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm text-primary truncate">Super Admin</div>
+                          </div>
+                        )}
+                      </Link>
+                    </TooltipTrigger>
+                    {!sidebarExpanded && (
+                      <TooltipContent side="right">
+                        <p>Super Admin</p>
+                      </TooltipContent>
                     )}
-                  >
-                    <item.icon className="h-5 w-5 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm">{item.name}</div>
-                      {item.description && (
-                        <div className="text-xs text-muted-foreground mt-0.5">
-                          {item.description}
-                        </div>
+                  </Tooltip>
+                )}
+                
+                {navigation.map((item) => {
+                  const isActive = location.pathname === item.href;
+                  return (
+                    <Tooltip key={item.name}>
+                      <TooltipTrigger asChild>
+                        <Link
+                          to={item.href}
+                          className={cn(
+                            "flex items-center gap-3 rounded-lg px-3 py-3 transition-all hover:bg-accent group",
+                            isActive
+                              ? "bg-accent text-accent-foreground font-medium"
+                              : "text-muted-foreground hover:text-foreground",
+                            !sidebarExpanded && "justify-center"
+                          )}
+                        >
+                          <item.icon className={cn(
+                            "h-5 w-5 flex-shrink-0 transition-colors",
+                            isActive && "text-primary"
+                          )} />
+                          {sidebarExpanded && (
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm truncate">{item.name}</div>
+                            </div>
+                          )}
+                        </Link>
+                      </TooltipTrigger>
+                      {!sidebarExpanded && (
+                        <TooltipContent side="right">
+                          <p>{item.name}</p>
+                        </TooltipContent>
                       )}
-                    </div>
-                  </Link>
-                );
-              })}
-            </nav>
-          </ScrollArea>
-        </aside>
+                    </Tooltip>
+                  );
+                })}
+              </nav>
+            </ScrollArea>
+          </aside>
+        </TooltipProvider>
 
-        {/* Main content */}
-        <main className="flex-1 lg:ml-0 p-6 lg:p-8 pt-20 lg:pt-8">
-          <div className="max-w-7xl mx-auto">
+        {/* Main content com margem dinâmica baseada no sidebar */}
+        <main className={cn(
+          "flex-1 transition-all duration-300",
+          "lg:ml-16 p-4 lg:p-6"
+        )}>
+          <div className="w-full mx-auto">
             {children}
           </div>
         </main>
       </div>
-
-      {/* Overlay for mobile */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-background/80 backdrop-blur-sm lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
     </div>
   );
 };

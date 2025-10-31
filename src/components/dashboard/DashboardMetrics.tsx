@@ -4,92 +4,74 @@ import { Progress } from "@/components/ui/progress";
 
 export const DashboardMetrics = () => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
       {/* Card 1: Consultas do Dia */}
-      <Card className="hover:shadow-lg transition-shadow border-l-4 border-l-primary">
-        <CardHeader className="pb-3">
+      <Card className="hover:shadow-md transition-shadow">
+        <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-xs lg:text-sm font-medium text-muted-foreground">
               Consultas do Dia
             </CardTitle>
-            <Calendar className="h-5 w-5 text-primary" />
+            <Calendar className="h-4 w-4 text-[hsl(var(--flowdent-blue))]" />
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold text-foreground mb-2">12</div>
-          <div className="space-y-1 text-xs text-muted-foreground">
-            <div className="flex justify-between">
-              <span>8 Confirmadas</span>
-              <span>2 Aguardando</span>
-            </div>
-            <div className="flex justify-between">
-              <span>2 Concluídas</span>
-            </div>
-          </div>
-          <Progress value={66} className="h-2 mt-3" />
+        <CardContent className="space-y-2">
+          <div className="text-2xl lg:text-3xl font-bold">12</div>
+          <Progress value={66} className="h-1.5" />
+          <p className="text-xs text-muted-foreground">8 confirmadas, 2 aguardando</p>
         </CardContent>
       </Card>
 
       {/* Card 2: Faturamento do Dia */}
-      <Card className="hover:shadow-lg transition-shadow border-l-4 border-l-accent">
-        <CardHeader className="pb-3">
+      <Card className="hover:shadow-md transition-shadow">
+        <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Faturamento do Dia
+            <CardTitle className="text-xs lg:text-sm font-medium text-muted-foreground">
+              Faturamento
             </CardTitle>
-            <DollarSign className="h-5 w-5 text-accent" />
+            <DollarSign className="h-4 w-4 text-[hsl(var(--flow-turquoise))]" />
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold text-foreground mb-2">R$ 3.240</div>
-          <div className="space-y-1 text-xs text-muted-foreground">
-            <div className="flex justify-between">
-              <span className="text-accent font-medium">R$ 1.800 Recebido</span>
-            </div>
-            <div className="flex justify-between">
-              <span>R$ 1.440 a Receber</span>
-            </div>
-          </div>
+        <CardContent className="space-y-2">
+          <div className="text-2xl lg:text-3xl font-bold">R$ 3,2k</div>
+          <p className="text-xs text-muted-foreground">
+            <span className="text-[hsl(var(--flow-turquoise))] font-medium">R$ 1,8k</span> recebido
+          </p>
         </CardContent>
       </Card>
 
       {/* Card 3: Novos Pacientes Hoje */}
-      <Card className="hover:shadow-lg transition-shadow border-l-4 border-l-secondary">
-        <CardHeader className="pb-3">
+      <Card className="hover:shadow-md transition-shadow">
+        <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Novos Pacientes Hoje
+            <CardTitle className="text-xs lg:text-sm font-medium text-muted-foreground">
+              Novos Pacientes
             </CardTitle>
-            <Users className="h-5 w-5 text-secondary" />
+            <Users className="h-4 w-4 text-[hsl(var(--flowdent-blue))]" />
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold text-foreground mb-2">3</div>
-          <div className="space-y-1 text-xs">
-            <div className="flex items-center gap-1">
-              <span className="text-accent font-medium">+15%</span>
-              <span className="text-muted-foreground">vs. média diária</span>
-            </div>
-          </div>
+        <CardContent className="space-y-2">
+          <div className="text-2xl lg:text-3xl font-bold">3</div>
+          <p className="text-xs text-muted-foreground">
+            <span className="text-[hsl(var(--flow-turquoise))] font-medium">+15%</span> vs. média
+          </p>
         </CardContent>
       </Card>
 
       {/* Card 4: Taxa de Ocupação */}
-      <Card className="hover:shadow-lg transition-shadow border-l-4 border-l-primary">
-        <CardHeader className="pb-3">
+      <Card className="hover:shadow-md transition-shadow">
+        <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Taxa de Ocupação
+            <CardTitle className="text-xs lg:text-sm font-medium text-muted-foreground">
+              Ocupação
             </CardTitle>
-            <PieChart className="h-5 w-5 text-primary" />
+            <PieChart className="h-4 w-4 text-[hsl(var(--flowdent-blue))]" />
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold text-foreground mb-2">78%</div>
-          <div className="space-y-1 text-xs text-muted-foreground">
-            <div>7h preenchidas de 9h disponíveis</div>
-          </div>
-          <Progress value={78} className="h-2 mt-3" />
+        <CardContent className="space-y-2">
+          <div className="text-2xl lg:text-3xl font-bold">78%</div>
+          <Progress value={78} className="h-1.5" />
+          <p className="text-xs text-muted-foreground">7h de 9h disponíveis</p>
         </CardContent>
       </Card>
     </div>
