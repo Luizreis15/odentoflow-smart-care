@@ -23,19 +23,21 @@ export const SidebarFilters = () => {
   ];
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2.5 w-full">
       {/* Calendário ultra compacto */}
-      <Card>
+      <Card className="w-full">
         <CardHeader className="p-2 pb-1">
           <CardTitle className="text-xs font-medium">Calendário</CardTitle>
         </CardHeader>
-        <CardContent className="p-2 overflow-hidden">
-          <Calendar
-            mode="single"
-            selected={date}
-            onSelect={setDate}
-            className="rounded-md border-0 w-full [&_.rdp-months]:w-full [&_.rdp-caption]:text-xs [&_.rdp-day]:h-6 [&_.rdp-day]:w-6 [&_.rdp-day]:text-xs [&_.rdp-table]:w-full"
-          />
+        <CardContent className="p-2">
+          <div className="w-full overflow-hidden">
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={setDate}
+              className="rounded-md border-0 w-full scale-95 origin-center [&_.rdp-months]:w-full [&_.rdp-month]:w-full [&_.rdp-table]:w-full [&_.rdp-caption]:text-xs [&_.rdp-day]:h-5 [&_.rdp-day]:w-5 [&_.rdp-day]:text-[10px] [&_.rdp-head_cell]:text-[10px] [&_.rdp-head_cell]:p-0 [&_.rdp-cell]:p-0"
+            />
+          </div>
         </CardContent>
       </Card>
 
