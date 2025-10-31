@@ -3,10 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
 import TrialBanner from "@/components/TrialBanner";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Users, DollarSign, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { DashboardMetrics } from "@/components/dashboard/DashboardMetrics";
+import { AgendaCalendar } from "@/components/dashboard/AgendaCalendar";
+import { SidebarFilters } from "@/components/dashboard/SidebarFilters";
+import { QuickActions } from "@/components/dashboard/QuickActions";
+import { UpcomingAppointments } from "@/components/dashboard/UpcomingAppointments";
 
 interface Profile {
   full_name: string;
@@ -139,11 +142,22 @@ const Dashboard = () => {
   if (loading) {
     return (
       <DashboardLayout user={profile}>
-        <Skeleton className="h-10 w-64 mb-8" />
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
+        <div className="flex gap-6">
+          <div className="w-80">
+            <Skeleton className="h-[400px]" />
+          </div>
+          <div className="flex-1">
+            <Skeleton className="h-10 w-64 mb-6" />
+            <div className="grid grid-cols-4 gap-4 mb-6">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-32" />
+              ))}
+            </div>
+            <Skeleton className="h-[500px]" />
+          </div>
+          <div className="w-80">
+            <Skeleton className="h-[400px]" />
+          </div>
         </div>
       </DashboardLayout>
     );
@@ -178,124 +192,24 @@ const Dashboard = () => {
       )}
 
         {!isSuperAdmin && (
-          <>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Consultas Hoje
-                  </CardTitle>
-                  <Calendar className="h-4 w-4 text-primary" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">12</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    +2 desde ontem
-                  </p>
-                </CardContent>
-              </Card>
+          <div className="flex gap-6">
+            {/* Sidebar Esquerda - Filtros e Calendário */}
+            <aside className="w-80 flex-shrink-0">
+              <SidebarFilters />
+            </aside>
 
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Pacientes Ativos
-                  </CardTitle>
-                  <Users className="h-4 w-4 text-secondary" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">248</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    +18 este mês
-                  </p>
-                </CardContent>
-              </Card>
+            {/* Área Central - Métricas e Agenda */}
+            <main className="flex-1 min-w-0">
+              <DashboardMetrics />
+              <AgendaCalendar />
+            </main>
 
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Receita Mensal
-                  </CardTitle>
-                  <DollarSign className="h-4 w-4 text-secondary" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">R$ 45.230</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    +12% vs. mês passado
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Próxima Consulta
-                  </CardTitle>
-                  <Clock className="h-4 w-4 text-primary" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">14:30</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Maria Silva - Limpeza
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Agendamentos Recentes</CardTitle>
-                  <CardDescription>
-                    Últimas consultas agendadas
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {[
-                      { name: "João Santos", time: "09:00", type: "Consulta" },
-                      { name: "Ana Paula", time: "10:30", type: "Limpeza" },
-                      { name: "Carlos Mendes", time: "14:00", type: "Canal" },
-                    ].map((appointment, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                        <div>
-                          <p className="font-medium">{appointment.name}</p>
-                          <p className="text-sm text-muted-foreground">{appointment.type}</p>
-                        </div>
-                        <span className="text-sm font-medium text-primary">{appointment.time}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Ações Rápidas</CardTitle>
-                  <CardDescription>
-                    Acesse rapidamente as funcionalidades principais
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    {[
-                      { label: "Novo Agendamento", icon: Calendar },
-                      { label: "Cadastrar Paciente", icon: Users },
-                      { label: "Ver Financeiro", icon: DollarSign },
-                      { label: "Relatórios", icon: Clock },
-                    ].map((action, i) => (
-                      <button
-                        key={i}
-                        className="flex flex-col items-center justify-center p-4 rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary hover:bg-accent/50 transition-all"
-                      >
-                        <action.icon className="h-6 w-6 mb-2 text-primary" />
-                        <span className="text-sm font-medium text-center">{action.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </>
+            {/* Sidebar Direita - Ações e Próximas Consultas */}
+            <aside className="w-80 flex-shrink-0 space-y-4">
+              <QuickActions />
+              <UpcomingAppointments />
+            </aside>
+          </div>
         )}
     </DashboardLayout>
   );
