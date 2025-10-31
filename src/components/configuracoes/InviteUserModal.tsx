@@ -57,73 +57,36 @@ export const InviteUserModal = ({ open, onClose, clinicaId }: InviteUserModalPro
     try {
       setSending(true);
 
-      // Verificar se o e-mail já existe
-      const { data: existing } = await supabase
-        .from("usuarios")
-        .select("id")
-        .eq("email", formData.email.toLowerCase())
+      // Buscar nome da clínica
+      const { data: clinica } = await supabase
+        .from("clinicas")
+        .select("nome")
+        .eq("id", clinicaId)
         .single();
 
-      if (existing) {
-        toast.error("Este e-mail já está cadastrado");
+      // Chamar edge function para criar usuário
+      const { data, error } = await supabase.functions.invoke("invite-user", {
+        body: {
+          name: formData.nome,
+          email: formData.email.toLowerCase(),
+          role: formData.perfil,
+          clinicaId: clinicaId,
+          clinicName: clinica?.nome || "Flowdent"
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.error) {
+        toast.error(data.error);
         return;
       }
 
-      // Gerar ID temporário para o usuário
-      const tempUserId = crypto.randomUUID();
-      
-      // Criar usuário placeholder
-      const { data: newUser, error: userError } = await (supabase as any)
-        .from("usuarios")
-        .insert({
-          id: tempUserId,
-          clinica_id: clinicaId,
-          nome: formData.nome,
-          email: formData.email.toLowerCase(),
-          perfil: formData.perfil
-        })
-        .select()
-        .single() as any;
-
-      if (userError) throw userError;
-
-      // Criar role para o usuário
-      await supabase
-        .from("user_roles" as any)
-        .insert({
-          user_id: newUser.id,
-          role: formData.perfil
-        });
-
-      // Registrar auditoria
-      await supabase
-        .from("audit_log" as any)
-        .insert({
-          entidade: "usuarios",
-          entidade_id: newUser.id,
-          acao: "invite",
-          dif: formData
-        });
-
-      // Enviar email de boas-vindas
-      try {
-        await supabase.functions.invoke("send-welcome-email", {
-          body: {
-            name: formData.nome,
-            email: formData.email.toLowerCase(),
-            role: formData.perfil,
-          },
-        });
-        
-        toast.success("Usuário criado com sucesso! Um email de boas-vindas foi enviado.");
-      } catch (emailError: any) {
-        console.error("Erro ao enviar email:", emailError);
-        toast.success("Usuário criado! Use 'Esqueci minha senha' na tela de login para acessar.");
-      }
-
+      toast.success("Usuário criado com sucesso! Um email com instruções foi enviado.");
       onClose();
     } catch (error: any) {
-      toast.error("Erro ao enviar convite: " + error.message);
+      console.error("Erro ao criar usuário:", error);
+      toast.error("Erro ao criar usuário: " + error.message);
     } finally {
       setSending(false);
     }
