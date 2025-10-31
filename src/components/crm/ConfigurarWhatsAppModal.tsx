@@ -41,18 +41,18 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
       if (!profile?.clinic_id) return;
 
       const { data } = await supabase
-        .from("whatsapp_configs")
+        .from("whatsapp_configs" as any)
         .select("*")
         .eq("clinica_id", profile.clinic_id)
         .maybeSingle();
 
       if (data) {
         setExistingConfig(true);
-        setAccessToken(data.access_token || "");
-        setPhoneNumberId(data.phone_number_id || "");
-        setBusinessAccountId(data.business_account_id || "");
-        setWebhookVerifyToken(data.webhook_verify_token || "");
-        setIsActive(data.is_active);
+        setAccessToken((data as any).access_token || "");
+        setPhoneNumberId((data as any).phone_number_id || "");
+        setBusinessAccountId((data as any).business_account_id || "");
+        setWebhookVerifyToken((data as any).webhook_verify_token || "");
+        setIsActive((data as any).is_active);
       } else {
         // Gerar token de verificação aleatório para novos
         setWebhookVerifyToken(generateRandomToken());
@@ -84,7 +84,7 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
       if (!profile?.clinic_id) throw new Error("Clínica não encontrada");
 
       const { error } = await supabase
-        .from("whatsapp_configs")
+        .from("whatsapp_configs" as any)
         .upsert({
           clinica_id: profile.clinic_id,
           access_token: accessToken,

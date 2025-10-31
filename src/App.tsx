@@ -17,6 +17,7 @@ import ProntuarioWrapper from "./pages/dashboard/ProntuarioWrapper";
 import PatientDetails from "./pages/dashboard/PatientDetails";
 import FinanceiroWrapper from "./pages/dashboard/FinanceiroWrapper";
 import CRMWrapper from "./pages/dashboard/CRMWrapper";
+import CRMAtendimentoWrapper from "./pages/dashboard/CRMAtendimentoWrapper";
 import PortalPacienteWrapper from "./pages/dashboard/PortalPacienteWrapper";
 import PortalAuth from "./pages/portal/PortalAuth";
 import PortalDashboard from "./pages/portal/PortalDashboard";
@@ -80,6 +81,7 @@ function App() {
               <Route path="/dashboard/prontuario/:id" element={<PatientDetails />} />
               <Route path="/dashboard/financeiro" element={<FinanceiroWrapper />} />
               <Route path="/dashboard/crm" element={<CRMWrapper />} />
+              <Route path="/dashboard/crm/atendimento" element={<CRMAtendimentoWrapper />} />
               <Route path="/dashboard/portal-paciente" element={<PortalPacienteWrapper />} />
               <Route path="/dashboard/ia-assistente" element={<IAAssistenteWrapper />} />
               <Route path="/dashboard/proteses" element={<ProtesesWrapper />} />

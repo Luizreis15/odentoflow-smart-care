@@ -3,8 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageSquare, Send, Users, TrendingUp, Plus, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 
 const CRM = () => {
+  const navigate = useNavigate();
   const campaigns = [
     {
       id: 1,
@@ -79,10 +81,20 @@ const CRM = () => {
             Relacionamento automático e campanhas personalizadas
           </p>
         </div>
-        <Button size="sm">
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Campanha
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => navigate("/dashboard/crm/atendimento")}
+          >
+            <MessageSquare className="mr-2 h-4 w-4" />
+            Atendimento WhatsApp
+          </Button>
+          <Button size="sm">
+            <Plus className="mr-2 h-4 w-4" />
+            Nova Campanha
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-4">

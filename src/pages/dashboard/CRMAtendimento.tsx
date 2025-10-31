@@ -101,12 +101,12 @@ export default function CRMAtendimento() {
 
       if (profile?.clinic_id) {
         const { data } = await supabase
-          .from("whatsapp_configs")
+          .from("whatsapp_configs" as any)
           .select("is_active")
           .eq("clinica_id", profile.clinic_id)
-          .single();
+          .maybeSingle();
 
-        setWhatsappConfigured(data?.is_active || false);
+        setWhatsappConfigured((data as any)?.is_active || false);
       }
     } catch (error) {
       console.error("Erro ao verificar config WhatsApp:", error);
@@ -126,7 +126,7 @@ export default function CRMAtendimento() {
       if (!profile?.clinic_id) return;
 
       const { data, error } = await supabase
-        .from("crm_conversations")
+        .from("crm_conversations" as any)
         .select(`
           *,
           contact:crm_contacts(*)
@@ -135,7 +135,7 @@ export default function CRMAtendimento() {
         .order("last_message_at", { ascending: false });
 
       if (error) throw error;
-      setConversations(data || []);
+      setConversations((data as any) || []);
     } catch (error) {
       console.error("Erro ao carregar conversas:", error);
       toast.error("Erro ao carregar conversas");
@@ -145,17 +145,17 @@ export default function CRMAtendimento() {
   const loadMessages = async (conversationId: string) => {
     try {
       const { data, error } = await supabase
-        .from("crm_messages")
+        .from("crm_messages" as any)
         .select("*")
         .eq("conversation_id", conversationId)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
+      setMessages((data as any) || []);
 
       // Marcar como lido
       await supabase
-        .from("crm_conversations")
+        .from("crm_conversations" as any)
         .update({ unread_count: 0 })
         .eq("id", conversationId);
     } catch (error) {
@@ -170,7 +170,7 @@ export default function CRMAtendimento() {
       const { data: user } = await supabase.auth.getUser();
       
       const { error } = await supabase
-        .from("crm_messages")
+        .from("crm_messages" as any)
         .insert({
           conversation_id: selectedConversation,
           content: messageInput,
@@ -186,7 +186,7 @@ export default function CRMAtendimento() {
       
       // Atualizar última mensagem da conversa
       await supabase
-        .from("crm_conversations")
+        .from("crm_conversations" as any)
         .update({ last_message_at: new Date().toISOString() })
         .eq("id", selectedConversation);
 
