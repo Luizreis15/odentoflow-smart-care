@@ -45,6 +45,8 @@ export function ClinicaTab({ clinicaId }: ClinicaTabProps) {
 
       if (configError && configError.code !== 'PGRST116') throw configError;
 
+      const address = clinicaData?.address as any;
+      
       setConfig({
         ...clinicaData,
         ...configData,
@@ -53,6 +55,14 @@ export function ClinicaTab({ clinicaId }: ClinicaTabProps) {
         whatsapp: configData?.whatsapp || "",
         telefone: clinicaData?.telefone || "",
         imprimir_papel_timbrado: configData?.imprimir_papel_timbrado || false,
+        // Extrair endereço do JSONB
+        cep: address?.cep || "",
+        rua: address?.rua || "",
+        numero: address?.numero || "",
+        complemento: address?.complemento || "",
+        bairro: address?.bairro || "",
+        cidade: address?.cidade || "",
+        uf: address?.uf || "",
       });
     } catch (error) {
       console.error("Erro ao carregar configurações:", error);
@@ -63,6 +73,52 @@ export function ClinicaTab({ clinicaId }: ClinicaTabProps) {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const buscarCEP = async () => {
+    if (!config?.cep || config.cep.length < 8) {
+      toast({
+        title: "Atenção",
+        description: "Digite um CEP válido",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const cep = config.cep.replace(/\D/g, "");
+      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const data = await response.json();
+
+      if (data.erro) {
+        toast({
+          title: "Erro",
+          description: "CEP não encontrado",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setConfig({
+        ...config,
+        rua: data.logradouro,
+        bairro: data.bairro,
+        cidade: data.localidade,
+        uf: data.uf,
+      });
+
+      toast({
+        title: "Sucesso",
+        description: "Endereço preenchido automaticamente"
+      });
+    } catch (error) {
+      console.error("Erro ao buscar CEP:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao buscar CEP",
+        variant: "destructive"
+      });
     }
   };
 
@@ -77,7 +133,15 @@ export function ClinicaTab({ clinicaId }: ClinicaTabProps) {
           nome: config.nome,
           cnpj: config.cnpj,
           telefone: config.telefone,
-          address: config.address
+          address: {
+            cep: config.cep,
+            rua: config.rua,
+            numero: config.numero,
+            complemento: config.complemento,
+            bairro: config.bairro,
+            cidade: config.cidade,
+            uf: config.uf
+          }
         })
         .eq("id", clinicaId);
 
@@ -299,30 +363,70 @@ export function ClinicaTab({ clinicaId }: ClinicaTabProps) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-4 gap-4">
             <div className="space-y-2">
-              <Label>CEP</Label>
-              <Input placeholder="00000-000" />
+              <Label htmlFor="cep">CEP</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="cep"
+                  placeholder="00000-000"
+                  value={config?.cep || ""}
+                  onChange={(e) => setConfig({ ...config, cep: e.target.value })}
+                />
+                <Button type="button" variant="outline" onClick={buscarCEP}>
+                  Buscar
+                </Button>
+              </div>
             </div>
             <div className="space-y-2 col-span-2">
-              <Label>Rua</Label>
-              <Input />
+              <Label htmlFor="rua">Rua</Label>
+              <Input
+                id="rua"
+                value={config?.rua || ""}
+                onChange={(e) => setConfig({ ...config, rua: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
-              <Label>Número</Label>
-              <Input />
+              <Label htmlFor="numero">Número</Label>
+              <Input
+                id="numero"
+                value={config?.numero || ""}
+                onChange={(e) => setConfig({ ...config, numero: e.target.value })}
+              />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <div className="space-y-2">
-              <Label>Complemento</Label>
-              <Input />
+              <Label htmlFor="complemento">Complemento</Label>
+              <Input
+                id="complemento"
+                value={config?.complemento || ""}
+                onChange={(e) => setConfig({ ...config, complemento: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
-              <Label>Cidade</Label>
-              <Input />
+              <Label htmlFor="bairro">Bairro</Label>
+              <Input
+                id="bairro"
+                value={config?.bairro || ""}
+                onChange={(e) => setConfig({ ...config, bairro: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
-              <Label>Estado</Label>
-              <Input />
+              <Label htmlFor="cidade">Cidade</Label>
+              <Input
+                id="cidade"
+                value={config?.cidade || ""}
+                onChange={(e) => setConfig({ ...config, cidade: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="uf">UF</Label>
+              <Input
+                id="uf"
+                placeholder="SP"
+                maxLength={2}
+                value={config?.uf || ""}
+                onChange={(e) => setConfig({ ...config, uf: e.target.value.toUpperCase() })}
+              />
             </div>
           </div>
         </CardContent>
