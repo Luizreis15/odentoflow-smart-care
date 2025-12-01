@@ -23,6 +23,8 @@ export const ProfissionalModal = ({ open, onClose, profissional, clinicaId }: Pr
     especialidade: "",
     email: "",
     telefone: "",
+    cpf: "",
+    chave_pix: "",
     perfil: "dentista",
     ativo: true
   });
@@ -36,6 +38,8 @@ export const ProfissionalModal = ({ open, onClose, profissional, clinicaId }: Pr
         especialidade: profissional.especialidade || "",
         email: profissional.email || "",
         telefone: profissional.telefone || "",
+        cpf: profissional.cpf || "",
+        chave_pix: profissional.chave_pix || "",
         perfil: profissional.perfil || "dentista",
         ativo: profissional.ativo ?? true
       });
@@ -46,6 +50,8 @@ export const ProfissionalModal = ({ open, onClose, profissional, clinicaId }: Pr
         especialidade: "",
         email: "",
         telefone: "",
+        cpf: "",
+        chave_pix: "",
         perfil: "dentista",
         ativo: true
       });
@@ -197,6 +203,28 @@ export const ProfissionalModal = ({ open, onClose, profissional, clinicaId }: Pr
                   id="telefone"
                   value={formData.telefone}
                   onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="cpf">CPF</Label>
+                <Input
+                  id="cpf"
+                  placeholder="000.000.000-00"
+                  value={formData.cpf}
+                  onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="chave_pix">Chave PIX</Label>
+                <Input
+                  id="chave_pix"
+                  placeholder="CPF, e-mail, telefone ou chave aleatória"
+                  value={formData.chave_pix}
+                  onChange={(e) => setFormData({ ...formData, chave_pix: e.target.value })}
                 />
               </div>
             </div>

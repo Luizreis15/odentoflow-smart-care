@@ -2067,7 +2067,9 @@ export type Database = {
       profissionais: {
         Row: {
           ativo: boolean | null
+          chave_pix: string | null
           clinica_id: string
+          cpf: string | null
           created_at: string | null
           cro: string | null
           email: string
@@ -2081,7 +2083,9 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean | null
+          chave_pix?: string | null
           clinica_id: string
+          cpf?: string | null
           created_at?: string | null
           cro?: string | null
           email: string
@@ -2095,7 +2099,9 @@ export type Database = {
         }
         Update: {
           ativo?: boolean | null
+          chave_pix?: string | null
           clinica_id?: string
+          cpf?: string | null
           created_at?: string | null
           cro?: string | null
           email?: string
