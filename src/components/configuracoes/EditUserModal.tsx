@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,8 +16,16 @@ interface EditUserModalProps {
 
 export const EditUserModal = ({ open, onClose, usuario, clinicaId }: EditUserModalProps) => {
   const [formData, setFormData] = useState<{
+    nome: string;
+    email: string;
+    cpf: string;
+    cargo: string;
     perfil: string;
   }>({
+    nome: "",
+    email: "",
+    cpf: "",
+    cargo: "",
     perfil: ""
   });
   const [profissionais, setProfissionais] = useState<any[]>([]);
@@ -25,6 +34,10 @@ export const EditUserModal = ({ open, onClose, usuario, clinicaId }: EditUserMod
   useEffect(() => {
     if (open && usuario) {
       setFormData({
+        nome: usuario.nome || "",
+        email: usuario.email || "",
+        cpf: usuario.cpf || "",
+        cargo: usuario.cargo || "",
         perfil: usuario.perfil || ""
       });
     }
@@ -55,6 +68,10 @@ export const EditUserModal = ({ open, onClose, usuario, clinicaId }: EditUserMod
       const { error } = await supabase
         .from("usuarios" as any)
         .update({
+          nome: formData.nome,
+          email: formData.email,
+          cpf: formData.cpf,
+          cargo: formData.cargo,
           perfil: formData.perfil
         })
         .eq("id", usuario.id);
@@ -106,8 +123,44 @@ export const EditUserModal = ({ open, onClose, usuario, clinicaId }: EditUserMod
 
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
-            <Label>E-mail</Label>
-            <div className="text-sm text-muted-foreground">{usuario.email}</div>
+            <Label htmlFor="nome">Nome *</Label>
+            <Input
+              id="nome"
+              value={formData.nome}
+              onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">E-mail *</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="cpf">CPF</Label>
+              <Input
+                id="cpf"
+                placeholder="000.000.000-00"
+                value={formData.cpf}
+                onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cargo">Cargo</Label>
+              <Input
+                id="cargo"
+                placeholder="Ex: Gerente, Secretária..."
+                value={formData.cargo}
+                onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
