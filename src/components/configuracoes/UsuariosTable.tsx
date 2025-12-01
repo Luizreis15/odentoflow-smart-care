@@ -8,6 +8,8 @@ interface Usuario {
   id: string;
   nome: string;
   email: string;
+  cpf?: string;
+  cargo?: string;
   perfil: string;
 }
 
@@ -64,6 +66,7 @@ export const UsuariosTable = ({ usuarios, loading, onEdit, onToggleStatus }: Usu
           <TableRow>
             <TableHead>Nome</TableHead>
             <TableHead>E-mail</TableHead>
+            <TableHead>Cargo</TableHead>
             <TableHead>Perfil</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
@@ -73,6 +76,7 @@ export const UsuariosTable = ({ usuarios, loading, onEdit, onToggleStatus }: Usu
             <TableRow key={user.id}>
               <TableCell className="font-medium">{user.nome}</TableCell>
               <TableCell>{user.email}</TableCell>
+              <TableCell>{user.cargo || "-"}</TableCell>
               <TableCell>
                 <Badge className={perfilColors[user.perfil] || ""}>
                   {perfilLabels[user.perfil] || user.perfil}
