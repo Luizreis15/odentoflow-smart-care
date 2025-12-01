@@ -20,7 +20,7 @@ const Configuracoes = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
   const [clinica, setClinica] = useState<any>(null);
-  const { isAdmin, loading: permissionsLoading } = usePermissions();
+  const { isAdmin, isSuperAdmin, loading: permissionsLoading } = usePermissions();
 
   useEffect(() => {
     loadData();
@@ -41,7 +41,7 @@ const Configuracoes = () => {
         .eq("id", session.user.id)
         .single();
 
-      if (!profileData?.clinic_id) {
+      if (!profileData?.clinic_id && !isSuperAdmin) {
         navigate("/onboarding/welcome");
         return;
       }
@@ -62,10 +62,10 @@ const Configuracoes = () => {
   };
 
   useEffect(() => {
-    if (!permissionsLoading && !isAdmin) {
+    if (!permissionsLoading && !isAdmin && !isSuperAdmin) {
       navigate("/dashboard");
     }
-  }, [isAdmin, permissionsLoading, navigate]);
+  }, [isAdmin, isSuperAdmin, permissionsLoading, navigate]);
 
   if (permissionsLoading || !profile) {
     return (
@@ -75,7 +75,7 @@ const Configuracoes = () => {
     );
   }
 
-  if (!isAdmin) {
+  if (!isAdmin && !isSuperAdmin) {
     return null;
   }
 
