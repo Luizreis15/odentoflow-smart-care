@@ -15,6 +15,9 @@ export const DashboardMetrics = ({ clinicId }: DashboardMetricsProps) => {
   const startOfToday = startOfDay(today);
   const endOfToday = endOfDay(today);
   const startOfCurrentMonth = startOfMonth(today);
+  
+  // Data de início de produção - contar novos pacientes apenas a partir desta data
+  const productionStartDate = new Date("2024-12-01T00:00:00");
 
   // Consultas do dia
   const { data: appointmentsToday, isLoading: loadingAppointments } = useQuery({
@@ -60,15 +63,20 @@ export const DashboardMetrics = ({ clinicId }: DashboardMetricsProps) => {
     },
   });
 
-  // Novos pacientes do mês
+  // Novos pacientes do mês (a partir da data de início de produção)
   const { data: newPatients, isLoading: loadingPatients } = useQuery({
     queryKey: ["new-patients-month", clinicId],
     queryFn: async () => {
+      // Usa a data mais recente entre início do mês ou início de produção
+      const countFromDate = startOfCurrentMonth > productionStartDate 
+        ? startOfCurrentMonth 
+        : productionStartDate;
+      
       const { data, error } = await supabase
         .from("patients")
         .select("id")
         .eq("clinic_id", clinicId)
-        .gte("created_at", startOfCurrentMonth.toISOString());
+        .gte("created_at", countFromDate.toISOString());
       
       if (error) throw error;
       return data?.length || 0;
