@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
@@ -43,6 +45,7 @@ const Prontuario = () => {
   const [saving, setSaving] = useState(false);
   const [patients, setPatients] = useState<any[]>([]);
   const [filteredPatients, setFilteredPatients] = useState<any[]>([]);
+  const [clinicId, setClinicId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     full_name: "",
     gender: "" as "masculino" | "feminino" | "",
@@ -61,6 +64,22 @@ const Prontuario = () => {
   });
 
   useEffect(() => {
+    const fetchClinicId = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("clinic_id")
+        .eq("id", user.id)
+        .single();
+
+      if (profile?.clinic_id) {
+        setClinicId(profile.clinic_id);
+      }
+    };
+    
+    fetchClinicId();
     loadPatients();
   }, []);
 
@@ -95,6 +114,99 @@ const Prontuario = () => {
       setLoading(false);
     }
   };
+
+  // Métricas do Dashboard
+  const { data: totalPatients, isLoading: loadingTotal } = useQuery({
+    queryKey: ["total-patients", clinicId],
+    queryFn: async () => {
+      if (!clinicId) return 0;
+      const { count, error } = await supabase
+        .from("patients")
+        .select("*", { count: "exact", head: true })
+        .eq("clinic_id", clinicId);
+      
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!clinicId,
+  });
+
+  const { data: patientsInTreatment, isLoading: loadingTreatment } = useQuery({
+    queryKey: ["patients-in-treatment", clinicId],
+    queryFn: async () => {
+      if (!clinicId) return 0;
+      const { data, error } = await supabase
+        .from("budget_items")
+        .select("budget_id!inner(patient_id!inner(clinic_id))")
+        .eq("treatment_status", "in_progress")
+        .eq("budget_id.patient_id.clinic_id", clinicId);
+      
+      if (error) throw error;
+      return data?.length || 0;
+    },
+    enabled: !!clinicId,
+  });
+
+  const { data: updatedRecords, isLoading: loadingUpdated } = useQuery({
+    queryKey: ["updated-records", clinicId],
+    queryFn: async () => {
+      if (!clinicId) return 0;
+      const { data, error } = await supabase
+        .from("patients")
+        .select("id, created_at, updated_at, notes")
+        .eq("clinic_id", clinicId);
+      
+      if (error) throw error;
+      
+      const updated = data?.filter(p => 
+        (p.updated_at && p.created_at && new Date(p.updated_at) > new Date(p.created_at)) ||
+        (p.notes && p.notes.trim() !== "")
+      );
+      
+      return updated?.length || 0;
+    },
+    enabled: !!clinicId,
+  });
+
+  const { data: totalAttachments, isLoading: loadingAttachments } = useQuery({
+    queryKey: ["total-attachments", clinicId],
+    queryFn: async () => {
+      if (!clinicId) return 0;
+      const { count, error } = await supabase
+        .from("patient_files")
+        .select("*, patient_id!inner(clinic_id)", { count: "exact", head: true })
+        .eq("patient_id.clinic_id", clinicId);
+      
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!clinicId,
+  });
+
+  const { data: recentAppointments, isLoading: loadingAppointments } = useQuery({
+    queryKey: ["recent-appointments", clinicId],
+    queryFn: async () => {
+      if (!clinicId) return [];
+      const { data, error } = await supabase
+        .from("appointments")
+        .select(`
+          id,
+          appointment_date,
+          title,
+          description,
+          patient_id!inner(full_name, clinic_id),
+          dentist_id(nome)
+        `)
+        .eq("patient_id.clinic_id", clinicId)
+        .eq("status", "completed")
+        .order("appointment_date", { ascending: false })
+        .limit(5);
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!clinicId,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -192,25 +304,6 @@ const Prontuario = () => {
       setSaving(false);
     }
   };
-
-  const recentRecords = [
-    {
-      id: 1,
-      patient: "Maria Silva",
-      date: "2024-03-15",
-      type: "Consulta",
-      dentist: "Dr. João Santos",
-      notes: "Limpeza completa realizada. Sem problemas dentários.",
-    },
-    {
-      id: 2,
-      patient: "Carlos Mendes",
-      date: "2024-03-10",
-      type: "Canal",
-      dentist: "Dra. Ana Paula",
-      notes: "Início de tratamento de canal no dente 16.",
-    },
-  ];
 
   const statusColors = {
     ativo: "bg-secondary text-secondary-foreground",
@@ -480,8 +573,12 @@ const Prontuario = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">248</div>
-            <p className="text-xs text-muted-foreground mt-1">+18 este mês</p>
+            {loadingTotal ? (
+              <Skeleton className="h-9 w-20" />
+            ) : (
+              <div className="text-3xl font-bold">{totalPatients || 0}</div>
+            )}
+            <p className="text-xs text-muted-foreground mt-1">Cadastrados</p>
           </CardContent>
         </Card>
 
@@ -492,8 +589,14 @@ const Prontuario = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">32</div>
-            <p className="text-xs text-muted-foreground mt-1">12.9% do total</p>
+            {loadingTreatment ? (
+              <Skeleton className="h-9 w-20" />
+            ) : (
+              <div className="text-3xl font-bold">{patientsInTreatment || 0}</div>
+            )}
+            <p className="text-xs text-muted-foreground mt-1">
+              {totalPatients ? ((patientsInTreatment || 0) / totalPatients * 100).toFixed(1) : 0}% do total
+            </p>
           </CardContent>
         </Card>
 
@@ -504,8 +607,14 @@ const Prontuario = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">198</div>
-            <p className="text-xs text-muted-foreground mt-1">79.8% completos</p>
+            {loadingUpdated ? (
+              <Skeleton className="h-9 w-20" />
+            ) : (
+              <div className="text-3xl font-bold">{updatedRecords || 0}</div>
+            )}
+            <p className="text-xs text-muted-foreground mt-1">
+              {totalPatients ? ((updatedRecords || 0) / totalPatients * 100).toFixed(1) : 0}% completos
+            </p>
           </CardContent>
         </Card>
 
@@ -516,7 +625,11 @@ const Prontuario = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">1.2k</div>
+            {loadingAttachments ? (
+              <Skeleton className="h-9 w-20" />
+            ) : (
+              <div className="text-3xl font-bold">{totalAttachments || 0}</div>
+            )}
             <p className="text-xs text-muted-foreground mt-1">Imagens e docs</p>
           </CardContent>
         </Card>
@@ -639,30 +752,51 @@ const Prontuario = () => {
           <CardDescription>Prontuários recentemente atualizados</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {recentRecords.map((record) => (
-              <div
-                key={record.id}
-                className="flex gap-4 p-4 rounded-lg border bg-card"
-              >
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary/20">
-                  <FileText className="h-5 w-5 text-secondary" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-semibold">{record.patient}</p>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(record.date).toLocaleDateString("pt-BR")}
-                    </span>
+          {loadingAppointments ? (
+            <div className="space-y-3">
+              {[1, 2].map((i) => (
+                <div key={i} className="flex gap-4 p-4 rounded-lg border bg-card">
+                  <Skeleton className="w-10 h-10 rounded-lg" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-48" />
+                    <Skeleton className="h-3 w-full" />
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {record.type} • {record.dentist}
-                  </p>
-                  <p className="text-sm mt-2">{record.notes}</p>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : !recentAppointments || recentAppointments.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Nenhum atendimento concluído ainda
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recentAppointments.map((appointment: any) => (
+                <div
+                  key={appointment.id}
+                  className="flex gap-4 p-4 rounded-lg border bg-card"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary/20">
+                    <FileText className="h-5 w-5 text-secondary" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-semibold">{appointment.patient_id.full_name}</p>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(appointment.appointment_date).toLocaleDateString("pt-BR")}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {appointment.title} • {appointment.dentist_id?.nome || "Não informado"}
+                    </p>
+                    {appointment.description && (
+                      <p className="text-sm mt-2">{appointment.description}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
