@@ -10,6 +10,7 @@ import { X, Plus, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Odontograma } from "./Odontograma";
 import { toast } from "sonner";
+import { NovoProcedimentoInline } from "./NovoProcedimentoInline";
 
 interface AdicionarTratamentoSectionProps {
   planos: any[];
@@ -33,6 +34,7 @@ export const AdicionarTratamentoSection = ({
   const [dentistas, setDentistas] = useState<any[]>([]);
   const [dentistaSelecionado, setDentistaSelecionado] = useState("");
   const [dentesSelecionados, setDentesSelecionados] = useState<string[]>([]);
+  const [mostrarFormNovo, setMostrarFormNovo] = useState(false);
 
   useEffect(() => {
     if (planoSelecionado) {
@@ -82,6 +84,19 @@ export const AdicionarTratamentoSection = ({
   const handleSelecionarProcedimento = (proc: any) => {
     setProcedimentoSelecionado(proc);
     setValor(proc.valor_customizado.toString());
+    setTratamentoAberto(false);
+  };
+
+  const handleProcedimentoCriado = (novoProcedimento: any) => {
+    // Adicionar o novo procedimento à lista
+    setProcedimentos([...procedimentos, novoProcedimento]);
+    
+    // Selecionar automaticamente
+    setProcedimentoSelecionado(novoProcedimento);
+    setValor(novoProcedimento.valor_customizado.toString());
+    
+    // Fechar form e popover
+    setMostrarFormNovo(false);
     setTratamentoAberto(false);
   };
 
@@ -159,7 +174,23 @@ export const AdicionarTratamentoSection = ({
               <Command>
                 <CommandInput placeholder="Buscar procedimento..." />
                 <CommandList>
-                  <CommandEmpty>Nenhum procedimento encontrado.</CommandEmpty>
+                  <CommandEmpty>
+                    <div className="p-4 text-center space-y-3">
+                      <p className="text-sm text-muted-foreground">Nenhum procedimento encontrado.</p>
+                      {!mostrarFormNovo && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setMostrarFormNovo(true)}
+                          className="w-full"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Incluir novo procedimento
+                        </Button>
+                      )}
+                    </div>
+                  </CommandEmpty>
                   <CommandGroup>
                     {procedimentos.map((proc) => (
                       <CommandItem
@@ -185,6 +216,14 @@ export const AdicionarTratamentoSection = ({
                     ))}
                   </CommandGroup>
                 </CommandList>
+                {mostrarFormNovo && (
+                  <NovoProcedimentoInline
+                    planoId={planoSelecionado}
+                    planos={planos}
+                    onProcedimentoCriado={handleProcedimentoCriado}
+                    onCancelar={() => setMostrarFormNovo(false)}
+                  />
+                )}
               </Command>
             </PopoverContent>
           </Popover>
