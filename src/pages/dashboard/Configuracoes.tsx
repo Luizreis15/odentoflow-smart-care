@@ -23,8 +23,10 @@ const Configuracoes = () => {
   const { isAdmin, isSuperAdmin, loading: permissionsLoading } = usePermissions();
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (!permissionsLoading) {
+      loadData();
+    }
+  }, [permissionsLoading, isSuperAdmin]);
 
   const loadData = async () => {
     try {
