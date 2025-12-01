@@ -158,12 +158,13 @@ export const AdicionarTratamentoSection = ({
 
         <div className="col-span-2 space-y-2">
           <Label>Tratamento*</Label>
-          <Popover open={tratamentoAberto} onOpenChange={setTratamentoAberto}>
-            <PopoverTrigger asChild>
+          <div className="flex gap-2">
+            <Popover open={tratamentoAberto} onOpenChange={setTratamentoAberto}>
+              <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 role="combobox"
-                className="w-full justify-between"
+                className="flex-1 justify-between"
               >
                 {procedimentoSelecionado
                   ? procedimentoSelecionado.procedimentos.descricao
@@ -227,6 +228,20 @@ export const AdicionarTratamentoSection = ({
               </Command>
             </PopoverContent>
           </Popover>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setMostrarFormNovo(true);
+              setTratamentoAberto(true);
+            }}
+            title="Incluir novo procedimento"
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Novo
+          </Button>
+          </div>
         </div>
 
         <div className="space-y-2">
