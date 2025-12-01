@@ -1,8 +1,102 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, DollarSign, Users, PieChart } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
+import { startOfMonth, startOfDay, endOfDay } from "date-fns";
 
-export const DashboardMetrics = () => {
+interface DashboardMetricsProps {
+  clinicId: string;
+}
+
+export const DashboardMetrics = ({ clinicId }: DashboardMetricsProps) => {
+  const today = new Date();
+  const startOfToday = startOfDay(today);
+  const endOfToday = endOfDay(today);
+  const startOfCurrentMonth = startOfMonth(today);
+
+  // Consultas do dia
+  const { data: appointmentsToday, isLoading: loadingAppointments } = useQuery({
+    queryKey: ["appointments-today", clinicId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("appointments")
+        .select("id, status, patient_id!inner(clinic_id)")
+        .eq("patient_id.clinic_id", clinicId)
+        .gte("appointment_date", startOfToday.toISOString())
+        .lte("appointment_date", endOfToday.toISOString());
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Faturamento do mês
+  const { data: paymentsMonth, isLoading: loadingPayments } = useQuery({
+    queryKey: ["payments-month", clinicId],
+    queryFn: async () => {
+      const { data: patients } = await supabase
+        .from("patients")
+        .select("id")
+        .eq("clinic_id", clinicId);
+      
+      if (!patients) return { total: 0, received: 0 };
+
+      const patientIds = patients.map(p => p.id);
+      
+      const { data, error } = await supabase
+        .from("payments")
+        .select("value, status")
+        .in("patient_id", patientIds)
+        .gte("payment_date", startOfCurrentMonth.toISOString().split('T')[0]);
+      
+      if (error) throw error;
+      
+      const total = data?.reduce((sum, p) => sum + Number(p.value || 0), 0) || 0;
+      const received = data?.filter(p => p.status === "paid").reduce((sum, p) => sum + Number(p.value || 0), 0) || 0;
+      
+      return { total, received };
+    },
+  });
+
+  // Novos pacientes do mês
+  const { data: newPatients, isLoading: loadingPatients } = useQuery({
+    queryKey: ["new-patients-month", clinicId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("patients")
+        .select("id")
+        .eq("clinic_id", clinicId)
+        .gte("created_at", startOfCurrentMonth.toISOString());
+      
+      if (error) throw error;
+      return data?.length || 0;
+    },
+  });
+
+  const totalAppointments = appointmentsToday?.length || 0;
+  const confirmedAppointments = appointmentsToday?.filter(a => a.status === "scheduled").length || 0;
+  const occupationRate = totalAppointments > 0 ? Math.round((confirmedAppointments / totalAppointments) * 100) : 0;
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 0,
+    }).format(value);
+  };
+
+  if (loadingAppointments || loadingPayments || loadingPatients) {
+    return (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+        {[...Array(4)].map((_, i) => (
+          <Skeleton key={i} className="h-24" />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
       <Card className="hover:shadow-md transition-shadow">
@@ -13,9 +107,13 @@ export const DashboardMetrics = () => {
           </div>
         </CardHeader>
         <CardContent className="p-3 pt-1 space-y-1">
-          <div className="text-xl font-bold">12</div>
-          <Progress value={66} className="h-1" />
-          <p className="text-xs text-muted-foreground">8 confirmadas</p>
+          <div className="text-xl font-bold">{totalAppointments}</div>
+          {totalAppointments > 0 && (
+            <>
+              <Progress value={(confirmedAppointments / totalAppointments) * 100} className="h-1" />
+              <p className="text-xs text-muted-foreground">{confirmedAppointments} confirmadas</p>
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -27,8 +125,8 @@ export const DashboardMetrics = () => {
           </div>
         </CardHeader>
         <CardContent className="p-3 pt-1 space-y-1">
-          <div className="text-xl font-bold">R$ 3,2k</div>
-          <p className="text-xs text-muted-foreground">R$ 1,8k recebido</p>
+          <div className="text-xl font-bold">{formatCurrency(paymentsMonth?.total || 0)}</div>
+          <p className="text-xs text-muted-foreground">{formatCurrency(paymentsMonth?.received || 0)} recebido</p>
         </CardContent>
       </Card>
 
@@ -40,8 +138,8 @@ export const DashboardMetrics = () => {
           </div>
         </CardHeader>
         <CardContent className="p-3 pt-1">
-          <div className="text-xl font-bold">3</div>
-          <p className="text-xs text-muted-foreground">+15% vs média</p>
+          <div className="text-xl font-bold">{newPatients}</div>
+          <p className="text-xs text-muted-foreground">Este mês</p>
         </CardContent>
       </Card>
 
@@ -53,8 +151,8 @@ export const DashboardMetrics = () => {
           </div>
         </CardHeader>
         <CardContent className="p-3 pt-1 space-y-1">
-          <div className="text-xl font-bold">78%</div>
-          <Progress value={78} className="h-1" />
+          <div className="text-xl font-bold">{occupationRate}%</div>
+          {totalAppointments > 0 && <Progress value={occupationRate} className="h-1" />}
         </CardContent>
       </Card>
     </div>

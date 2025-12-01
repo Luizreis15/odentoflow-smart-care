@@ -1,21 +1,37 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export const SidebarFilters = () => {
+interface SidebarFiltersProps {
+  clinicId: string;
+}
+
+export const SidebarFilters = ({ clinicId }: SidebarFiltersProps) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const navigate = useNavigate();
 
-  const professionals = [
-    { name: "Dr. João Silva", avatar: "JS", active: true },
-    { name: "Dra. Maria Santos", avatar: "MS", active: true },
-    { name: "Dr. Pedro Costa", avatar: "PC", active: false },
-  ];
+  const { data: professionals, isLoading } = useQuery({
+    queryKey: ["professionals", clinicId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profissionais")
+        .select("id, nome, especialidade")
+        .eq("clinica_id", clinicId)
+        .eq("ativo", true)
+        .order("nome");
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   const consultTypes = [
     { label: "Primeira Consulta", checked: true },
@@ -23,6 +39,14 @@ export const SidebarFilters = () => {
     { label: "Cirurgia", checked: false },
     { label: "Limpeza", checked: true },
   ];
+
+  const getInitials = (name: string) => {
+    const parts = name.split(" ");
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
 
   return (
     <div className="space-y-3 w-full">
@@ -47,23 +71,40 @@ export const SidebarFilters = () => {
           <CardTitle className="text-sm font-medium">Profissionais</CardTitle>
         </CardHeader>
         <CardContent className="p-3">
-          <div className="space-y-2">
-            {professionals.map((prof, index) => (
-              <div
-                key={index}
-                className={`flex items-center gap-2 p-2 rounded text-sm cursor-pointer transition-colors ${
-                  prof.active ? "bg-primary/10 text-primary" : "hover:bg-muted"
-                }`}
-              >
-                <Avatar className="h-6 w-6">
-                  <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-                    {prof.avatar}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="font-medium truncate">{prof.name}</span>
-              </div>
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="space-y-2">
+              {[...Array(2)].map((_, i) => (
+                <Skeleton key={i} className="h-10" />
+              ))}
+            </div>
+          ) : professionals && professionals.length > 0 ? (
+            <div className="space-y-2">
+              {professionals.map((prof) => (
+                <div
+                  key={prof.id}
+                  className="flex items-center gap-2 p-2 rounded text-sm cursor-pointer transition-colors hover:bg-muted"
+                >
+                  <Avatar className="h-6 w-6">
+                    <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                      {getInitials(prof.nome)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <span className="font-medium truncate block">{prof.nome}</span>
+                    {prof.especialidade && (
+                      <span className="text-xs text-muted-foreground truncate block">
+                        {prof.especialidade}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-2">
+              Nenhum profissional cadastrado
+            </p>
+          )}
         </CardContent>
       </Card>
 
