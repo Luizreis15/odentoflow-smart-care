@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileText } from "lucide-react";
+import { Search, Plus, FileText, Upload } from "lucide-react";
+import { ImportPacientesModal } from "@/components/pacientes/ImportPacientesModal";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -37,6 +38,7 @@ const Prontuario = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [patients, setPatients] = useState<any[]>([]);
@@ -225,13 +227,18 @@ const Prontuario = () => {
             Histórico clínico completo dos pacientes
           </p>
         </div>
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetTrigger asChild>
-            <Button size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Paciente
-            </Button>
-          </SheetTrigger>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => setShowImportModal(true)}>
+            <Upload className="mr-2 h-4 w-4" />
+            Importar Pacientes
+          </Button>
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <SheetTrigger asChild>
+              <Button size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Paciente
+              </Button>
+            </SheetTrigger>
           <SheetContent className="sm:max-w-[700px] overflow-y-auto">
             <SheetHeader>
               <SheetTitle>Dados do paciente</SheetTitle>
@@ -456,7 +463,14 @@ const Prontuario = () => {
             </form>
           </SheetContent>
         </Sheet>
+        </div>
       </div>
+
+      <ImportPacientesModal
+        open={showImportModal}
+        onOpenChange={setShowImportModal}
+        onSuccess={loadPatients}
+      />
 
       <div className="grid gap-6 md:grid-cols-4">
         <Card>
