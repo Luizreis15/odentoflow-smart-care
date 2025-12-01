@@ -14,6 +14,7 @@ import { UpcomingAppointments } from "@/components/dashboard/UpcomingAppointment
 interface Profile {
   full_name: string;
   email: string;
+  clinic_id: string;
 }
 
 const Dashboard = () => {
@@ -184,20 +185,20 @@ const Dashboard = () => {
         <h1 className="text-lg lg:text-xl font-bold mb-4">Bem-vindo, {profile?.full_name?.split(' ')[0] || "Usuário"}!</h1>
       )}
 
-        {!isSuperAdmin && (
+        {!isSuperAdmin && profile?.clinic_id && (
           <div className="flex gap-6 w-full">
             <aside className="hidden xl:block w-80 flex-shrink-0">
-              <SidebarFilters />
+              <SidebarFilters clinicId={profile.clinic_id} />
             </aside>
 
             <main className="flex-1 min-w-0 space-y-4">
-              <DashboardMetrics />
-              <AgendaCalendar />
+              <DashboardMetrics clinicId={profile.clinic_id} />
+              <AgendaCalendar clinicId={profile.clinic_id} />
             </main>
 
             <aside className="hidden lg:block w-80 flex-shrink-0 space-y-4">
               <QuickActions />
-              <UpcomingAppointments />
+              <UpcomingAppointments clinicId={profile.clinic_id} />
             </aside>
           </div>
         )}
