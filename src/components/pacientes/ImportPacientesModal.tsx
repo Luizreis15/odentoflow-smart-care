@@ -65,6 +65,11 @@ export const ImportPacientesModal = ({
     }
   };
 
+  const safeString = (value: any): string => {
+    if (value === null || value === undefined) return "";
+    return String(value).trim();
+  };
+
   const normalizeCPF = (cpf: string): string => {
     return cpf.replace(/\D/g, "").slice(0, 11);
   };
@@ -151,66 +156,79 @@ export const ImportPacientesModal = ({
 
       const patients: ParsedPatient[] = jsonData
         .map((row: any, index: number) => {
-          // Skip deleted records
-          if (ignoreDeleted && row.Deleted === "X") {
-            return null;
+          try {
+            // Skip deleted records
+            if (ignoreDeleted && safeString(row.Deleted) === "X") {
+              return null;
+            }
+
+            // Build address from components
+            const addressParts = [
+              safeString(row.Street),
+              safeString(row.Number),
+              safeString(row.Complement),
+              safeString(row.Neighborhood),
+              safeString(row.City),
+              safeString(row.State)
+            ].filter(Boolean);
+            const address = addressParts.length > 0 ? addressParts.join(", ") : undefined;
+
+            // Combine how_found fields
+            const howFoundParts = [safeString(row.HowDidMeet), safeString(row.insurancePlanName)].filter(Boolean);
+            const howFound = howFoundParts.length > 0 ? howFoundParts.join(" - ") : undefined;
+
+            // Combine notes
+            const notesParts = [safeString(row.Notes), safeString(row.OtherDocumentId)].filter(Boolean);
+            const notes = notesParts.length > 0 ? notesParts.join(" | ") : undefined;
+
+            const phone = normalizePhone(safeString(row.MobilePhone));
+            
+            // Skip if no phone and option is selected
+            if (ignoreNoPhone && !phone) {
+              return null;
+            }
+
+            const patient: PatientData = {
+              full_name: safeString(row.Name),
+              phone: phone,
+              email: safeString(row.Email).toLowerCase() || undefined,
+              cpf: row.DocumentId ? normalizeCPF(safeString(row.DocumentId)) : undefined,
+              birth_date: parseDate(row.BirthDate),
+              gender: mapGender(safeString(row.Sex)),
+              address,
+              how_found: howFound,
+              notes,
+              rg: safeString(row.OtherDocumentId) || undefined,
+              is_foreign: false,
+            };
+
+            const validation = validatePatient(patient);
+
+            return {
+              ...patient,
+              _validationStatus: validation.status,
+              _validationMessages: validation.messages,
+              _originalRow: index + 2, // +2 because Excel starts at 1 and has header
+            } as ParsedPatient;
+          } catch (rowError: any) {
+            console.error(`Erro na linha ${index + 2}:`, rowError);
+            return {
+              full_name: `ERRO - Linha ${index + 2}`,
+              phone: "",
+              _validationStatus: "error" as const,
+              _validationMessages: [`Erro ao processar: ${rowError.message}`],
+              _originalRow: index + 2,
+            } as ParsedPatient;
           }
-
-          // Build address from components
-          const addressParts = [
-            row.Street,
-            row.Number ? `${row.Number}` : "",
-            row.Complement,
-            row.Neighborhood,
-            row.City,
-            row.State
-          ].filter(Boolean);
-          const address = addressParts.length > 0 ? addressParts.join(", ") : undefined;
-
-          // Combine how_found fields
-          const howFound = [row.HowDidMeet, row.insurancePlanName].filter(Boolean).join(" - ") || undefined;
-
-          // Combine notes
-          const notes = [row.Notes, row.OtherDocumentId].filter(Boolean).join(" | ") || undefined;
-
-          const phone = normalizePhone(row.MobilePhone || "");
-          
-          // Skip if no phone and option is selected
-          if (ignoreNoPhone && !phone) {
-            return null;
-          }
-
-          const patient: PatientData = {
-            full_name: row.Name?.trim() || "",
-            phone: phone,
-            email: row.Email?.toLowerCase()?.trim(),
-            cpf: row.DocumentId ? normalizeCPF(row.DocumentId) : undefined,
-            birth_date: parseDate(row.BirthDate),
-            gender: mapGender(row.Sex),
-            address,
-            how_found: howFound,
-            notes,
-            rg: row.OtherDocumentId,
-            is_foreign: false,
-          };
-
-          const validation = validatePatient(patient);
-
-          return {
-            ...patient,
-            _validationStatus: validation.status,
-            _validationMessages: validation.messages,
-            _originalRow: index + 2, // +2 because Excel starts at 1 and has header
-          } as ParsedPatient;
         })
         .filter((p): p is ParsedPatient => p !== null);
 
       setParsedData(patients);
       setStep("preview");
       toast.success(`${patients.length} pacientes analisados`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao analisar arquivo:", error);
-      toast.error("Erro ao analisar arquivo");
+      toast.error(`Erro ao analisar arquivo: ${error.message || "Formato inválido"}`);
     }
   };
 
