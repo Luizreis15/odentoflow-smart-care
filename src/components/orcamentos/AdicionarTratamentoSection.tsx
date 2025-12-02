@@ -173,12 +173,18 @@ export const AdicionarTratamentoSection = ({
             </PopoverTrigger>
             <PopoverContent 
               className="w-[500px] p-0"
+              onPointerDownOutside={(e) => {
+                if (mostrarFormNovo) {
+                  e.preventDefault();
+                }
+              }}
+              onFocusOutside={(e) => {
+                if (mostrarFormNovo) {
+                  e.preventDefault();
+                }
+              }}
               onInteractOutside={(e) => {
-                // Previne fechamento quando interagir com Select portals
-                const target = e.target as HTMLElement;
-                if (target?.closest('[data-radix-select-content]') || 
-                    target?.closest('[role="listbox"]') ||
-                    target?.closest('[data-radix-popper-content-wrapper]')) {
+                if (mostrarFormNovo) {
                   e.preventDefault();
                 }
               }}
