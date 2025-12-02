@@ -159,7 +159,7 @@ export const AdicionarTratamentoSection = ({
         <div className="col-span-2 space-y-2">
           <Label>Tratamento*</Label>
           <div className="flex gap-2">
-            <Popover open={tratamentoAberto} onOpenChange={setTratamentoAberto}>
+            <Popover open={tratamentoAberto} onOpenChange={setTratamentoAberto} modal={false}>
               <PopoverTrigger asChild>
               <Button
                 variant="outline"

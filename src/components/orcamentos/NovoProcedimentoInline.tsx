@@ -111,7 +111,7 @@ export const NovoProcedimentoInline = ({
               <SelectTrigger className="h-9">
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" sideOffset={5} className="z-[9999]">
                 {ESPECIALIDADES.map((esp) => (
                   <SelectItem key={esp} value={esp}>
                     {esp}
@@ -141,7 +141,7 @@ export const NovoProcedimentoInline = ({
             <SelectTrigger className="h-9">
               <SelectValue placeholder="Selecione" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper" sideOffset={5} className="z-[9999]">
               {planos.map((plano) => (
                 <SelectItem key={plano.id} value={plano.id}>
                   {plano.nome}
