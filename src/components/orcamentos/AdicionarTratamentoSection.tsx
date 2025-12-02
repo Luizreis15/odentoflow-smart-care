@@ -166,8 +166,7 @@ export const AdicionarTratamentoSection = ({
                 if (open || !mostrarFormNovo) {
                   setTratamentoAberto(open);
                 }
-              }} 
-              modal={false}
+              }}
             >
               <PopoverTrigger asChild>
               <Button
@@ -180,7 +179,19 @@ export const AdicionarTratamentoSection = ({
                   : "Buscar procedimento..."}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[500px] p-0">
+            <PopoverContent 
+              className="w-[500px] p-0"
+              onPointerDownOutside={(e) => {
+                if (mostrarFormNovo) {
+                  e.preventDefault();
+                }
+              }}
+              onInteractOutside={(e) => {
+                if (mostrarFormNovo) {
+                  e.preventDefault();
+                }
+              }}
+            >
               {mostrarFormNovo ? (
                 <NovoProcedimentoInline
                   planoId={planoSelecionado}
