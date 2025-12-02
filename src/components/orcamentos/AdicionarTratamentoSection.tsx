@@ -171,7 +171,18 @@ export const AdicionarTratamentoSection = ({
                   : "Buscar procedimento..."}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[500px] p-0">
+            <PopoverContent 
+              className="w-[500px] p-0"
+              onInteractOutside={(e) => {
+                // Previne fechamento quando interagir com Select portals
+                const target = e.target as HTMLElement;
+                if (target?.closest('[data-radix-select-content]') || 
+                    target?.closest('[role="listbox"]') ||
+                    target?.closest('[data-radix-popper-content-wrapper]')) {
+                  e.preventDefault();
+                }
+              }}
+            >
               {mostrarFormNovo ? (
                 <NovoProcedimentoInline
                   planoId={planoSelecionado}
