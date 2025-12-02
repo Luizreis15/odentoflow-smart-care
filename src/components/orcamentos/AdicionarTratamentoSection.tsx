@@ -10,7 +10,6 @@ import { X, Plus, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Odontograma } from "./Odontograma";
 import { toast } from "sonner";
-import { NovoProcedimentoInline } from "./NovoProcedimentoInline";
 
 interface AdicionarTratamentoSectionProps {
   planos: any[];
@@ -34,7 +33,6 @@ export const AdicionarTratamentoSection = ({
   const [dentistas, setDentistas] = useState<any[]>([]);
   const [dentistaSelecionado, setDentistaSelecionado] = useState("");
   const [dentesSelecionados, setDentesSelecionados] = useState<string[]>([]);
-  const [mostrarFormNovo, setMostrarFormNovo] = useState(false);
 
   useEffect(() => {
     if (planoSelecionado) {
@@ -87,18 +85,6 @@ export const AdicionarTratamentoSection = ({
     setTratamentoAberto(false);
   };
 
-  const handleProcedimentoCriado = (novoProcedimento: any) => {
-    // Adicionar o novo procedimento à lista
-    setProcedimentos([...procedimentos, novoProcedimento]);
-    
-    // Selecionar automaticamente
-    setProcedimentoSelecionado(novoProcedimento);
-    setValor(novoProcedimento.valor_customizado.toString());
-    
-    // Fechar form e popover
-    setMostrarFormNovo(false);
-    setTratamentoAberto(false);
-  };
 
   const handleAdicionar = () => {
     if (!procedimentoSelecionado || !valor) {
@@ -158,101 +144,57 @@ export const AdicionarTratamentoSection = ({
 
         <div className="col-span-2 space-y-2">
           <Label>Tratamento*</Label>
-          <div className="flex gap-2">
-            <Popover 
-              open={tratamentoAberto} 
-              onOpenChange={(open) => {
-                // Só permite fechar se não estiver no form de novo procedimento
-                if (open || !mostrarFormNovo) {
-                  setTratamentoAberto(open);
-                }
-              }}
-            >
-              <PopoverTrigger asChild>
+          <Popover open={tratamentoAberto} onOpenChange={setTratamentoAberto}>
+            <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 role="combobox"
-                className="flex-1 justify-between"
+                className="w-full justify-between"
               >
                 {procedimentoSelecionado
                   ? procedimentoSelecionado.procedimentos.descricao
                   : "Buscar procedimento..."}
               </Button>
             </PopoverTrigger>
-            <PopoverContent 
-              className="w-[500px] p-0"
-              onPointerDownOutside={(e) => {
-                if (mostrarFormNovo) {
-                  e.preventDefault();
-                }
-              }}
-              onInteractOutside={(e) => {
-                if (mostrarFormNovo) {
-                  e.preventDefault();
-                }
-              }}
-            >
-              {mostrarFormNovo ? (
-                <NovoProcedimentoInline
-                  planoId={planoSelecionado}
-                  planos={planos}
-                  onProcedimentoCriado={handleProcedimentoCriado}
-                  onCancelar={() => setMostrarFormNovo(false)}
-                />
-              ) : (
-                <Command>
-                  <CommandInput placeholder="Buscar procedimento..." />
-                  <CommandList className="max-h-[300px] overflow-auto">
-                    <CommandEmpty>
-                      <div className="p-4 text-center">
-                        <p className="text-sm text-muted-foreground">
-                          Nenhum procedimento encontrado.
-                        </p>
-                      </div>
-                    </CommandEmpty>
-                    <CommandGroup>
-                      {procedimentos.map((proc) => (
-                        <CommandItem
-                          key={proc.id}
-                          value={proc.procedimentos.descricao}
-                          onSelect={() => handleSelecionarProcedimento(proc)}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              procedimentoSelecionado?.id === proc.id
-                                ? "opacity-100"
-                                : "opacity-0"
-                            )}
-                          />
-                          <div className="flex flex-col">
-                            <span>{proc.procedimentos.descricao}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {proc.procedimentos.especialidade} • R$ {proc.valor_customizado.toFixed(2)}
-                            </span>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              )}
+            <PopoverContent className="w-[500px] p-0">
+              <Command>
+                <CommandInput placeholder="Buscar procedimento..." />
+                <CommandList className="max-h-[300px] overflow-auto">
+                  <CommandEmpty>
+                    <div className="p-4 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        Nenhum procedimento encontrado.
+                      </p>
+                    </div>
+                  </CommandEmpty>
+                  <CommandGroup>
+                    {procedimentos.map((proc) => (
+                      <CommandItem
+                        key={proc.id}
+                        value={proc.procedimentos.descricao}
+                        onSelect={() => handleSelecionarProcedimento(proc)}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            procedimentoSelecionado?.id === proc.id
+                              ? "opacity-100"
+                              : "opacity-0"
+                          )}
+                        />
+                        <div className="flex flex-col">
+                          <span>{proc.procedimentos.descricao}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {proc.procedimentos.especialidade} • R$ {proc.valor_customizado.toFixed(2)}
+                          </span>
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
             </PopoverContent>
           </Popover>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setMostrarFormNovo(true);
-              setTratamentoAberto(true);
-            }}
-            title="Incluir novo procedimento"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Novo
-          </Button>
-          </div>
         </div>
 
         <div className="space-y-2">
