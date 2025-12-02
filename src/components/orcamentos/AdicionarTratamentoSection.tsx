@@ -159,7 +159,16 @@ export const AdicionarTratamentoSection = ({
         <div className="col-span-2 space-y-2">
           <Label>Tratamento*</Label>
           <div className="flex gap-2">
-            <Popover open={tratamentoAberto} onOpenChange={setTratamentoAberto} modal={false}>
+            <Popover 
+              open={tratamentoAberto} 
+              onOpenChange={(open) => {
+                // Só permite fechar se não estiver no form de novo procedimento
+                if (open || !mostrarFormNovo) {
+                  setTratamentoAberto(open);
+                }
+              }} 
+              modal={false}
+            >
               <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -171,24 +180,7 @@ export const AdicionarTratamentoSection = ({
                   : "Buscar procedimento..."}
               </Button>
             </PopoverTrigger>
-            <PopoverContent 
-              className="w-[500px] p-0"
-              onPointerDownOutside={(e) => {
-                if (mostrarFormNovo) {
-                  e.preventDefault();
-                }
-              }}
-              onFocusOutside={(e) => {
-                if (mostrarFormNovo) {
-                  e.preventDefault();
-                }
-              }}
-              onInteractOutside={(e) => {
-                if (mostrarFormNovo) {
-                  e.preventDefault();
-                }
-              }}
-            >
+            <PopoverContent className="w-[500px] p-0">
               {mostrarFormNovo ? (
                 <NovoProcedimentoInline
                   planoId={planoSelecionado}
@@ -199,7 +191,7 @@ export const AdicionarTratamentoSection = ({
               ) : (
                 <Command>
                   <CommandInput placeholder="Buscar procedimento..." />
-                  <CommandList>
+                  <CommandList className="max-h-[300px] overflow-auto">
                     <CommandEmpty>
                       <div className="p-4 text-center">
                         <p className="text-sm text-muted-foreground">
