@@ -12,10 +12,11 @@ import { Plus, Settings, Flag, Loader2 } from "lucide-react";
 
 interface Module {
   id: string;
-  key: string;
+  code: string;
   name: string;
   description: string | null;
-  is_enabled: boolean;
+  category: string | null;
+  is_active: boolean;
   created_at: string;
 }
 
@@ -36,7 +37,7 @@ const AdminModules = () => {
   const [showModuleModal, setShowModuleModal] = useState(false);
   const [showFlagModal, setShowFlagModal] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [moduleForm, setModuleForm] = useState({ key: "", name: "", description: "" });
+  const [moduleForm, setModuleForm] = useState({ code: "", name: "", description: "" });
   const [flagForm, setFlagForm] = useState({ key: "", name: "", description: "", module_id: "" });
 
   useEffect(() => {
@@ -64,10 +65,10 @@ const AdminModules = () => {
     try {
       await supabase
         .from("system_modules")
-        .update({ is_enabled: !module.is_enabled })
+        .update({ is_active: !module.is_active })
         .eq("id", module.id);
       
-      toast.success(`Módulo ${!module.is_enabled ? "ativado" : "desativado"}`);
+      toast.success(`Módulo ${!module.is_active ? "ativado" : "desativado"}`);
       loadData();
     } catch (error) {
       toast.error("Erro ao atualizar módulo");
@@ -89,8 +90,8 @@ const AdminModules = () => {
   };
 
   const handleCreateModule = async () => {
-    if (!moduleForm.key || !moduleForm.name) {
-      toast.error("Key e nome são obrigatórios");
+    if (!moduleForm.code || !moduleForm.name) {
+      toast.error("Código e nome são obrigatórios");
       return;
     }
 
@@ -99,7 +100,7 @@ const AdminModules = () => {
       await supabase.from("system_modules").insert(moduleForm);
       toast.success("Módulo criado!");
       setShowModuleModal(false);
-      setModuleForm({ key: "", name: "", description: "" });
+      setModuleForm({ code: "", name: "", description: "" });
       loadData();
     } catch (error: any) {
       toast.error(error.message || "Erro ao criar módulo");
@@ -172,13 +173,13 @@ const AdminModules = () => {
               >
                 <div>
                   <p className="text-white font-medium">{module.name}</p>
-                  <p className="text-slate-400 text-sm">{module.key}</p>
+                  <p className="text-slate-400 text-sm">{module.code}</p>
                   {module.description && (
                     <p className="text-slate-500 text-xs mt-1">{module.description}</p>
                   )}
                 </div>
                 <Switch
-                  checked={module.is_enabled}
+                  checked={module.is_active}
                   onCheckedChange={() => handleToggleModule(module)}
                 />
               </div>
@@ -247,10 +248,10 @@ const AdminModules = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-slate-200">Key *</Label>
+              <Label className="text-slate-200">Código *</Label>
               <Input
-                value={moduleForm.key}
-                onChange={(e) => setModuleForm({ ...moduleForm, key: e.target.value })}
+                value={moduleForm.code}
+                onChange={(e) => setModuleForm({ ...moduleForm, code: e.target.value })}
                 placeholder="Ex: crm_module"
                 className="bg-slate-700 border-slate-600 text-white"
               />
