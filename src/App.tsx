@@ -3,6 +3,18 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+// Admin Pages
+import AdminAuth from "./pages/admin/AdminAuth";
+import AdminLayout from "./components/AdminLayout";
+import AdminDashboard from "./pages/admin/Dashboard";
+import AdminUsers from "./pages/admin/Users";
+import AdminClinics from "./pages/admin/Clinics";
+import AdminLeads from "./pages/admin/Leads";
+import AdminMarketing from "./pages/admin/Marketing";
+import AdminSubscriptions from "./pages/admin/Subscriptions";
+import AdminModules from "./pages/admin/Modules";
+import AdminAudit from "./pages/admin/Audit";
 import { useState } from "react";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
