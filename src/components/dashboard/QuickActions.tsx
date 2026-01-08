@@ -51,21 +51,22 @@ export const QuickActions = () => {
   ];
 
   return (
-    <Card>
-      <CardHeader className="p-1.5 pb-0.5">
+    <Card className="lg:block">
+      <CardHeader className="p-2 lg:p-3 pb-1">
         <CardTitle className="text-xs font-medium">Ações Rápidas</CardTitle>
       </CardHeader>
-      <CardContent className="p-1.5">
-        <div className="grid grid-cols-2 gap-1.5">
+      <CardContent className="p-2 lg:p-3 pt-1">
+        {/* Mobile: horizontal scroll | Desktop: grid */}
+        <div className="flex lg:grid lg:grid-cols-2 gap-2 overflow-x-auto pb-1 lg:pb-0 scrollbar-hide">
           {actions.map((action, index) => (
             <Button
               key={index}
               variant="outline"
               onClick={action.onClick}
-              className="h-auto flex flex-col items-center justify-center p-2 hover:border-primary hover:bg-accent/10 transition-all cursor-pointer"
+              className="h-auto flex-shrink-0 flex flex-col items-center justify-center p-3 lg:p-2 min-w-[80px] lg:min-w-0 hover:border-primary hover:bg-accent/10 transition-all cursor-pointer"
             >
-              <action.icon className={`h-4 w-4 mb-1 ${action.color}`} />
-              <span className="text-xs font-medium text-center leading-tight">
+              <action.icon className={`h-5 w-5 lg:h-4 lg:w-4 mb-1 ${action.color}`} />
+              <span className="text-xs font-medium text-center leading-tight whitespace-nowrap">
                 {action.label}
               </span>
             </Button>

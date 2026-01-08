@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Navbar from "./Navbar";
+import MobileBottomNav from "./mobile/MobileBottomNav";
 import { usePermissions } from "@/hooks/usePermissions";
 
 interface DashboardLayoutProps {
@@ -200,13 +201,16 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
         {/* Main content com margem dinâmica baseada no sidebar */}
         <main className={cn(
           "flex-1 transition-all duration-300",
-          "lg:ml-16 p-2 lg:p-3"
+          "lg:ml-16 p-3 lg:p-4 pb-20 lg:pb-4"
         )}>
           <div className="w-full mx-auto max-h-[calc(100vh-4rem)] overflow-y-auto">
             {children}
           </div>
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav user={user} />
     </div>
   );
 };

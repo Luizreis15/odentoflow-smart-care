@@ -150,22 +150,14 @@ const Dashboard = () => {
   if (loading) {
     return (
       <DashboardLayout user={profile}>
-        <div className="flex gap-6">
-          <div className="w-80">
-            <Skeleton className="h-[400px]" />
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-48" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-24 md:h-32" />
+            ))}
           </div>
-          <div className="flex-1">
-            <Skeleton className="h-10 w-64 mb-6" />
-            <div className="grid grid-cols-4 gap-4 mb-6">
-              {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} className="h-32" />
-              ))}
-            </div>
-            <Skeleton className="h-[500px]" />
-          </div>
-          <div className="w-80">
-            <Skeleton className="h-[400px]" />
-          </div>
+          <Skeleton className="h-[300px] md:h-[400px]" />
         </div>
       </DashboardLayout>
     );
@@ -186,20 +178,35 @@ const Dashboard = () => {
       )}
 
         {!isSuperAdmin && profile?.clinic_id && (
-          <div className="flex gap-6 w-full">
-            <aside className="hidden xl:block w-80 flex-shrink-0">
-              <SidebarFilters clinicId={profile.clinic_id} />
-            </aside>
-
-            <main className="flex-1 min-w-0 space-y-4">
-              <DashboardMetrics clinicId={profile.clinic_id} />
-              <AgendaCalendar clinicId={profile.clinic_id} />
-            </main>
-
-            <aside className="hidden lg:block w-80 flex-shrink-0 space-y-4">
+          <div className="space-y-4">
+            {/* Métricas - Grid responsivo */}
+            <DashboardMetrics clinicId={profile.clinic_id} />
+            
+            {/* Quick Actions - Scroll horizontal no mobile */}
+            <div className="lg:hidden">
               <QuickActions />
-              <UpcomingAppointments clinicId={profile.clinic_id} />
-            </aside>
+            </div>
+
+            {/* Layout Desktop com sidebars */}
+            <div className="flex gap-6">
+              <aside className="hidden xl:block w-80 flex-shrink-0">
+                <SidebarFilters clinicId={profile.clinic_id} />
+              </aside>
+
+              <main className="flex-1 min-w-0 space-y-4">
+                <AgendaCalendar clinicId={profile.clinic_id} />
+                
+                {/* Próximos agendamentos no mobile */}
+                <div className="lg:hidden">
+                  <UpcomingAppointments clinicId={profile.clinic_id} />
+                </div>
+              </main>
+
+              <aside className="hidden lg:block w-80 flex-shrink-0 space-y-4">
+                <QuickActions />
+                <UpcomingAppointments clinicId={profile.clinic_id} />
+              </aside>
+            </div>
           </div>
         )}
     </DashboardLayout>
