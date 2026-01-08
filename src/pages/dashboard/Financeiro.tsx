@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { NovaTransacaoModal } from "@/components/financeiro/NovaTransacaoModal";
 import { ComissoesTab } from "@/components/financeiro/ComissoesTab";
+import { ReceivablesTab } from "@/components/financeiro/ReceivablesTab";
 
 interface Transaction {
   id: string;
@@ -155,6 +156,9 @@ const Financeiro = () => {
           <TabsList className="mt-4 bg-primary-foreground/10 border-none">
             <TabsTrigger value="fluxo" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
               FLUXO DE CAIXA
+            </TabsTrigger>
+            <TabsTrigger value="receber" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
+              CONTAS A RECEBER
             </TabsTrigger>
             <TabsTrigger value="transacoes" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
               TRANSAÇÕES
@@ -309,6 +313,10 @@ const Financeiro = () => {
                 </Table>
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="receber" className="m-0 p-6">
+            {clinicId && <ReceivablesTab clinicId={clinicId} />}
           </TabsContent>
 
           <TabsContent value="transacoes" className="m-0 p-6">
