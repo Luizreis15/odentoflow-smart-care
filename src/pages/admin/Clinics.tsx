@@ -1,0 +1,228 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { toast } from "sonner";
+import { Search, Eye, ExternalLink, Loader2 } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+interface Clinic {
+  id: string;
+  nome: string;
+  cnpj: string | null;
+  telefone: string | null;
+  status_assinatura: string | null;
+  plano: string | null;
+  created_at: string;
+  current_period_end: string | null;
+  patient_count?: number;
+  user_count?: number;
+}
+
+const AdminClinics = () => {
+  const navigate = useNavigate();
+  const [clinics, setClinics] = useState<Clinic[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [impersonating, setImpersonating] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadClinics();
+  }, []);
+
+  const loadClinics = async () => {
+    try {
+      const { data: clinicsData, error } = await supabase
+        .from("clinicas")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Get patient and user counts for each clinic
+      const clinicsWithCounts = await Promise.all(
+        (clinicsData || []).map(async (clinic) => {
+          const [patientRes, userRes] = await Promise.all([
+            supabase.from("patients").select("id", { count: "exact", head: true }).eq("clinic_id", clinic.id),
+            supabase.from("profiles").select("id", { count: "exact", head: true }).eq("clinic_id", clinic.id),
+          ]);
+
+          return {
+            ...clinic,
+            patient_count: patientRes.count || 0,
+            user_count: userRes.count || 0,
+          };
+        })
+      );
+
+      setClinics(clinicsWithCounts);
+    } catch (error) {
+      console.error("Error loading clinics:", error);
+      toast.error("Erro ao carregar clínicas");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImpersonate = async (clinic: Clinic) => {
+    setImpersonating(clinic.id);
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Log impersonation
+      await supabase.from("admin_impersonation_logs").insert({
+        admin_user_id: user.id,
+        impersonated_clinic_id: clinic.id,
+        reason: "Admin access for testing/support",
+      });
+
+      // Store impersonation state
+      localStorage.setItem("admin_impersonation", JSON.stringify({
+        clinicId: clinic.id,
+        clinicName: clinic.nome,
+        startedAt: new Date().toISOString(),
+      }));
+
+      toast.success(`Impersonando: ${clinic.nome}`);
+      navigate("/dashboard");
+    } catch (error: any) {
+      toast.error("Erro ao iniciar impersonação");
+      console.error(error);
+    } finally {
+      setImpersonating(null);
+    }
+  };
+
+  const getStatusBadge = (status: string | null) => {
+    const styles: Record<string, string> = {
+      active: "bg-green-500/20 text-green-400",
+      trialing: "bg-amber-500/20 text-amber-400",
+      past_due: "bg-red-500/20 text-red-400",
+      cancelled: "bg-slate-500/20 text-slate-400",
+      incomplete: "bg-orange-500/20 text-orange-400",
+    };
+    const labels: Record<string, string> = {
+      active: "Ativo",
+      trialing: "Trial",
+      past_due: "Pendente",
+      cancelled: "Cancelado",
+      incomplete: "Incompleto",
+    };
+    const key = status || "trialing";
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs ${styles[key] || styles.trialing}`}>
+        {labels[key] || key}
+      </span>
+    );
+  };
+
+  const filteredClinics = clinics.filter(
+    (clinic) =>
+      clinic.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      clinic.cnpj?.includes(searchTerm) ||
+      clinic.telefone?.includes(searchTerm)
+  );
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-white">Clínicas</h1>
+        <p className="text-slate-400">Gerenciar todas as clínicas cadastradas</p>
+      </div>
+
+      <Card className="bg-slate-800 border-slate-700">
+        <CardHeader>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              placeholder="Buscar por nome, CNPJ ou telefone..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-slate-700 border-slate-600 text-white"
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="border-slate-700">
+                  <TableHead className="text-slate-400">Clínica</TableHead>
+                  <TableHead className="text-slate-400">CNPJ</TableHead>
+                  <TableHead className="text-slate-400">Status</TableHead>
+                  <TableHead className="text-slate-400">Plano</TableHead>
+                  <TableHead className="text-slate-400">Pacientes</TableHead>
+                  <TableHead className="text-slate-400">Usuários</TableHead>
+                  <TableHead className="text-slate-400">Criado em</TableHead>
+                  <TableHead className="text-slate-400">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredClinics.map((clinic) => (
+                  <TableRow key={clinic.id} className="border-slate-700">
+                    <TableCell className="text-white font-medium">
+                      {clinic.nome}
+                    </TableCell>
+                    <TableCell className="text-slate-300">
+                      {clinic.cnpj || "-"}
+                    </TableCell>
+                    <TableCell>{getStatusBadge(clinic.status_assinatura)}</TableCell>
+                    <TableCell className="text-slate-300">
+                      {clinic.plano || "Free"}
+                    </TableCell>
+                    <TableCell className="text-slate-300">
+                      {clinic.patient_count}
+                    </TableCell>
+                    <TableCell className="text-slate-300">
+                      {clinic.user_count}
+                    </TableCell>
+                    <TableCell className="text-slate-300">
+                      {format(new Date(clinic.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleImpersonate(clinic)}
+                          disabled={impersonating === clinic.id}
+                          className="text-slate-400 hover:text-white"
+                          title="Acessar como esta clínica"
+                        >
+                          {impersonating === clinic.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filteredClinics.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center text-slate-500 py-8">
+                      Nenhuma clínica encontrada
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default AdminClinics;

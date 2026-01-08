@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_impersonation_logs: {
+        Row: {
+          actions_performed: string[] | null
+          admin_user_id: string
+          ended_at: string | null
+          id: string
+          impersonated_clinic_id: string
+          reason: string | null
+          started_at: string | null
+        }
+        Insert: {
+          actions_performed?: string[] | null
+          admin_user_id: string
+          ended_at?: string | null
+          id?: string
+          impersonated_clinic_id: string
+          reason?: string | null
+          started_at?: string | null
+        }
+        Update: {
+          actions_performed?: string[] | null
+          admin_user_id?: string
+          ended_at?: string | null
+          id?: string
+          impersonated_clinic_id?: string
+          reason?: string | null
+          started_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_impersonation_logs_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_impersonation_logs_impersonated_clinic_id_fkey"
+            columns: ["impersonated_clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       anamnese_modelos: {
         Row: {
           ativo: boolean
@@ -1084,6 +1129,112 @@ export type Database = {
           },
         ]
       }
+      email_campaign_recipients: {
+        Row: {
+          campaign_id: string
+          clicked_at: string | null
+          email: string
+          error_message: string | null
+          id: string
+          opened_at: string | null
+          recipient_id: string | null
+          recipient_type: string
+          sent_at: string | null
+          status: string | null
+        }
+        Insert: {
+          campaign_id: string
+          clicked_at?: string | null
+          email: string
+          error_message?: string | null
+          id?: string
+          opened_at?: string | null
+          recipient_id?: string | null
+          recipient_type: string
+          sent_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          clicked_at?: string | null
+          email?: string
+          error_message?: string | null
+          id?: string
+          opened_at?: string | null
+          recipient_id?: string | null
+          recipient_type?: string
+          sent_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_campaign_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "email_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_campaigns: {
+        Row: {
+          clicked_count: number | null
+          created_at: string | null
+          created_by: string
+          html_content: string
+          id: string
+          name: string
+          opened_count: number | null
+          scheduled_at: string | null
+          sent_at: string | null
+          status: string | null
+          subject: string
+          target_type: string
+          total_recipients: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          clicked_count?: number | null
+          created_at?: string | null
+          created_by: string
+          html_content: string
+          id?: string
+          name: string
+          opened_count?: number | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject: string
+          target_type: string
+          total_recipients?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          clicked_count?: number | null
+          created_at?: string | null
+          created_by?: string
+          html_content?: string
+          id?: string
+          name?: string
+          opened_count?: number | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject?: string
+          target_type?: string
+          total_recipients?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_campaigns_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feature_flags: {
         Row: {
           allowlist_tenants: Json | null
@@ -1225,6 +1376,114 @@ export type Database = {
           {
             foreignKeyName: "laboratorios_clinica_id_fkey"
             columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_interactions: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          lead_id: string
+          performed_by: string
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          lead_id: string
+          performed_by: string
+          type: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          lead_id?: string
+          performed_by?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_interactions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_interactions_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          assigned_to: string | null
+          company_name: string | null
+          converted_clinic_id: string | null
+          created_at: string | null
+          email: string
+          id: string
+          last_contact_at: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          score: number | null
+          source: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          company_name?: string | null
+          converted_clinic_id?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          last_contact_at?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          score?: number | null
+          source?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          company_name?: string | null
+          converted_clinic_id?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          last_contact_at?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          score?: number | null
+          source?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_converted_clinic_id_fkey"
+            columns: ["converted_clinic_id"]
             isOneToOne: false
             referencedRelation: "clinicas"
             referencedColumns: ["id"]
