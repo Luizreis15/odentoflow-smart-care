@@ -116,6 +116,19 @@ function App() {
               <Route path="/portal/auth" element={<PortalAuth />} />
               <Route path="/portal/dashboard" element={<PortalDashboard />} />
               
+              {/* Admin Routes */}
+              <Route path="/admin" element={<AdminAuth />} />
+              <Route element={<AdminLayout />}>
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route path="/admin/users" element={<AdminUsers />} />
+                <Route path="/admin/clinics" element={<AdminClinics />} />
+                <Route path="/admin/leads" element={<AdminLeads />} />
+                <Route path="/admin/marketing" element={<AdminMarketing />} />
+                <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
+                <Route path="/admin/modules" element={<AdminModules />} />
+                <Route path="/admin/audit" element={<AdminAudit />} />
+              </Route>
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
