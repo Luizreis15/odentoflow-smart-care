@@ -141,47 +141,51 @@ const Financeiro = () => {
   const { receitas, despesas, saldo } = calculateTotals();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <div className="bg-primary text-primary-foreground px-6 py-4 rounded-t-lg shadow-lg">
+        <div className="bg-primary text-primary-foreground px-4 md:px-6 py-3 md:py-4 rounded-t-lg shadow-lg">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Fluxo de Caixa</h1>
+            <h1 className="text-lg md:text-2xl font-bold">Financeiro</h1>
             <div className="flex gap-2">
-              <Button variant="secondary" size="sm" className="bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground border-none">
+              <Button variant="secondary" size="sm" className="bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground border-none h-9 w-9 p-0">
                 <Search className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
-          <TabsList className="mt-4 bg-primary-foreground/10 border-none">
-            <TabsTrigger value="fluxo" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
-              FLUXO DE CAIXA
-            </TabsTrigger>
-            <TabsTrigger value="receber" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
-              CONTAS A RECEBER
-            </TabsTrigger>
-            <TabsTrigger value="transacoes" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
-              TRANSAÇÕES
-            </TabsTrigger>
-            <TabsTrigger value="nota" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
-              NOTA FISCAL
-            </TabsTrigger>
-            <TabsTrigger value="comissoes" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
-              COMISSÕES
-            </TabsTrigger>
-            <TabsTrigger value="carteira" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary">
-              CARTEIRA DIGITAL
-            </TabsTrigger>
-          </TabsList>
+          {/* Tabs - Scroll horizontal no mobile */}
+          <div className="mt-3 md:mt-4 -mx-4 md:mx-0 px-4 md:px-0 overflow-x-auto scrollbar-hide">
+            <TabsList className="bg-primary-foreground/10 border-none w-max md:w-auto">
+              <TabsTrigger value="fluxo" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
+                FLUXO
+              </TabsTrigger>
+              <TabsTrigger value="receber" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
+                RECEBER
+              </TabsTrigger>
+              <TabsTrigger value="transacoes" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
+                TRANSAÇÕES
+              </TabsTrigger>
+              <TabsTrigger value="nota" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
+                NF-E
+              </TabsTrigger>
+              <TabsTrigger value="comissoes" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
+                COMISSÕES
+              </TabsTrigger>
+              <TabsTrigger value="carteira" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
+                CARTEIRA
+              </TabsTrigger>
+            </TabsList>
+          </div>
         </div>
 
-        <div className="bg-white rounded-b-lg shadow">
-          <TabsContent value="fluxo" className="m-0 p-6 space-y-6">
-            <div className="flex items-center gap-4">
+        <div className="bg-card rounded-b-lg shadow">
+          <TabsContent value="fluxo" className="m-0 p-4 md:p-6 space-y-4 md:space-y-6">
+            {/* Filtros - Stack no mobile */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-4">
               <div className="flex-1">
-                <label className="text-sm font-medium mb-2 block">Exibindo financeiro</label>
+                <label className="text-sm font-medium mb-2 block">Período</label>
                 <Select value={periodFilter} onValueChange={setPeriodFilter}>
-                  <SelectTrigger className="w-[200px]">
+                  <SelectTrigger className="w-full md:w-[200px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -195,148 +199,164 @@ const Financeiro = () => {
                 </Select>
               </div>
 
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                FILTRAR
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="flex-1 md:flex-none">
+                  <Filter className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline">FILTRAR</span>
+                </Button>
 
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                EXPORTAR
-              </Button>
+                <Button variant="outline" size="sm" className="flex-1 md:flex-none">
+                  <Download className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline">EXPORTAR</span>
+                </Button>
 
-              <Button 
-                size="sm" 
-                className="bg-green-600 hover:bg-green-700"
-                onClick={() => setShowNovaTransacao(true)}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                ADICIONAR
-              </Button>
+                <Button 
+                  size="sm" 
+                  className="bg-green-600 hover:bg-green-700 flex-1 md:flex-none"
+                  onClick={() => setShowNovaTransacao(true)}
+                >
+                  <Plus className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline">ADICIONAR</span>
+                </Button>
+              </div>
             </div>
 
-            {/* Cards de resumo */}
-            <div className="grid grid-cols-3 gap-4">
-              <Card className="border-l-4 border-l-green-500">
-                <CardContent className="pt-6">
+            {/* Cards de resumo - Scroll no mobile */}
+            <div className="flex lg:grid lg:grid-cols-3 gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
+              <Card className="border-l-4 border-l-green-500 flex-shrink-0 w-[200px] lg:w-auto">
+                <CardContent className="p-4 lg:pt-6">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-muted-foreground">RECEITAS</span>
-                    <TrendingUp className="h-5 w-5 text-green-500" />
+                    <span className="text-xs lg:text-sm font-medium text-muted-foreground">RECEITAS</span>
+                    <TrendingUp className="h-4 w-4 lg:h-5 lg:w-5 text-green-500" />
                   </div>
-                  <div className="text-2xl font-bold text-green-600">
+                  <div className="text-xl lg:text-2xl font-bold text-green-600">
                     R$ {receitas.toFixed(2)}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     A receber R$ 0,00
                   </p>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    Total previsto R$ {receitas.toFixed(2)}
-                  </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-l-4 border-l-red-500">
-                <CardContent className="pt-6">
+              <Card className="border-l-4 border-l-red-500 flex-shrink-0 w-[200px] lg:w-auto">
+                <CardContent className="p-4 lg:pt-6">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-muted-foreground">DESPESAS</span>
-                    <TrendingDown className="h-5 w-5 text-red-500" />
+                    <span className="text-xs lg:text-sm font-medium text-muted-foreground">DESPESAS</span>
+                    <TrendingDown className="h-4 w-4 lg:h-5 lg:w-5 text-red-500" />
                   </div>
-                  <div className="text-2xl font-bold text-red-600">
+                  <div className="text-xl lg:text-2xl font-bold text-red-600">
                     R$ {despesas.toFixed(2)}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     A pagar R$ 0,00
                   </p>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    Total previsto R$ {despesas.toFixed(2)}
-                  </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-l-4 border-l-blue-500">
-                <CardContent className="pt-6">
+              <Card className="border-l-4 border-l-blue-500 flex-shrink-0 w-[200px] lg:w-auto">
+                <CardContent className="p-4 lg:pt-6">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-muted-foreground">SALDO</span>
+                    <span className="text-xs lg:text-sm font-medium text-muted-foreground">SALDO</span>
                   </div>
-                  <div className={`text-2xl font-bold ${saldo >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                  <div className={`text-xl lg:text-2xl font-bold ${saldo >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
                     R$ {saldo.toFixed(2)}
                   </div>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    Total previsto R$ {saldo.toFixed(2)}
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    Total previsto
                   </div>
                 </CardContent>
               </Card>
             </div>
 
             {/* Tabela de transações */}
-            <div className="border rounded-lg">
+            <div className="border rounded-lg overflow-hidden">
               {loading ? (
-                <div className="p-12 text-center">
+                <div className="p-8 md:p-12 text-center">
                   <p className="text-muted-foreground">Carregando...</p>
                 </div>
               ) : transactions.length === 0 ? (
-                <div className="p-12 text-center">
+                <div className="p-8 md:p-12 text-center">
                   <div className="inline-block p-4 bg-muted rounded-lg mb-4">
-                    <Download className="h-12 w-12 text-muted-foreground" />
+                    <Download className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground" />
                   </div>
-                  <p className="text-lg font-medium">Sem resultados para o período</p>
+                  <p className="text-base md:text-lg font-medium">Sem resultados</p>
                   <p className="text-sm text-muted-foreground mt-1">
                     Tente alterar os filtros
                   </p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Categoria</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                <>
+                  {/* Mobile: Cards */}
+                  <div className="lg:hidden divide-y">
                     {transactions.map((transaction) => (
-                      <TableRow key={transaction.id}>
-                        <TableCell>
-                          {new Date(transaction.date).toLocaleDateString("pt-BR")}
-                        </TableCell>
-                        <TableCell>{transaction.reference || "-"}</TableCell>
-                        <TableCell>{transaction.category}</TableCell>
-                        <TableCell className="text-right">
-                          <span className={transaction.type === "receita" ? "text-green-600" : "text-red-600"}>
-                            {transaction.type === "receita" ? "+" : "-"}R$ {transaction.value.toFixed(2)}
-                          </span>
-                        </TableCell>
-                      </TableRow>
+                      <div key={transaction.id} className="p-4 flex items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{transaction.reference || "-"}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(transaction.date).toLocaleDateString("pt-BR")} • {transaction.category}
+                          </p>
+                        </div>
+                        <span className={`font-bold whitespace-nowrap ${transaction.type === "receita" ? "text-green-600" : "text-red-600"}`}>
+                          {transaction.type === "receita" ? "+" : "-"}R$ {transaction.value.toFixed(2)}
+                        </span>
+                      </div>
                     ))}
-                  </TableBody>
-                </Table>
+                  </div>
+
+                  {/* Desktop: Table */}
+                  <Table className="hidden lg:table">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead>Categoria</TableHead>
+                        <TableHead className="text-right">Valor</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {transactions.map((transaction) => (
+                        <TableRow key={transaction.id}>
+                          <TableCell>
+                            {new Date(transaction.date).toLocaleDateString("pt-BR")}
+                          </TableCell>
+                          <TableCell>{transaction.reference || "-"}</TableCell>
+                          <TableCell>{transaction.category}</TableCell>
+                          <TableCell className="text-right">
+                            <span className={transaction.type === "receita" ? "text-green-600" : "text-red-600"}>
+                              {transaction.type === "receita" ? "+" : "-"}R$ {transaction.value.toFixed(2)}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </>
               )}
             </div>
           </TabsContent>
 
-          <TabsContent value="receber" className="m-0 p-6">
+          <TabsContent value="receber" className="m-0 p-4 md:p-6">
             {clinicId && <ReceivablesTab clinicId={clinicId} />}
           </TabsContent>
 
-          <TabsContent value="transacoes" className="m-0 p-6">
-            <div className="text-center py-12">
+          <TabsContent value="transacoes" className="m-0 p-4 md:p-6">
+            <div className="text-center py-8 md:py-12">
               <p className="text-muted-foreground">Módulo de transações em desenvolvimento</p>
             </div>
           </TabsContent>
 
-          <TabsContent value="nota" className="m-0 p-6">
-            <div className="text-center py-12">
+          <TabsContent value="nota" className="m-0 p-4 md:p-6">
+            <div className="text-center py-8 md:py-12">
               <p className="text-muted-foreground">Módulo de notas fiscais em desenvolvimento</p>
             </div>
           </TabsContent>
 
-          <TabsContent value="comissoes" className="m-0 p-6">
+          <TabsContent value="comissoes" className="m-0 p-4 md:p-6">
             {clinicId && <ComissoesTab clinicId={clinicId} />}
           </TabsContent>
 
-          <TabsContent value="carteira" className="m-0 p-6">
-            <div className="text-center py-12">
+          <TabsContent value="carteira" className="m-0 p-4 md:p-6">
+            <div className="text-center py-8 md:py-12">
               <p className="text-muted-foreground">Módulo de carteira digital em desenvolvimento</p>
             </div>
           </TabsContent>

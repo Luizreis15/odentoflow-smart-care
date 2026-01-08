@@ -195,66 +195,66 @@ export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Cards de Aging */}
-      <div className="grid grid-cols-5 gap-4">
+    <div className="space-y-4 md:space-y-6">
+      {/* Cards de Aging - Scroll horizontal no mobile */}
+      <div className="flex lg:grid lg:grid-cols-5 gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
         <Card 
-          className={`cursor-pointer transition-all ${agingFilter === "all" ? "ring-2 ring-primary" : ""}`}
+          className={`cursor-pointer transition-all flex-shrink-0 w-[140px] lg:w-auto ${agingFilter === "all" ? "ring-2 ring-primary" : ""}`}
           onClick={() => setAgingFilter("all")}
         >
-          <CardContent className="pt-4">
-            <div className="text-sm font-medium text-muted-foreground">Total a Receber</div>
-            <div className="text-2xl font-bold">{formatCurrency(aging.total)}</div>
+          <CardContent className="p-3 lg:pt-4">
+            <div className="text-xs font-medium text-muted-foreground">Total</div>
+            <div className="text-lg lg:text-2xl font-bold">{formatCurrency(aging.total)}</div>
           </CardContent>
         </Card>
 
         <Card 
-          className={`cursor-pointer transition-all border-l-4 border-l-blue-500 ${agingFilter === "aVencer" ? "ring-2 ring-primary" : ""}`}
+          className={`cursor-pointer transition-all border-l-4 border-l-blue-500 flex-shrink-0 w-[140px] lg:w-auto ${agingFilter === "aVencer" ? "ring-2 ring-primary" : ""}`}
           onClick={() => setAgingFilter("aVencer")}
         >
-          <CardContent className="pt-4">
-            <div className="text-sm font-medium text-muted-foreground">A Vencer</div>
-            <div className="text-2xl font-bold text-blue-600">{formatCurrency(aging.aVencer)}</div>
+          <CardContent className="p-3 lg:pt-4">
+            <div className="text-xs font-medium text-muted-foreground">A Vencer</div>
+            <div className="text-lg lg:text-2xl font-bold text-blue-600">{formatCurrency(aging.aVencer)}</div>
           </CardContent>
         </Card>
 
         <Card 
-          className={`cursor-pointer transition-all border-l-4 border-l-yellow-500 ${agingFilter === "vencido1a30" ? "ring-2 ring-primary" : ""}`}
+          className={`cursor-pointer transition-all border-l-4 border-l-yellow-500 flex-shrink-0 w-[140px] lg:w-auto ${agingFilter === "vencido1a30" ? "ring-2 ring-primary" : ""}`}
           onClick={() => setAgingFilter("vencido1a30")}
         >
-          <CardContent className="pt-4">
-            <div className="text-sm font-medium text-muted-foreground">Vencido 1-30 dias</div>
-            <div className="text-2xl font-bold text-yellow-600">{formatCurrency(aging.vencido1a30)}</div>
+          <CardContent className="p-3 lg:pt-4">
+            <div className="text-xs font-medium text-muted-foreground">1-30 dias</div>
+            <div className="text-lg lg:text-2xl font-bold text-yellow-600">{formatCurrency(aging.vencido1a30)}</div>
           </CardContent>
         </Card>
 
         <Card 
-          className={`cursor-pointer transition-all border-l-4 border-l-orange-500 ${agingFilter === "vencido31a60" ? "ring-2 ring-primary" : ""}`}
+          className={`cursor-pointer transition-all border-l-4 border-l-orange-500 flex-shrink-0 w-[140px] lg:w-auto ${agingFilter === "vencido31a60" ? "ring-2 ring-primary" : ""}`}
           onClick={() => setAgingFilter("vencido31a60")}
         >
-          <CardContent className="pt-4">
-            <div className="text-sm font-medium text-muted-foreground">Vencido 31-60 dias</div>
-            <div className="text-2xl font-bold text-orange-600">{formatCurrency(aging.vencido31a60)}</div>
+          <CardContent className="p-3 lg:pt-4">
+            <div className="text-xs font-medium text-muted-foreground">31-60 dias</div>
+            <div className="text-lg lg:text-2xl font-bold text-orange-600">{formatCurrency(aging.vencido31a60)}</div>
           </CardContent>
         </Card>
 
         <Card 
-          className={`cursor-pointer transition-all border-l-4 border-l-red-500 ${agingFilter === "vencido60mais" ? "ring-2 ring-primary" : ""}`}
+          className={`cursor-pointer transition-all border-l-4 border-l-red-500 flex-shrink-0 w-[140px] lg:w-auto ${agingFilter === "vencido60mais" ? "ring-2 ring-primary" : ""}`}
           onClick={() => setAgingFilter("vencido60mais")}
         >
-          <CardContent className="pt-4">
-            <div className="text-sm font-medium text-muted-foreground">Vencido 60+ dias</div>
-            <div className="text-2xl font-bold text-red-600">{formatCurrency(aging.vencido60mais)}</div>
+          <CardContent className="p-3 lg:pt-4">
+            <div className="text-xs font-medium text-muted-foreground">60+ dias</div>
+            <div className="text-lg lg:text-2xl font-bold text-red-600">{formatCurrency(aging.vencido60mais)}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filtros */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
+      {/* Filtros - Stack no mobile */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-4">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por paciente ou número..."
+            placeholder="Buscar paciente ou nº..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -262,7 +262,7 @@ export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
         </div>
 
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full md:w-[180px]">
             <Filter className="h-4 w-4 mr-2" />
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -276,83 +276,135 @@ export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
         </Select>
       </div>
 
-      {/* Tabela */}
+      {/* Lista - Cards no mobile, Tabela no desktop */}
       <div className="border rounded-lg">
         {loading ? (
-          <div className="p-12 text-center">
+          <div className="p-8 md:p-12 text-center">
             <p className="text-muted-foreground">Carregando...</p>
           </div>
         ) : filteredTitles.length === 0 ? (
-          <div className="p-12 text-center">
+          <div className="p-8 md:p-12 text-center">
             <div className="inline-block p-4 bg-muted rounded-lg mb-4">
-              <DollarSign className="h-12 w-12 text-muted-foreground" />
+              <DollarSign className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground" />
             </div>
-            <p className="text-lg font-medium">Nenhum título encontrado</p>
+            <p className="text-base md:text-lg font-medium">Nenhum título encontrado</p>
             <p className="text-sm text-muted-foreground mt-1">
               {statusFilter !== "all" || searchTerm ? "Tente alterar os filtros" : "Aprove orçamentos para gerar títulos"}
             </p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nº</TableHead>
-                <TableHead>Paciente</TableHead>
-                <TableHead>Parcela</TableHead>
-                <TableHead>Vencimento</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Saldo</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <>
+            {/* Mobile: Cards */}
+            <div className="lg:hidden divide-y">
               {filteredTitles.map((title) => {
                 const daysOverdue = getDaysOverdue(title.due_date);
+                const isOverdue = daysOverdue > 0 && title.status !== "paid" && title.status !== "cancelled";
                 return (
-                  <TableRow key={title.id} className={daysOverdue > 0 && title.status !== "paid" && title.status !== "cancelled" ? "bg-red-50" : ""}>
-                    <TableCell className="font-mono">#{title.title_number}</TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{title.patient?.full_name || "—"}</div>
-                        <div className="text-sm text-muted-foreground">{title.patient?.phone}</div>
+                  <div 
+                    key={title.id} 
+                    className={`p-4 space-y-3 ${isOverdue ? "bg-red-50" : ""}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{title.patient?.full_name || "—"}</p>
+                        <p className="text-sm text-muted-foreground">#{title.title_number} • {title.installment_number}/{title.total_installments}</p>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      {title.installment_number}/{title.total_installments}
-                    </TableCell>
-                    <TableCell>
+                      {getStatusBadge(title.status, title.due_date)}
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-sm">
                       <div>
-                        <div>{new Date(title.due_date).toLocaleDateString("pt-BR")}</div>
-                        {daysOverdue > 0 && title.status !== "paid" && title.status !== "cancelled" && (
-                          <div className="text-xs text-red-600">{daysOverdue} dias atrás</div>
+                        <span className="text-muted-foreground">Venc: </span>
+                        {new Date(title.due_date).toLocaleDateString("pt-BR")}
+                        {isOverdue && (
+                          <span className="text-xs text-red-600 ml-1">({daysOverdue}d)</span>
                         )}
                       </div>
-                    </TableCell>
-                    <TableCell>{formatCurrency(title.amount)}</TableCell>
-                    <TableCell className="font-medium">
-                      {formatCurrency(title.balance)}
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge(title.status, title.due_date)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {title.status !== "paid" && title.status !== "cancelled" && (
-                        <Button
-                          size="sm"
-                          onClick={() => handlePayment(title)}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          <DollarSign className="h-4 w-4 mr-1" />
-                          Baixar
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
+                      <div className="text-right">
+                        <div className="font-bold">{formatCurrency(title.balance)}</div>
+                        {title.balance !== title.amount && (
+                          <div className="text-xs text-muted-foreground line-through">{formatCurrency(title.amount)}</div>
+                        )}
+                      </div>
+                    </div>
+
+                    {title.status !== "paid" && title.status !== "cancelled" && (
+                      <Button
+                        size="sm"
+                        onClick={() => handlePayment(title)}
+                        className="w-full bg-green-600 hover:bg-green-700"
+                      >
+                        <DollarSign className="h-4 w-4 mr-1" />
+                        Baixar Pagamento
+                      </Button>
+                    )}
+                  </div>
                 );
               })}
-            </TableBody>
-          </Table>
+            </div>
+
+            {/* Desktop: Table */}
+            <Table className="hidden lg:table">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nº</TableHead>
+                  <TableHead>Paciente</TableHead>
+                  <TableHead>Parcela</TableHead>
+                  <TableHead>Vencimento</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>Saldo</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredTitles.map((title) => {
+                  const daysOverdue = getDaysOverdue(title.due_date);
+                  return (
+                    <TableRow key={title.id} className={daysOverdue > 0 && title.status !== "paid" && title.status !== "cancelled" ? "bg-red-50" : ""}>
+                      <TableCell className="font-mono">#{title.title_number}</TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{title.patient?.full_name || "—"}</div>
+                          <div className="text-sm text-muted-foreground">{title.patient?.phone}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {title.installment_number}/{title.total_installments}
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div>{new Date(title.due_date).toLocaleDateString("pt-BR")}</div>
+                          {daysOverdue > 0 && title.status !== "paid" && title.status !== "cancelled" && (
+                            <div className="text-xs text-red-600">{daysOverdue} dias atrás</div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{formatCurrency(title.amount)}</TableCell>
+                      <TableCell className="font-medium">
+                        {formatCurrency(title.balance)}
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(title.status, title.due_date)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {title.status !== "paid" && title.status !== "cancelled" && (
+                          <Button
+                            size="sm"
+                            onClick={() => handlePayment(title)}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <DollarSign className="h-4 w-4 mr-1" />
+                            Baixar
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </>
         )}
       </div>
 
