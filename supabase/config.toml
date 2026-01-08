@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.whatsapp-qr-connect]
 verify_jwt = true
+
+[functions.approve-budget]
+verify_jwt = true
+
+[functions.record-payment]
+verify_jwt = true
