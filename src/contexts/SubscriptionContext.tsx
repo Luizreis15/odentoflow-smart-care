@@ -23,6 +23,16 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 
   const checkSubscription = async () => {
     try {
+      // Check if super admin is impersonating a clinic - skip subscription check
+      const impersonation = localStorage.getItem("admin_impersonation");
+      if (impersonation) {
+        setSubscribed(true);
+        setStatus("admin_impersonation");
+        setPlan("enterprise");
+        setLoading(false);
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         setSubscribed(false);
