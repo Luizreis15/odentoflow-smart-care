@@ -7,13 +7,24 @@ export const DOMAINS = {
   APP_URL: 'https://app.flowdent.com.br',
 };
 
+// Verifica se está em ambiente de desenvolvimento/preview
+export const isDevEnvironment = (): boolean => {
+  const hostname = window.location.hostname;
+  return (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.includes('lovableproject.com')
+  );
+};
+
 // Em desenvolvimento, localhost age como o domínio do APP
 export const isAppDomain = (): boolean => {
   const hostname = window.location.hostname;
   return (
     hostname === DOMAINS.APP ||
     hostname === 'localhost' ||
-    hostname === '127.0.0.1'
+    hostname === '127.0.0.1' ||
+    hostname.includes('lovableproject.com')
   );
 };
 
@@ -23,8 +34,8 @@ export const isSiteDomain = (): boolean => {
 
 // Gera URLs absolutas para o domínio do App
 export const getAppUrl = (path: string = ''): string => {
-  // Em desenvolvimento, usa URL relativa
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+  // Em desenvolvimento/preview, usa URL relativa (mesmo domínio)
+  if (isDevEnvironment()) {
     return path;
   }
   return `${DOMAINS.APP_URL}${path}`;
