@@ -44,6 +44,28 @@ const AdminAuth = () => {
     return !!data;
   };
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast.error("Digite seu email primeiro");
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/admin`,
+      });
+      
+      if (error) throw error;
+      
+      toast.success("Email de recuperação enviado! Verifique sua caixa de entrada.");
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao enviar email de recuperação");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -136,6 +158,15 @@ const AdminAuth = () => {
                 ) : (
                   "Entrar"
                 )}
+              </Button>
+              <Button
+                type="button"
+                variant="link"
+                className="w-full text-slate-400 hover:text-white"
+                onClick={handleForgotPassword}
+                disabled={loading}
+              >
+                Esqueci minha senha
               </Button>
             </form>
           </CardContent>
