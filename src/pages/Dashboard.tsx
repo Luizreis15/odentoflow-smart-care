@@ -47,7 +47,40 @@ const Dashboard = () => {
       console.log("[DASHBOARD] Session found:", session.user.email);
       setUser(session.user);
 
-      // Check for impersonation first
+      // Check for impersonation data in URL (cross-domain transfer)
+      const searchParams = new URLSearchParams(window.location.search);
+      const impersonateParam = searchParams.get("impersonate");
+      
+      if (impersonateParam) {
+        try {
+          const impersonationData: ImpersonationState = JSON.parse(decodeURIComponent(impersonateParam));
+          console.log("[DASHBOARD] Received impersonation via URL:", impersonationData.clinicName);
+          
+          // Validate user is super admin before accepting impersonation
+          const { data: userRole } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", session.user.id)
+            .eq("role", "super_admin")
+            .maybeSingle();
+          
+          if (userRole) {
+            // Store in localStorage for this domain
+            localStorage.setItem("admin_impersonation", JSON.stringify(impersonationData));
+            console.log("[DASHBOARD] Impersonation data saved to localStorage");
+          } else {
+            console.warn("[DASHBOARD] Non-admin tried to impersonate, rejecting");
+          }
+          
+          // Clean URL
+          window.history.replaceState({}, "", "/dashboard");
+        } catch (e) {
+          console.error("[DASHBOARD] Error parsing impersonation data:", e);
+          window.history.replaceState({}, "", "/dashboard");
+        }
+      }
+
+      // Check for impersonation in localStorage
       const storedImpersonation = localStorage.getItem("admin_impersonation");
       if (storedImpersonation) {
         const impersonation: ImpersonationState = JSON.parse(storedImpersonation);
