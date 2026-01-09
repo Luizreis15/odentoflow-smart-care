@@ -2,7 +2,6 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Play } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import heroImage from '@/assets/flowdent-hero.jpg';
 
 export default function HeroSection() {
@@ -72,10 +71,10 @@ export default function HeroSection() {
                 asChild
                 className="bg-[hsl(var(--flowdent-blue))] text-white hover:bg-[hsl(var(--flow-turquoise))] transition-all duration-300 text-lg px-8 py-6 shadow-lg hover:shadow-xl"
               >
-                <Link to="/auth?signup=true">
+                <a href="https://app.flowdent.com.br/auth?signup=true">
                   Comece Agora!
                   <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
+                </a>
               </Button>
               
               <Button 

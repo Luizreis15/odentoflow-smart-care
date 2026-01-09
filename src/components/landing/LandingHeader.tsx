@@ -122,7 +122,7 @@ export default function LandingHeader() {
           {/* CTAs Desktop */}
           <div className="hidden md:flex items-center space-x-4">
             <a 
-              href="/auth" 
+              href="https://app.flowdent.com.br/auth" 
               className="text-[hsl(var(--flowdent-blue))] hover:text-[hsl(var(--flow-turquoise))] transition font-semibold"
             >
               Entrar
@@ -131,7 +131,7 @@ export default function LandingHeader() {
               asChild
               className="bg-[hsl(var(--flowdent-blue))] text-white hover:bg-[hsl(var(--flow-turquoise))] transition-colors"
             >
-              <Link to="/auth">Inicie de Graça</Link>
+              <a href="https://app.flowdent.com.br/auth?signup=true">Inicie de Graça</a>
             </Button>
           </div>
 
@@ -214,11 +214,11 @@ export default function LandingHeader() {
                   Contato
                 </button>
                 <hr className="border-[hsl(var(--cloud-white))]" />
-                <a href="/auth" className="text-[hsl(var(--flowdent-blue))] font-semibold">
+                <a href="https://app.flowdent.com.br/auth" className="text-[hsl(var(--flowdent-blue))] font-semibold">
                   Entrar
                 </a>
                 <Button asChild className="bg-[hsl(var(--flowdent-blue))] text-white w-full">
-                  <Link to="/auth">Inicie de Graça</Link>
+                  <a href="https://app.flowdent.com.br/auth?signup=true">Inicie de Graça</a>
                 </Button>
               </nav>
             </motion.div>
