@@ -35,6 +35,17 @@ export const ImportProcedimentosModal = ({
     }
   };
 
+  const generateSlug = (descricao: string, index: number) => {
+    const slug = descricao
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .substring(0, 30);
+    return `PROC-${slug}-${index + 1}`;
+  };
+
   const parseFile = async (file: File): Promise<any[]> => {
     const ext = file.name.split(".").pop()?.toLowerCase();
 
@@ -45,17 +56,16 @@ export const ImportProcedimentosModal = ({
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(firstSheet);
 
-      return jsonData.map((row: any) => {
-        // Normalizar nomes das colunas
+      return jsonData.map((row: any, idx: number) => {
         const normalizedRow: any = {};
         
         Object.keys(row).forEach(key => {
           const lowerKey = key.toLowerCase().trim();
           if (lowerKey.includes("codigo") || lowerKey.includes("código")) {
             normalizedRow.codigo_sistema = String(row[key]).trim();
-          } else if (lowerKey.includes("especialidade")) {
+          } else if (lowerKey.includes("segmento") || lowerKey.includes("especialidade")) {
             normalizedRow.especialidade = String(row[key]).trim();
-          } else if (lowerKey.includes("descri") || lowerKey.includes("descrição")) {
+          } else if (lowerKey.includes("procedimento") || lowerKey.includes("descri") || lowerKey.includes("descrição")) {
             normalizedRow.descricao = String(row[key]).trim();
           } else if (lowerKey.includes("valor") || lowerKey.includes("preço") || lowerKey.includes("preco")) {
             const valorStr = String(row[key]).replace(/[^\d.,]/g, "").replace(",", ".");
@@ -63,34 +73,50 @@ export const ImportProcedimentosModal = ({
           }
         });
 
+        // Gerar codigo_sistema se não existir
+        if (!normalizedRow.codigo_sistema && normalizedRow.descricao) {
+          normalizedRow.codigo_sistema = generateSlug(normalizedRow.descricao, idx);
+        }
+
         return normalizedRow;
-      }).filter(d => d.codigo_sistema && d.especialidade && d.descricao && !isNaN(d.valor));
+      }).filter(d => d.especialidade && d.descricao && !isNaN(d.valor));
     } else {
-      // Parse CSV
+      // Parse CSV - detectar separador automaticamente
       const text = await file.text();
       const lines = text.split("\n").filter(l => l.trim());
-      const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
       
-      const data = lines.slice(1).map(line => {
-        const values = line.split(",").map(v => v.trim());
+      // Detectar separador
+      const firstLine = lines[0];
+      const separator = firstLine.includes(";") ? ";" : ",";
+      
+      const headers = lines[0].split(separator).map(h => h.trim().toLowerCase());
+      
+      const data = lines.slice(1).map((line, idx) => {
+        const values = line.split(separator).map(v => v.trim());
         const obj: any = {};
         
-        headers.forEach((header, idx) => {
+        headers.forEach((header, i) => {
+          const val = values[i];
           if (header.includes("codigo") || header.includes("código")) {
-            obj.codigo_sistema = values[idx];
-          } else if (header.includes("especialidade")) {
-            obj.especialidade = values[idx];
-          } else if (header.includes("descri") || header.includes("descrição")) {
-            obj.descricao = values[idx];
+            obj.codigo_sistema = val;
+          } else if (header.includes("segmento") || header.includes("especialidade")) {
+            obj.especialidade = val;
+          } else if (header.includes("procedimento") || header.includes("descri") || header.includes("descrição")) {
+            obj.descricao = val;
           } else if (header.includes("valor") || header.includes("preço") || header.includes("preco")) {
-            obj.valor = parseFloat(values[idx].replace(/[^\d.,]/g, "").replace(",", "."));
+            obj.valor = parseFloat(val?.replace(/[^\d.,]/g, "").replace(",", ".") || "0");
           }
         });
+        
+        // Gerar codigo_sistema se não existir
+        if (!obj.codigo_sistema && obj.descricao) {
+          obj.codigo_sistema = generateSlug(obj.descricao, idx);
+        }
         
         return obj;
       });
 
-      return data.filter(d => d.codigo_sistema && d.especialidade && d.descricao && d.valor);
+      return data.filter(d => d.especialidade && d.descricao && !isNaN(d.valor));
     }
   };
 
@@ -177,11 +203,13 @@ export const ImportProcedimentosModal = ({
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription className="text-sm">
-              <strong>Formato esperado:</strong>
+              <strong>Formatos aceitos:</strong>
               <br />
-              Colunas: Código, Especialidade, Descrição, Valor
+              • Segmento, Procedimento, Valor (separador: vírgula ou ponto e vírgula)
               <br />
-              Se o código já existir, o procedimento será atualizado
+              • Código, Especialidade, Descrição, Valor
+              <br />
+              <span className="text-muted-foreground">O código será gerado automaticamente se não informado</span>
             </AlertDescription>
           </Alert>
 
