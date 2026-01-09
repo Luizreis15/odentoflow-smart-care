@@ -71,7 +71,7 @@ export default function HeroSection() {
                 asChild
                 className="bg-[hsl(var(--flowdent-blue))] text-white hover:bg-[hsl(var(--flow-turquoise))] transition-all duration-300 text-lg px-8 py-6 shadow-lg hover:shadow-xl"
               >
-                <a href="https://app.flowdent.com.br/auth?signup=true">
+                <a href="https://app.flowdent.com.br/cadastro">
                   Comece Agora!
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </a>

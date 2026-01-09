@@ -61,7 +61,7 @@ export default function CTASection() {
                 asChild
                 className="bg-white text-[hsl(var(--flowdent-blue))] hover:bg-white/90 transition-all duration-300 text-lg px-8 py-6 shadow-xl"
               >
-                <a href="https://app.flowdent.com.br/auth?signup=true">
+                <a href="https://app.flowdent.com.br/cadastro">
                   Comece Grátis Agora
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </a>
