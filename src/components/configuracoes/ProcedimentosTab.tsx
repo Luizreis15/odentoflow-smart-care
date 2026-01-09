@@ -83,13 +83,16 @@ export const ProcedimentosTab = ({ clinicaId }: ProcedimentosTabProps) => {
         .delete()
         .eq("id", planoId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro detalhado ao excluir plano:", error);
+        throw error;
+      }
 
       toast.success("Plano excluído com sucesso");
       loadData();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao excluir plano:", error);
-      toast.error("Erro ao excluir plano");
+      toast.error(`Erro ao excluir plano: ${error?.message || 'Erro desconhecido'}`);
     }
   };
 

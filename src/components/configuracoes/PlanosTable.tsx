@@ -105,7 +105,10 @@ export const PlanosTable = ({ planos, onSetPadrao, onDelete, onEdit }: PlanosTab
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => onDelete(plano.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(plano.id);
+                          }}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                           Excluir
