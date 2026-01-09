@@ -81,7 +81,7 @@ export const AdicionarTratamentoSection = ({
 
   const handleSelecionarProcedimento = (proc: any) => {
     setProcedimentoSelecionado(proc);
-    setValor(proc.valor_customizado.toString());
+    setValor((proc.valor_customizado ?? proc.procedimentos?.valor ?? 0).toString());
     setTratamentoAberto(false);
   };
 
@@ -171,7 +171,8 @@ export const AdicionarTratamentoSection = ({
                     {procedimentos.map((proc) => (
                       <CommandItem
                         key={proc.id}
-                        value={proc.procedimentos.descricao}
+                        value={proc.id}
+                        keywords={[proc.procedimentos?.descricao || '', proc.procedimentos?.especialidade || '']}
                         onSelect={() => handleSelecionarProcedimento(proc)}
                       >
                         <Check
@@ -183,9 +184,9 @@ export const AdicionarTratamentoSection = ({
                           )}
                         />
                         <div className="flex flex-col">
-                          <span>{proc.procedimentos.descricao}</span>
+                          <span>{proc.procedimentos?.descricao}</span>
                           <span className="text-xs text-muted-foreground">
-                            {proc.procedimentos.especialidade} • R$ {proc.valor_customizado.toFixed(2)}
+                            {proc.procedimentos?.especialidade} • R$ {(proc.valor_customizado ?? 0).toFixed(2)}
                           </span>
                         </div>
                       </CommandItem>
