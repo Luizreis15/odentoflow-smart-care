@@ -171,7 +171,7 @@ const Cadastro = () => {
 
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: validation.data.email,
       password: validation.data.password,
       options: {
@@ -186,20 +186,38 @@ const Cadastro = () => {
       },
     });
 
-    setLoading(false);
-
     if (error) {
+      setLoading(false);
       toast({
         variant: "destructive",
         title: "Erro ao criar conta",
         description: error.message,
       });
-    } else {
-      toast({
-        title: "Conta criada com sucesso!",
-        description: "Você será redirecionado para o onboarding.",
-      });
+      return;
     }
+
+    // Enviar email de boas-vindas para o dono da clínica
+    if (data.user) {
+      try {
+        await supabase.functions.invoke('send-welcome-email', {
+          body: {
+            name: validation.data.fullName,
+            email: validation.data.email,
+            clinicName: clinicName,
+            isOwner: true,
+          }
+        });
+      } catch (emailError) {
+        console.error("Erro ao enviar email de boas-vindas:", emailError);
+        // Não bloquear o cadastro se o email falhar
+      }
+    }
+
+    setLoading(false);
+    toast({
+      title: "Conta criada com sucesso!",
+      description: "Você será redirecionado para o onboarding.",
+    });
   };
 
   return (

@@ -1,19 +1,34 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Shield, Loader2 } from "lucide-react";
+import { Shield, Loader2, ArrowLeft } from "lucide-react";
+import { z } from "zod";
 
 const AdminAuth = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [isResetPassword, setIsResetPassword] = useState(searchParams.get('reset') === 'true');
+  
+  // Reset password fields
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  useEffect(() => {
+    if (searchParams.get('reset') === 'true') {
+      setIsResetPassword(true);
+      setIsForgotPassword(false);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     checkExistingSession();
@@ -44,25 +59,78 @@ const AdminAuth = () => {
     return !!data;
   };
 
-  const handleForgotPassword = async () => {
-    if (!email) {
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email.trim()) {
       toast.error("Digite seu email primeiro");
+      return;
+    }
+
+    const emailValidation = z.string().email("Email inválido").safeParse(email);
+    if (!emailValidation.success) {
+      toast.error("Por favor, insira um email válido");
       return;
     }
     
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/admin`,
+      const { error } = await supabase.functions.invoke('reset-password', {
+        body: { email, isAdmin: true }
       });
       
       if (error) throw error;
       
       toast.success("Email de recuperação enviado! Verifique sua caixa de entrada.");
+      setIsForgotPassword(false);
+      setEmail("");
     } catch (error: any) {
       toast.error(error.message || "Erro ao enviar email de recuperação");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newPassword.trim() || !confirmPassword.trim()) {
+      toast.error("Por favor, preencha todos os campos");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("As senhas não coincidem");
+      return;
+    }
+
+    const passwordValidation = z.string()
+      .min(8, "A senha deve ter pelo menos 8 caracteres")
+      .max(128, "A senha deve ter no máximo 128 caracteres")
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "A senha deve conter letra maiúscula, minúscula e número")
+      .safeParse(newPassword);
+    
+    if (!passwordValidation.success) {
+      toast.error(passwordValidation.error.errors[0].message);
+      return;
+    }
+
+    setLoading(true);
+
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+
+    setLoading(false);
+
+    if (error) {
+      toast.error(error.message || "Erro ao redefinir senha");
+    } else {
+      toast.success("Senha redefinida com sucesso!");
+      setIsResetPassword(false);
+      setNewPassword("");
+      setConfirmPassword("");
+      navigate("/admin");
     }
   };
 
@@ -118,57 +186,149 @@ const AdminAuth = () => {
 
         <Card className="bg-slate-800 border-slate-700">
           <CardHeader>
-            <CardTitle className="text-white">Login Administrativo</CardTitle>
+            <CardTitle className="text-white">
+              {isResetPassword 
+                ? "Redefinir Senha" 
+                : isForgotPassword 
+                  ? "Recuperar Senha" 
+                  : "Login Administrativo"}
+            </CardTitle>
             <CardDescription className="text-slate-400">
-              Entre com suas credenciais de super administrador
+              {isResetPassword 
+                ? "Digite sua nova senha" 
+                : isForgotPassword 
+                  ? "Digite seu email para receber o link de recuperação" 
+                  : "Entre com suas credenciais de super administrador"}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-slate-200">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@flowdent.com.br"
-                  required
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-slate-200">Senha</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Verificando...
-                  </>
-                ) : (
-                  "Entrar"
-                )}
-              </Button>
-              <Button
-                type="button"
-                variant="link"
-                className="w-full text-slate-400 hover:text-white"
-                onClick={handleForgotPassword}
-                disabled={loading}
-              >
-                Esqueci minha senha
-              </Button>
-            </form>
+            {isResetPassword ? (
+              // RESET PASSWORD FORM
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new-password" className="text-slate-200">Nova Senha</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                  />
+                  <p className="text-xs text-slate-400">
+                    Mínimo 8 caracteres, com letra maiúscula, minúscula e número
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password" className="text-slate-200">Confirmar Nova Senha</Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Redefinindo...
+                    </>
+                  ) : (
+                    "Redefinir Senha"
+                  )}
+                </Button>
+              </form>
+            ) : isForgotPassword ? (
+              // FORGOT PASSWORD FORM
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-slate-200">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="admin@flowdent.com.br"
+                    required
+                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    "Enviar Link de Recuperação"
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full text-slate-400 hover:text-white"
+                  onClick={() => {
+                    setIsForgotPassword(false);
+                    setEmail("");
+                  }}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Voltar ao login
+                </Button>
+              </form>
+            ) : (
+              // LOGIN FORM
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-slate-200">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="admin@flowdent.com.br"
+                    required
+                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-slate-200">Senha</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Verificando...
+                    </>
+                  ) : (
+                    "Entrar"
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="link"
+                  className="w-full text-slate-400 hover:text-white"
+                  onClick={() => setIsForgotPassword(true)}
+                  disabled={loading}
+                >
+                  Esqueci minha senha
+                </Button>
+              </form>
+            )}
           </CardContent>
         </Card>
 
