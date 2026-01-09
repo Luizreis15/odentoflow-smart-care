@@ -3,10 +3,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Plus, Check } from "lucide-react";
+import { X, Plus, Check, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Odontograma } from "./Odontograma";
 import { toast } from "sonner";
@@ -33,6 +32,14 @@ export const AdicionarTratamentoSection = ({
   const [dentistas, setDentistas] = useState<any[]>([]);
   const [dentistaSelecionado, setDentistaSelecionado] = useState("");
   const [dentesSelecionados, setDentesSelecionados] = useState<string[]>([]);
+  const [buscaProcedimento, setBuscaProcedimento] = useState("");
+
+  const procedimentosFiltrados = procedimentos.filter((proc) => {
+    const termo = buscaProcedimento.toLowerCase();
+    const descricao = (proc.procedimentos?.descricao || '').toLowerCase();
+    const especialidade = (proc.procedimentos?.especialidade || '').toLowerCase();
+    return descricao.includes(termo) || especialidade.includes(termo);
+  });
 
   useEffect(() => {
     if (planoSelecionado) {
@@ -157,42 +164,43 @@ export const AdicionarTratamentoSection = ({
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[500px] p-0">
-              <Command>
-                <CommandInput placeholder="Buscar procedimento..." />
-                <CommandList className="max-h-[300px] overflow-auto">
-                  <CommandEmpty>
-                    <div className="p-4 text-center">
-                      <p className="text-sm text-muted-foreground">
-                        Nenhum procedimento encontrado.
-                      </p>
+              <div className="flex items-center border-b px-3">
+                <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                <input
+                  placeholder="Buscar procedimento..."
+                  value={buscaProcedimento}
+                  onChange={(e) => setBuscaProcedimento(e.target.value)}
+                  className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+                />
+              </div>
+              <div className="max-h-[300px] overflow-auto p-1">
+                {procedimentosFiltrados.length === 0 ? (
+                  <div className="py-6 text-center text-sm text-muted-foreground">
+                    Nenhum procedimento encontrado.
+                  </div>
+                ) : (
+                  procedimentosFiltrados.map((proc) => (
+                    <div
+                      key={proc.id}
+                      onClick={() => handleSelecionarProcedimento(proc)}
+                      className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          procedimentoSelecionado?.id === proc.id ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      <div className="flex flex-col">
+                        <span>{proc.procedimentos?.descricao}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {proc.procedimentos?.especialidade} • R$ {(proc.valor_customizado ?? 0).toFixed(2)}
+                        </span>
+                      </div>
                     </div>
-                  </CommandEmpty>
-                  <CommandGroup>
-                    {procedimentos.map((proc) => (
-                      <CommandItem
-                        key={proc.id}
-                        value={`${proc.procedimentos?.descricao || ''} ${proc.procedimentos?.especialidade || ''}`}
-                        onSelect={() => handleSelecionarProcedimento(proc)}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            procedimentoSelecionado?.id === proc.id
-                              ? "opacity-100"
-                              : "opacity-0"
-                          )}
-                        />
-                        <div className="flex flex-col">
-                          <span>{proc.procedimentos?.descricao}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {proc.procedimentos?.especialidade} • R$ {(proc.valor_customizado ?? 0).toFixed(2)}
-                          </span>
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
+                  ))
+                )}
+              </div>
             </PopoverContent>
           </Popover>
         </div>
