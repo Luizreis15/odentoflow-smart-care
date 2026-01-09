@@ -92,10 +92,10 @@ export default function FeatureSection({
                 className="bg-[hsl(var(--flowdent-blue))] text-white hover:bg-[hsl(var(--flow-turquoise))] transition-all duration-300 shadow-lg"
                 size="lg"
               >
-                <Link to="/auth">
+                <a href="https://app.flowdent.com.br/cadastro">
                   Experimente Grátis
                   <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
+                </a>
               </Button>
             </motion.div>
           </motion.div>

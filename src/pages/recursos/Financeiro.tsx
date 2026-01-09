@@ -27,7 +27,7 @@ export default function FinanceiroRecurso() {
                   size="lg"
                   className="bg-[hsl(var(--flowdent-blue))] text-white hover:bg-[hsl(var(--flow-turquoise))]"
                 >
-                  <Link to="/auth?signup=true">Começar Agora</Link>
+                  <a href="https://app.flowdent.com.br/cadastro">Começar Agora</a>
                 </Button>
               </div>
               <div>
@@ -165,7 +165,7 @@ export default function FinanceiroRecurso() {
               size="lg"
               className="bg-[hsl(var(--flowdent-blue))] text-white hover:bg-[hsl(var(--flow-turquoise))]"
             >
-              <Link to="/auth?signup=true">Experimentar Grátis por 7 Dias</Link>
+              <a href="https://app.flowdent.com.br/cadastro">Experimentar Grátis por 7 Dias</a>
             </Button>
           </div>
         </section>
