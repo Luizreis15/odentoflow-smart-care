@@ -171,8 +171,7 @@ export const AdicionarTratamentoSection = ({
                     {procedimentos.map((proc) => (
                       <CommandItem
                         key={proc.id}
-                        value={proc.id}
-                        keywords={[proc.procedimentos?.descricao || '', proc.procedimentos?.especialidade || '']}
+                        value={`${proc.procedimentos?.descricao || ''} ${proc.procedimentos?.especialidade || ''}`}
                         onSelect={() => handleSelecionarProcedimento(proc)}
                       >
                         <Check
