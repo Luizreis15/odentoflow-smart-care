@@ -1,7 +1,8 @@
-import { ReactNode, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { ReactNode, useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 import {
   Calendar,
   FileText,
@@ -15,11 +16,22 @@ import {
   Package,
   User,
   Shield,
+  Eye,
+  X,
+  ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Navbar from "./Navbar";
 import MobileBottomNav from "./mobile/MobileBottomNav";
 import { usePermissions } from "@/hooks/usePermissions";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+interface ImpersonationState {
+  clinicId: string;
+  clinicName: string;
+  startedAt: string;
+}
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -113,14 +125,79 @@ const navigation = [
 
 const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const { isSuperAdmin } = usePermissions();
+  const [impersonation, setImpersonation] = useState<ImpersonationState | null>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("admin_impersonation");
+    if (stored) {
+      setImpersonation(JSON.parse(stored));
+    }
+  }, []);
+
+  const handleEndImpersonation = async () => {
+    const stored = localStorage.getItem("admin_impersonation");
+    if (stored) {
+      const state = JSON.parse(stored) as ImpersonationState;
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("admin_impersonation_logs").update({
+          ended_at: new Date().toISOString()
+        }).match({
+          admin_user_id: user.id,
+          impersonated_clinic_id: state.clinicId,
+          ended_at: null
+        });
+      }
+    }
+    
+    localStorage.removeItem("admin_impersonation");
+    setImpersonation(null);
+    toast.success("Impersonação encerrada");
+    navigate("/admin/clinics");
+  };
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Impersonation Banner */}
+      {impersonation && (
+        <div className="fixed top-0 left-0 right-0 bg-amber-500 text-amber-950 px-4 py-2 flex items-center justify-between z-[60]">
+          <div className="flex items-center gap-2">
+            <Eye className="h-4 w-4" />
+            <span className="font-medium text-sm md:text-base">
+              Visualizando: {impersonation.clinicName}
+            </span>
+          </div>
+          <div className="flex items-center gap-1 md:gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="bg-amber-400 border-amber-600 hover:bg-amber-300 text-amber-950 text-xs md:text-sm"
+              onClick={() => navigate("/admin/clinics")}
+            >
+              <ArrowLeft className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+              <span className="hidden md:inline">Voltar ao Admin</span>
+              <span className="md:hidden">Admin</span>
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="hover:bg-amber-400 text-amber-950"
+              onClick={handleEndImpersonation}
+            >
+              <X className="h-4 w-4" />
+              <span className="hidden md:inline ml-1">Encerrar</span>
+            </Button>
+          </div>
+        </div>
+      )}
+
       <Navbar user={user} />
       
-      <div className="flex pt-16">
+      <div className={cn("flex", impersonation ? "pt-[104px]" : "pt-16")}>
         {/* Sidebar retrátil no desktop - expande ao passar mouse */}
         <TooltipProvider delayDuration={0}>
           <aside

@@ -17,12 +17,20 @@ interface Profile {
   clinic_id: string;
 }
 
+interface ImpersonationState {
+  clinicId: string;
+  clinicName: string;
+  startedAt: string;
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [activeClinicId, setActiveClinicId] = useState<string | null>(null);
+  const [isImpersonating, setIsImpersonating] = useState(false);
   const { status, trialEnd } = useSubscription();
 
   useEffect(() => {
@@ -38,6 +46,27 @@ const Dashboard = () => {
 
       console.log("[DASHBOARD] Session found:", session.user.email);
       setUser(session.user);
+
+      // Check for impersonation first
+      const storedImpersonation = localStorage.getItem("admin_impersonation");
+      if (storedImpersonation) {
+        const impersonation: ImpersonationState = JSON.parse(storedImpersonation);
+        console.log("[DASHBOARD] Impersonation active:", impersonation.clinicName);
+        setActiveClinicId(impersonation.clinicId);
+        setIsImpersonating(true);
+        
+        // Get profile for display
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
+        
+        setProfile(profileData);
+        setIsSuperAdmin(true);
+        setLoading(false);
+        return;
+      }
 
       // Check if user is super admin
       console.log("[DASHBOARD] Checking super admin role");
@@ -63,6 +92,7 @@ const Dashboard = () => {
         console.log("[DASHBOARD] Super admin detected, granting access");
         setProfile(profileData);
         setIsSuperAdmin(true);
+        setActiveClinicId(profileData?.clinic_id || null);
         setLoading(false);
         return;
       }
@@ -92,6 +122,7 @@ const Dashboard = () => {
 
       console.log("[DASHBOARD] All checks passed, setting profile and loading false");
       setProfile(profileData);
+      setActiveClinicId(profileData.clinic_id);
       setLoading(false);
     };
 
@@ -177,10 +208,10 @@ const Dashboard = () => {
         <h1 className="text-lg lg:text-xl font-bold mb-4">Bem-vindo, {profile?.full_name?.split(' ')[0] || "Usuário"}!</h1>
       )}
 
-        {!isSuperAdmin && profile?.clinic_id && (
+        {activeClinicId && (
           <div className="space-y-4">
             {/* Métricas - Grid responsivo */}
-            <DashboardMetrics clinicId={profile.clinic_id} />
+            <DashboardMetrics clinicId={activeClinicId} />
             
             {/* Quick Actions - Scroll horizontal no mobile */}
             <div className="lg:hidden">
@@ -190,21 +221,21 @@ const Dashboard = () => {
             {/* Layout Desktop com sidebars */}
             <div className="flex gap-6">
               <aside className="hidden xl:block w-80 flex-shrink-0">
-                <SidebarFilters clinicId={profile.clinic_id} />
+                <SidebarFilters clinicId={activeClinicId} />
               </aside>
 
               <main className="flex-1 min-w-0 space-y-4">
-                <AgendaCalendar clinicId={profile.clinic_id} />
+                <AgendaCalendar clinicId={activeClinicId} />
                 
                 {/* Próximos agendamentos no mobile */}
                 <div className="lg:hidden">
-                  <UpcomingAppointments clinicId={profile.clinic_id} />
+                  <UpcomingAppointments clinicId={activeClinicId} />
                 </div>
               </main>
 
               <aside className="hidden lg:block w-80 flex-shrink-0 space-y-4">
                 <QuickActions />
-                <UpcomingAppointments clinicId={profile.clinic_id} />
+                <UpcomingAppointments clinicId={activeClinicId} />
               </aside>
             </div>
           </div>

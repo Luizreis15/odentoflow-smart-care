@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Search, Eye, ExternalLink, Loader2 } from "lucide-react";
+import { Search, Eye, Loader2, Plus, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -29,6 +31,13 @@ const AdminClinics = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [impersonating, setImpersonating] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newClinic, setNewClinic] = useState({
+    nome: "",
+    cnpj: "",
+    telefone: "",
+  });
 
   useEffect(() => {
     loadClinics();
@@ -89,13 +98,51 @@ const AdminClinics = () => {
         startedAt: new Date().toISOString(),
       }));
 
-      toast.success(`Impersonando: ${clinic.nome}`);
+      toast.success(`Acessando como: ${clinic.nome}`);
       navigate("/dashboard");
     } catch (error: any) {
       toast.error("Erro ao iniciar impersonação");
       console.error(error);
     } finally {
       setImpersonating(null);
+    }
+  };
+
+  const handleCreateTestClinic = async () => {
+    if (!newClinic.nome.trim()) {
+      toast.error("Nome da clínica é obrigatório");
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase
+        .from("clinicas")
+        .insert({
+          nome: newClinic.nome,
+          cnpj: newClinic.cnpj || null,
+          telefone: newClinic.telefone || null,
+          status_assinatura: "trialing",
+          onboarding_status: "completed",
+          owner_user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("Clínica de teste criada com sucesso!");
+      setShowCreateModal(false);
+      setNewClinic({ nome: "", cnpj: "", telefone: "" });
+      loadClinics();
+    } catch (error: any) {
+      console.error("Error creating test clinic:", error);
+      toast.error("Erro ao criar clínica de teste");
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -131,9 +178,18 @@ const AdminClinics = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Clínicas</h1>
-        <p className="text-slate-400">Gerenciar todas as clínicas cadastradas</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Clínicas</h1>
+          <p className="text-slate-400">Gerenciar todas as clínicas cadastradas</p>
+        </div>
+        <Button
+          onClick={() => setShowCreateModal(true)}
+          className="bg-primary hover:bg-primary/90"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Criar Clínica de Teste
+        </Button>
       </div>
 
       <Card className="bg-slate-800 border-slate-700">
@@ -169,9 +225,12 @@ const AdminClinics = () => {
               </TableHeader>
               <TableBody>
                 {filteredClinics.map((clinic) => (
-                  <TableRow key={clinic.id} className="border-slate-700">
+                  <TableRow key={clinic.id} className="border-slate-700 hover:bg-slate-700/50">
                     <TableCell className="text-white font-medium">
-                      {clinic.nome}
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-slate-400" />
+                        {clinic.nome}
+                      </div>
                     </TableCell>
                     <TableCell className="text-slate-300">
                       {clinic.cnpj || "-"}
@@ -190,22 +249,22 @@ const AdminClinics = () => {
                       {format(new Date(clinic.created_at), "dd/MM/yyyy", { locale: ptBR })}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleImpersonate(clinic)}
-                          disabled={impersonating === clinic.id}
-                          className="text-slate-400 hover:text-white"
-                          title="Acessar como esta clínica"
-                        >
-                          {impersonating === clinic.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleImpersonate(clinic)}
+                        disabled={impersonating === clinic.id}
+                        className="border-primary/50 text-primary hover:bg-primary/20"
+                      >
+                        {impersonating === clinic.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Eye className="h-4 w-4 mr-1" />
+                            Acessar
+                          </>
+                        )}
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -221,6 +280,68 @@ const AdminClinics = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal para criar clínica de teste */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="bg-slate-800 border-slate-700">
+          <DialogHeader>
+            <DialogTitle className="text-white">Criar Clínica de Teste</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="nome" className="text-slate-300">Nome da Clínica *</Label>
+              <Input
+                id="nome"
+                value={newClinic.nome}
+                onChange={(e) => setNewClinic({ ...newClinic, nome: e.target.value })}
+                placeholder="Ex: Clínica Teste 01"
+                className="bg-slate-700 border-slate-600 text-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cnpj" className="text-slate-300">CNPJ (opcional)</Label>
+              <Input
+                id="cnpj"
+                value={newClinic.cnpj}
+                onChange={(e) => setNewClinic({ ...newClinic, cnpj: e.target.value })}
+                placeholder="00.000.000/0000-00"
+                className="bg-slate-700 border-slate-600 text-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="telefone" className="text-slate-300">Telefone (opcional)</Label>
+              <Input
+                id="telefone"
+                value={newClinic.telefone}
+                onChange={(e) => setNewClinic({ ...newClinic, telefone: e.target.value })}
+                placeholder="(00) 00000-0000"
+                className="bg-slate-700 border-slate-600 text-white"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowCreateModal(false)}
+              className="border-slate-600 text-slate-300"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCreateTestClinic}
+              disabled={creating}
+              className="bg-primary hover:bg-primary/90"
+            >
+              {creating ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Plus className="h-4 w-4 mr-2" />
+              )}
+              Criar Clínica
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
