@@ -151,3 +151,15 @@ All colors MUST be HSL.
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Fix cmdk v1.x bug: data-disabled="" is set on all items, even non-disabled ones */
+/* This forces pointer-events to work correctly */
+[cmdk-item] {
+  pointer-events: auto !important;
+}
+
+[cmdk-item][data-disabled="true"],
+[cmdk-item][aria-disabled="true"] {
+  pointer-events: none !important;
+  opacity: 0.5 !important;
+}
