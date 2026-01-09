@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { getAppUrl } from "@/config/domains";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -26,7 +26,6 @@ interface Clinic {
 }
 
 const AdminClinics = () => {
-  const navigate = useNavigate();
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -91,19 +90,20 @@ const AdminClinics = () => {
         reason: "Admin access for testing/support",
       });
 
-      // Store impersonation state
-      localStorage.setItem("admin_impersonation", JSON.stringify({
+      // Pass impersonation data via URL to cross domain
+      const impersonationData = encodeURIComponent(JSON.stringify({
         clinicId: clinic.id,
         clinicName: clinic.nome,
         startedAt: new Date().toISOString(),
       }));
 
       toast.success(`Acessando como: ${clinic.nome}`);
-      navigate("/dashboard");
+      
+      // Redirect to app domain with impersonation data in URL
+      window.location.href = getAppUrl(`/dashboard?impersonate=${impersonationData}`);
     } catch (error: any) {
       toast.error("Erro ao iniciar impersonação");
       console.error(error);
-    } finally {
       setImpersonating(null);
     }
   };
