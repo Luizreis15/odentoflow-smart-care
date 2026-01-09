@@ -21,6 +21,7 @@ import AdminAudit from "@/pages/admin/Audit";
 
 // App Pages (app.flowdent.com.br)
 import Auth from "@/pages/Auth";
+import Cadastro from "@/pages/Cadastro";
 import Index from "@/pages/Index";
 import Onboarding from "@/pages/Onboarding";
 import Welcome from "@/pages/onboarding/Welcome";
