@@ -92,6 +92,7 @@ function AppRoutes() {
       
       <Route path="/old-dashboard" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
+      <Route path="/cadastro" element={<Cadastro />} />
       <Route path="/onboarding" element={<Onboarding />} />
       <Route path="/onboarding/welcome" element={<Welcome />} />
       <Route path="/onboarding/tipo" element={<Tipo />} />
