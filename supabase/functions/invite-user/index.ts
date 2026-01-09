@@ -73,7 +73,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: email.toLowerCase(),
       password: tempPassword,
-      email_confirm: true, // Auto-confirmar email
+      email_confirm: true,
       user_metadata: {
         full_name: name,
       },
@@ -100,7 +100,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (usuarioError) {
       console.error("Erro ao criar registro em usuarios:", usuarioError);
-      // Limpar usuário criado no auth
       console.log("Rolling back: deleting user from auth");
       await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
       throw new Error("Erro ao criar registro: " + usuarioError.message);
@@ -126,7 +125,6 @@ const handler = async (req: Request): Promise<Response> => {
     // Gerar link de redefinição de senha
     console.log("Generating password reset link...");
     
-    // Determinar a URL de redirecionamento correta
     const redirectUrl = Deno.env.get("APP_URL") || "https://flowdent.com.br";
     
     const { data: resetData, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
@@ -151,44 +149,113 @@ const handler = async (req: Request): Promise<Response> => {
       assistente: "Assistente",
     };
 
-    // Enviar email de boas-vindas
-    console.log("Sending welcome email...");
-    try {
-      const emailResponse = await resend.emails.send({
-        from: "Flowdent <noreply@flowdent.com.br>",
-        to: [email.toLowerCase()],
-        subject: `Bem-vindo(a) ao Flowdent - ${clinicName}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #0EA5E9;">Bem-vindo(a) ao Flowdent!</h1>
-            <p>Olá <strong>${name}</strong>,</p>
-            <p>Você foi convidado para fazer parte da equipe da <strong>${clinicName}</strong> como <strong>${roleNames[role] || role}</strong>.</p>
-            <p>Para acessar sua conta pela primeira vez, clique no botão abaixo para definir sua senha:</p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetData?.properties?.action_link || '#'}" 
-                 style="background-color: #0EA5E9; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                Definir Senha
-              </a>
-            </div>
-            <p style="color: #999; font-size: 14px; margin-top: 20px;">
-              Se o botão não funcionar, 
-              <a href="${resetData?.properties?.action_link || '#'}" style="color: #0EA5E9; text-decoration: underline;">
-                clique aqui
-              </a>.
-            </p>
-            <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
-            <p style="color: #666; font-size: 14px;">
-              Se você não solicitou este convite, pode ignorar este email com segurança.
-            </p>
-          </div>
-        `,
-      });
+    const roleName = roleNames[role] || role;
 
-      console.log("Email enviado com sucesso:", emailResponse);
-    } catch (emailError: any) {
-      console.error("Erro ao enviar email:", emailError);
-      // Não falhar se o email não for enviado
-    }
+    // Enviar email de boas-vindas
+    console.log("Sending welcome email via Resend...");
+    
+    const emailResponse = await resend.emails.send({
+      from: "Flowdent <noreply@flowdent.com.br>",
+      to: [email.toLowerCase()],
+      subject: `Bem-vindo(a) ao Flowdent - ${clinicName}`,
+      html: `
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Bem-vindo ao Flowdent</title>
+          </head>
+          <body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f4f5;">
+              <tr>
+                <td align="center" style="padding: 40px 20px;">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    <!-- Header -->
+                    <tr>
+                      <td style="background: linear-gradient(135deg, #0EA5E9 0%, #06B6D4 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;">Flowdent</h1>
+                        <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 14px;">Sistema de Gestão Odontológica</p>
+                      </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                      <td style="padding: 40px 30px;">
+                        <h2 style="color: #18181b; margin: 0 0 20px 0; font-size: 22px; font-weight: 600;">Bem-vindo(a) ao Flowdent! 🎉</h2>
+                        
+                        <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
+                          Olá <strong>${name}</strong>,
+                        </p>
+                        
+                        <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
+                          Você foi convidado para fazer parte da equipe da <strong>${clinicName}</strong> como <strong>${roleName}</strong>.
+                        </p>
+                        
+                        <!-- Info Box -->
+                        <div style="background-color: #f0f9ff; border-left: 4px solid #0EA5E9; padding: 16px; border-radius: 0 8px 8px 0; margin: 0 0 24px 0;">
+                          <p style="color: #0369a1; font-size: 14px; margin: 0;">
+                            <strong>Seu email de acesso:</strong><br>
+                            ${email.toLowerCase()}
+                          </p>
+                        </div>
+                        
+                        <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                          Para acessar sua conta pela primeira vez, clique no botão abaixo para definir sua senha:
+                        </p>
+                        
+                        <!-- Button -->
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                          <tr>
+                            <td align="center" style="padding: 0 0 30px 0;">
+                              <a href="${resetData?.properties?.action_link || '#'}" 
+                                 style="display: inline-block; background: linear-gradient(135deg, #0EA5E9 0%, #06B6D4 100%); color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4);">
+                                Definir Minha Senha
+                              </a>
+                            </td>
+                          </tr>
+                        </table>
+                        
+                        <!-- Fallback Link -->
+                        <p style="color: #71717a; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
+                          Se o botão não funcionar, copie e cole o link abaixo no seu navegador:
+                        </p>
+                        <p style="color: #0EA5E9; font-size: 14px; line-height: 1.6; margin: 0 0 30px 0; word-break: break-all;">
+                          <a href="${resetData?.properties?.action_link || '#'}" style="color: #0EA5E9; text-decoration: underline;">
+                            ${resetData?.properties?.action_link || '#'}
+                          </a>
+                        </p>
+                        
+                        <!-- Security Notice -->
+                        <div style="border-top: 1px solid #e4e4e7; padding-top: 20px;">
+                          <p style="color: #71717a; font-size: 14px; line-height: 1.6; margin: 0;">
+                            Se você não esperava este convite, pode ignorar este email com segurança.
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                      <td style="background-color: #f4f4f5; padding: 24px 30px; border-radius: 0 0 12px 12px; text-align: center;">
+                        <p style="color: #71717a; font-size: 14px; margin: 0 0 8px 0;">
+                          © ${new Date().getFullYear()} Flowdent. Todos os direitos reservados.
+                        </p>
+                        <p style="color: #a1a1aa; font-size: 12px; margin: 0;">
+                          <a href="https://flowdent.com.br" style="color: #0EA5E9; text-decoration: none;">flowdent.com.br</a>
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+      `,
+    });
+
+    console.log("Email enviado com sucesso:", emailResponse);
 
     console.log("=== Invite User Function Completed Successfully ===");
     return new Response(
