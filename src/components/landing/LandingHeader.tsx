@@ -131,7 +131,7 @@ export default function LandingHeader() {
               asChild
               className="bg-[hsl(var(--flowdent-blue))] text-white hover:bg-[hsl(var(--flow-turquoise))] transition-colors"
             >
-              <a href="https://app.flowdent.com.br/auth?signup=true">Inicie de Graça</a>
+              <a href="https://app.flowdent.com.br/cadastro">Inicie de Graça</a>
             </Button>
           </div>
 
@@ -218,7 +218,7 @@ export default function LandingHeader() {
                   Entrar
                 </a>
                 <Button asChild className="bg-[hsl(var(--flowdent-blue))] text-white w-full">
-                  <a href="https://app.flowdent.com.br/auth?signup=true">Inicie de Graça</a>
+                  <a href="https://app.flowdent.com.br/cadastro">Inicie de Graça</a>
                 </Button>
               </nav>
             </motion.div>
