@@ -24,7 +24,8 @@ export const isAppDomain = (): boolean => {
     hostname === DOMAINS.APP ||
     hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
-    hostname.includes('lovableproject.com')
+    hostname.includes('lovableproject.com') ||
+    hostname.includes('lovable.app')
   );
 };
 
