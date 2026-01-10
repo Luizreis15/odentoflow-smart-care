@@ -163,7 +163,7 @@ export const AdicionarTratamentoSection = ({
                   : "Buscar procedimento..."}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[500px] p-0">
+            <PopoverContent className="w-[500px] p-0 z-[100]">
               <div className="flex items-center border-b px-3">
                 <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                 <input
