@@ -67,11 +67,11 @@ const MobileQuickActions = ({ clinicId }: MobileQuickActionsProps) => {
   ];
 
   return (
-    <div className="px-4 overflow-hidden">
+    <div className="w-full max-w-full box-border px-4 overflow-hidden">
       <h2 className="text-sm font-semibold text-foreground/70 mb-3 uppercase tracking-wide">
         Ações Rápidas
       </h2>
-      <div className="grid grid-cols-2 gap-2 w-full">
+      <div className="w-full grid grid-cols-2 gap-2">
         {actions.map((action, index) => (
           <Button
             key={index}
