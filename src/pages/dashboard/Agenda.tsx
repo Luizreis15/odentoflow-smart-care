@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Plus, Filter, X, UserPlus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Plus, Filter, X, UserPlus, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
@@ -24,9 +25,23 @@ const appointmentSchema = z.object({
   duration: z.string().min(1, "Duração é obrigatória"),
 });
 
+// Generate time slots from 08:00 to 18:00 in 30min intervals
+const generateTimeSlots = () => {
+  const slots: string[] = [];
+  for (let hour = 8; hour < 18; hour++) {
+    slots.push(`${hour.toString().padStart(2, '0')}:00`);
+    slots.push(`${hour.toString().padStart(2, '0')}:30`);
+  }
+  return slots;
+};
+
+const TIME_SLOTS = generateTimeSlots();
+
 const Agenda = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState<"calendar" | "day-slots">("calendar");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
@@ -47,6 +62,32 @@ const Agenda = () => {
     time: "",
     duration: "30",
   });
+
+  // Handle URL params for pre-selecting date/time
+  useEffect(() => {
+    const dateParam = searchParams.get("date");
+    const timeParam = searchParams.get("time");
+    
+    if (dateParam) {
+      const parsedDate = parseISO(dateParam);
+      setSelectedDate(parsedDate);
+      setCurrentMonth(parsedDate);
+      setViewMode("day-slots");
+      
+      if (timeParam) {
+        // Pre-fill form and open sheet
+        setFormData(prev => ({
+          ...prev,
+          date: dateParam,
+          time: timeParam,
+        }));
+        setIsSheetOpen(true);
+      }
+      
+      // Clear params after processing
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     loadData();
@@ -210,6 +251,45 @@ const Agenda = () => {
     cancelled: "Cancelado",
   };
 
+  // Handle slot click - pre-fill form and open sheet
+  const handleSlotClick = (date: Date, time: string) => {
+    setFormData(prev => ({
+      ...prev,
+      date: format(date, "yyyy-MM-dd"),
+      time: time,
+    }));
+    setIsSheetOpen(true);
+  };
+
+  // Handle day click from calendar - switch to slots view
+  const handleDayClick = (day: Date) => {
+    setSelectedDate(day);
+    setViewMode("day-slots");
+  };
+
+  // Get appointment for a specific time slot
+  const getAppointmentForSlot = (time: string) => {
+    const dayAppointments = getAppointmentsForDate(selectedDate);
+    return dayAppointments.find(apt => {
+      const aptTime = format(parseISO(apt.appointment_date), "HH:mm");
+      return aptTime === time;
+    });
+  };
+
+  // Check if slot is within an appointment duration
+  const isSlotOccupied = (time: string) => {
+    const dayAppointments = getAppointmentsForDate(selectedDate);
+    const [slotHour, slotMinute] = time.split(":").map(Number);
+    const slotMinutes = slotHour * 60 + slotMinute;
+    
+    return dayAppointments.some(apt => {
+      const aptDate = parseISO(apt.appointment_date);
+      const aptStartMinutes = aptDate.getHours() * 60 + aptDate.getMinutes();
+      const aptEndMinutes = aptStartMinutes + (apt.duration_minutes || 30);
+      return slotMinutes >= aptStartMinutes && slotMinutes < aptEndMinutes;
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -277,13 +357,134 @@ const Agenda = () => {
     setFormData({ ...formData, patientId });
   };
 
+  // Day Slots View Component
+  const DayTimeSlotsView = () => {
+    const availableSlots = TIME_SLOTS.filter(time => !isSlotOccupied(time)).length;
+    
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => setViewMode("calendar")}
+                className="h-8 w-8"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div>
+                <CardTitle className="text-2xl capitalize">
+                  {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
+                </CardTitle>
+                <CardDescription className="capitalize">
+                  {format(selectedDate, "EEEE", { locale: ptBR })} • {availableSlots} horários disponíveis
+                </CardDescription>
+              </div>
+            </div>
+            <Badge variant="secondary" className="text-sm">
+              {selectedDayAppointments.length} agendamento{selectedDayAppointments.length !== 1 && "s"}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
+            {TIME_SLOTS.map((time) => {
+              const appointment = getAppointmentForSlot(time);
+              const occupied = isSlotOccupied(time);
+              
+              if (appointment) {
+                // Slot with appointment
+                return (
+                  <div
+                    key={time}
+                    className={cn(
+                      "flex items-center gap-4 p-4 rounded-lg border-l-4 transition-all",
+                      "bg-[hsl(var(--card-blue))] border-l-[hsl(var(--flowdent-blue))]"
+                    )}
+                  >
+                    <div className="flex items-center justify-center w-16 shrink-0">
+                      <span className="text-lg font-bold text-[hsl(var(--flowdent-blue))]">{time}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-semibold text-foreground truncate">
+                          {appointment.patient?.full_name}
+                        </p>
+                        <Badge className={statusColors[appointment.status as keyof typeof statusColors]}>
+                          {statusLabels[appointment.status as keyof typeof statusLabels]}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {appointment.title} • {appointment.dentist?.nome} • {appointment.duration_minutes} min
+                      </p>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      Ver Detalhes
+                    </Button>
+                  </div>
+                );
+              }
+              
+              if (occupied) {
+                // Slot is within another appointment's duration - show as disabled
+                return (
+                  <div
+                    key={time}
+                    className="flex items-center gap-4 p-3 rounded-lg bg-muted/50 opacity-50"
+                  >
+                    <div className="flex items-center justify-center w-16 shrink-0">
+                      <span className="text-sm font-medium text-muted-foreground">{time}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground italic">Em consulta</span>
+                  </div>
+                );
+              }
+              
+              // Available slot - clickable
+              return (
+                <button
+                  key={time}
+                  onClick={() => handleSlotClick(selectedDate, time)}
+                  className={cn(
+                    "w-full flex items-center gap-4 p-4 rounded-lg border-l-4 transition-all",
+                    "bg-[hsl(var(--card-green))] border-l-[hsl(var(--success-green))]",
+                    "hover:shadow-md hover:scale-[1.01] cursor-pointer",
+                    "group"
+                  )}
+                >
+                  <div className="flex items-center justify-center w-16 shrink-0">
+                    <span className="text-lg font-bold text-[hsl(var(--success-green))]">{time}</span>
+                  </div>
+                  <div className="flex-1 flex items-center gap-2">
+                    <Plus className="h-4 w-4 text-[hsl(var(--success-green))] group-hover:scale-110 transition-transform" />
+                    <span className="font-medium text-[hsl(var(--success-green))]">
+                      Horário Disponível
+                    </span>
+                    <span className="text-sm text-muted-foreground hidden sm:inline">
+                      — Clique para agendar
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Agenda Inteligente</h1>
           <p className="text-muted-foreground mt-1">
-            Gerencie agendamentos e horários com calendário visual
+            {viewMode === "calendar" 
+              ? "Clique em um dia para ver os horários disponíveis"
+              : "Clique em um horário disponível para agendar"
+            }
           </p>
         </div>
         <div className="flex gap-2">
@@ -364,7 +565,10 @@ const Agenda = () => {
               <SheetHeader>
                 <SheetTitle>Novo Agendamento</SheetTitle>
                 <SheetDescription>
-                  Preencha os dados para criar um novo agendamento
+                  {formData.date && formData.time 
+                    ? `Agendando para ${format(parseISO(formData.date), "dd/MM/yyyy", { locale: ptBR })} às ${formData.time}`
+                    : "Preencha os dados para criar um novo agendamento"
+                  }
                 </SheetDescription>
               </SheetHeader>
               <form onSubmit={handleSubmit} className="space-y-4 mt-6">
@@ -436,6 +640,7 @@ const Agenda = () => {
                       type="date"
                       value={formData.date}
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                      className={formData.date ? "border-[hsl(var(--success-green))] bg-[hsl(var(--card-green))]" : ""}
                     />
                   </div>
 
@@ -446,6 +651,7 @@ const Agenda = () => {
                       type="time"
                       value={formData.time}
                       onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                      className={formData.time ? "border-[hsl(var(--success-green))] bg-[hsl(var(--card-green))]" : ""}
                     />
                   </div>
                 </div>
@@ -523,178 +729,220 @@ const Agenda = () => {
         </Card>
       </div>
 
-      <div className="grid lg:grid-cols-[1fr_400px] gap-6">
-        {/* Calendário Visual */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-2xl capitalize">
-                  {format(currentMonth, "MMMM 'de' yyyy", { locale: ptBR })}
-                </CardTitle>
-                <CardDescription>Clique em um dia para ver os agendamentos</CardDescription>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="icon" onClick={previousMonth}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => {
-                  setCurrentMonth(new Date());
-                  setSelectedDate(new Date());
-                }}>
-                  Hoje
-                </Button>
-                <Button variant="outline" size="icon" onClick={nextMonth}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-12 text-muted-foreground">
-                Carregando calendário...
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {/* Cabeçalho dos dias da semana */}
-                <div className="grid grid-cols-7 gap-2 mb-2">
-                  {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
-                    <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">
-                      {day}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Grid de dias do mês */}
-                <div className="grid grid-cols-7 gap-2">
-                  {getCalendarDays().map((day, idx) => {
-                    const dayAppointments = getAppointmentsForDate(day);
-                    const isCurrentMonth = isSameMonth(day, currentMonth);
-                    const isSelected = isSameDay(day, selectedDate);
-                    const isTodayDate = isToday(day);
-
-                    return (
-                      <button
-                        key={idx}
-                        onClick={() => setSelectedDate(day)}
-                        className={cn(
-                          "relative min-h-[80px] p-2 rounded-lg border-2 transition-all",
-                          "flex flex-col items-start justify-start",
-                          "hover:border-primary hover:shadow-md",
-                          isCurrentMonth ? "bg-card" : "bg-muted/30",
-                          isSelected && "border-primary bg-primary/5 shadow-md",
-                          !isSelected && "border-border",
-                          isTodayDate && "ring-2 ring-primary/20"
-                        )}
-                      >
-                        <span className={cn(
-                          "text-sm font-medium mb-1",
-                          !isCurrentMonth && "text-muted-foreground",
-                          isSelected && "text-primary font-bold",
-                          isTodayDate && !isSelected && "text-primary"
-                        )}>
-                          {format(day, "d")}
-                        </span>
-                        
-                        {dayAppointments.length > 0 && (
-                          <div className="space-y-1 w-full">
-                            {dayAppointments.slice(0, 2).map((apt) => (
-                              <div
-                                key={apt.id}
-                                className={cn(
-                                  "text-xs px-1.5 py-0.5 rounded truncate",
-                                  apt.status === "confirmed" && "bg-secondary/80 text-secondary-foreground",
-                                  apt.status === "scheduled" && "bg-primary/20 text-primary",
-                                  apt.status === "completed" && "bg-muted text-muted-foreground",
-                                  apt.status === "cancelled" && "bg-destructive/20 text-destructive"
-                                )}
-                              >
-                                {format(parseISO(apt.appointment_date), "HH:mm")} {apt.patient?.full_name?.split(' ')[0]}
-                              </div>
-                            ))}
-                            {dayAppointments.length > 2 && (
-                              <div className="text-xs text-muted-foreground px-1.5">
-                                +{dayAppointments.length - 2} mais
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Painel lateral com detalhes do dia selecionado */}
-        <div className="space-y-4">
+      {/* Conditional rendering based on view mode */}
+      {viewMode === "day-slots" ? (
+        <DayTimeSlotsView />
+      ) : (
+        <div className="grid lg:grid-cols-[1fr_400px] gap-6">
+          {/* Calendário Visual */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-xl capitalize">
-                    {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
+                  <CardTitle className="text-2xl capitalize">
+                    {format(currentMonth, "MMMM 'de' yyyy", { locale: ptBR })}
                   </CardTitle>
-                  <CardDescription className="capitalize">
-                    {format(selectedDate, "EEEE", { locale: ptBR })}
-                  </CardDescription>
+                  <CardDescription>Clique em um dia para ver os horários</CardDescription>
                 </div>
-                <Badge variant="secondary">
-                  {selectedDayAppointments.length} consulta{selectedDayAppointments.length !== 1 && "s"}
-                </Badge>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="icon" onClick={previousMonth}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    setCurrentMonth(new Date());
+                    setSelectedDate(new Date());
+                  }}>
+                    Hoje
+                  </Button>
+                  <Button variant="outline" size="icon" onClick={nextMonth}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
-              {selectedDayAppointments.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <CalendarIcon className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>Nenhum agendamento neste dia</p>
+              {loading ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  Carregando calendário...
                 </div>
               ) : (
-                <div className="space-y-3 max-h-[600px] overflow-y-auto">
-                  {selectedDayAppointments
-                    .sort((a, b) => new Date(a.appointment_date).getTime() - new Date(b.appointment_date).getTime())
-                    .map((apt) => {
-                      const aptTime = format(parseISO(apt.appointment_date), "HH:mm");
-                      
+                <div className="space-y-2">
+                  {/* Cabeçalho dos dias da semana */}
+                  <div className="grid grid-cols-7 gap-2 mb-2">
+                    {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
+                      <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Grid de dias do mês */}
+                  <div className="grid grid-cols-7 gap-2">
+                    {getCalendarDays().map((day, idx) => {
+                      const dayAppointments = getAppointmentsForDate(day);
+                      const isCurrentMonth = isSameMonth(day, currentMonth);
+                      const isSelected = isSameDay(day, selectedDate);
+                      const isTodayDate = isToday(day);
+                      // Calculate available slots for this day
+                      const occupiedCount = dayAppointments.length;
+
                       return (
-                        <div
-                          key={apt.id}
-                          className="p-4 rounded-lg border bg-card hover:shadow-md transition-shadow space-y-2"
+                        <button
+                          key={idx}
+                          onClick={() => handleDayClick(day)}
+                          className={cn(
+                            "relative min-h-[80px] p-2 rounded-lg border-2 transition-all",
+                            "flex flex-col items-start justify-start",
+                            "hover:border-primary hover:shadow-md hover:scale-[1.02]",
+                            isCurrentMonth ? "bg-card" : "bg-muted/30",
+                            isSelected && "border-primary bg-primary/5 shadow-md",
+                            !isSelected && "border-border",
+                            isTodayDate && "ring-2 ring-primary/20"
+                          )}
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-primary" />
-                              <span className="font-semibold">{aptTime}</span>
+                          <span className={cn(
+                            "text-sm font-medium mb-1",
+                            !isCurrentMonth && "text-muted-foreground",
+                            isSelected && "text-primary font-bold",
+                            isTodayDate && !isSelected && "text-primary"
+                          )}>
+                            {format(day, "d")}
+                          </span>
+                          
+                          {dayAppointments.length > 0 && (
+                            <div className="space-y-1 w-full">
+                              {dayAppointments.slice(0, 2).map((apt) => (
+                                <div
+                                  key={apt.id}
+                                  className={cn(
+                                    "text-xs px-1.5 py-0.5 rounded truncate",
+                                    apt.status === "confirmed" && "bg-secondary/80 text-secondary-foreground",
+                                    apt.status === "scheduled" && "bg-primary/20 text-primary",
+                                    apt.status === "completed" && "bg-muted text-muted-foreground",
+                                    apt.status === "cancelled" && "bg-destructive/20 text-destructive"
+                                  )}
+                                >
+                                  {format(parseISO(apt.appointment_date), "HH:mm")} {apt.patient?.full_name?.split(' ')[0]}
+                                </div>
+                              ))}
+                              {dayAppointments.length > 2 && (
+                                <div className="text-xs text-muted-foreground px-1.5">
+                                  +{dayAppointments.length - 2} mais
+                                </div>
+                              )}
                             </div>
-                            <Badge className={statusColors[apt.status as keyof typeof statusColors]}>
-                              {statusLabels[apt.status as keyof typeof statusLabels]}
-                            </Badge>
-                          </div>
-                          <div>
-                            <p className="font-medium text-foreground">{apt.patient?.full_name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {apt.title} • {apt.dentist?.nome}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              Duração: {apt.duration_minutes} min
-                            </p>
-                          </div>
-                          <Button variant="outline" size="sm" className="w-full">
-                            Ver Detalhes
-                          </Button>
-                        </div>
+                          )}
+                          
+                          {/* Badge showing slots info */}
+                          {isCurrentMonth && occupiedCount === 0 && (
+                            <div className="absolute bottom-1 right-1">
+                              <Badge variant="outline" className="text-[10px] px-1 py-0 bg-[hsl(var(--card-green))] text-[hsl(var(--success-green))] border-[hsl(var(--success-green))]/30">
+                                Livre
+                              </Badge>
+                            </div>
+                          )}
+                        </button>
                       );
                     })}
+                  </div>
                 </div>
               )}
             </CardContent>
           </Card>
+
+          {/* Painel lateral com detalhes do dia selecionado */}
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-xl capitalize">
+                      {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
+                    </CardTitle>
+                    <CardDescription className="capitalize">
+                      {format(selectedDate, "EEEE", { locale: ptBR })}
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">
+                      {selectedDayAppointments.length} consulta{selectedDayAppointments.length !== 1 && "s"}
+                    </Badge>
+                    <Button 
+                      size="sm" 
+                      onClick={() => setViewMode("day-slots")}
+                      className="bg-[hsl(var(--success-green))] hover:bg-[hsl(var(--success-green))]/90"
+                    >
+                      Ver Horários
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {selectedDayAppointments.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CalendarIcon className="h-12 w-12 mx-auto mb-3 text-[hsl(var(--success-green))]/50" />
+                    <p className="text-muted-foreground mb-4">Nenhum agendamento neste dia</p>
+                    <Button 
+                      onClick={() => setViewMode("day-slots")}
+                      className="bg-[hsl(var(--success-green))] hover:bg-[hsl(var(--success-green))]/90"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Agendar Consulta
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                    {selectedDayAppointments
+                      .sort((a, b) => new Date(a.appointment_date).getTime() - new Date(b.appointment_date).getTime())
+                      .map((apt) => {
+                        const aptTime = format(parseISO(apt.appointment_date), "HH:mm");
+                        
+                        return (
+                          <div
+                            key={apt.id}
+                            className="p-4 rounded-lg border bg-card hover:shadow-md transition-shadow space-y-2"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-primary" />
+                                <span className="font-semibold">{aptTime}</span>
+                              </div>
+                              <Badge className={statusColors[apt.status as keyof typeof statusColors]}>
+                                {statusLabels[apt.status as keyof typeof statusLabels]}
+                              </Badge>
+                            </div>
+                            <div>
+                              <p className="font-medium text-foreground">{apt.patient?.full_name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {apt.title} • {apt.dentist?.nome}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Duração: {apt.duration_minutes} min
+                              </p>
+                            </div>
+                            <Button variant="outline" size="sm" className="w-full">
+                              Ver Detalhes
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    
+                    {/* Button to see all slots */}
+                    <Button 
+                      variant="outline" 
+                      className="w-full mt-4 border-[hsl(var(--success-green))] text-[hsl(var(--success-green))] hover:bg-[hsl(var(--card-green))]"
+                      onClick={() => setViewMode("day-slots")}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Ver Todos os Horários
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
+      )}
 
       <CadastroRapidoPacienteModal
         open={isNewPatientModalOpen}
