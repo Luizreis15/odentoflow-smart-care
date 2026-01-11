@@ -23,18 +23,34 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 
-const menuItems = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Agenda", href: "/dashboard/agenda", icon: Calendar },
-  { name: "Prontuário", href: "/dashboard/prontuario", icon: FileText },
-  { name: "Financeiro", href: "/dashboard/financeiro", icon: DollarSign },
-  { name: "CRM", href: "/dashboard/crm", icon: MessageSquare },
-  { name: "Próteses", href: "/dashboard/proteses", icon: FlaskConical },
-  { name: "Estoque", href: "/dashboard/estoque", icon: Package },
-  { name: "Portal Paciente", href: "/dashboard/portal-paciente", icon: Users },
-  { name: "IA Assistente", href: "/dashboard/ia-assistente", icon: Sparkles },
-  { name: "Configurações", href: "/dashboard/configuracoes", icon: Settings },
-  { name: "Perfil", href: "/dashboard/profile", icon: User },
+// Organized menu categories
+const menuCategories = [
+  {
+    title: "PRINCIPAIS",
+    items: [
+      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { name: "Agenda", href: "/dashboard/agenda", icon: Calendar },
+      { name: "Prontuário", href: "/dashboard/prontuario", icon: FileText },
+    ],
+  },
+  {
+    title: "GESTÃO",
+    items: [
+      { name: "Financeiro", href: "/dashboard/financeiro", icon: DollarSign },
+      { name: "CRM", href: "/dashboard/crm", icon: MessageSquare },
+      { name: "Estoque", href: "/dashboard/estoque", icon: Package },
+    ],
+  },
+  {
+    title: "OUTROS",
+    items: [
+      { name: "Próteses", href: "/dashboard/proteses", icon: FlaskConical },
+      { name: "Portal Paciente", href: "/dashboard/portal-paciente", icon: Users },
+      { name: "IA Assistente", href: "/dashboard/ia-assistente", icon: Sparkles },
+      { name: "Configurações", href: "/dashboard/configuracoes", icon: Settings },
+      { name: "Perfil", href: "/dashboard/profile", icon: User },
+    ],
+  },
 ];
 
 interface MobileDrawerMenuProps {
@@ -100,41 +116,67 @@ const MobileDrawerMenu = ({ user, onClose }: MobileDrawerMenuProps) => {
 
       <Separator />
 
-      {/* Menu items */}
+      {/* Menu items organized by category */}
       <ScrollArea className="flex-1">
-        <nav className="p-2 space-y-1">
+        <nav className="py-2">
           {isSuperAdmin && (
-            <Link
-              to="/super-admin"
-              onClick={onClose}
-              className="flex items-center gap-3 px-3 py-3 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-            >
-              <Shield className="h-5 w-5" />
-              <span className="font-medium">Super Admin</span>
-              <ChevronRight className="h-4 w-4 ml-auto" />
-            </Link>
+            <div className="px-2 mb-2">
+              <Link
+                to="/super-admin"
+                onClick={onClose}
+                className="flex items-center gap-3 px-3 py-3 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+              >
+                <Shield className="h-5 w-5" />
+                <span className="font-medium">Super Admin</span>
+                <ChevronRight className="h-4 w-4 ml-auto" />
+              </Link>
+            </div>
           )}
 
-          {menuItems.map((item) => {
-            const isActive = location.pathname === item.href;
-            return (
-              <Link
-                key={item.name}
-                to={item.href}
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors",
-                  isActive
-                    ? "bg-accent text-primary font-medium"
-                    : "text-foreground hover:bg-accent/50"
-                )}
-              >
-                <item.icon className={cn("h-5 w-5", isActive && "text-primary")} />
-                <span>{item.name}</span>
-                <ChevronRight className="h-4 w-4 ml-auto text-muted-foreground" />
-              </Link>
-            );
-          })}
+          {menuCategories.map((category, categoryIndex) => (
+            <div key={category.title} className="mb-2">
+              {/* Category title */}
+              <div className="px-4 py-2">
+                <span className="text-xs font-semibold text-muted-foreground tracking-wider">
+                  {category.title}
+                </span>
+              </div>
+
+              {/* Category items */}
+              <div className="px-2 space-y-0.5">
+                {category.items.map((item) => {
+                  const isActive = location.pathname === item.href;
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      onClick={onClose}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
+                        isActive
+                          ? "bg-accent text-primary font-medium"
+                          : "text-foreground hover:bg-accent/50"
+                      )}
+                    >
+                      <item.icon
+                        className={cn(
+                          "h-5 w-5",
+                          isActive ? "text-primary" : "text-muted-foreground"
+                        )}
+                      />
+                      <span className="text-sm">{item.name}</span>
+                      <ChevronRight className="h-4 w-4 ml-auto text-muted-foreground" />
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* Separator between categories */}
+              {categoryIndex < menuCategories.length - 1 && (
+                <Separator className="mt-2" />
+              )}
+            </div>
+          ))}
         </nav>
       </ScrollArea>
 
