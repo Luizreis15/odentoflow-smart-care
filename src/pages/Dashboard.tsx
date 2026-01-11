@@ -252,16 +252,38 @@ const Dashboard = () => {
         />
       )}
       
-      {isSuperAdmin ? (
-        <h1 className="text-lg font-bold mb-4">Painel Super Admin</h1>
-      ) : (
-        <h1 className="text-lg lg:text-xl font-bold mb-4">Bem-vindo, {profile?.full_name?.split(' ')[0] || "Usuário"}!</h1>
-      )}
+      {/* Hero Section Desktop */}
+      <div className="hidden lg:block bg-gradient-to-br from-[hsl(var(--flowdent-blue))] via-[hsl(var(--flow-turquoise))] to-[hsl(var(--flowdent-blue))] p-6 rounded-xl mb-2 text-white">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">
+              {isSuperAdmin ? "Painel Super Admin" : `Bem-vindo, ${profile?.full_name?.split(' ')[0] || "Usuário"}!`}
+            </h1>
+            <p className="text-white/80 text-sm mt-1">Confira o resumo da sua clínica hoje</p>
+          </div>
+          <div className="text-right">
+            <p className="text-white/70 text-sm">
+              {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </p>
+          </div>
+        </div>
+      </div>
 
-        {activeClinicId && (
-          <div className="space-y-4">
-            {/* Métricas - Grid responsivo */}
+      {/* Mobile Title */}
+      <div className="lg:hidden px-4 mb-4">
+        {isSuperAdmin ? (
+          <h1 className="text-lg font-bold">Painel Super Admin</h1>
+        ) : (
+          <h1 className="text-lg font-bold">Bem-vindo, {profile?.full_name?.split(' ')[0] || "Usuário"}!</h1>
+        )}
+      </div>
+
+      {activeClinicId && (
+        <div className="space-y-4">
+          {/* Métricas - Grid responsivo com margem negativa para overlap no desktop */}
+          <div className="lg:-mt-4 lg:relative lg:z-10">
             <DashboardMetrics clinicId={activeClinicId} />
+          </div>
             
             {/* Quick Actions - Scroll horizontal no mobile */}
             <div className="lg:hidden">
