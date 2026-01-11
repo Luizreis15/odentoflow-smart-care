@@ -12,7 +12,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   ArrowLeft, Edit, Copy, MessageCircle, MoreVertical, 
   Phone, Mail, Trash2, Printer, Send, Link2, 
-  User, Phone as PhoneIcon, FileText, AlertCircle
+  User, Phone as PhoneIcon, FileText, AlertCircle,
+  DollarSign, Calendar, Smile
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +24,9 @@ import AnamnesesTab from "@/components/anamnese/AnamnesesTab";
 import ImagensTab from "@/components/imagens/ImagensTab";
 import { DocumentosTab } from "@/components/documentos/DocumentosTab";
 import { EditPatientModal } from "@/components/pacientes/EditPatientModal";
+import { FinanceiroTab } from "@/components/pacientes/FinanceiroTab";
+import { OdontogramaTab } from "@/components/pacientes/OdontogramaTab";
+import { AgendamentosTab } from "@/components/pacientes/AgendamentosTab";
 import { cn } from "@/lib/utils";
 
 interface Patient {
@@ -310,14 +314,16 @@ const PatientDetails = () => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full justify-start flex-wrap h-auto gap-1">
+        <TabsList className="w-full justify-start flex-wrap h-auto gap-1 p-1">
           <TabsTrigger value="cadastro">Cadastro</TabsTrigger>
           <TabsTrigger value="orcamentos">Orçamentos</TabsTrigger>
+          <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+          <TabsTrigger value="odontograma">Odontograma</TabsTrigger>
           <TabsTrigger value="tratamentos">Tratamentos</TabsTrigger>
           <TabsTrigger value="anamnese">Anamnese</TabsTrigger>
           <TabsTrigger value="imagens">Imagens</TabsTrigger>
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
-          <TabsTrigger value="debitos">Débitos</TabsTrigger>
+          <TabsTrigger value="agendamentos">Agendamentos</TabsTrigger>
         </TabsList>
 
         <div className="mt-6">
@@ -613,12 +619,16 @@ const PatientDetails = () => {
             <DocumentosTab patientId={id!} />
           </TabsContent>
 
-          <TabsContent value="debitos" className="mt-0">
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">Nenhum débito cadastrado</p>
-              </CardContent>
-            </Card>
+          <TabsContent value="financeiro" className="mt-0">
+            <FinanceiroTab patientId={id!} />
+          </TabsContent>
+
+          <TabsContent value="odontograma" className="mt-0">
+            <OdontogramaTab patientId={id!} />
+          </TabsContent>
+
+          <TabsContent value="agendamentos" className="mt-0">
+            <AgendamentosTab patientId={id!} />
           </TabsContent>
         </div>
       </Tabs>
