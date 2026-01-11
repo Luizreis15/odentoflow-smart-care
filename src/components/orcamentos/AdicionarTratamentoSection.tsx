@@ -113,6 +113,7 @@ export const AdicionarTratamentoSection = ({
 
     onAdicionarTratamento({
       procedimento_id: procedimentoSelecionado.procedimentos.id,
+      procedure_code: procedimentoSelecionado.procedimentos.codigo_sistema,
       nome: procedimentoSelecionado.procedimentos.descricao,
       valor: parseFloat(valor),
       dentista_id: dentistaSelecionado,

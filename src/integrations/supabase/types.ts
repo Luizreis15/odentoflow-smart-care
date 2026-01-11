@@ -438,6 +438,7 @@ export type Database = {
           insurance_id: string | null
           notes: string | null
           procedure_code: string | null
+          procedure_id: string | null
           procedure_name: string
           professional_id: string | null
           quantity: number
@@ -458,6 +459,7 @@ export type Database = {
           insurance_id?: string | null
           notes?: string | null
           procedure_code?: string | null
+          procedure_id?: string | null
           procedure_name: string
           professional_id?: string | null
           quantity?: number
@@ -478,6 +480,7 @@ export type Database = {
           insurance_id?: string | null
           notes?: string | null
           procedure_code?: string | null
+          procedure_id?: string | null
           procedure_name?: string
           professional_id?: string | null
           quantity?: number
@@ -496,6 +499,13 @@ export type Database = {
             columns: ["budget_id"]
             isOneToOne: false
             referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_items_procedure_id_fkey"
+            columns: ["procedure_id"]
+            isOneToOne: false
+            referencedRelation: "procedimentos"
             referencedColumns: ["id"]
           },
           {

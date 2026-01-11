@@ -28,6 +28,7 @@ interface NovoOrcamentoModalProps {
 interface TratamentoItem {
   id: string;
   procedimento_id: string;
+  procedure_code?: string;
   nome: string;
   valor: number;
   dentista_id?: string;
@@ -276,9 +277,11 @@ export const NovoOrcamentoModal = ({
 
       if (orcamentoError) throw orcamentoError;
 
-      // Create budget items with professional_id
+      // Create budget items with professional_id and procedure reference
       const itens = tratamentos.map(t => ({
         budget_id: orcamento.id,
+        procedure_id: t.procedimento_id,
+        procedure_code: t.procedure_code,
         procedure_name: t.nome,
         unit_price: t.valor,
         quantity: 1,
