@@ -163,7 +163,7 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
 
   return (
     <div
-      className="min-h-screen bg-background pb-24 overflow-auto"
+      className="min-h-screen bg-background pb-24 overflow-y-auto overflow-x-hidden"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
