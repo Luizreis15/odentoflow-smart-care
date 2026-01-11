@@ -163,7 +163,8 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
 
   return (
     <div
-      className="min-h-screen w-full max-w-full bg-background pb-24 overflow-y-auto overflow-x-hidden"
+      className="min-h-screen bg-background pb-24 overflow-y-auto overflow-x-hidden"
+      style={{ width: '100vw', maxWidth: '100vw' }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -176,7 +177,7 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
 
       {/* Hero Header with Gradient */}
       <div className="bg-gradient-to-br from-[hsl(var(--flowdent-blue))] via-[hsl(var(--flow-turquoise))] to-[hsl(var(--health-mint))] text-white">
-        <div className="px-4 py-6 pb-8">
+        <div className="px-4 py-4 pb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-white/80 text-sm capitalize">{todayFormatted}</p>
