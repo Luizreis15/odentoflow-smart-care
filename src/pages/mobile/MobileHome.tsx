@@ -163,7 +163,7 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
 
   return (
     <div
-      className="min-h-screen bg-background pb-24 overflow-y-auto overflow-x-hidden"
+      className="min-h-screen w-full max-w-full bg-background pb-24 overflow-y-auto overflow-x-hidden"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -222,7 +222,7 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
       </div>
 
       {/* Content - with negative margin to overlap header */}
-      <div className="space-y-6 -mt-4">
+      <div className="w-full max-w-full space-y-6 -mt-4">
         {/* Metrics Cards */}
         <MobileMetrics metrics={metrics} />
 

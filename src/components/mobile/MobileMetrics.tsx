@@ -50,7 +50,7 @@ const getMetricConfig = (type: string) => {
 
 const MobileMetrics = ({ metrics }: MobileMetricsProps) => {
   return (
-    <div className="px-4 overflow-hidden">
+    <div className="w-full max-w-full box-border px-4 overflow-hidden">
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
         {metrics.map((metric, index) => {
           const config = getMetricConfig(metric.type || "");
