@@ -163,15 +163,15 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
 
   return (
     <div
-      className="min-h-screen bg-background pb-24 overflow-y-auto overflow-x-hidden"
-      style={{ width: '100vw', maxWidth: '100vw' }}
+      className="min-h-screen pb-24 overflow-y-auto overflow-x-hidden"
+      style={{ width: '100vw', maxWidth: '100vw', background: 'linear-gradient(to bottom, hsl(var(--flowdent-blue)) 0%, hsl(var(--flowdent-blue)) 200px, hsl(var(--background)) 200px)' }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
       {/* Pull-to-refresh indicator */}
       {isRefreshing && (
         <div className="flex justify-center py-2">
-          <RefreshCw className="h-5 w-5 animate-spin text-primary" />
+          <RefreshCw className="h-5 w-5 animate-spin text-white" />
         </div>
       )}
 
@@ -222,8 +222,8 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
         </div>
       </div>
 
-      {/* Content - with negative margin to overlap header */}
-      <div className="w-full max-w-full space-y-6 -mt-4">
+      {/* Content - directly touching hero */}
+      <div className="w-full max-w-full space-y-6 bg-background rounded-t-3xl pt-4">
         {/* Metrics Cards */}
         <MobileMetrics metrics={metrics} />
 
