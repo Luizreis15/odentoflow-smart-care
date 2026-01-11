@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { startOfWeek, endOfWeek, addWeeks, format, addDays, startOfDay, endOfDay } from "date-fns";
+import { startOfWeek, endOfWeek, addWeeks, format, addDays, startOfDay, endOfDay, isSameDay, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +61,19 @@ export const AgendaCalendar = ({ clinicId }: AgendaCalendarProps) => {
     }
   };
 
+  // Helper to check if a specific time slot has passed
+  const isPastSlot = (date: Date, hour: string) => {
+    const today = new Date();
+    if (isBefore(startOfDay(date), startOfDay(today))) return true;
+    
+    if (isSameDay(date, today)) {
+      const [hourNum] = hour.split(":").map(Number);
+      if (hourNum <= today.getHours()) return true;
+    }
+    
+    return false;
+  };
+
   const getAppointmentForSlot = (dayIndex: number, hour: string) => {
     if (!appointments) return null;
     
@@ -81,6 +94,12 @@ export const AgendaCalendar = ({ clinicId }: AgendaCalendarProps) => {
   // Navigate to agenda page with date and time pre-selected
   const handleSlotClick = (dayIndex: number, hour: string) => {
     const targetDate = addDays(weekStart, dayIndex);
+    
+    // Block clicking on past slots
+    if (isPastSlot(targetDate, hour)) {
+      return;
+    }
+    
     const dateStr = format(targetDate, "yyyy-MM-dd");
     navigate(`/dashboard/agenda?date=${dateStr}&time=${hour}`);
   };
@@ -159,6 +178,8 @@ export const AgendaCalendar = ({ clinicId }: AgendaCalendarProps) => {
                   </div>
                   {weekDays.map((_, dayIndex) => {
                     const apt = getAppointmentForSlot(dayIndex, hour);
+                    const targetDate = addDays(weekStart, dayIndex);
+                    const slotPassed = isPastSlot(targetDate, hour);
                     
                     return (
                       <div
@@ -167,9 +188,11 @@ export const AgendaCalendar = ({ clinicId }: AgendaCalendarProps) => {
                           "min-h-[48px] rounded border transition-all",
                           apt 
                             ? "border-transparent" 
-                            : "border-muted-foreground/10 hover:border-[hsl(var(--success-green))] hover:bg-[hsl(var(--card-green))] cursor-pointer group bg-muted/20"
+                            : slotPassed
+                              ? "border-muted-foreground/10 bg-muted/30 cursor-not-allowed"
+                              : "border-muted-foreground/10 hover:border-[hsl(var(--success-green))] hover:bg-[hsl(var(--card-green))] cursor-pointer group bg-muted/20"
                         )}
-                        onClick={() => !apt && handleSlotClick(dayIndex, hour)}
+                        onClick={() => !apt && !slotPassed && handleSlotClick(dayIndex, hour)}
                       >
                         {apt ? (
                           <div
@@ -186,6 +209,8 @@ export const AgendaCalendar = ({ clinicId }: AgendaCalendarProps) => {
                               {apt.title}
                             </div>
                           </div>
+                        ) : slotPassed ? (
+                          null
                         ) : (
                           <div className="h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <Plus className="h-4 w-4 text-[hsl(var(--success-green))]" />

@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths, isSameDay, isSameMonth, parseISO, isToday } from "date-fns";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths, isSameDay, isSameMonth, parseISO, isToday, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { CadastroRapidoPacienteModal } from "@/components/agenda/CadastroRapidoPacienteModal";
@@ -36,6 +36,27 @@ const generateTimeSlots = () => {
 };
 
 const TIME_SLOTS = generateTimeSlots();
+
+// Helper to check if a date is in the past
+const isPastDate = (date: Date) => {
+  return isBefore(startOfDay(date), startOfDay(new Date()));
+};
+
+// Helper to check if a specific time slot has passed
+const isPastSlot = (date: Date, time: string) => {
+  if (isPastDate(date)) return true;
+  
+  // If it's today, check if the time has passed
+  if (isSameDay(date, new Date())) {
+    const now = new Date();
+    const [hour, minute] = time.split(":").map(Number);
+    const slotTime = new Date(date);
+    slotTime.setHours(hour, minute, 0, 0);
+    return slotTime < now;
+  }
+  
+  return false;
+};
 
 const Agenda = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -75,13 +96,17 @@ const Agenda = () => {
       setViewMode("day-slots");
       
       if (timeParam) {
-        // Pre-fill form and open sheet
-        setFormData(prev => ({
-          ...prev,
-          date: dateParam,
-          time: timeParam,
-        }));
-        setIsSheetOpen(true);
+        // Only open form if slot is not in the past
+        if (!isPastSlot(parsedDate, timeParam)) {
+          setFormData(prev => ({
+            ...prev,
+            date: dateParam,
+            time: timeParam,
+          }));
+          setIsSheetOpen(true);
+        } else {
+          toast.info("Este horário já passou. Selecione outro horário disponível.");
+        }
       }
       
       // Clear params after processing
@@ -253,6 +278,12 @@ const Agenda = () => {
 
   // Handle slot click - pre-fill form and open sheet
   const handleSlotClick = (date: Date, time: string) => {
+    // Block scheduling in past dates/times
+    if (isPastSlot(date, time)) {
+      toast.error("Não é possível agendar em horários passados");
+      return;
+    }
+    
     setFormData(prev => ({
       ...prev,
       date: format(date, "yyyy-MM-dd"),
@@ -292,6 +323,13 @@ const Agenda = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate date/time before proceeding
+    const appointmentDate = parseISO(formData.date);
+    if (isPastSlot(appointmentDate, formData.time)) {
+      toast.error("Não é possível criar agendamentos em datas/horários passados");
+      return;
+    }
     
     try {
       // Validate form data
@@ -393,6 +431,7 @@ const Agenda = () => {
             {TIME_SLOTS.map((time) => {
               const appointment = getAppointmentForSlot(time);
               const occupied = isSlotOccupied(time);
+              const slotPassed = isPastSlot(selectedDate, time);
               
               if (appointment) {
                 // Slot with appointment
@@ -438,6 +477,21 @@ const Agenda = () => {
                       <span className="text-sm font-medium text-muted-foreground">{time}</span>
                     </div>
                     <span className="text-sm text-muted-foreground italic">Em consulta</span>
+                  </div>
+                );
+              }
+              
+              // Past slot - show as unavailable
+              if (slotPassed) {
+                return (
+                  <div
+                    key={time}
+                    className="flex items-center gap-4 p-3 rounded-lg bg-muted/40 border-l-4 border-muted-foreground/20"
+                  >
+                    <div className="flex items-center justify-center w-16 shrink-0">
+                      <span className="text-sm font-medium text-muted-foreground/60">{time}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground/60 italic">Horário passado</span>
                   </div>
                 );
               }
