@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
 import { supabase } from "@/integrations/supabase/client";
 import { X, Plus, Check, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -151,58 +151,63 @@ export const AdicionarTratamentoSection = ({
 
         <div className="col-span-2 space-y-2">
           <Label>Tratamento*</Label>
-          <Popover open={tratamentoAberto} onOpenChange={setTratamentoAberto}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                className="w-full justify-between"
-              >
-                {procedimentoSelecionado
-                  ? procedimentoSelecionado.procedimentos.descricao
-                  : "Buscar procedimento..."}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[500px] p-0">
-              <div className="flex items-center border-b px-3">
-                <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                <input
-                  placeholder="Buscar procedimento..."
-                  value={buscaProcedimento}
-                  onChange={(e) => setBuscaProcedimento(e.target.value)}
-                  className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
-                />
-              </div>
-              <div className="max-h-[300px] overflow-auto p-1">
-                {procedimentosFiltrados.length === 0 ? (
-                  <div className="py-6 text-center text-sm text-muted-foreground">
-                    Nenhum procedimento encontrado.
-                  </div>
-                ) : (
-                  procedimentosFiltrados.map((proc) => (
-                    <div
-                      key={proc.id}
-                      onClick={() => handleSelecionarProcedimento(proc)}
-                      className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          procedimentoSelecionado?.id === proc.id ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      <div className="flex flex-col">
-                        <span>{proc.procedimentos?.descricao}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {proc.procedimentos?.especialidade} • R$ {(proc.valor_customizado ?? 0).toFixed(2)}
-                        </span>
-                      </div>
+          <div className="relative">
+            <Button
+              type="button"
+              variant="outline"
+              role="combobox"
+              className="w-full justify-between"
+              onClick={() => setTratamentoAberto(!tratamentoAberto)}
+            >
+              {procedimentoSelecionado
+                ? procedimentoSelecionado.procedimentos.descricao
+                : "Buscar procedimento..."}
+            </Button>
+            
+            {tratamentoAberto && (
+              <div className="absolute top-full left-0 mt-1 w-full min-w-[500px] border rounded-lg bg-popover shadow-lg z-[9999] max-h-[300px] overflow-hidden">
+                <div className="flex items-center border-b px-3 bg-popover">
+                  <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                  <input
+                    placeholder="Buscar procedimento..."
+                    value={buscaProcedimento}
+                    onChange={(e) => setBuscaProcedimento(e.target.value)}
+                    className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+                    autoFocus
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+                <div className="max-h-[250px] overflow-auto p-1">
+                  {procedimentosFiltrados.length === 0 ? (
+                    <div className="py-6 text-center text-sm text-muted-foreground">
+                      Nenhum procedimento encontrado.
                     </div>
-                  ))
-                )}
+                  ) : (
+                    procedimentosFiltrados.map((proc) => (
+                      <div
+                        key={proc.id}
+                        onClick={() => handleSelecionarProcedimento(proc)}
+                        className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            procedimentoSelecionado?.id === proc.id ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        <div className="flex flex-col">
+                          <span>{proc.procedimentos?.descricao}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {proc.procedimentos?.especialidade} • R$ {(proc.valor_customizado ?? 0).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
-            </PopoverContent>
-          </Popover>
+            )}
+          </div>
         </div>
 
         <div className="space-y-2">
