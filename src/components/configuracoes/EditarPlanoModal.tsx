@@ -163,6 +163,8 @@ export default function EditarPlanoModal({ open, onOpenChange, plano, onSuccess 
 
   const valorAjuste = parseFloat(percentualAjuste) || 0;
 
+  if (!plano) return null;
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
