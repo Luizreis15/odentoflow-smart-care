@@ -71,12 +71,12 @@ const MobileQuickActions = ({ clinicId }: MobileQuickActionsProps) => {
       <h2 className="text-sm font-semibold text-foreground/70 mb-3 uppercase tracking-wide">
         Ações Rápidas
       </h2>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2 w-full">
         {actions.map((action, index) => (
           <Button
             key={index}
             onClick={action.onClick}
-            className={`h-16 flex-col gap-1.5 text-white font-medium rounded-xl border-none transition-all hover:scale-[1.02] active:scale-[0.98] ${action.gradient} shadow-lg ${action.shadowColor}`}
+            className={`w-full min-w-0 h-16 flex-col gap-1.5 text-white font-medium rounded-xl border-none transition-all hover:scale-[1.02] active:scale-[0.98] ${action.gradient} shadow-lg ${action.shadowColor}`}
           >
             <div className="p-1.5 rounded-lg bg-white/20 backdrop-blur-sm">
               <action.icon className="h-4 w-4" />
