@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Bell, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import MobileMetrics from "@/components/mobile/MobileMetrics";
 import MobileQuickActions from "@/components/mobile/MobileQuickActions";
 import MobileAgendaList from "@/components/mobile/MobileAgendaList";
@@ -97,6 +97,28 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
     setTimeout(() => setIsRefreshing(false), 500);
   };
 
+  // Pull-to-refresh on the main container
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    (e.currentTarget as HTMLElement).dataset.touchStartY = String(touch.clientY);
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    async (e: React.TouchEvent) => {
+      const touchStartY = Number(
+        (e.currentTarget as HTMLElement).dataset.touchStartY || 0
+      );
+      const touchEndY = e.changedTouches[0].clientY;
+      const scrollTop = (e.currentTarget as HTMLElement).scrollTop;
+
+      // If at top and pulled down more than 100px
+      if (scrollTop <= 0 && touchEndY - touchStartY > 100) {
+        await handleRefresh();
+      }
+    },
+    [handleRefresh]
+  );
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -130,7 +152,18 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
   ];
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div
+      className="min-h-screen bg-background pb-24 overflow-auto"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Pull-to-refresh indicator */}
+      {isRefreshing && (
+        <div className="flex justify-center py-2">
+          <RefreshCw className="h-5 w-5 animate-spin text-primary" />
+        </div>
+      )}
+
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
         <div className="flex items-center justify-between px-4 py-3">
@@ -164,7 +197,7 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
         {/* Quick Actions */}
         <MobileQuickActions clinicId={clinicId} />
 
-        {/* Upcoming Appointments */}
+        {/* Upcoming Appointments with Swipe Actions */}
         <MobileAgendaList clinicId={clinicId} />
       </div>
     </div>

@@ -1,12 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Clock, ChevronRight, Calendar } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Calendar, RefreshCw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { toast } from "@/hooks/use-toast";
+import { useState, useCallback } from "react";
+import SwipeableAppointmentCard from "./SwipeableAppointmentCard";
 
 interface MobileAgendaListProps {
   clinicId: string;
@@ -14,8 +14,10 @@ interface MobileAgendaListProps {
 
 const MobileAgendaList = ({ clinicId }: MobileAgendaListProps) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { data: appointments, isLoading } = useQuery({
+  const { data: appointments, isLoading, refetch } = useQuery({
     queryKey: ["mobile-upcoming-appointments", clinicId],
     queryFn: async () => {
       const now = new Date();
@@ -42,40 +44,121 @@ const MobileAgendaList = ({ clinicId }: MobileAgendaListProps) => {
         .gte("appointment_date", startOfDay)
         .lte("appointment_date", endOfDay)
         .order("appointment_date", { ascending: true })
-        .limit(5);
+        .limit(10);
 
       if (error) throw error;
       return data;
     },
   });
 
-  const getStatusVariant = (status: string | null) => {
-    switch (status) {
-      case "confirmado":
-        return "default";
-      case "cancelado":
-        return "destructive";
-      case "concluido":
-        return "secondary";
-      default:
-        return "outline";
-    }
+  // Mutation to update appointment status
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({
+      id,
+      status,
+    }: {
+      id: string;
+      status: string;
+    }) => {
+      const { error } = await supabase
+        .from("appointments")
+        .update({ status })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["mobile-upcoming-appointments"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["mobile-appointments-today"],
+      });
+    },
+  });
+
+  const handleConfirm = useCallback(
+    (id: string) => {
+      updateStatusMutation.mutate(
+        { id, status: "confirmado" },
+        {
+          onSuccess: () => {
+            toast({
+              title: "Agendamento confirmado",
+              description: "O paciente será notificado.",
+            });
+          },
+          onError: () => {
+            toast({
+              variant: "destructive",
+              title: "Erro ao confirmar",
+              description: "Tente novamente.",
+            });
+          },
+        }
+      );
+    },
+    [updateStatusMutation]
+  );
+
+  const handleCancel = useCallback(
+    (id: string) => {
+      updateStatusMutation.mutate(
+        { id, status: "cancelado" },
+        {
+          onSuccess: () => {
+            toast({
+              title: "Agendamento cancelado",
+              description: "O paciente será notificado.",
+            });
+          },
+          onError: () => {
+            toast({
+              variant: "destructive",
+              title: "Erro ao cancelar",
+              description: "Tente novamente.",
+            });
+          },
+        }
+      );
+    },
+    [updateStatusMutation]
+  );
+
+  const handleSendMessage = useCallback(
+    (id: string, patientId: string) => {
+      navigate(`/dashboard/crm?patient=${patientId}`);
+    },
+    [navigate]
+  );
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setTimeout(() => setIsRefreshing(false), 500);
   };
 
-  const getStatusLabel = (status: string | null) => {
-    switch (status) {
-      case "confirmado":
-        return "Confirmado";
-      case "cancelado":
-        return "Cancelado";
-      case "concluido":
-        return "Concluído";
-      case "agendado":
-        return "Agendado";
-      default:
-        return status || "Pendente";
-    }
-  };
+  // Pull-to-refresh handler
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    (e.currentTarget as HTMLElement).dataset.touchStartY = String(touch.clientY);
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    async (e: React.TouchEvent) => {
+      const touchStartY = Number(
+        (e.currentTarget as HTMLElement).dataset.touchStartY || 0
+      );
+      const touchEndY = e.changedTouches[0].clientY;
+      const scrollTop = e.currentTarget.scrollTop;
+
+      // If at top and pulled down more than 80px
+      if (scrollTop === 0 && touchEndY - touchStartY > 80) {
+        await handleRefresh();
+      }
+    },
+    [handleRefresh]
+  );
 
   if (isLoading) {
     return (
@@ -107,51 +190,48 @@ const MobileAgendaList = ({ clinicId }: MobileAgendaListProps) => {
   }
 
   return (
-    <div className="px-4">
-      <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
-        Próximos Atendimentos
-      </h2>
-      <div className="space-y-2">
-        {appointments.map((apt) => {
-          const patient = apt.patients as { full_name: string } | null;
-          const professional = apt.profissionais as { nome: string } | null;
+    <div
+      className="px-4"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          Próximos Atendimentos
+        </h2>
+        <button
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="p-1.5 rounded-full hover:bg-accent transition-colors"
+        >
+          <RefreshCw
+            className={`h-4 w-4 text-muted-foreground ${
+              isRefreshing ? "animate-spin" : ""
+            }`}
+          />
+        </button>
+      </div>
 
-          return (
-            <Card
-              key={apt.id}
-              className="cursor-pointer active:scale-[0.98] transition-transform"
-              onClick={() => navigate(`/dashboard/prontuario/${apt.patient_id}`)}
-            >
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Clock className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">
-                    {patient?.full_name || "Paciente"}
-                  </p>
-                  <p className="text-sm text-muted-foreground truncate">
-                    {apt.title} {professional ? `- ${professional.nome}` : ""}
-                  </p>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="font-medium text-sm">
-                    {format(parseISO(apt.appointment_date), "HH:mm", {
-                      locale: ptBR,
-                    })}
-                  </p>
-                  <Badge
-                    variant={getStatusVariant(apt.status)}
-                    className="text-xs mt-1"
-                  >
-                    {getStatusLabel(apt.status)}
-                  </Badge>
-                </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-              </CardContent>
-            </Card>
-          );
-        })}
+      {/* Swipe instructions */}
+      <p className="text-xs text-muted-foreground mb-3 text-center">
+        ← Deslize para cancelar | Deslize para confirmar →
+      </p>
+
+      <div className="space-y-2">
+        {appointments.map((apt) => (
+          <SwipeableAppointmentCard
+            key={apt.id}
+            appointment={{
+              ...apt,
+              patients: apt.patients as { full_name: string } | null,
+              profissionais: apt.profissionais as { nome: string } | null,
+            }}
+            onConfirm={handleConfirm}
+            onCancel={handleCancel}
+            onSendMessage={handleSendMessage}
+            onClick={() => navigate(`/dashboard/prontuario/${apt.patient_id}`)}
+          />
+        ))}
       </div>
     </div>
   );
