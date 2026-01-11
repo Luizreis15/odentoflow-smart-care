@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,6 +30,10 @@ interface Patient {
   responsible_phone?: string;
   notes?: string;
   address?: string;
+  nickname?: string;
+  status?: string;
+  civil_status?: string;
+  education_level?: string;
 }
 
 interface EditPatientModalProps {
@@ -41,6 +47,7 @@ export function EditPatientModal({ open, onOpenChange, patient, onSuccess }: Edi
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     full_name: "",
+    nickname: "",
     phone: "",
     cpf: "",
     rg: "",
@@ -55,12 +62,16 @@ export function EditPatientModal({ open, onOpenChange, patient, onSuccess }: Edi
     responsible_birth_date: "",
     responsible_cpf: "",
     responsible_phone: "",
+    status: "active",
+    civil_status: "",
+    education_level: "",
   });
 
   useEffect(() => {
     if (patient) {
       setFormData({
         full_name: patient.full_name || "",
+        nickname: patient.nickname || "",
         phone: patient.phone || "",
         cpf: patient.cpf || "",
         rg: patient.rg || "",
@@ -75,6 +86,9 @@ export function EditPatientModal({ open, onOpenChange, patient, onSuccess }: Edi
         responsible_birth_date: patient.responsible_birth_date || "",
         responsible_cpf: patient.responsible_cpf || "",
         responsible_phone: patient.responsible_phone || "",
+        status: patient.status || "active",
+        civil_status: patient.civil_status || "",
+        education_level: patient.education_level || "",
       });
     }
   }, [patient]);
@@ -94,6 +108,7 @@ export function EditPatientModal({ open, onOpenChange, patient, onSuccess }: Edi
         .from("patients")
         .update({
           full_name: formData.full_name,
+          nickname: formData.nickname || null,
           phone: formData.phone,
           cpf: formData.cpf || null,
           rg: formData.rg || null,
@@ -108,6 +123,9 @@ export function EditPatientModal({ open, onOpenChange, patient, onSuccess }: Edi
           responsible_birth_date: formData.responsible_birth_date || null,
           responsible_cpf: formData.responsible_cpf || null,
           responsible_phone: formData.responsible_phone || null,
+          status: formData.status,
+          civil_status: formData.civil_status || null,
+          education_level: formData.education_level || null,
         })
         .eq("id", patient.id);
 
@@ -132,17 +150,47 @@ export function EditPatientModal({ open, onOpenChange, patient, onSuccess }: Edi
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Status */}
+          <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+            <div>
+              <Label htmlFor="status" className="text-base font-medium">Status do Paciente</Label>
+              <p className="text-sm text-muted-foreground">
+                {formData.status === "active" ? "Paciente ativo no sistema" : "Paciente inativo"}
+              </p>
+            </div>
+            <Switch
+              id="status"
+              checked={formData.status === "active"}
+              onCheckedChange={(checked) => 
+                setFormData({ ...formData, status: checked ? "active" : "inactive" })
+              }
+            />
+          </div>
+
+          <Separator />
+
+          {/* Dados Pessoais */}
           <div className="space-y-4">
             <h3 className="font-semibold">Dados Pessoais</h3>
             
             <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
+              <div className="col-span-2 md:col-span-1">
                 <Label htmlFor="full_name">Nome Completo *</Label>
                 <Input
                   id="full_name"
                   value={formData.full_name}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                   required
+                />
+              </div>
+
+              <div className="col-span-2 md:col-span-1">
+                <Label htmlFor="nickname">Apelido</Label>
+                <Input
+                  id="nickname"
+                  value={formData.nickname}
+                  onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
+                  placeholder="Como prefere ser chamado"
                 />
               </div>
 
@@ -229,6 +277,52 @@ export function EditPatientModal({ open, onOpenChange, patient, onSuccess }: Edi
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 />
               </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Dados Complementares */}
+          <div className="space-y-4">
+            <h3 className="font-semibold">Dados Complementares</h3>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="civil_status">Estado Civil</Label>
+                <Select 
+                  value={formData.civil_status} 
+                  onValueChange={(value) => setFormData({ ...formData, civil_status: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="solteiro">Solteiro(a)</SelectItem>
+                    <SelectItem value="casado">Casado(a)</SelectItem>
+                    <SelectItem value="divorciado">Divorciado(a)</SelectItem>
+                    <SelectItem value="viuvo">Viúvo(a)</SelectItem>
+                    <SelectItem value="uniao_estavel">União Estável</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="education_level">Escolaridade</Label>
+                <Select 
+                  value={formData.education_level} 
+                  onValueChange={(value) => setFormData({ ...formData, education_level: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fundamental">Ensino Fundamental</SelectItem>
+                    <SelectItem value="medio">Ensino Médio</SelectItem>
+                    <SelectItem value="superior">Ensino Superior</SelectItem>
+                    <SelectItem value="pos_graduacao">Pós-graduação</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
               <div>
                 <Label htmlFor="how_found">Como chegou na clínica</Label>
@@ -246,7 +340,7 @@ export function EditPatientModal({ open, onOpenChange, patient, onSuccess }: Edi
                 </Select>
               </div>
 
-              <div className="col-span-2 flex items-center space-x-2">
+              <div className="flex items-center space-x-2 pt-6">
                 <Checkbox
                   id="is_foreign"
                   checked={formData.is_foreign}
@@ -257,6 +351,9 @@ export function EditPatientModal({ open, onOpenChange, patient, onSuccess }: Edi
             </div>
           </div>
 
+          <Separator />
+
+          {/* Dados do Responsável */}
           <div className="space-y-4">
             <h3 className="font-semibold">Dados do Responsável</h3>
             
@@ -314,6 +411,9 @@ export function EditPatientModal({ open, onOpenChange, patient, onSuccess }: Edi
             </div>
           </div>
 
+          <Separator />
+
+          {/* Observações */}
           <div>
             <Label htmlFor="notes">Observações</Label>
             <Textarea
@@ -321,10 +421,11 @@ export function EditPatientModal({ open, onOpenChange, patient, onSuccess }: Edi
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={4}
+              placeholder="Observações sobre o paciente..."
             />
           </div>
 
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
