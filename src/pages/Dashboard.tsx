@@ -10,6 +10,8 @@ import { AgendaCalendar } from "@/components/dashboard/AgendaCalendar";
 import { SidebarFilters } from "@/components/dashboard/SidebarFilters";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { UpcomingAppointments } from "@/components/dashboard/UpcomingAppointments";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileHome from "@/pages/mobile/MobileHome";
 
 interface Profile {
   full_name: string;
@@ -25,6 +27,7 @@ interface ImpersonationState {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -223,6 +226,20 @@ const Dashboard = () => {
           </div>
           <Skeleton className="h-[300px] md:h-[400px]" />
         </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Mobile Home - simplified view
+  if (isMobile && activeClinicId) {
+    return (
+      <DashboardLayout user={profile}>
+        {!isSuperAdmin && status === "trialing" && trialEnd && (
+          <TrialBanner 
+            daysLeft={Math.ceil((new Date(trialEnd).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} 
+          />
+        )}
+        <MobileHome user={profile} clinicId={activeClinicId} />
       </DashboardLayout>
     );
   }
