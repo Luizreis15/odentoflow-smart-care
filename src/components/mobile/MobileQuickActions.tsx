@@ -67,16 +67,23 @@ const MobileQuickActions = ({ clinicId }: MobileQuickActionsProps) => {
   ];
 
   return (
-    <div className="w-full max-w-full box-border px-4 overflow-hidden">
+    <div className="px-4">
       <h2 className="text-sm font-semibold text-foreground/70 mb-3 uppercase tracking-wide">
         Ações Rápidas
       </h2>
-      <div className="w-full grid grid-cols-2 gap-2">
+      <div 
+        className="grid gap-2"
+        style={{ 
+          gridTemplateColumns: 'repeat(2, calc(50% - 4px))',
+          width: '100%'
+        }}
+      >
         {actions.map((action, index) => (
           <Button
             key={index}
             onClick={action.onClick}
-            className={`w-full min-w-0 h-16 flex-col gap-1.5 text-white font-medium rounded-xl border-none transition-all hover:scale-[1.02] active:scale-[0.98] ${action.gradient} shadow-lg ${action.shadowColor}`}
+            className={`h-16 flex-col gap-1.5 text-white font-medium rounded-xl border-none transition-all hover:scale-[1.02] active:scale-[0.98] ${action.gradient} shadow-lg ${action.shadowColor}`}
+            style={{ width: '100%', minWidth: 0 }}
           >
             <div className="p-1.5 rounded-lg bg-white/20 backdrop-blur-sm">
               <action.icon className="h-4 w-4" />
