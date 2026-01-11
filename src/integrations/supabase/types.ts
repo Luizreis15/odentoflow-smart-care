@@ -1812,15 +1812,18 @@ export type Database = {
         Row: {
           address: string | null
           birth_date: string | null
+          civil_status: string | null
           clinic_id: string
           cpf: string | null
           created_at: string | null
+          education_level: string | null
           email: string | null
           full_name: string
           gender: string | null
           how_found: string | null
           id: string
           is_foreign: boolean | null
+          nickname: string | null
           notes: string | null
           phone: string
           responsible_birth_date: string | null
@@ -1828,21 +1831,25 @@ export type Database = {
           responsible_name: string | null
           responsible_phone: string | null
           rg: string | null
+          status: string | null
           tags: string[] | null
           updated_at: string | null
         }
         Insert: {
           address?: string | null
           birth_date?: string | null
+          civil_status?: string | null
           clinic_id: string
           cpf?: string | null
           created_at?: string | null
+          education_level?: string | null
           email?: string | null
           full_name: string
           gender?: string | null
           how_found?: string | null
           id?: string
           is_foreign?: boolean | null
+          nickname?: string | null
           notes?: string | null
           phone: string
           responsible_birth_date?: string | null
@@ -1850,21 +1857,25 @@ export type Database = {
           responsible_name?: string | null
           responsible_phone?: string | null
           rg?: string | null
+          status?: string | null
           tags?: string[] | null
           updated_at?: string | null
         }
         Update: {
           address?: string | null
           birth_date?: string | null
+          civil_status?: string | null
           clinic_id?: string
           cpf?: string | null
           created_at?: string | null
+          education_level?: string | null
           email?: string | null
           full_name?: string
           gender?: string | null
           how_found?: string | null
           id?: string
           is_foreign?: boolean | null
+          nickname?: string | null
           notes?: string | null
           phone?: string
           responsible_birth_date?: string | null
@@ -1872,6 +1883,7 @@ export type Database = {
           responsible_name?: string | null
           responsible_phone?: string | null
           rg?: string | null
+          status?: string | null
           tags?: string[] | null
           updated_at?: string | null
         }
