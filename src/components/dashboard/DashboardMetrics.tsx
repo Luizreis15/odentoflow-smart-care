@@ -5,10 +5,54 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { startOfMonth, startOfDay, endOfDay } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface DashboardMetricsProps {
   clinicId: string;
 }
+
+const metricConfigs = [
+  {
+    key: "appointments",
+    title: "Consultas do Dia",
+    icon: Calendar,
+    gradientClass: "bg-gradient-to-br from-[hsl(205,84%,96%)] to-[hsl(192,100%,94%)]",
+    iconBgClass: "bg-[hsl(205,84%,29%)]/10",
+    iconClass: "text-[hsl(var(--flowdent-blue))]",
+    valueClass: "text-[hsl(var(--flowdent-blue))]",
+    borderClass: "border-l-4 border-l-[hsl(var(--flowdent-blue))]",
+  },
+  {
+    key: "revenue",
+    title: "Faturamento",
+    icon: DollarSign,
+    gradientClass: "bg-gradient-to-br from-[hsl(145,63%,96%)] to-[hsl(169,61%,94%)]",
+    iconBgClass: "bg-[hsl(145,63%,42%)]/10",
+    iconClass: "text-[hsl(var(--success-green))]",
+    valueClass: "text-[hsl(var(--success-green))]",
+    borderClass: "border-l-4 border-l-[hsl(var(--success-green))]",
+  },
+  {
+    key: "patients",
+    title: "Novos Pacientes",
+    icon: Users,
+    gradientClass: "bg-gradient-to-br from-[hsl(192,100%,96%)] to-[hsl(192,100%,92%)]",
+    iconBgClass: "bg-[hsl(192,100%,42%)]/10",
+    iconClass: "text-[hsl(var(--flow-turquoise))]",
+    valueClass: "text-[hsl(var(--flow-turquoise))]",
+    borderClass: "border-l-4 border-l-[hsl(var(--flow-turquoise))]",
+  },
+  {
+    key: "occupation",
+    title: "Ocupação",
+    icon: PieChart,
+    gradientClass: "bg-gradient-to-br from-[hsl(169,61%,96%)] to-[hsl(169,61%,92%)]",
+    iconBgClass: "bg-[hsl(169,61%,54%)]/10",
+    iconClass: "text-[hsl(var(--health-mint))]",
+    valueClass: "text-[hsl(var(--health-mint))]",
+    borderClass: "border-l-4 border-l-[hsl(var(--health-mint))]",
+  },
+];
 
 export const DashboardMetrics = ({ clinicId }: DashboardMetricsProps) => {
   const today = new Date();
@@ -105,64 +149,67 @@ export const DashboardMetrics = ({ clinicId }: DashboardMetricsProps) => {
     );
   }
 
+  const metricsData = [
+    {
+      ...metricConfigs[0],
+      value: totalAppointments,
+      subValue: totalAppointments > 0 ? `${confirmedAppointments} confirmadas` : null,
+      progress: totalAppointments > 0 ? (confirmedAppointments / totalAppointments) * 100 : 0,
+    },
+    {
+      ...metricConfigs[1],
+      value: formatCurrency(paymentsMonth?.total || 0),
+      subValue: `${formatCurrency(paymentsMonth?.received || 0)} recebido`,
+    },
+    {
+      ...metricConfigs[2],
+      value: newPatients,
+      subValue: "Este mês",
+    },
+    {
+      ...metricConfigs[3],
+      value: `${occupationRate}%`,
+      progress: occupationRate,
+    },
+  ];
+
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-      <Card className="hover:shadow-md transition-shadow">
-        <CardHeader className="p-3 pb-1">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xs font-medium text-muted-foreground">Consultas do Dia</CardTitle>
-            <Calendar className="h-3.5 w-3.5 text-[hsl(var(--flowdent-blue))]" />
-          </div>
-        </CardHeader>
-        <CardContent className="p-3 pt-1 space-y-1">
-          <div className="text-xl font-bold">{totalAppointments}</div>
-          {totalAppointments > 0 && (
-            <>
-              <Progress value={(confirmedAppointments / totalAppointments) * 100} className="h-1" />
-              <p className="text-xs text-muted-foreground">{confirmedAppointments} confirmadas</p>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card className="hover:shadow-md transition-shadow">
-        <CardHeader className="p-3 pb-1">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xs font-medium text-muted-foreground">Faturamento</CardTitle>
-            <DollarSign className="h-3.5 w-3.5 text-[hsl(var(--flow-turquoise))]" />
-          </div>
-        </CardHeader>
-        <CardContent className="p-3 pt-1 space-y-1">
-          <div className="text-xl font-bold">{formatCurrency(paymentsMonth?.total || 0)}</div>
-          <p className="text-xs text-muted-foreground">{formatCurrency(paymentsMonth?.received || 0)} recebido</p>
-        </CardContent>
-      </Card>
-
-      <Card className="hover:shadow-md transition-shadow">
-        <CardHeader className="p-3 pb-1">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xs font-medium text-muted-foreground">Novos Pacientes</CardTitle>
-            <Users className="h-3.5 w-3.5 text-[hsl(var(--flowdent-blue))]" />
-          </div>
-        </CardHeader>
-        <CardContent className="p-3 pt-1">
-          <div className="text-xl font-bold">{newPatients}</div>
-          <p className="text-xs text-muted-foreground">Este mês</p>
-        </CardContent>
-      </Card>
-
-      <Card className="hover:shadow-md transition-shadow">
-        <CardHeader className="p-3 pb-1">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xs font-medium text-muted-foreground">Ocupação</CardTitle>
-            <PieChart className="h-3.5 w-3.5 text-[hsl(var(--flowdent-blue))]" />
-          </div>
-        </CardHeader>
-        <CardContent className="p-3 pt-1 space-y-1">
-          <div className="text-xl font-bold">{occupationRate}%</div>
-          {totalAppointments > 0 && <Progress value={occupationRate} className="h-1" />}
-        </CardContent>
-      </Card>
+      {metricsData.map((metric) => {
+        const Icon = metric.icon;
+        return (
+          <Card 
+            key={metric.key} 
+            className={cn(
+              "hover:shadow-lg transition-all border-none",
+              metric.gradientClass,
+              metric.borderClass
+            )}
+          >
+            <CardHeader className="p-3 pb-1">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xs font-medium text-foreground/70">
+                  {metric.title}
+                </CardTitle>
+                <div className={cn("p-1.5 rounded-lg", metric.iconBgClass)}>
+                  <Icon className={cn("h-3.5 w-3.5", metric.iconClass)} />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-3 pt-1 space-y-1">
+              <div className={cn("text-xl font-bold", metric.valueClass)}>
+                {metric.value}
+              </div>
+              {'progress' in metric && metric.progress !== undefined && metric.progress > 0 && (
+                <Progress value={metric.progress} className="h-1" />
+              )}
+              {'subValue' in metric && metric.subValue && (
+                <p className="text-xs text-foreground/60">{metric.subValue}</p>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 };

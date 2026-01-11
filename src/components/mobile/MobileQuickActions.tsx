@@ -21,25 +21,29 @@ const MobileQuickActions = ({ clinicId }: MobileQuickActionsProps) => {
     {
       icon: CalendarPlus,
       label: "Agendar",
-      color: "bg-primary hover:bg-primary/90",
+      gradient: "bg-gradient-to-br from-[hsl(205,84%,35%)] to-[hsl(205,84%,25%)]",
+      shadowColor: "shadow-[hsl(205,84%,29%)/25]",
       onClick: () => navigate("/dashboard/agenda"),
     },
     {
       icon: Search,
       label: "Buscar Paciente",
-      color: "bg-emerald-500 hover:bg-emerald-600",
+      gradient: "bg-gradient-to-br from-emerald-500 to-emerald-600",
+      shadowColor: "shadow-emerald-500/25",
       onClick: () => navigate("/dashboard/prontuario"),
     },
     {
       icon: DollarSign,
       label: "Receber",
-      color: "bg-green-600 hover:bg-green-700",
+      gradient: "bg-gradient-to-br from-green-500 to-green-600",
+      shadowColor: "shadow-green-500/25",
       onClick: () => navigate("/dashboard/financeiro"),
     },
     {
       icon: ClipboardList,
       label: "Orçamento",
-      color: "bg-orange-500 hover:bg-orange-600",
+      gradient: "bg-gradient-to-br from-orange-500 to-orange-600",
+      shadowColor: "shadow-orange-500/25",
       onClick: () =>
         toast({
           title: "Em breve",
@@ -49,20 +53,22 @@ const MobileQuickActions = ({ clinicId }: MobileQuickActionsProps) => {
     {
       icon: CheckCircle,
       label: "Confirmar",
-      color: "bg-blue-500 hover:bg-blue-600",
+      gradient: "bg-gradient-to-br from-[hsl(192,100%,42%)] to-[hsl(192,100%,35%)]",
+      shadowColor: "shadow-[hsl(192,100%,42%)/25]",
       onClick: () => navigate("/dashboard/agenda"),
     },
     {
       icon: MessageCircle,
       label: "Mensagem",
-      color: "bg-[#25D366] hover:bg-[#20BD5A]",
+      gradient: "bg-gradient-to-br from-[#25D366] to-[#128C7E]",
+      shadowColor: "shadow-[#25D366]/25",
       onClick: () => navigate("/dashboard/crm"),
     },
   ];
 
   return (
     <div className="px-4">
-      <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
+      <h2 className="text-sm font-semibold text-foreground/70 mb-3 uppercase tracking-wide">
         Ações Rápidas
       </h2>
       <div className="grid grid-cols-2 gap-3">
@@ -70,9 +76,11 @@ const MobileQuickActions = ({ clinicId }: MobileQuickActionsProps) => {
           <Button
             key={index}
             onClick={action.onClick}
-            className={`h-20 flex-col gap-2 text-white font-medium shadow-md rounded-xl ${action.color}`}
+            className={`h-20 flex-col gap-2 text-white font-medium rounded-xl border-none transition-all hover:scale-[1.02] active:scale-[0.98] ${action.gradient} shadow-lg ${action.shadowColor}`}
           >
-            <action.icon className="h-6 w-6" />
+            <div className="p-2 rounded-lg bg-white/20 backdrop-blur-sm">
+              <action.icon className="h-5 w-5" />
+            </div>
             <span className="text-sm">{action.label}</span>
           </Button>
         ))}
