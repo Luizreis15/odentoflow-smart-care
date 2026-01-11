@@ -115,7 +115,7 @@ serve(async (req) => {
     const treatmentItems = budget.budget_items.map((item: any) => ({
       treatment_id: treatment.id,
       budget_item_id: item.id,
-      procedure_id: null, // Could be linked if we have procedure reference
+      procedure_id: item.procedure_id || null,
       professional_id: item.professional_id,
       tooth_number: item.tooth_number ? parseInt(item.tooth_number) : null,
       tooth_region: item.tooth_region,
