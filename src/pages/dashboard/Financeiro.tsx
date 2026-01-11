@@ -223,45 +223,52 @@ const Financeiro = () => {
 
             {/* Cards de resumo - Scroll no mobile */}
             <div className="flex lg:grid lg:grid-cols-3 gap-3 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
-              <Card className="border-l-4 border-l-green-500 flex-shrink-0 w-[200px] lg:w-auto">
+              <Card className="border-l-4 border-l-[hsl(var(--success-green))] bg-gradient-to-br from-[hsl(145,63%,97%)] to-[hsl(145,63%,94%)] flex-shrink-0 w-[200px] lg:w-auto border-none shadow-md">
                 <CardContent className="p-4 lg:pt-6">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs lg:text-sm font-medium text-muted-foreground">RECEITAS</span>
-                    <TrendingUp className="h-4 w-4 lg:h-5 lg:w-5 text-green-500" />
+                    <span className="text-xs lg:text-sm font-medium text-foreground/70">RECEITAS</span>
+                    <div className="p-1.5 rounded-lg bg-[hsl(var(--success-green))]/10">
+                      <TrendingUp className="h-4 w-4 lg:h-5 lg:w-5 text-[hsl(var(--success-green))]" />
+                    </div>
                   </div>
-                  <div className="text-xl lg:text-2xl font-bold text-green-600">
+                  <div className="text-xl lg:text-2xl font-bold text-[hsl(var(--success-green))]">
                     R$ {receitas.toFixed(2)}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-foreground/60 mt-1">
                     A receber R$ 0,00
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="border-l-4 border-l-red-500 flex-shrink-0 w-[200px] lg:w-auto">
+              <Card className="border-l-4 border-l-[hsl(var(--error-red))] bg-gradient-to-br from-red-50 to-red-100/50 flex-shrink-0 w-[200px] lg:w-auto border-none shadow-md">
                 <CardContent className="p-4 lg:pt-6">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs lg:text-sm font-medium text-muted-foreground">DESPESAS</span>
-                    <TrendingDown className="h-4 w-4 lg:h-5 lg:w-5 text-red-500" />
+                    <span className="text-xs lg:text-sm font-medium text-foreground/70">DESPESAS</span>
+                    <div className="p-1.5 rounded-lg bg-[hsl(var(--error-red))]/10">
+                      <TrendingDown className="h-4 w-4 lg:h-5 lg:w-5 text-[hsl(var(--error-red))]" />
+                    </div>
                   </div>
-                  <div className="text-xl lg:text-2xl font-bold text-red-600">
+                  <div className="text-xl lg:text-2xl font-bold text-[hsl(var(--error-red))]">
                     R$ {despesas.toFixed(2)}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-foreground/60 mt-1">
                     A pagar R$ 0,00
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="border-l-4 border-l-blue-500 flex-shrink-0 w-[200px] lg:w-auto">
+              <Card className="border-l-4 border-l-[hsl(var(--flowdent-blue))] bg-gradient-to-br from-[hsl(205,84%,97%)] to-[hsl(205,84%,94%)] flex-shrink-0 w-[200px] lg:w-auto border-none shadow-md">
                 <CardContent className="p-4 lg:pt-6">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs lg:text-sm font-medium text-muted-foreground">SALDO</span>
+                    <span className="text-xs lg:text-sm font-medium text-foreground/70">SALDO</span>
+                    <div className="p-1.5 rounded-lg bg-[hsl(var(--flowdent-blue))]/10">
+                      <TrendingUp className="h-4 w-4 lg:h-5 lg:w-5 text-[hsl(var(--flowdent-blue))]" />
+                    </div>
                   </div>
-                  <div className={`text-xl lg:text-2xl font-bold ${saldo >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                  <div className={`text-xl lg:text-2xl font-bold ${saldo >= 0 ? 'text-[hsl(var(--flowdent-blue))]' : 'text-[hsl(var(--error-red))]'}`}>
                     R$ {saldo.toFixed(2)}
                   </div>
-                  <div className="mt-1 text-xs text-muted-foreground">
+                  <div className="mt-1 text-xs text-foreground/60">
                     Total previsto
                   </div>
                 </CardContent>

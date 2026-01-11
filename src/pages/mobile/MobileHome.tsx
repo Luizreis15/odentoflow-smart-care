@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Bell, RefreshCw } from "lucide-react";
+import { Bell, RefreshCw, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useCallback } from "react";
 import MobileMetrics from "@/components/mobile/MobileMetrics";
@@ -133,23 +133,33 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
       label: "Consultas Hoje",
       value: appointmentsData?.total || 0,
       color: "bg-primary",
+      type: "appointments" as const,
     },
     {
       label: "A Receber Hoje",
       value: formatCurrency(receivablesData || 0),
       color: "bg-green-500",
+      type: "revenue" as const,
     },
     {
       label: "Novos Pacientes",
       value: newPatientsData || 0,
       color: "bg-blue-500",
+      type: "patients" as const,
     },
     {
       label: "Pendentes",
       value: appointmentsData?.pending || 0,
       color: "bg-amber-500",
+      type: "pending" as const,
     },
   ];
+
+  const todayFormatted = new Date().toLocaleDateString("pt-BR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
 
   return (
     <div
@@ -164,38 +174,67 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
         </div>
       )}
 
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div>
-            <p className="text-sm text-muted-foreground">{getGreeting()},</p>
-            <h1 className="text-xl font-bold">{firstName}!</h1>
+      {/* Hero Header with Gradient */}
+      <div className="bg-gradient-to-br from-[hsl(var(--flowdent-blue))] via-[hsl(var(--flow-turquoise))] to-[hsl(var(--health-mint))] text-white">
+        <div className="px-4 py-6 pb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-white/80 text-sm capitalize">{todayFormatted}</p>
+              <h1 className="text-2xl font-bold mt-1">
+                {getGreeting()}, {firstName}!
+              </h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="text-white hover:bg-white/20"
+              >
+                <RefreshCw
+                  className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`}
+                />
+              </Button>
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+                <Bell className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-            >
-              <RefreshCw
-                className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`}
-              />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Bell className="h-5 w-5" />
-            </Button>
+
+          {/* Quick Stats in Header */}
+          <div className="flex items-center gap-4 mt-2">
+            <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
+              <Calendar className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                {appointmentsData?.total || 0} consultas hoje
+              </span>
+            </div>
+            {appointmentsData && appointmentsData.pending > 0 && (
+              <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
+                <span className="text-sm">
+                  {appointmentsData.pending} pendentes
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="space-y-6 py-4">
+      {/* Content - with negative margin to overlap header */}
+      <div className="space-y-6 -mt-4">
         {/* Metrics Cards */}
         <MobileMetrics metrics={metrics} />
 
         {/* Quick Actions */}
         <MobileQuickActions clinicId={clinicId} />
+
+        {/* Swipe Instructions */}
+        <div className="px-4">
+          <p className="text-xs text-center text-muted-foreground bg-muted/50 rounded-lg py-2 px-4">
+            💡 Deslize para a direita para confirmar ou esquerda para cancelar
+          </p>
+        </div>
 
         {/* Upcoming Appointments with Swipe Actions */}
         <MobileAgendaList clinicId={clinicId} />

@@ -202,7 +202,8 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
         <TooltipProvider delayDuration={0}>
           <aside
             className={cn(
-              "hidden lg:flex fixed left-0 top-16 bottom-0 z-40 border-r bg-card transition-all duration-150 ease-out",
+              "hidden lg:flex fixed left-0 top-16 bottom-0 z-40 border-r transition-all duration-150 ease-out",
+              "bg-[hsl(var(--sidebar-background))]",
               sidebarExpanded ? "w-64" : "w-16"
             )}
             onMouseEnter={() => setSidebarExpanded(true)}
@@ -216,14 +217,17 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
                       <Link
                         to="/super-admin"
                         className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-3 mb-2 transition-all bg-primary/10 hover:bg-primary/20 border border-primary/20",
+                          "flex items-center gap-3 rounded-lg px-3 py-3 mb-2 transition-all",
+                          "bg-gradient-to-r from-[hsl(var(--flowdent-blue))]/10 to-[hsl(var(--flow-turquoise))]/10",
+                          "hover:from-[hsl(var(--flowdent-blue))]/20 hover:to-[hsl(var(--flow-turquoise))]/20",
+                          "border border-[hsl(var(--flowdent-blue))]/20",
                           !sidebarExpanded && "justify-center"
                         )}
                       >
-                        <Shield className="h-5 w-5 flex-shrink-0 text-primary" />
+                        <Shield className="h-5 w-5 flex-shrink-0 text-[hsl(var(--flowdent-blue))]" />
                         {sidebarExpanded && (
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm text-primary truncate">Super Admin</div>
+                            <div className="font-medium text-sm text-[hsl(var(--flowdent-blue))] truncate">Super Admin</div>
                           </div>
                         )}
                       </Link>
@@ -244,16 +248,16 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
                         <Link
                           to={item.href}
                           className={cn(
-                            "flex items-center gap-3 rounded-lg px-3 py-3 transition-all hover:bg-accent group",
+                            "flex items-center gap-3 rounded-lg px-3 py-3 transition-all group",
                             isActive
-                              ? "bg-accent text-accent-foreground font-medium"
-                              : "text-muted-foreground hover:text-foreground",
+                              ? "bg-gradient-to-r from-[hsl(var(--flowdent-blue))]/15 to-[hsl(var(--flow-turquoise))]/10 text-[hsl(var(--flowdent-blue))] font-medium shadow-sm"
+                              : "text-foreground/70 hover:bg-[hsl(var(--sidebar-accent))] hover:text-foreground",
                             !sidebarExpanded && "justify-center"
                           )}
                         >
                           <item.icon className={cn(
                             "h-5 w-5 flex-shrink-0 transition-colors",
-                            isActive && "text-primary"
+                            isActive ? "text-[hsl(var(--flowdent-blue))]" : "text-foreground/50 group-hover:text-[hsl(var(--flow-turquoise))]"
                           )} />
                           {sidebarExpanded && (
                             <div className="flex-1 min-w-0">

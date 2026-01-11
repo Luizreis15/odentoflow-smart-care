@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useDrag } from "@use-gesture/react";
 import { animated, useSpring } from "@react-spring/web";
-import { Check, X, MessageCircle, Clock, ChevronRight } from "lucide-react";
+import { Check, X, MessageCircle, Clock, ChevronRight, User } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -73,53 +73,78 @@ const SwipeableAppointmentCard = ({
     { axis: "x", filterTaps: true }
   );
 
-  const getStatusVariant = (status: string | null) => {
+  const getStatusConfig = (status: string | null) => {
     switch (status) {
       case "confirmado":
-        return "default";
+        return {
+          variant: "default" as const,
+          label: "Confirmado",
+          borderClass: "border-l-4 border-l-[hsl(var(--success-green))]",
+          bgClass: "bg-[hsl(var(--card-green))]",
+          avatarClass: "bg-[hsl(var(--success-green))]/20 text-[hsl(var(--success-green))]",
+        };
       case "cancelado":
-        return "destructive";
+        return {
+          variant: "destructive" as const,
+          label: "Cancelado",
+          borderClass: "border-l-4 border-l-[hsl(var(--error-red))]",
+          bgClass: "bg-red-50",
+          avatarClass: "bg-[hsl(var(--error-red))]/20 text-[hsl(var(--error-red))]",
+        };
       case "concluido":
-        return "secondary";
-      default:
-        return "outline";
-    }
-  };
-
-  const getStatusLabel = (status: string | null) => {
-    switch (status) {
-      case "confirmado":
-        return "Confirmado";
-      case "cancelado":
-        return "Cancelado";
-      case "concluido":
-        return "Concluído";
+        return {
+          variant: "secondary" as const,
+          label: "Concluído",
+          borderClass: "border-l-4 border-l-muted-foreground",
+          bgClass: "bg-muted/50",
+          avatarClass: "bg-muted text-muted-foreground",
+        };
       case "agendado":
-        return "Agendado";
+        return {
+          variant: "outline" as const,
+          label: "Agendado",
+          borderClass: "border-l-4 border-l-[hsl(var(--flowdent-blue))]",
+          bgClass: "bg-[hsl(var(--card-blue))]",
+          avatarClass: "bg-[hsl(var(--flowdent-blue))]/20 text-[hsl(var(--flowdent-blue))]",
+        };
       default:
-        return status || "Pendente";
+        return {
+          variant: "outline" as const,
+          label: status || "Pendente",
+          borderClass: "border-l-4 border-l-[hsl(var(--warning-amber))]",
+          bgClass: "bg-[hsl(var(--card-amber))]",
+          avatarClass: "bg-[hsl(var(--warning-amber))]/20 text-[hsl(var(--warning-amber))]",
+        };
     }
   };
 
+  const statusConfig = getStatusConfig(appointment.status);
   const patient = appointment.patients;
   const professional = appointment.profissionais;
+  const patientInitials = patient?.full_name
+    ? patient.full_name.split(" ").map(n => n[0]).slice(0, 2).join("")
+    : "P";
 
   return (
     <div ref={containerRef} className="relative overflow-hidden rounded-xl">
       {/* Background actions */}
       <div className="absolute inset-0 flex">
         {/* Left action (confirm) - shown when swiping right */}
-        <div className="flex-1 bg-green-500 flex items-center justify-start px-4">
+        <div className="flex-1 bg-gradient-to-r from-[hsl(var(--success-green))] to-emerald-500 flex items-center justify-start px-4">
           <div className="flex items-center gap-2 text-white">
-            <Check className="h-6 w-6" />
+            <div className="p-2 rounded-full bg-white/20">
+              <Check className="h-5 w-5" />
+            </div>
             <span className="font-medium text-sm">Confirmar</span>
           </div>
         </div>
         {/* Right action (cancel) - shown when swiping left */}
-        <div className="flex-1 bg-destructive flex items-center justify-end px-4">
+        <div className="flex-1 bg-gradient-to-l from-[hsl(var(--error-red))] to-red-500 flex items-center justify-end px-4">
           <div className="flex items-center gap-2 text-white">
             <span className="font-medium text-sm">Cancelar</span>
-            <X className="h-6 w-6" />
+            <div className="p-2 rounded-full bg-white/20">
+              <X className="h-5 w-5" />
+            </div>
           </div>
         </div>
       </div>
@@ -132,35 +157,40 @@ const SwipeableAppointmentCard = ({
       >
         <Card
           className={cn(
-            "cursor-pointer active:scale-[0.98] transition-transform border-none shadow-sm",
-            "touch-pan-y"
+            "cursor-pointer active:scale-[0.98] transition-transform border-none shadow-md",
+            "touch-pan-y",
+            statusConfig.borderClass,
+            statusConfig.bgClass
           )}
           onClick={onClick}
         >
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Clock className="h-5 w-5 text-primary" />
+            <div className={cn(
+              "h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-sm",
+              statusConfig.avatarClass
+            )}>
+              {patientInitials}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-medium truncate">
+              <p className="font-semibold truncate text-foreground">
                 {patient?.full_name || "Paciente"}
               </p>
-              <p className="text-sm text-muted-foreground truncate">
+              <p className="text-sm text-foreground/60 truncate">
                 {appointment.title}
-                {professional ? ` - ${professional.nome}` : ""}
+                {professional ? ` • ${professional.nome}` : ""}
               </p>
             </div>
             <div className="text-right flex-shrink-0">
-              <p className="font-medium text-sm">
+              <p className="font-bold text-sm text-foreground">
                 {format(parseISO(appointment.appointment_date), "HH:mm", {
                   locale: ptBR,
                 })}
               </p>
               <Badge
-                variant={getStatusVariant(appointment.status)}
+                variant={statusConfig.variant}
                 className="text-xs mt-1"
               >
-                {getStatusLabel(appointment.status)}
+                {statusConfig.label}
               </Badge>
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">
@@ -169,11 +199,11 @@ const SwipeableAppointmentCard = ({
                   e.stopPropagation();
                   onSendMessage(appointment.id, appointment.patient_id);
                 }}
-                className="p-2 rounded-full hover:bg-accent transition-colors"
+                className="p-2 rounded-full hover:bg-white/50 transition-colors"
               >
-                <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                <MessageCircle className="h-4 w-4 text-[hsl(var(--flowdent-blue))]" />
               </button>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              <ChevronRight className="h-5 w-5 text-foreground/40" />
             </div>
           </CardContent>
         </Card>
