@@ -59,10 +59,11 @@ const MobileAgenda = ({ clinicId }: MobileAgendaProps) => {
   const getDateRange = () => {
     switch (viewMode) {
       case "day":
-        return {
-          start: new Date(currentDate.setHours(0, 0, 0, 0)),
-          end: new Date(currentDate.setHours(23, 59, 59, 999)),
-        };
+        const dayStart = new Date(currentDate);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(currentDate);
+        dayEnd.setHours(23, 59, 59, 999);
+        return { start: dayStart, end: dayEnd };
       case "week":
         return {
           start: startOfWeek(currentDate, { locale: ptBR }),
@@ -204,9 +205,10 @@ const MobileAgenda = ({ clinicId }: MobileAgendaProps) => {
         </div>
 
         {/* View Mode Tabs */}
-        <div className="flex gap-1 bg-white/10 rounded-lg p-1 mb-3">
+        <div className="flex gap-1 bg-white/10 rounded-lg p-1 mb-3" style={{ touchAction: 'manipulation' }}>
           {(["day", "week", "month"] as ViewMode[]).map((mode) => (
             <button
+              type="button"
               key={mode}
               onClick={() => setViewMode(mode)}
               className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
