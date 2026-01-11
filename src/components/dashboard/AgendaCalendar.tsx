@@ -1,18 +1,21 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { startOfWeek, endOfWeek, addWeeks, format, addDays, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 interface AgendaCalendarProps {
   clinicId: string;
 }
 
 export const AgendaCalendar = ({ clinicId }: AgendaCalendarProps) => {
+  const navigate = useNavigate();
   const [currentWeek, setCurrentWeek] = useState(new Date());
   
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
@@ -73,6 +76,13 @@ export const AgendaCalendar = ({ clinicId }: AgendaCalendarProps) => {
         aptDate.getHours() === hourNum
       );
     });
+  };
+
+  // Navigate to agenda page with date and time pre-selected
+  const handleSlotClick = (dayIndex: number, hour: string) => {
+    const targetDate = addDays(weekStart, dayIndex);
+    const dateStr = format(targetDate, "yyyy-MM-dd");
+    navigate(`/dashboard/agenda?date=${dateStr}&time=${hour}`);
   };
 
   if (isLoading) {
@@ -153,9 +163,15 @@ export const AgendaCalendar = ({ clinicId }: AgendaCalendarProps) => {
                     return (
                       <div
                         key={dayIndex}
-                        className="min-h-[48px] rounded border border-muted-foreground/10 hover:border-primary/30 transition-colors bg-muted/20"
+                        className={cn(
+                          "min-h-[48px] rounded border transition-all",
+                          apt 
+                            ? "border-transparent" 
+                            : "border-muted-foreground/10 hover:border-[hsl(var(--success-green))] hover:bg-[hsl(var(--card-green))] cursor-pointer group bg-muted/20"
+                        )}
+                        onClick={() => !apt && handleSlotClick(dayIndex, hour)}
                       >
-                        {apt && (
+                        {apt ? (
                           <div
                             className={`h-full p-2 rounded ${getStatusColor(
                               apt.status || "scheduled"
@@ -169,6 +185,10 @@ export const AgendaCalendar = ({ clinicId }: AgendaCalendarProps) => {
                             <div className="text-xs opacity-90 truncate">
                               {apt.title}
                             </div>
+                          </div>
+                        ) : (
+                          <div className="h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Plus className="h-4 w-4 text-[hsl(var(--success-green))]" />
                           </div>
                         )}
                       </div>
@@ -193,6 +213,10 @@ export const AgendaCalendar = ({ clinicId }: AgendaCalendarProps) => {
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded bg-accent"></div>
             <span className="text-sm text-muted-foreground">Concluído</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded border-2 border-[hsl(var(--success-green))] bg-[hsl(var(--card-green))]"></div>
+            <span className="text-sm text-muted-foreground">Clique para agendar</span>
           </div>
         </div>
       </CardContent>
