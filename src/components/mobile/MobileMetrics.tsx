@@ -50,8 +50,8 @@ const getMetricConfig = (type: string) => {
 
 const MobileMetrics = ({ metrics }: MobileMetricsProps) => {
   return (
-    <div className="px-4">
-      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+    <div className="px-4 overflow-hidden">
+      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
         {metrics.map((metric, index) => {
           const config = getMetricConfig(metric.type || "");
           const Icon = config.icon;
@@ -60,20 +60,20 @@ const MobileMetrics = ({ metrics }: MobileMetricsProps) => {
             <Card
               key={index}
               className={cn(
-                "min-w-[140px] flex-shrink-0 border-none shadow-md transition-all hover:shadow-lg",
+                "min-w-[130px] flex-shrink-0 border-none shadow-md transition-all hover:shadow-lg snap-start",
                 config.bgClass
               )}
             >
-              <CardContent className="p-4">
+              <CardContent className="p-3">
                 <div className="flex items-center gap-2 mb-2">
                   <div className={cn("p-1.5 rounded-lg bg-white/60", config.textClass)}>
                     <Icon className="h-4 w-4" />
                   </div>
-                  <span className="text-xs font-medium text-foreground/70 truncate">
+                  <span className="text-xs font-medium text-foreground/70 truncate max-w-[70px]">
                     {metric.label}
                   </span>
                 </div>
-                <p className={cn("text-2xl font-bold", config.textClass)}>
+                <p className={cn("text-xl font-bold", config.textClass)}>
                   {metric.value}
                 </p>
               </CardContent>
