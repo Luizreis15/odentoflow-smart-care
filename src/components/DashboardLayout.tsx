@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -127,8 +127,23 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { isSuperAdmin } = usePermissions();
   const [impersonation, setImpersonation] = useState<ImpersonationState | null>(null);
+
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setSidebarExpanded(true);
+  };
+
+  const handleMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setSidebarExpanded(false);
+    }, 150);
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem("admin_impersonation");
@@ -202,12 +217,13 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
         <TooltipProvider delayDuration={0}>
           <aside
             className={cn(
-              "hidden lg:flex fixed left-0 top-16 bottom-0 z-40 border-r transition-all duration-150 ease-out",
+              "hidden lg:flex fixed left-0 top-16 bottom-0 z-40 border-r",
+              "transition-[width] duration-200 ease-in-out will-change-[width]",
               "bg-[hsl(var(--sidebar-background))]",
               sidebarExpanded ? "w-64" : "w-16"
             )}
-            onMouseEnter={() => setSidebarExpanded(true)}
-            onMouseLeave={() => setSidebarExpanded(false)}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
           >
             <ScrollArea className="w-full py-4">
               <nav className="space-y-1 px-2">
@@ -225,11 +241,12 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
                         )}
                       >
                         <Shield className="h-5 w-5 flex-shrink-0 text-[hsl(var(--flowdent-blue))]" />
-                        {sidebarExpanded && (
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm text-[hsl(var(--flowdent-blue))] truncate">Super Admin</div>
-                          </div>
-                        )}
+                        <div className={cn(
+                          "flex-1 min-w-0 transition-opacity duration-200 overflow-hidden",
+                          sidebarExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
+                        )}>
+                          <div className="font-medium text-sm text-[hsl(var(--flowdent-blue))] truncate whitespace-nowrap">Super Admin</div>
+                        </div>
                       </Link>
                     </TooltipTrigger>
                     {!sidebarExpanded && (
@@ -259,11 +276,12 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
                             "h-5 w-5 flex-shrink-0 transition-colors",
                             isActive ? "text-[hsl(var(--flowdent-blue))]" : "text-foreground/50 group-hover:text-[hsl(var(--flow-turquoise))]"
                           )} />
-                          {sidebarExpanded && (
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-sm truncate">{item.name}</div>
-                            </div>
-                          )}
+                          <div className={cn(
+                            "flex-1 min-w-0 transition-opacity duration-200 overflow-hidden",
+                            sidebarExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
+                          )}>
+                            <div className="font-medium text-sm truncate whitespace-nowrap">{item.name}</div>
+                          </div>
                         </Link>
                       </TooltipTrigger>
                       {!sidebarExpanded && (
@@ -281,7 +299,7 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
 
         {/* Main content com margem dinâmica baseada no sidebar */}
         <main className={cn(
-          "flex-1 transition-all duration-300",
+          "flex-1 transition-all duration-200",
           "lg:ml-16 lg:pt-2 lg:pb-4 pb-20"
         )}>
           <div className="w-full mx-auto max-h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden">
