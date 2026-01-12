@@ -190,17 +190,18 @@ const MobileAgenda = ({ clinicId }: MobileAgendaProps) => {
   }, {} as Record<string, typeof appointments>);
 
   return (
-    <div className="min-h-screen bg-background pb-24 overflow-x-hidden" style={{ width: '100vw', maxWidth: '100vw' }}>
+    <div className="min-h-screen bg-background pb-24 overflow-x-hidden">
       {/* Header with filters */}
-      <div className="bg-gradient-to-br from-[hsl(var(--flowdent-blue))] via-[hsl(var(--flow-turquoise))] to-[hsl(var(--health-mint))] text-white px-4 py-4">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold">Agenda</h1>
+      <div className="bg-gradient-to-br from-[hsl(var(--flowdent-blue))] via-[hsl(var(--flow-turquoise))] to-[hsl(var(--health-mint))] text-white px-4 py-3">
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-lg font-bold">Agenda</h1>
           <Button
-            size="icon"
+            size="sm"
             onClick={() => navigate("/dashboard/agenda?new=true")}
-            className="bg-white/20 hover:bg-white/30 text-white rounded-full h-10 w-10"
+            className="bg-white/20 hover:bg-white/30 text-white h-9 px-3"
           >
-            <Plus className="h-5 w-5" />
+            <Plus className="h-4 w-4 mr-1" />
+            Novo
           </Button>
         </div>
 
@@ -239,33 +240,34 @@ const MobileAgenda = ({ clinicId }: MobileAgendaProps) => {
       </div>
 
       {/* Date Navigation */}
-      <div className="flex items-center justify-between px-4 py-3 bg-card border-b">
-        <Button variant="ghost" size="icon" onClick={() => navigateDate("prev")}>
+      <div className="flex items-center justify-between px-3 py-2 bg-card border-b">
+        <Button variant="ghost" size="icon" onClick={() => navigateDate("prev")} className="h-9 w-9">
           <ChevronLeft className="h-5 w-5" />
         </Button>
-        <div className="text-center">
-          <p className="font-semibold capitalize">{getDateLabel()}</p>
-          <p className="text-xs text-muted-foreground">
+        <div className="text-center flex-1">
+          <p className="font-semibold capitalize text-sm">{getDateLabel()}</p>
+          <p className="text-[10px] text-muted-foreground">
             {appointments?.length || 0} agendamento(s)
           </p>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0">
           <Button
             variant="ghost"
             size="icon"
             onClick={handleRefresh}
             disabled={isRefreshing}
+            className="h-9 w-9"
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => navigateDate("next")}>
+          <Button variant="ghost" size="icon" onClick={() => navigateDate("next")} className="h-9 w-9">
             <ChevronRight className="h-5 w-5" />
           </Button>
         </div>
       </div>
 
       {/* Appointments List */}
-      <div className="p-4 space-y-3">
+      <div className="p-3 space-y-2">
         {isLoading ? (
           <>
             {[1, 2, 3, 4].map((i) => (

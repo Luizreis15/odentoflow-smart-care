@@ -312,24 +312,26 @@ const Prontuario = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-4 lg:space-y-6 pb-4">
+      <div className="flex flex-col gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Prontuário Digital</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-xl lg:text-3xl font-bold text-foreground">Prontuário Digital</h1>
+          <p className="text-sm lg:text-base text-muted-foreground mt-1">
             Histórico clínico completo dos pacientes
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => setShowImportModal(true)}>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={() => setShowImportModal(true)} className="flex-1 sm:flex-none">
             <Upload className="mr-2 h-4 w-4" />
-            Importar Pacientes
+            <span className="hidden sm:inline">Importar Pacientes</span>
+            <span className="sm:hidden">Importar</span>
           </Button>
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-              <Button size="sm">
+              <Button size="sm" className="flex-1 sm:flex-none">
                 <Plus className="mr-2 h-4 w-4" />
-                Novo Paciente
+                <span className="hidden sm:inline">Novo Paciente</span>
+                <span className="sm:hidden">Novo</span>
               </Button>
             </SheetTrigger>
           <SheetContent className="sm:max-w-[700px] overflow-y-auto">
@@ -565,72 +567,72 @@ const Prontuario = () => {
         onSuccess={loadPatients}
       />
 
-      <div className="grid gap-6 md:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total de Pacientes
+      <div className="grid gap-3 lg:gap-6 grid-cols-2 lg:grid-cols-4">
+        <Card className="p-3 lg:p-0">
+          <CardHeader className="pb-2 lg:pb-3 p-0 lg:p-6 lg:pb-3">
+            <CardTitle className="text-xs lg:text-sm font-medium text-muted-foreground">
+              Total Pacientes
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 lg:p-6 lg:pt-0">
             {loadingTotal ? (
-              <Skeleton className="h-9 w-20" />
+              <Skeleton className="h-7 lg:h-9 w-16 lg:w-20" />
             ) : (
-              <div className="text-3xl font-bold">{totalPatients || 0}</div>
+              <div className="text-2xl lg:text-3xl font-bold">{totalPatients || 0}</div>
             )}
-            <p className="text-xs text-muted-foreground mt-1">Cadastrados</p>
+            <p className="text-[10px] lg:text-xs text-muted-foreground mt-1">Cadastrados</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+        <Card className="p-3 lg:p-0">
+          <CardHeader className="pb-2 lg:pb-3 p-0 lg:p-6 lg:pb-3">
+            <CardTitle className="text-xs lg:text-sm font-medium text-muted-foreground">
               Em Tratamento
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 lg:p-6 lg:pt-0">
             {loadingTreatment ? (
-              <Skeleton className="h-9 w-20" />
+              <Skeleton className="h-7 lg:h-9 w-16 lg:w-20" />
             ) : (
-              <div className="text-3xl font-bold">{patientsInTreatment || 0}</div>
+              <div className="text-2xl lg:text-3xl font-bold">{patientsInTreatment || 0}</div>
             )}
-            <p className="text-xs text-muted-foreground mt-1">
-              {totalPatients ? ((patientsInTreatment || 0) / totalPatients * 100).toFixed(1) : 0}% do total
+            <p className="text-[10px] lg:text-xs text-muted-foreground mt-1">
+              {totalPatients ? ((patientsInTreatment || 0) / totalPatients * 100).toFixed(0) : 0}% do total
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Prontuários Atualizados
+        <Card className="p-3 lg:p-0">
+          <CardHeader className="pb-2 lg:pb-3 p-0 lg:p-6 lg:pb-3">
+            <CardTitle className="text-xs lg:text-sm font-medium text-muted-foreground">
+              Atualizados
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 lg:p-6 lg:pt-0">
             {loadingUpdated ? (
-              <Skeleton className="h-9 w-20" />
+              <Skeleton className="h-7 lg:h-9 w-16 lg:w-20" />
             ) : (
-              <div className="text-3xl font-bold">{updatedRecords || 0}</div>
+              <div className="text-2xl lg:text-3xl font-bold">{updatedRecords || 0}</div>
             )}
-            <p className="text-xs text-muted-foreground mt-1">
-              {totalPatients ? ((updatedRecords || 0) / totalPatients * 100).toFixed(1) : 0}% completos
+            <p className="text-[10px] lg:text-xs text-muted-foreground mt-1">
+              {totalPatients ? ((updatedRecords || 0) / totalPatients * 100).toFixed(0) : 0}% completos
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Anexos Salvos
+        <Card className="p-3 lg:p-0">
+          <CardHeader className="pb-2 lg:pb-3 p-0 lg:p-6 lg:pb-3">
+            <CardTitle className="text-xs lg:text-sm font-medium text-muted-foreground">
+              Anexos
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 lg:p-6 lg:pt-0">
             {loadingAttachments ? (
-              <Skeleton className="h-9 w-20" />
+              <Skeleton className="h-7 lg:h-9 w-16 lg:w-20" />
             ) : (
-              <div className="text-3xl font-bold">{totalAttachments || 0}</div>
+              <div className="text-2xl lg:text-3xl font-bold">{totalAttachments || 0}</div>
             )}
-            <p className="text-xs text-muted-foreground mt-1">Imagens e docs</p>
+            <p className="text-[10px] lg:text-xs text-muted-foreground mt-1">Imagens/docs</p>
           </CardContent>
         </Card>
       </div>
@@ -653,12 +655,12 @@ const Prontuario = () => {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="all" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="all">Todos</TabsTrigger>
-          <TabsTrigger value="active">Ativos</TabsTrigger>
-          <TabsTrigger value="treatment">Em Tratamento</TabsTrigger>
-          <TabsTrigger value="inactive">Inativos</TabsTrigger>
+      <Tabs defaultValue="all" className="space-y-3 lg:space-y-4">
+        <TabsList className="w-full grid grid-cols-4 h-auto">
+          <TabsTrigger value="all" className="text-xs lg:text-sm py-2">Todos</TabsTrigger>
+          <TabsTrigger value="active" className="text-xs lg:text-sm py-2">Ativos</TabsTrigger>
+          <TabsTrigger value="treatment" className="text-xs lg:text-sm py-2">Tratam.</TabsTrigger>
+          <TabsTrigger value="inactive" className="text-xs lg:text-sm py-2">Inativos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
@@ -677,41 +679,33 @@ const Prontuario = () => {
                   {searchTerm ? "Nenhum paciente encontrado" : "Nenhum paciente cadastrado"}
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2 lg:space-y-3">
                   {filteredPatients.map((patient) => (
                     <div
                       key={patient.id}
-                      className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:shadow-md transition-shadow"
+                      className="flex items-center gap-3 lg:gap-4 p-3 lg:p-4 rounded-lg border bg-card hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => navigate(`/dashboard/prontuario/${patient.id}`)}
                     >
-                      <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary font-semibold">
+                      <div className="flex items-center justify-center w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-primary/10 text-primary font-semibold text-sm lg:text-base shrink-0">
                         {patient.full_name.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-semibold text-foreground">{patient.full_name}</p>
-                        </div>
-                        <div className="flex gap-4 text-sm text-muted-foreground">
-                          <span>{patient.phone}</span>
-                          {patient.email && (
-                            <>
-                              <span>•</span>
-                              <span>{patient.email}</span>
-                            </>
-                          )}
-                          {patient.birth_date && (
-                            <>
-                              <span>•</span>
-                              <span>{new Date(patient.birth_date).toLocaleDateString("pt-BR")}</span>
-                            </>
-                          )}
-                        </div>
+                        <p className="font-semibold text-foreground text-sm lg:text-base truncate">{patient.full_name}</p>
+                        <p className="text-xs lg:text-sm text-muted-foreground truncate">
+                          {patient.phone}
+                          {patient.email && ` • ${patient.email}`}
+                        </p>
                       </div>
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => navigate(`/dashboard/prontuario/${patient.id}`)}
+                        className="hidden sm:flex shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/dashboard/prontuario/${patient.id}`);
+                        }}
                       >
-                        Ver Prontuário
+                        Ver
                       </Button>
                     </div>
                   ))}

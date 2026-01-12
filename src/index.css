@@ -164,3 +164,20 @@ All colors MUST be HSL.
   display: none;
 }
 
+/* Mobile-friendly scrolling */
+.mobile-scroll {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.mobile-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Ensure content doesn't overflow on mobile */
+@media (max-width: 640px) {
+  .overflow-x-hidden {
+    overflow-x: hidden !important;
+  }
+}
+
