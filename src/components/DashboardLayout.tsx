@@ -210,14 +210,16 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
         </div>
       )}
 
-      <Navbar user={user} />
+      <div className="lg:hidden">
+        <Navbar user={user} />
+      </div>
       
-      <div className={cn("flex", impersonation ? "pt-[104px]" : "pt-16")}>
+      <div className={cn("flex", impersonation ? "lg:pt-[44px] pt-[104px]" : "lg:pt-0 pt-16")}>
         {/* Sidebar retrátil no desktop - expande ao passar mouse */}
         <TooltipProvider delayDuration={0}>
           <aside
             className={cn(
-              "hidden lg:flex fixed left-0 top-16 bottom-0 z-40 border-r",
+              "hidden lg:flex fixed left-0 top-0 bottom-0 z-40 border-r",
               "transition-[width] duration-200 ease-in-out will-change-[width]",
               "bg-[hsl(var(--sidebar-background))]",
               sidebarExpanded ? "w-64" : "w-16"

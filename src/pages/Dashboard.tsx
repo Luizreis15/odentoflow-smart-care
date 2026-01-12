@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
 import TrialBanner from "@/components/TrialBanner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { DashboardMetrics } from "@/components/dashboard/DashboardMetrics";
 import { AgendaCalendar } from "@/components/dashboard/AgendaCalendar";
@@ -12,6 +13,15 @@ import { QuickActions } from "@/components/dashboard/QuickActions";
 import { UpcomingAppointments } from "@/components/dashboard/UpcomingAppointments";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileHome from "@/pages/mobile/MobileHome";
+import { User, LogOut, Settings, CreditCard } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 interface Profile {
   full_name: string;
@@ -252,20 +262,65 @@ const Dashboard = () => {
         />
       )}
       
-      {/* Hero Section Desktop - Edge to edge */}
-      <div className="hidden lg:block bg-gradient-to-br from-[hsl(var(--flowdent-blue))] via-[hsl(var(--flow-turquoise))] to-[hsl(var(--flowdent-blue))] p-6 px-8 mb-2 text-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">
-              {isSuperAdmin ? "Painel Super Admin" : `Bem-vindo, ${profile?.full_name?.split(' ')[0] || "Usuário"}!`}
-            </h1>
-            <p className="text-white/80 text-sm mt-1">Confira o resumo da sua clínica hoje</p>
+      {/* Hero Section Desktop - Edge to edge com navbar integrada */}
+      <div className="hidden lg:block bg-gradient-to-br from-[hsl(var(--flowdent-blue))] via-[hsl(var(--flow-turquoise))] to-[hsl(var(--flowdent-blue))] p-4 px-8 text-white">
+        {/* Linha superior: Logo Central + Data/Perfil à direita */}
+        <div className="flex items-center justify-between mb-4">
+          {/* Espaço reservado à esquerda para balancear */}
+          <div className="w-48"></div>
+          
+          {/* Logo Flowdent centralizada */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+              <span className="text-white font-bold text-lg">F</span>
+            </div>
+            <span className="font-bold text-xl text-white">Flowdent</span>
           </div>
-          <div className="text-right">
-            <p className="text-white/70 text-sm">
+          
+          {/* Data + Perfil à direita */}
+          <div className="flex items-center gap-4">
+            <span className="text-white/80 text-sm">
               {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </p>
+            </span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2 text-white hover:bg-white/10 hover:text-white">
+                  <User className="h-4 w-4" />
+                  <span>{profile?.full_name || "Usuário"}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-white">
+                <DropdownMenuItem onClick={() => navigate("/dashboard/perfil")} className="cursor-pointer">
+                  <Settings className="mr-2 h-4 w-4" />
+                  Meu Perfil
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/dashboard/assinatura")} className="cursor-pointer">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Assinatura
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    toast.success("Logout realizado com sucesso!");
+                    navigate("/auth");
+                  }} 
+                  className="cursor-pointer text-red-600 focus:text-red-600"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
+        </div>
+        
+        {/* Linha inferior: Mensagem de boas-vindas */}
+        <div>
+          <h1 className="text-2xl font-bold">
+            {isSuperAdmin ? "Painel Super Admin" : `Bem-vindo, ${profile?.full_name?.split(' ')[0] || "Usuário"}!`}
+          </h1>
+          <p className="text-white/80 text-sm mt-1">Confira o resumo da sua clínica hoje</p>
         </div>
       </div>
 
