@@ -289,19 +289,31 @@ const Auth = () => {
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Form */}
-      <div className="w-full lg:w-1/2 flex flex-col bg-white">
-        {/* Header */}
-        <div className="p-6 border-b">
+      <div className="w-full lg:w-1/2 flex flex-col bg-gradient-to-b from-white via-white to-[hsl(var(--cloud-white))] lg:bg-white lg:bg-none">
+        {/* Header - Com gradiente no mobile */}
+        <div className="bg-gradient-to-r from-[hsl(var(--flowdent-blue))] to-[hsl(var(--flow-turquoise))] lg:bg-none lg:bg-white p-6 lg:border-b">
           <Link to="/" className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-[hsl(var(--flowdent-blue))]">
+            <div className="w-10 h-10 rounded-xl bg-white/20 lg:bg-[hsl(var(--flowdent-blue))]/10 flex items-center justify-center">
+              <span className="text-2xl font-bold text-white lg:text-[hsl(var(--flowdent-blue))]">F</span>
+            </div>
+            <span className="text-2xl font-bold text-white lg:text-[hsl(var(--flowdent-blue))]">
               Flowdent
             </span>
           </Link>
         </div>
 
+        {/* Decoração Mobile */}
+        <div className="lg:hidden flex justify-center pt-8 pb-4">
+          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[hsl(var(--flowdent-blue))]/10 to-[hsl(var(--flow-turquoise))]/10 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[hsl(var(--flowdent-blue))]/20 to-[hsl(var(--flow-turquoise))]/20 flex items-center justify-center">
+              <span className="text-4xl">🦷</span>
+            </div>
+          </div>
+        </div>
+
         {/* Form Content */}
-        <div className="flex-1 flex items-center justify-center p-8">
-          <div className="w-full max-w-md space-y-8">
+        <div className="flex-1 flex items-start lg:items-center justify-center p-6 lg:p-8 pt-4 lg:pt-8">
+          <div className="w-full max-w-md space-y-6 lg:space-y-8">
             {isResetPassword ? (
               // RESET PASSWORD FORM
               <>
