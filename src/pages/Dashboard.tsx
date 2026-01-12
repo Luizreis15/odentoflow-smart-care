@@ -252,8 +252,8 @@ const Dashboard = () => {
         />
       )}
       
-      {/* Hero Section Desktop */}
-      <div className="hidden lg:block bg-gradient-to-br from-[hsl(var(--flowdent-blue))] via-[hsl(var(--flow-turquoise))] to-[hsl(var(--flowdent-blue))] p-6 rounded-xl mb-2 text-white">
+      {/* Hero Section Desktop - Edge to edge */}
+      <div className="hidden lg:block bg-gradient-to-br from-[hsl(var(--flowdent-blue))] via-[hsl(var(--flow-turquoise))] to-[hsl(var(--flowdent-blue))] p-6 px-8 mb-2 text-white">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">
@@ -279,7 +279,7 @@ const Dashboard = () => {
       </div>
 
       {activeClinicId && (
-        <div className="space-y-4">
+        <div className="space-y-4 px-4">
           {/* Métricas - Grid responsivo com margem negativa para overlap no desktop */}
           <div className="lg:-mt-4 lg:relative lg:z-10">
             <DashboardMetrics clinicId={activeClinicId} />
