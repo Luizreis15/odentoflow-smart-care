@@ -5,15 +5,14 @@ import DashboardLayout from "@/components/DashboardLayout";
 import TrialBanner from "@/components/TrialBanner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { DashboardMetrics } from "@/components/dashboard/DashboardMetrics";
-import { AgendaCalendar } from "@/components/dashboard/AgendaCalendar";
-import { SidebarFilters } from "@/components/dashboard/SidebarFilters";
-import { QuickActions } from "@/components/dashboard/QuickActions";
+import { ModuleCards } from "@/components/dashboard/ModuleCards";
 import { UpcomingAppointments } from "@/components/dashboard/UpcomingAppointments";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileHome from "@/pages/mobile/MobileHome";
-import { User, LogOut, Settings, CreditCard } from "lucide-react";
+import { User, LogOut, Settings, CreditCard, Search } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -254,6 +253,16 @@ const Dashboard = () => {
     );
   }
 
+  // Função para saudação baseada na hora
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Bom dia";
+    if (hour < 18) return "Boa tarde";
+    return "Boa noite";
+  };
+
+  const firstName = profile?.full_name?.split(' ')[0] || "Usuário";
+
   return (
     <DashboardLayout user={profile}>
       {!isSuperAdmin && status === "trialing" && trialEnd && (
@@ -262,111 +271,106 @@ const Dashboard = () => {
         />
       )}
       
-      {/* Hero Section Desktop - Edge to edge com navbar integrada */}
-      <div className="hidden lg:block bg-gradient-to-br from-[hsl(var(--flowdent-blue))] via-[hsl(var(--flow-turquoise))] to-[hsl(var(--flowdent-blue))] p-4 px-8 text-white">
-        {/* Linha superior: Logo Central + Data/Perfil à direita */}
-        <div className="flex items-center justify-between mb-4">
-          {/* Espaço reservado à esquerda para balancear */}
-          <div className="w-48"></div>
-          
-          {/* Logo Flowdent centralizada */}
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">F</span>
+      {/* Header Desktop - Estilo Clinicorp */}
+      <div className="hidden lg:block bg-card border-b border-border">
+        <div className="px-8 py-4">
+          <div className="flex items-center justify-between">
+            {/* Logo Flowdent */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--flowdent-blue))] to-[hsl(var(--flow-turquoise))] flex items-center justify-center shadow-md">
+                <span className="text-white font-bold text-xl">F</span>
+              </div>
+              <span className="font-bold text-xl text-[hsl(var(--flowdent-blue))]">Flowdent</span>
             </div>
-            <span className="font-bold text-xl text-white">Flowdent</span>
-          </div>
-          
-          {/* Data + Perfil à direita */}
-          <div className="flex items-center gap-4">
-            <span className="text-white/80 text-sm">
-              {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </span>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2 text-white hover:bg-white/10 hover:text-white">
-                  <User className="h-4 w-4" />
-                  <span>{profile?.full_name || "Usuário"}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-white">
-                <DropdownMenuItem onClick={() => navigate("/dashboard/perfil")} className="cursor-pointer">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Meu Perfil
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/dashboard/assinatura")} className="cursor-pointer">
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  Assinatura
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={async () => {
-                    await supabase.auth.signOut();
-                    toast.success("Logout realizado com sucesso!");
-                    navigate("/auth");
-                  }} 
-                  className="cursor-pointer text-red-600 focus:text-red-600"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sair
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-        
-        {/* Linha inferior: Mensagem de boas-vindas */}
-        <div>
-          <h1 className="text-2xl font-bold">
-            {isSuperAdmin ? "Painel Super Admin" : `Bem-vindo, ${profile?.full_name?.split(' ')[0] || "Usuário"}!`}
-          </h1>
-          <p className="text-white/80 text-sm mt-1">Confira o resumo da sua clínica hoje</p>
-        </div>
-      </div>
-
-      {/* Mobile Title */}
-      <div className="lg:hidden px-4 mb-4">
-        {isSuperAdmin ? (
-          <h1 className="text-lg font-bold">Painel Super Admin</h1>
-        ) : (
-          <h1 className="text-lg font-bold">Bem-vindo, {profile?.full_name?.split(' ')[0] || "Usuário"}!</h1>
-        )}
-      </div>
-
-      {activeClinicId && (
-        <div className="space-y-4 px-4">
-          {/* Métricas - Grid responsivo com margem negativa para overlap no desktop */}
-          <div className="lg:-mt-4 lg:relative lg:z-10">
-            <DashboardMetrics clinicId={activeClinicId} />
-          </div>
             
-            {/* Quick Actions - Scroll horizontal no mobile */}
-            <div className="lg:hidden">
-              <QuickActions />
+            {/* Barra de Busca Central */}
+            <div className="flex-1 max-w-xl mx-8">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Buscar pacientes, consultas ou funções..."
+                  className="pl-10 bg-muted/50 border-border focus:bg-background"
+                />
+              </div>
             </div>
-
-            {/* Layout Desktop com sidebars */}
-            <div className="flex gap-6">
-              <aside className="hidden xl:block w-80 flex-shrink-0">
-                <SidebarFilters clinicId={activeClinicId} />
-              </aside>
-
-              <main className="flex-1 min-w-0 space-y-4">
-                <AgendaCalendar clinicId={activeClinicId} />
-                
-                {/* Próximos agendamentos no mobile */}
-                <div className="lg:hidden">
-                  <UpcomingAppointments clinicId={activeClinicId} />
-                </div>
-              </main>
-
-              <aside className="hidden lg:block w-80 flex-shrink-0 space-y-4">
-                <QuickActions />
-                <UpcomingAppointments clinicId={activeClinicId} />
-              </aside>
+            
+            {/* Data + Perfil */}
+            <div className="flex items-center gap-4">
+              <span className="text-muted-foreground text-sm">
+                {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <div className="w-8 h-8 rounded-full bg-[hsl(var(--flowdent-blue))] flex items-center justify-center">
+                      <User className="h-4 w-4 text-white" />
+                    </div>
+                    <span className="font-medium">{profile?.full_name || "Usuário"}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => navigate("/dashboard/perfil")} className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Meu Perfil
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/dashboard/assinatura")} className="cursor-pointer">
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    Assinatura
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={async () => {
+                      await supabase.auth.signOut();
+                      toast.success("Logout realizado com sucesso!");
+                      navigate("/auth");
+                    }} 
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Conteúdo Principal */}
+      <div className="px-4 lg:px-8 py-6 space-y-6">
+        {/* Saudação */}
+        <div>
+          <h1 className="text-xl lg:text-2xl font-bold text-foreground">
+            {isSuperAdmin 
+              ? "Painel Super Admin" 
+              : `Olá, ${firstName}! ${getGreeting()}!`
+            }
+          </h1>
+          {!isSuperAdmin && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Escolha um módulo para começar ou confira o resumo do dia.
+            </p>
+          )}
+        </div>
+
+        {activeClinicId && (
+          <>
+            {/* Cards de Módulos - Estilo Clinicorp */}
+            <ModuleCards />
+            
+            {/* Resumo do Dia */}
+            <div className="pt-4 border-t border-border">
+              <h2 className="text-lg font-semibold text-foreground mb-4">📊 Resumo do Dia</h2>
+              <DashboardMetrics clinicId={activeClinicId} />
+            </div>
+            
+            {/* Próximos Agendamentos */}
+            <div className="lg:max-w-2xl">
+              <UpcomingAppointments clinicId={activeClinicId} />
+            </div>
+          </>
         )}
+      </div>
     </DashboardLayout>
   );
 };
