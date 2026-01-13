@@ -1,12 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileText, Upload } from "lucide-react";
+import { Search, Plus, Upload } from "lucide-react";
 import { ImportPacientesModal } from "@/components/pacientes/ImportPacientesModal";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
@@ -14,7 +11,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
@@ -115,99 +111,6 @@ const Prontuario = () => {
     }
   };
 
-  // Métricas do Dashboard
-  const { data: totalPatients, isLoading: loadingTotal } = useQuery({
-    queryKey: ["total-patients", clinicId],
-    queryFn: async () => {
-      if (!clinicId) return 0;
-      const { count, error } = await supabase
-        .from("patients")
-        .select("*", { count: "exact", head: true })
-        .eq("clinic_id", clinicId);
-      
-      if (error) throw error;
-      return count || 0;
-    },
-    enabled: !!clinicId,
-  });
-
-  const { data: patientsInTreatment, isLoading: loadingTreatment } = useQuery({
-    queryKey: ["patients-in-treatment", clinicId],
-    queryFn: async () => {
-      if (!clinicId) return 0;
-      const { data, error } = await supabase
-        .from("budget_items")
-        .select("budget_id!inner(patient_id!inner(clinic_id))")
-        .eq("treatment_status", "in_progress")
-        .eq("budget_id.patient_id.clinic_id", clinicId);
-      
-      if (error) throw error;
-      return data?.length || 0;
-    },
-    enabled: !!clinicId,
-  });
-
-  const { data: updatedRecords, isLoading: loadingUpdated } = useQuery({
-    queryKey: ["updated-records", clinicId],
-    queryFn: async () => {
-      if (!clinicId) return 0;
-      const { data, error } = await supabase
-        .from("patients")
-        .select("id, created_at, updated_at, notes")
-        .eq("clinic_id", clinicId);
-      
-      if (error) throw error;
-      
-      const updated = data?.filter(p => 
-        (p.updated_at && p.created_at && new Date(p.updated_at) > new Date(p.created_at)) ||
-        (p.notes && p.notes.trim() !== "")
-      );
-      
-      return updated?.length || 0;
-    },
-    enabled: !!clinicId,
-  });
-
-  const { data: totalAttachments, isLoading: loadingAttachments } = useQuery({
-    queryKey: ["total-attachments", clinicId],
-    queryFn: async () => {
-      if (!clinicId) return 0;
-      const { count, error } = await supabase
-        .from("patient_files")
-        .select("*, patient_id!inner(clinic_id)", { count: "exact", head: true })
-        .eq("patient_id.clinic_id", clinicId);
-      
-      if (error) throw error;
-      return count || 0;
-    },
-    enabled: !!clinicId,
-  });
-
-  const { data: recentAppointments, isLoading: loadingAppointments } = useQuery({
-    queryKey: ["recent-appointments", clinicId],
-    queryFn: async () => {
-      if (!clinicId) return [];
-      const { data, error } = await supabase
-        .from("appointments")
-        .select(`
-          id,
-          appointment_date,
-          title,
-          description,
-          patient_id!inner(full_name, clinic_id),
-          dentist_id(nome)
-        `)
-        .eq("patient_id.clinic_id", clinicId)
-        .eq("status", "completed")
-        .order("appointment_date", { ascending: false })
-        .limit(5);
-      
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!clinicId,
-  });
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -305,259 +208,313 @@ const Prontuario = () => {
     }
   };
 
-  const statusColors = {
-    ativo: "bg-secondary text-secondary-foreground",
-    tratamento: "bg-primary/10 text-primary",
-    inativo: "bg-muted text-muted-foreground",
+  // Filter patients by status for tabs
+  const getPatientsByStatus = (status: string) => {
+    if (status === "all") return filteredPatients;
+    return filteredPatients.filter((p) => p.status === status);
+  };
+
+  const renderPatientList = (patientList: any[]) => {
+    if (loading) {
+      return (
+        <div className="text-center py-8 text-muted-foreground">
+          Carregando pacientes...
+        </div>
+      );
+    }
+    
+    if (patientList.length === 0) {
+      return (
+        <div className="text-center py-8 text-muted-foreground">
+          {searchTerm ? "Nenhum paciente encontrado" : "Nenhum paciente cadastrado"}
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-2">
+        {patientList.map((patient) => (
+          <div
+            key={patient.id}
+            className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => navigate(`/dashboard/prontuario/${patient.id}`)}
+          >
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary font-semibold text-sm shrink-0">
+              {patient.full_name.charAt(0).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-foreground text-sm truncate">{patient.full_name}</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {patient.phone}
+                {patient.email && ` • ${patient.email}`}
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="hidden sm:flex shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/dashboard/prontuario/${patient.id}`);
+              }}
+            >
+              Ver
+            </Button>
+          </div>
+        ))}
+      </div>
+    );
   };
 
   return (
-    <div className="space-y-4 lg:space-y-6 pb-4">
-      <div className="flex flex-col gap-3">
-        <div>
-          <h1 className="text-xl lg:text-3xl font-bold text-foreground">Prontuário Digital</h1>
-          <p className="text-sm lg:text-base text-muted-foreground mt-1">
-            Histórico clínico completo dos pacientes
-          </p>
+    <div className="space-y-4 pb-4">
+      {/* Header compacto com Busca + Botões */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar paciente por nome, CPF ou telefone..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={() => setShowImportModal(true)} className="flex-1 sm:flex-none">
-            <Upload className="mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">Importar Pacientes</span>
-            <span className="sm:hidden">Importar</span>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => setShowImportModal(true)}>
+            <Upload className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Importar</span>
           </Button>
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-              <Button size="sm" className="flex-1 sm:flex-none">
-                <Plus className="mr-2 h-4 w-4" />
+              <Button size="sm">
+                <Plus className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">Novo Paciente</span>
-                <span className="sm:hidden">Novo</span>
               </Button>
             </SheetTrigger>
-          <SheetContent className="sm:max-w-[700px] overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>Dados do paciente</SheetTitle>
-              <SheetDescription>
-                Preencha os dados do paciente para criar o prontuário
-              </SheetDescription>
-            </SheetHeader>
-            <form onSubmit={handleSubmit} className="space-y-6 mt-6">
-              {/* Dados do Paciente */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-foreground">Dados do paciente</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="md:col-span-2 space-y-2">
-                    <Label htmlFor="full_name">Nome do paciente *</Label>
-                    <Input
-                      id="full_name"
-                      placeholder="Nome completo do paciente"
-                      value={formData.full_name}
-                      onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                      required
-                    />
+            <SheetContent className="sm:max-w-[700px] overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>Dados do paciente</SheetTitle>
+                <SheetDescription>
+                  Preencha os dados do paciente para criar o prontuário
+                </SheetDescription>
+              </SheetHeader>
+              <form onSubmit={handleSubmit} className="space-y-6 mt-6">
+                {/* Dados do Paciente */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-foreground">Dados do paciente</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="md:col-span-2 space-y-2">
+                      <Label htmlFor="full_name">Nome do paciente *</Label>
+                      <Input
+                        id="full_name"
+                        placeholder="Nome completo do paciente"
+                        value={formData.full_name}
+                        onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Sexo *</Label>
+                      <RadioGroup
+                        value={formData.gender}
+                        onValueChange={(value: "masculino" | "feminino") => 
+                          setFormData({ ...formData, gender: value })
+                        }
+                        className="flex gap-4"
+                        required
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="masculino" id="masculino" />
+                          <Label htmlFor="masculino" className="font-normal cursor-pointer">
+                            Masculino
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="feminino" id="feminino" />
+                          <Label htmlFor="feminino" className="font-normal cursor-pointer">
+                            Feminino
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Sexo *</Label>
-                    <RadioGroup
-                      value={formData.gender}
-                      onValueChange={(value: "masculino" | "feminino") => 
-                        setFormData({ ...formData, gender: value })
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="is_foreign"
+                      checked={formData.is_foreign}
+                      onCheckedChange={(checked) => 
+                        setFormData({ ...formData, is_foreign: checked })
                       }
-                      className="flex gap-4"
-                      required
+                    />
+                    <Label htmlFor="is_foreign" className="font-normal cursor-pointer">
+                      Paciente estrangeiro
+                    </Label>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="birth_date">Data de nascimento</Label>
+                      <Input
+                        id="birth_date"
+                        type="date"
+                        value={formData.birth_date}
+                        onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="cpf">CPF</Label>
+                      <Input
+                        id="cpf"
+                        placeholder="000.000.000-00"
+                        value={formData.cpf}
+                        onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="rg">RG</Label>
+                      <Input
+                        id="rg"
+                        placeholder="00.000.000-0"
+                        value={formData.rg}
+                        onChange={(e) => setFormData({ ...formData, rg: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Celular do paciente *</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        className="w-24"
+                        value="+55"
+                        disabled
+                      />
+                      <Input
+                        id="phone"
+                        placeholder="11 93736 7647"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        required
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="how_found">Como o paciente chegou na clínica</Label>
+                    <Select
+                      value={formData.how_found}
+                      onValueChange={(value) => setFormData({ ...formData, how_found: value })}
                     >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="masculino" id="masculino" />
-                        <Label htmlFor="masculino" className="font-normal cursor-pointer">
-                          Masculino
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="feminino" id="feminino" />
-                        <Label htmlFor="feminino" className="font-normal cursor-pointer">
-                          Feminino
-                        </Label>
-                      </div>
-                    </RadioGroup>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma opção" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="indicacao">Indicação</SelectItem>
+                        <SelectItem value="google">Google</SelectItem>
+                        <SelectItem value="redes_sociais">Redes Sociais</SelectItem>
+                        <SelectItem value="placa">Placa/Fachada</SelectItem>
+                        <SelectItem value="outro">Outro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tags">Etiquetas</Label>
+                    <Input
+                      id="tags"
+                      placeholder="Digite etiquetas separadas por vírgula"
+                      value={formData.tags}
+                      onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Separe as etiquetas com vírgula (ex: VIP, Ortodontia, Prioritário)
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="is_foreign"
-                    checked={formData.is_foreign}
-                    onCheckedChange={(checked) => 
-                      setFormData({ ...formData, is_foreign: checked })
-                    }
+                {/* Dados do Responsável */}
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="text-sm font-semibold text-foreground">Dados do responsável</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="responsible_name">Nome do responsável</Label>
+                      <Input
+                        id="responsible_name"
+                        placeholder="Nome completo do responsável"
+                        value={formData.responsible_name}
+                        onChange={(e) => setFormData({ ...formData, responsible_name: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="responsible_birth_date">Data de nascimento</Label>
+                      <Input
+                        id="responsible_birth_date"
+                        type="date"
+                        value={formData.responsible_birth_date}
+                        onChange={(e) => setFormData({ ...formData, responsible_birth_date: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="responsible_cpf">CPF</Label>
+                      <Input
+                        id="responsible_cpf"
+                        placeholder="000.000.000-00"
+                        value={formData.responsible_cpf}
+                        onChange={(e) => setFormData({ ...formData, responsible_cpf: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="responsible_phone">Celular do responsável</Label>
+                      <Input
+                        id="responsible_phone"
+                        placeholder="(00) 00000-0000"
+                        value={formData.responsible_phone}
+                        onChange={(e) => setFormData({ ...formData, responsible_phone: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Observação */}
+                <div className="space-y-2 pt-4 border-t">
+                  <Label htmlFor="notes">Observação</Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="Informações adicionais sobre o paciente"
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    rows={3}
                   />
-                  <Label htmlFor="is_foreign" className="font-normal cursor-pointer">
-                    Paciente estrangeiro
-                  </Label>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="birth_date">Data de nascimento</Label>
-                    <Input
-                      id="birth_date"
-                      type="date"
-                      value={formData.birth_date}
-                      onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="cpf">CPF</Label>
-                    <Input
-                      id="cpf"
-                      placeholder="000.000.000-00"
-                      value={formData.cpf}
-                      onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="rg">RG</Label>
-                    <Input
-                      id="rg"
-                      placeholder="00.000.000-0"
-                      value={formData.rg}
-                      onChange={(e) => setFormData({ ...formData, rg: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Celular do paciente *</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      className="w-24"
-                      value="+55"
-                      disabled
-                    />
-                    <Input
-                      id="phone"
-                      placeholder="11 93736 7647"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      required
-                      className="flex-1"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="how_found">Como o paciente chegou na clínica</Label>
-                  <Select
-                    value={formData.how_found}
-                    onValueChange={(value) => setFormData({ ...formData, how_found: value })}
+                <div className="flex gap-3 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setIsSheetOpen(false)} 
+                    disabled={saving}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma opção" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="indicacao">Indicação</SelectItem>
-                      <SelectItem value="google">Google</SelectItem>
-                      <SelectItem value="redes_sociais">Redes Sociais</SelectItem>
-                      <SelectItem value="placa">Placa/Fachada</SelectItem>
-                      <SelectItem value="outro">Outro</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    FECHAR
+                  </Button>
+                  <Button type="submit" disabled={saving}>
+                    {saving ? "SALVANDO..." : "SALVAR"}
+                  </Button>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="tags">Etiquetas</Label>
-                  <Input
-                    id="tags"
-                    placeholder="Digite etiquetas separadas por vírgula"
-                    value={formData.tags}
-                    onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Separe as etiquetas com vírgula (ex: VIP, Ortodontia, Prioritário)
-                  </p>
-                </div>
-              </div>
-
-              {/* Dados do Responsável */}
-              <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-sm font-semibold text-foreground">Dados do responsável</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="responsible_name">Nome do responsável</Label>
-                    <Input
-                      id="responsible_name"
-                      placeholder="Nome completo do responsável"
-                      value={formData.responsible_name}
-                      onChange={(e) => setFormData({ ...formData, responsible_name: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="responsible_birth_date">Data de nascimento</Label>
-                    <Input
-                      id="responsible_birth_date"
-                      type="date"
-                      value={formData.responsible_birth_date}
-                      onChange={(e) => setFormData({ ...formData, responsible_birth_date: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="responsible_cpf">CPF</Label>
-                    <Input
-                      id="responsible_cpf"
-                      placeholder="000.000.000-00"
-                      value={formData.responsible_cpf}
-                      onChange={(e) => setFormData({ ...formData, responsible_cpf: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="responsible_phone">Celular do responsável</Label>
-                    <Input
-                      id="responsible_phone"
-                      placeholder="(00) 00000-0000"
-                      value={formData.responsible_phone}
-                      onChange={(e) => setFormData({ ...formData, responsible_phone: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Observação */}
-              <div className="space-y-2 pt-4 border-t">
-                <Label htmlFor="notes">Observação</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Informações adicionais sobre o paciente"
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setIsSheetOpen(false)} 
-                  disabled={saving}
-                >
-                  FECHAR
-                </Button>
-                <Button type="submit" disabled={saving}>
-                  {saving ? "SALVANDO..." : "SALVAR"}
-                </Button>
-              </div>
-            </form>
-          </SheetContent>
-        </Sheet>
+              </form>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
 
@@ -567,232 +524,31 @@ const Prontuario = () => {
         onSuccess={loadPatients}
       />
 
-      <div className="grid gap-3 lg:gap-6 grid-cols-2 lg:grid-cols-4">
-        <Card className="p-3 lg:p-0">
-          <CardHeader className="pb-2 lg:pb-3 p-0 lg:p-6 lg:pb-3">
-            <CardTitle className="text-xs lg:text-sm font-medium text-muted-foreground">
-              Total Pacientes
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0 lg:p-6 lg:pt-0">
-            {loadingTotal ? (
-              <Skeleton className="h-7 lg:h-9 w-16 lg:w-20" />
-            ) : (
-              <div className="text-2xl lg:text-3xl font-bold">{totalPatients || 0}</div>
-            )}
-            <p className="text-[10px] lg:text-xs text-muted-foreground mt-1">Cadastrados</p>
-          </CardContent>
-        </Card>
-
-        <Card className="p-3 lg:p-0">
-          <CardHeader className="pb-2 lg:pb-3 p-0 lg:p-6 lg:pb-3">
-            <CardTitle className="text-xs lg:text-sm font-medium text-muted-foreground">
-              Em Tratamento
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0 lg:p-6 lg:pt-0">
-            {loadingTreatment ? (
-              <Skeleton className="h-7 lg:h-9 w-16 lg:w-20" />
-            ) : (
-              <div className="text-2xl lg:text-3xl font-bold">{patientsInTreatment || 0}</div>
-            )}
-            <p className="text-[10px] lg:text-xs text-muted-foreground mt-1">
-              {totalPatients ? ((patientsInTreatment || 0) / totalPatients * 100).toFixed(0) : 0}% do total
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="p-3 lg:p-0">
-          <CardHeader className="pb-2 lg:pb-3 p-0 lg:p-6 lg:pb-3">
-            <CardTitle className="text-xs lg:text-sm font-medium text-muted-foreground">
-              Atualizados
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0 lg:p-6 lg:pt-0">
-            {loadingUpdated ? (
-              <Skeleton className="h-7 lg:h-9 w-16 lg:w-20" />
-            ) : (
-              <div className="text-2xl lg:text-3xl font-bold">{updatedRecords || 0}</div>
-            )}
-            <p className="text-[10px] lg:text-xs text-muted-foreground mt-1">
-              {totalPatients ? ((updatedRecords || 0) / totalPatients * 100).toFixed(0) : 0}% completos
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="p-3 lg:p-0">
-          <CardHeader className="pb-2 lg:pb-3 p-0 lg:p-6 lg:pb-3">
-            <CardTitle className="text-xs lg:text-sm font-medium text-muted-foreground">
-              Anexos
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0 lg:p-6 lg:pt-0">
-            {loadingAttachments ? (
-              <Skeleton className="h-7 lg:h-9 w-16 lg:w-20" />
-            ) : (
-              <div className="text-2xl lg:text-3xl font-bold">{totalAttachments || 0}</div>
-            )}
-            <p className="text-[10px] lg:text-xs text-muted-foreground mt-1">Imagens/docs</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Buscar Paciente</CardTitle>
-          <CardDescription>Encontre prontuários por nome, CPF ou telefone</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Digite o nome do paciente..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Tabs defaultValue="all" className="space-y-3 lg:space-y-4">
+      {/* Abas de Filtro + Lista */}
+      <Tabs defaultValue="all" className="space-y-3">
         <TabsList className="w-full grid grid-cols-4 h-auto">
           <TabsTrigger value="all" className="text-xs lg:text-sm py-2">Todos</TabsTrigger>
-          <TabsTrigger value="active" className="text-xs lg:text-sm py-2">Ativos</TabsTrigger>
-          <TabsTrigger value="treatment" className="text-xs lg:text-sm py-2">Tratam.</TabsTrigger>
-          <TabsTrigger value="inactive" className="text-xs lg:text-sm py-2">Inativos</TabsTrigger>
+          <TabsTrigger value="ativo" className="text-xs lg:text-sm py-2">Ativos</TabsTrigger>
+          <TabsTrigger value="tratamento" className="text-xs lg:text-sm py-2">Tratam.</TabsTrigger>
+          <TabsTrigger value="inativo" className="text-xs lg:text-sm py-2">Inativos</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="all" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Pacientes</CardTitle>
-              <CardDescription>Lista completa de prontuários</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Carregando pacientes...
-                </div>
-              ) : filteredPatients.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  {searchTerm ? "Nenhum paciente encontrado" : "Nenhum paciente cadastrado"}
-                </div>
-              ) : (
-                <div className="space-y-2 lg:space-y-3">
-                  {filteredPatients.map((patient) => (
-                    <div
-                      key={patient.id}
-                      className="flex items-center gap-3 lg:gap-4 p-3 lg:p-4 rounded-lg border bg-card hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => navigate(`/dashboard/prontuario/${patient.id}`)}
-                    >
-                      <div className="flex items-center justify-center w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-primary/10 text-primary font-semibold text-sm lg:text-base shrink-0">
-                        {patient.full_name.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-foreground text-sm lg:text-base truncate">{patient.full_name}</p>
-                        <p className="text-xs lg:text-sm text-muted-foreground truncate">
-                          {patient.phone}
-                          {patient.email && ` • ${patient.email}`}
-                        </p>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="hidden sm:flex shrink-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/dashboard/prontuario/${patient.id}`);
-                        }}
-                      >
-                        Ver
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        <TabsContent value="all">
+          {renderPatientList(getPatientsByStatus("all"))}
         </TabsContent>
 
-        <TabsContent value="active">
-          <Card>
-            <CardContent className="py-8">
-              <p className="text-muted-foreground text-center">Filtro de pacientes ativos</p>
-            </CardContent>
-          </Card>
+        <TabsContent value="ativo">
+          {renderPatientList(getPatientsByStatus("ativo"))}
         </TabsContent>
 
-        <TabsContent value="treatment">
-          <Card>
-            <CardContent className="py-8">
-              <p className="text-muted-foreground text-center">Filtro de pacientes em tratamento</p>
-            </CardContent>
-          </Card>
+        <TabsContent value="tratamento">
+          {renderPatientList(getPatientsByStatus("tratamento"))}
         </TabsContent>
 
-        <TabsContent value="inactive">
-          <Card>
-            <CardContent className="py-8">
-              <p className="text-muted-foreground text-center">Filtro de pacientes inativos</p>
-            </CardContent>
-          </Card>
+        <TabsContent value="inativo">
+          {renderPatientList(getPatientsByStatus("inativo"))}
         </TabsContent>
       </Tabs>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Últimos Atendimentos</CardTitle>
-          <CardDescription>Prontuários recentemente atualizados</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loadingAppointments ? (
-            <div className="space-y-3">
-              {[1, 2].map((i) => (
-                <div key={i} className="flex gap-4 p-4 rounded-lg border bg-card">
-                  <Skeleton className="w-10 h-10 rounded-lg" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-48" />
-                    <Skeleton className="h-3 w-full" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : !recentAppointments || recentAppointments.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Nenhum atendimento concluído ainda
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {recentAppointments.map((appointment: any) => (
-                <div
-                  key={appointment.id}
-                  className="flex gap-4 p-4 rounded-lg border bg-card"
-                >
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-secondary/20">
-                    <FileText className="h-5 w-5 text-secondary" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-semibold">{appointment.patient_id.full_name}</p>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(appointment.appointment_date).toLocaleDateString("pt-BR")}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {appointment.title} • {appointment.dentist_id?.nome || "Não informado"}
-                    </p>
-                    {appointment.description && (
-                      <p className="text-sm mt-2">{appointment.description}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 };
