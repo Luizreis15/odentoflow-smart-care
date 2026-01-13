@@ -624,7 +624,10 @@ const PatientDetails = () => {
           </TabsContent>
 
           <TabsContent value="odontograma" className="mt-0">
-            <OdontogramaTab patientId={id!} />
+            <OdontogramaTab 
+              patientId={id!} 
+              onAddProcedimento={() => setShowNovoOrcamento(true)}
+            />
           </TabsContent>
 
           <TabsContent value="agendamentos" className="mt-0">

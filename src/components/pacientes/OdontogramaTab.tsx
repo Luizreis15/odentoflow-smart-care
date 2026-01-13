@@ -17,6 +17,7 @@ import { ProcedimentosTable } from "@/components/odontograma/ProcedimentosTable"
 
 interface OdontogramaTabProps {
   patientId: string;
+  onAddProcedimento?: () => void;
 }
 
 // Dentes permanentes FDI
@@ -42,7 +43,7 @@ interface DenteData {
   procedures: any[];
 }
 
-export const OdontogramaTab = ({ patientId }: OdontogramaTabProps) => {
+export const OdontogramaTab = ({ patientId, onAddProcedimento }: OdontogramaTabProps) => {
   const [denticao, setDenticao] = useState<"permanente" | "decidua">("permanente");
   const [selectedDente, setSelectedDente] = useState<number | null>(null);
   const [selectedFace, setSelectedFace] = useState<string | null>(null);
@@ -382,7 +383,7 @@ export const OdontogramaTab = ({ patientId }: OdontogramaTabProps) => {
       <div className="w-[340px] shrink-0">
         <ProcedimentosTable
           procedimentos={procedimentosTabela}
-          onAddProcedimento={() => toast.info("Adicionar procedimento")}
+          onAddProcedimento={onAddProcedimento}
           onPrint={() => window.print()}
         />
       </div>
