@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Plus, Filter, X, UserPlus, ArrowLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Plus, Filter, X, UserPlus, ArrowLeft, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
@@ -530,26 +530,39 @@ const Agenda = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      {/* Header Compacto com Filtro de Profissional Visível */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Agenda Inteligente</h1>
-          <p className="text-muted-foreground mt-1">
-            {viewMode === "calendar" 
-              ? "Clique em um dia para ver os horários disponíveis"
-              : "Clique em um horário disponível para agendar"
-            }
-          </p>
+        <div className="flex items-center gap-3">
+          {/* Filtro por Profissional - Sempre Visível */}
+          <Select 
+            value={filters.dentistId} 
+            onValueChange={(value) => setFilters({ ...filters, dentistId: value })}
+          >
+            <SelectTrigger className="w-[220px]">
+              <Users className="mr-2 h-4 w-4 text-muted-foreground" />
+              <SelectValue placeholder="Todos Profissionais" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos Profissionais</SelectItem>
+              {dentists.map(dentist => (
+                <SelectItem key={dentist.id} value={dentist.id}>
+                  {dentist.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
+        
         <div className="flex gap-2">
           <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="sm">
                 <Filter className="mr-2 h-4 w-4" />
-                Filtrar
-                {(filters.status !== "all" || filters.dentistId !== "all") && (
+                Mais Filtros
+                {filters.status !== "all" && (
                   <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center">
-                    {[filters.status !== "all", filters.dentistId !== "all"].filter(Boolean).length}
+                    1
                   </Badge>
                 )}
               </Button>
@@ -739,55 +752,11 @@ const Agenda = () => {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Consultas Hoje
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{todayAppointments.length}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {todayAppointments.filter(a => a.status === "confirmed").length} confirmadas
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Esta Semana
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{weekAppointments.length}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {weekAppointments.filter(a => a.status === "completed").length} concluídas
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Profissionais Ativos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{dentists.length}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              disponíveis
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Conditional rendering based on view mode */}
       {viewMode === "day-slots" ? (
         <DayTimeSlotsView />
       ) : (
-        <div className="grid lg:grid-cols-[1fr_400px] gap-6">
+        <div className="grid lg:grid-cols-[1fr_350px] gap-4">
           {/* Calendário Visual */}
           <Card>
             <CardHeader>
