@@ -18,12 +18,14 @@ interface FornecedoresTabProps {
 
 interface Supplier {
   id: string;
-  nome: string;
+  razao_social: string;
+  nome_fantasia: string | null;
   cnpj: string | null;
-  telefone: string | null;
-  email: string | null;
-  responsavel: string | null;
-  condicoes_comerciais: string | null;
+  contato_nome: string | null;
+  contato_email: string | null;
+  contato_telefone: string | null;
+  contato_whatsapp: string | null;
+  condicoes_pagamento: string | null;
   ativo: boolean;
 }
 
@@ -34,12 +36,14 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
   const [showModal, setShowModal] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [formData, setFormData] = useState({
-    nome: "",
+    razao_social: "",
+    nome_fantasia: "",
     cnpj: "",
-    telefone: "",
-    email: "",
-    responsavel: "",
-    condicoes_comerciais: "",
+    contato_nome: "",
+    contato_email: "",
+    contato_telefone: "",
+    contato_whatsapp: "",
+    condicoes_pagamento: "",
     ativo: true,
   });
 
@@ -53,11 +57,11 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
       const { data, error } = await supabase
         .from("suppliers")
         .select("*")
-        .eq("clinic_id", clinicaId)
-        .order("nome");
+        .eq("clinica_id", clinicaId)
+        .order("razao_social");
 
       if (error) throw error;
-      setSuppliers(data || []);
+      setSuppliers((data || []) as Supplier[]);
     } catch (error) {
       console.error("Erro ao carregar fornecedores:", error);
       toast.error("Erro ao carregar fornecedores");
@@ -70,23 +74,27 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
     if (supplier) {
       setEditingSupplier(supplier);
       setFormData({
-        nome: supplier.nome,
+        razao_social: supplier.razao_social,
+        nome_fantasia: supplier.nome_fantasia || "",
         cnpj: supplier.cnpj || "",
-        telefone: supplier.telefone || "",
-        email: supplier.email || "",
-        responsavel: supplier.responsavel || "",
-        condicoes_comerciais: supplier.condicoes_comerciais || "",
+        contato_nome: supplier.contato_nome || "",
+        contato_email: supplier.contato_email || "",
+        contato_telefone: supplier.contato_telefone || "",
+        contato_whatsapp: supplier.contato_whatsapp || "",
+        condicoes_pagamento: supplier.condicoes_pagamento || "",
         ativo: supplier.ativo,
       });
     } else {
       setEditingSupplier(null);
       setFormData({
-        nome: "",
+        razao_social: "",
+        nome_fantasia: "",
         cnpj: "",
-        telefone: "",
-        email: "",
-        responsavel: "",
-        condicoes_comerciais: "",
+        contato_nome: "",
+        contato_email: "",
+        contato_telefone: "",
+        contato_whatsapp: "",
+        condicoes_pagamento: "",
         ativo: true,
       });
     }
@@ -94,8 +102,8 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.nome) {
-      toast.error("Nome é obrigatório");
+    if (!formData.razao_social) {
+      toast.error("Razão Social é obrigatória");
       return;
     }
 
@@ -104,12 +112,14 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
         const { error } = await supabase
           .from("suppliers")
           .update({
-            nome: formData.nome,
+            razao_social: formData.razao_social,
+            nome_fantasia: formData.nome_fantasia || null,
             cnpj: formData.cnpj || null,
-            telefone: formData.telefone || null,
-            email: formData.email || null,
-            responsavel: formData.responsavel || null,
-            condicoes_comerciais: formData.condicoes_comerciais || null,
+            contato_nome: formData.contato_nome || null,
+            contato_email: formData.contato_email || null,
+            contato_telefone: formData.contato_telefone || null,
+            contato_whatsapp: formData.contato_whatsapp || null,
+            condicoes_pagamento: formData.condicoes_pagamento || null,
             ativo: formData.ativo,
           })
           .eq("id", editingSupplier.id);
@@ -118,13 +128,15 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
         toast.success("Fornecedor atualizado!");
       } else {
         const { error } = await supabase.from("suppliers").insert({
-          clinic_id: clinicaId,
-          nome: formData.nome,
+          clinica_id: clinicaId,
+          razao_social: formData.razao_social,
+          nome_fantasia: formData.nome_fantasia || null,
           cnpj: formData.cnpj || null,
-          telefone: formData.telefone || null,
-          email: formData.email || null,
-          responsavel: formData.responsavel || null,
-          condicoes_comerciais: formData.condicoes_comerciais || null,
+          contato_nome: formData.contato_nome || null,
+          contato_email: formData.contato_email || null,
+          contato_telefone: formData.contato_telefone || null,
+          contato_whatsapp: formData.contato_whatsapp || null,
+          condicoes_pagamento: formData.condicoes_pagamento || null,
           ativo: formData.ativo,
         });
 
@@ -154,11 +166,16 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
     }
   };
 
+  const getDisplayName = (supplier: Supplier) => {
+    return supplier.nome_fantasia || supplier.razao_social;
+  };
+
   const filteredSuppliers = suppliers.filter(
     (s) =>
-      s.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.razao_social.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.nome_fantasia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       s.cnpj?.includes(searchTerm) ||
-      s.responsavel?.toLowerCase().includes(searchTerm.toLowerCase())
+      s.contato_nome?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -212,10 +229,17 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
             <TableBody>
               {filteredSuppliers.map((supplier) => (
                 <TableRow key={supplier.id}>
-                  <TableCell className="font-medium">{supplier.nome}</TableCell>
+                  <TableCell>
+                    <div>
+                      <div className="font-medium">{getDisplayName(supplier)}</div>
+                      {supplier.nome_fantasia && (
+                        <div className="text-xs text-muted-foreground">{supplier.razao_social}</div>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>{supplier.cnpj || "—"}</TableCell>
-                  <TableCell>{supplier.responsavel || "—"}</TableCell>
-                  <TableCell>{supplier.telefone || "—"}</TableCell>
+                  <TableCell>{supplier.contato_nome || "—"}</TableCell>
+                  <TableCell>{supplier.contato_telefone || "—"}</TableCell>
                   <TableCell>
                     {supplier.ativo ? (
                       <Badge className="bg-green-100 text-green-800">Ativo</Badge>
@@ -241,23 +265,32 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
 
         {/* Modal */}
         <Dialog open={showModal} onOpenChange={setShowModal}>
-          <DialogContent>
+          <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>{editingSupplier ? "Editar Fornecedor" : "Novo Fornecedor"}</DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4">
               <div>
-                <Label htmlFor="nome">Nome / Razão Social *</Label>
+                <Label htmlFor="razao_social">Razão Social *</Label>
                 <Input
-                  id="nome"
-                  value={formData.nome}
-                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  placeholder="Nome do fornecedor"
+                  id="razao_social"
+                  value={formData.razao_social}
+                  onChange={(e) => setFormData({ ...formData, razao_social: e.target.value })}
+                  placeholder="Razão Social do fornecedor"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
+                  <Input
+                    id="nome_fantasia"
+                    value={formData.nome_fantasia}
+                    onChange={(e) => setFormData({ ...formData, nome_fantasia: e.target.value })}
+                    placeholder="Nome Fantasia"
+                  />
+                </div>
                 <div>
                   <Label htmlFor="cnpj">CNPJ</Label>
                   <Input
@@ -267,45 +300,57 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
                     placeholder="00.000.000/0000-00"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="telefone">Telefone</Label>
+                  <Label htmlFor="contato_nome">Nome do Contato</Label>
                   <Input
-                    id="telefone"
-                    value={formData.telefone}
-                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                    placeholder="(11) 99999-9999"
+                    id="contato_nome"
+                    value={formData.contato_nome}
+                    onChange={(e) => setFormData({ ...formData, contato_nome: e.target.value })}
+                    placeholder="Nome do contato"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="contato_email">E-mail</Label>
+                  <Input
+                    id="contato_email"
+                    type="email"
+                    value={formData.contato_email}
+                    onChange={(e) => setFormData({ ...formData, contato_email: e.target.value })}
+                    placeholder="contato@fornecedor.com"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="email">E-mail</Label>
+                  <Label htmlFor="contato_telefone">Telefone</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="contato@fornecedor.com"
+                    id="contato_telefone"
+                    value={formData.contato_telefone}
+                    onChange={(e) => setFormData({ ...formData, contato_telefone: e.target.value })}
+                    placeholder="(11) 99999-9999"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="responsavel">Responsável</Label>
+                  <Label htmlFor="contato_whatsapp">WhatsApp</Label>
                   <Input
-                    id="responsavel"
-                    value={formData.responsavel}
-                    onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
-                    placeholder="Nome do contato"
+                    id="contato_whatsapp"
+                    value={formData.contato_whatsapp}
+                    onChange={(e) => setFormData({ ...formData, contato_whatsapp: e.target.value })}
+                    placeholder="(11) 99999-9999"
                   />
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="condicoes">Condições Comerciais</Label>
+                <Label htmlFor="condicoes">Condições de Pagamento</Label>
                 <Textarea
                   id="condicoes"
-                  value={formData.condicoes_comerciais}
-                  onChange={(e) => setFormData({ ...formData, condicoes_comerciais: e.target.value })}
+                  value={formData.condicoes_pagamento}
+                  onChange={(e) => setFormData({ ...formData, condicoes_pagamento: e.target.value })}
                   placeholder="Ex: 30/60/90 dias, desconto 5%..."
                   rows={2}
                 />

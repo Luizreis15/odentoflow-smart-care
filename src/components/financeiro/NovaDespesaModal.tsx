@@ -17,7 +17,8 @@ interface NovaDespesaModalProps {
 
 interface Supplier {
   id: string;
-  nome: string;
+  razao_social: string;
+  nome_fantasia: string | null;
 }
 
 interface Category {
@@ -59,17 +60,21 @@ export const NovaDespesaModal = ({ open, onOpenChange, clinicId, onSuccess }: No
   const loadOptions = async () => {
     try {
       const [suppliersRes, categoriesRes, typesRes] = await Promise.all([
-        supabase.from("suppliers").select("id, nome").eq("clinic_id", clinicId).eq("ativo", true),
+        supabase.from("suppliers").select("id, razao_social, nome_fantasia").eq("clinica_id", clinicId).eq("ativo", true),
         supabase.from("expense_categories").select("id, nome, cor").eq("clinic_id", clinicId).eq("ativo", true),
         supabase.from("expense_types").select("id, nome, tipo").eq("clinic_id", clinicId).eq("ativo", true),
       ]);
 
-      if (suppliersRes.data) setSuppliers(suppliersRes.data);
-      if (categoriesRes.data) setCategories(categoriesRes.data);
-      if (typesRes.data) setExpenseTypes(typesRes.data);
+      if (suppliersRes.data) setSuppliers(suppliersRes.data as Supplier[]);
+      if (categoriesRes.data) setCategories(categoriesRes.data as Category[]);
+      if (typesRes.data) setExpenseTypes(typesRes.data as ExpenseType[]);
     } catch (error) {
       console.error("Erro ao carregar opções:", error);
     }
+  };
+
+  const getSupplierDisplayName = (supplier: Supplier) => {
+    return supplier.nome_fantasia || supplier.razao_social;
   };
 
   const handleSubmit = async () => {
@@ -180,7 +185,7 @@ export const NovaDespesaModal = ({ open, onOpenChange, clinicId, onSuccess }: No
               </SelectTrigger>
               <SelectContent>
                 {suppliers.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                  <SelectItem key={s.id} value={s.id}>{getSupplierDisplayName(s)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

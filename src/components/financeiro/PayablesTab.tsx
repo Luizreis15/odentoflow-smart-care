@@ -26,7 +26,8 @@ interface PayableTitle {
   notes: string | null;
   recurrence: string;
   supplier?: {
-    nome: string;
+    razao_social: string;
+    nome_fantasia: string | null;
   } | null;
   category?: {
     nome: string;
@@ -79,7 +80,7 @@ export const PayablesTab = ({ clinicId }: PayablesTabProps) => {
         .from("payable_titles")
         .select(`
           *,
-          supplier:suppliers(nome),
+          supplier:suppliers(razao_social, nome_fantasia),
           category:expense_categories(nome, cor),
           expense_type:expense_types(nome, tipo)
         `)
@@ -94,8 +95,8 @@ export const PayablesTab = ({ clinicId }: PayablesTabProps) => {
 
       if (error) throw error;
       
-      setTitles(data || []);
-      calculateAging(data || []);
+      setTitles((data || []) as PayableTitle[]);
+      calculateAging((data || []) as PayableTitle[]);
     } catch (error) {
       console.error("Erro ao carregar títulos:", error);
       toast.error("Erro ao carregar contas a pagar");
@@ -168,10 +169,16 @@ export const PayablesTab = ({ clinicId }: PayablesTabProps) => {
     return diffDays;
   };
 
+  const getSupplierName = (title: PayableTitle) => {
+    if (!title.supplier) return "Sem fornecedor";
+    return title.supplier.nome_fantasia || title.supplier.razao_social;
+  };
+
   const filteredTitles = titles.filter((title) => {
+    const supplierName = getSupplierName(title);
     const matchesSearch = 
       title.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      title.supplier?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      supplierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       title.title_number.toString().includes(searchTerm);
 
     if (!matchesSearch) return false;
@@ -324,7 +331,7 @@ export const PayablesTab = ({ clinicId }: PayablesTabProps) => {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate">{title.description}</p>
-                        <p className="text-sm text-muted-foreground">{title.supplier?.nome || "Sem fornecedor"}</p>
+                        <p className="text-sm text-muted-foreground">{getSupplierName(title)}</p>
                       </div>
                       {getStatusBadge(title.status, title.due_date)}
                     </div>
@@ -397,7 +404,7 @@ export const PayablesTab = ({ clinicId }: PayablesTabProps) => {
                     <TableRow key={title.id} className={daysOverdue > 0 && title.status !== "paid" && title.status !== "cancelled" ? "bg-red-50" : ""}>
                       <TableCell className="font-mono">#{title.title_number}</TableCell>
                       <TableCell>
-                        <div className="font-medium">{title.supplier?.nome || "—"}</div>
+                        <div className="font-medium">{getSupplierName(title)}</div>
                       </TableCell>
                       <TableCell>
                         <div className="max-w-[200px] truncate">{title.description}</div>
