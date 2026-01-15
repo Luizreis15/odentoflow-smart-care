@@ -17,7 +17,8 @@ interface PayableTitle {
   amount: number;
   balance: number;
   supplier?: {
-    nome: string;
+    razao_social: string;
+    nome_fantasia: string | null;
   } | null;
 }
 
@@ -76,16 +77,22 @@ export const PagamentoDespesaDrawer = ({
 
   const loadCaixas = async () => {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("caixas")
         .select("id, nome")
-        .eq("clinic_id", clinicId)
+        .eq("clinica_id", clinicId)
         .eq("ativo", true);
 
-      if (data) setCaixas(data);
+      if (error) throw error;
+      if (data) setCaixas(data as Caixa[]);
     } catch (error) {
       console.error("Erro ao carregar caixas:", error);
     }
+  };
+
+  const getSupplierName = () => {
+    if (!title.supplier) return "—";
+    return title.supplier.nome_fantasia || title.supplier.razao_social;
   };
 
   const handleSubmit = async () => {
@@ -151,7 +158,7 @@ export const PagamentoDespesaDrawer = ({
             <div className="bg-muted p-4 rounded-lg space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Fornecedor:</span>
-                <span className="font-medium">{title.supplier?.nome || "—"}</span>
+                <span className="font-medium">{getSupplierName()}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Vencimento:</span>

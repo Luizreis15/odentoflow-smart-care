@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { NovaTransacaoModal } from "@/components/financeiro/NovaTransacaoModal";
 import { ComissoesTab } from "@/components/financeiro/ComissoesTab";
 import { ReceivablesTab } from "@/components/financeiro/ReceivablesTab";
+import { PayablesTab } from "@/components/financeiro/PayablesTab";
 
 interface Transaction {
   id: string;
@@ -162,6 +163,9 @@ const Financeiro = () => {
               <TabsTrigger value="receber" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
                 RECEBER
               </TabsTrigger>
+              <TabsTrigger value="pagar" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
+                PAGAR
+              </TabsTrigger>
               <TabsTrigger value="transacoes" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
                 TRANSAÇÕES
               </TabsTrigger>
@@ -170,9 +174,6 @@ const Financeiro = () => {
               </TabsTrigger>
               <TabsTrigger value="comissoes" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
                 COMISSÕES
-              </TabsTrigger>
-              <TabsTrigger value="carteira" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
-                CARTEIRA
               </TabsTrigger>
             </TabsList>
           </div>
@@ -344,6 +345,10 @@ const Financeiro = () => {
 
           <TabsContent value="receber" className="m-0 p-4 md:p-6">
             {clinicId && <ReceivablesTab clinicId={clinicId} />}
+          </TabsContent>
+
+          <TabsContent value="pagar" className="m-0 p-4 md:p-6">
+            {clinicId && <PayablesTab clinicId={clinicId} />}
           </TabsContent>
 
           <TabsContent value="transacoes" className="m-0 p-4 md:p-6">

@@ -15,6 +15,8 @@ import { ContratosTab } from "@/components/configuracoes/ContratosTab";
 import { CaixasTab } from "@/components/configuracoes/CaixasTab";
 import { CadeirasTab } from "@/components/configuracoes/CadeirasTab";
 import { LocaisEstoqueTab } from "@/components/configuracoes/LocaisEstoqueTab";
+import { FornecedoresTab } from "@/components/configuracoes/FornecedoresTab";
+import { DespesasTab } from "@/components/configuracoes/DespesasTab";
 
 const Configuracoes = () => {
   const navigate = useNavigate();
@@ -100,19 +102,23 @@ const Configuracoes = () => {
       )}
 
       <Tabs defaultValue="clinica" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-11 h-auto">
-          <TabsTrigger value="clinica">Clínica</TabsTrigger>
-          <TabsTrigger value="equipe">Equipe</TabsTrigger>
-          <TabsTrigger value="usuarios">Usuários</TabsTrigger>
-          <TabsTrigger value="nota-fiscal">Nota Fiscal</TabsTrigger>
-          <TabsTrigger value="planos">Planos</TabsTrigger>
-          <TabsTrigger value="anamnese">Anamnese</TabsTrigger>
-          <TabsTrigger value="contratos">Contratos</TabsTrigger>
-          <TabsTrigger value="categorias">Categorias</TabsTrigger>
-          <TabsTrigger value="caixas">Caixas</TabsTrigger>
-          <TabsTrigger value="cadeiras">Cadeiras</TabsTrigger>
-          <TabsTrigger value="locais-estoque">Locais Estoque</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+          <TabsList className="w-max md:w-full md:grid md:grid-cols-13 h-auto">
+            <TabsTrigger value="clinica">Clínica</TabsTrigger>
+            <TabsTrigger value="equipe">Equipe</TabsTrigger>
+            <TabsTrigger value="usuarios">Usuários</TabsTrigger>
+            <TabsTrigger value="nota-fiscal">Nota Fiscal</TabsTrigger>
+            <TabsTrigger value="planos">Planos</TabsTrigger>
+            <TabsTrigger value="anamnese">Anamnese</TabsTrigger>
+            <TabsTrigger value="contratos">Contratos</TabsTrigger>
+            <TabsTrigger value="categorias">Categorias</TabsTrigger>
+            <TabsTrigger value="caixas">Caixas</TabsTrigger>
+            <TabsTrigger value="cadeiras">Cadeiras</TabsTrigger>
+            <TabsTrigger value="locais-estoque">Estoque</TabsTrigger>
+            <TabsTrigger value="fornecedores">Fornecedores</TabsTrigger>
+            <TabsTrigger value="despesas">Despesas</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="clinica">
           <ClinicaTab clinicaId={profile.clinic_id} />
@@ -158,6 +164,14 @@ const Configuracoes = () => {
 
         <TabsContent value="locais-estoque">
           <LocaisEstoqueTab clinicaId={profile.clinic_id} />
+        </TabsContent>
+
+        <TabsContent value="fornecedores">
+          <FornecedoresTab clinicaId={profile.clinic_id} />
+        </TabsContent>
+
+        <TabsContent value="despesas">
+          <DespesasTab clinicaId={profile.clinic_id} />
         </TabsContent>
       </Tabs>
     </div>
