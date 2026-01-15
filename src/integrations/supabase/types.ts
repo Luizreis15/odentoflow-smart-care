@@ -1245,6 +1245,88 @@ export type Database = {
           },
         ]
       }
+      expense_categories: {
+        Row: {
+          ativo: boolean | null
+          clinic_id: string
+          cor: string | null
+          created_at: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          clinic_id: string
+          cor?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          clinic_id?: string
+          cor?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_categories_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_types: {
+        Row: {
+          ativo: boolean | null
+          clinic_id: string
+          created_at: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          tipo: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          clinic_id: string
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          tipo: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          clinic_id?: string
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          tipo?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_types_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feature_flags: {
         Row: {
           allowlist_tenants: Json | null
@@ -1893,6 +1975,163 @@ export type Database = {
             columns: ["clinic_id"]
             isOneToOne: false
             referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payable_payments: {
+        Row: {
+          amount: number
+          cash_account_id: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          notes: string | null
+          payable_id: string
+          payment_date: string
+          payment_method: string | null
+        }
+        Insert: {
+          amount: number
+          cash_account_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          payable_id: string
+          payment_date?: string
+          payment_method?: string | null
+        }
+        Update: {
+          amount?: number
+          cash_account_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          payable_id?: string
+          payment_date?: string
+          payment_method?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payable_payments_cash_account_id_fkey"
+            columns: ["cash_account_id"]
+            isOneToOne: false
+            referencedRelation: "caixas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payable_payments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payable_payments_payable_id_fkey"
+            columns: ["payable_id"]
+            isOneToOne: false
+            referencedRelation: "payable_titles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payable_titles: {
+        Row: {
+          amount: number
+          balance: number
+          category_id: string | null
+          clinic_id: string
+          created_at: string | null
+          created_by: string | null
+          description: string
+          document_number: string | null
+          due_date: string
+          expense_type_id: string | null
+          id: string
+          notes: string | null
+          payment_method: string | null
+          recurrence: string | null
+          status: string | null
+          supplier_id: string | null
+          title_number: number
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          balance: number
+          category_id?: string | null
+          clinic_id: string
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          document_number?: string | null
+          due_date: string
+          expense_type_id?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          recurrence?: string | null
+          status?: string | null
+          supplier_id?: string | null
+          title_number?: number
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          balance?: number
+          category_id?: string | null
+          clinic_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          document_number?: string | null
+          due_date?: string
+          expense_type_id?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          recurrence?: string | null
+          status?: string | null
+          supplier_id?: string | null
+          title_number?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payable_titles_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payable_titles_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payable_titles_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payable_titles_expense_type_id_fkey"
+            columns: ["expense_type_id"]
+            isOneToOne: false
+            referencedRelation: "expense_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payable_titles_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
