@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Plus, Filter, X, UserPlus, ArrowLeft, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Plus, Filter, X, UserPlus, ArrowLeft, Users, Check, ChevronsUpDown } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
@@ -66,6 +68,7 @@ const Agenda = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
+  const [openPatientCombobox, setOpenPatientCombobox] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [patients, setPatients] = useState<any[]>([]);
@@ -653,18 +656,49 @@ const Agenda = () => {
                       Novo Paciente
                     </Button>
                   </div>
-                  <Select value={formData.patientId} onValueChange={(value) => setFormData({ ...formData, patientId: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o paciente" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {patients.map((patient) => (
-                        <SelectItem key={patient.id} value={patient.id}>
-                          {patient.full_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={openPatientCombobox} onOpenChange={setOpenPatientCombobox}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={openPatientCombobox}
+                        className="w-full justify-between font-normal"
+                      >
+                        {formData.patientId
+                          ? patients.find((p) => p.id === formData.patientId)?.full_name
+                          : "Pesquisar paciente..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Digite o nome do paciente..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhum paciente encontrado.</CommandEmpty>
+                          <CommandGroup>
+                            {patients.map((patient) => (
+                              <CommandItem
+                                key={patient.id}
+                                value={patient.full_name}
+                                onSelect={() => {
+                                  setFormData({ ...formData, patientId: patient.id });
+                                  setOpenPatientCombobox(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    formData.patientId === patient.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {patient.full_name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <div className="space-y-2">
