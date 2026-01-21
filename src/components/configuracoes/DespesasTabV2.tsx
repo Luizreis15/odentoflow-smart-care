@@ -83,23 +83,162 @@ interface Supplier {
   nome_fantasia: string | null;
 }
 
-const MACRO_TYPES_SEED = [
-  { codigo: "fixa", nome: "Despesa Fixa", icone: "Building2", ordem: 1 },
-  { codigo: "variavel", nome: "Despesa Variável", icone: "TrendingUp", ordem: 2 },
-  { codigo: "comissao", nome: "Comissões / Repasse Profissional", icone: "Users", ordem: 3 },
-  { codigo: "financeira", nome: "Despesas Financeiras", icone: "CreditCard", ordem: 4 },
-  { codigo: "laboratorio", nome: "Laboratório & Prótese", icone: "Package", ordem: 5 },
-  { codigo: "capex", nome: "Compra de Equipamentos / Capex", icone: "Cog", ordem: 6 },
-  { codigo: "emprestimo", nome: "Empréstimos e Financiamentos", icone: "Wallet", ordem: 7 },
-  { codigo: "tributo", nome: "Tributos e Obrigações", icone: "FileText", ordem: 8 },
-  { codigo: "pessoal", nome: "Pessoal / Folha", icone: "Users", ordem: 9 },
-  { codigo: "marketing", nome: "Marketing / Comercial", icone: "Sparkles", ordem: 10 },
-  { codigo: "manutencao", nome: "Manutenção / Infraestrutura", icone: "Wrench", ordem: 11 },
-  { codigo: "tecnologia", nome: "Tecnologia / Sistemas", icone: "Cog", ordem: 12 },
-  { codigo: "consumo", nome: "Suprimentos Clínicos (Consumo)", icone: "ShoppingCart", ordem: 13 },
-  { codigo: "limpeza", nome: "Limpeza / Higienização", icone: "Sparkles", ordem: 14 },
-  { codigo: "cursos", nome: "Cursos / Desenvolvimento", icone: "GraduationCap", ordem: 15 },
-];
+// Catálogo completo: Macro Types → Groups → Items
+const CATALOG_SEED = {
+  fixa: {
+    nome: "Despesa Fixa",
+    icone: "Building2",
+    ordem: 1,
+    groups: {
+      aluguel: { nome: "Aluguel e Condomínio", items: ["Aluguel do Imóvel", "Taxa de Condomínio", "IPTU"] },
+      concessionarias: { nome: "Concessionárias", items: ["Energia Elétrica", "Água e Esgoto", "Gás"] },
+      telefonia: { nome: "Telefonia e Internet", items: ["Telefone Fixo", "Internet", "Celular Corporativo"] },
+      seguros: { nome: "Seguros", items: ["Seguro do Imóvel", "Seguro de Equipamentos", "Seguro de Vida"] },
+    },
+  },
+  variavel: {
+    nome: "Despesa Variável",
+    icone: "TrendingUp",
+    ordem: 2,
+    groups: {
+      escritorio: { nome: "Material de Escritório", items: ["Papel A4", "Toner/Cartuchos", "Material de Papelaria"] },
+      copa: { nome: "Copa e Cozinha", items: ["Café", "Água Mineral", "Descartáveis Copa"] },
+      diversos: { nome: "Diversos", items: ["Correios/Motoboy", "Estacionamento", "Uber/Transporte"] },
+    },
+  },
+  comissao: {
+    nome: "Comissões / Repasse Profissional",
+    icone: "Users",
+    ordem: 3,
+    groups: {
+      dentistas: { nome: "Dentistas", items: ["Comissão Dentista Clínico", "Comissão Ortodontista", "Comissão Endodontista", "Comissão Implantodontista"] },
+      especialistas: { nome: "Outros Especialistas", items: ["Comissão Periodontista", "Comissão Protesista", "Repasse Terceiros"] },
+    },
+  },
+  financeira: {
+    nome: "Despesas Financeiras",
+    icone: "CreditCard",
+    ordem: 4,
+    groups: {
+      taxas_bancarias: { nome: "Taxas Bancárias", items: ["Taxa de Manutenção de Conta", "TED/DOC", "Taxa de Boleto"] },
+      taxas_cartao: { nome: "Taxas de Cartão", items: ["Taxa Cartão de Crédito", "Taxa Cartão de Débito", "Antecipação de Recebíveis"] },
+      juros: { nome: "Juros e Multas", items: ["Juros de Empréstimo", "Multas Bancárias", "IOF"] },
+    },
+  },
+  laboratorio: {
+    nome: "Laboratório & Prótese",
+    icone: "Package",
+    ordem: 5,
+    groups: {
+      proteses: { nome: "Próteses Dentárias", items: ["Coroa de Porcelana", "Coroa Metalocerâmica", "Prótese Total", "Prótese Parcial Removível", "Faceta de Porcelana"] },
+      implantes: { nome: "Componentes de Implante", items: ["Implante Osseointegrado", "Cicatrizador", "Pilar Protético", "Coroa sobre Implante"] },
+      ortodontia: { nome: "Ortodontia", items: ["Aparelho Móvel", "Contenção", "Placa de Bruxismo"] },
+    },
+  },
+  capex: {
+    nome: "Compra de Equipamentos / Capex",
+    icone: "Cog",
+    ordem: 6,
+    groups: {
+      equipamentos: { nome: "Equipamentos Odontológicos", items: ["Cadeira Odontológica", "Compressor", "Autoclave", "Raio-X"] },
+      moveis: { nome: "Móveis e Instalações", items: ["Mobiliário Recepção", "Armários Consultório", "Instalações Elétricas"] },
+      informatica: { nome: "Informática", items: ["Computador/Notebook", "Impressora", "Scanner Intraoral"] },
+    },
+  },
+  emprestimo: {
+    nome: "Empréstimos e Financiamentos",
+    icone: "Wallet",
+    ordem: 7,
+    groups: {
+      bancarios: { nome: "Empréstimos Bancários", items: ["Parcela Empréstimo", "Financiamento de Equipamento", "Capital de Giro"] },
+    },
+  },
+  tributo: {
+    nome: "Tributos e Obrigações",
+    icone: "FileText",
+    ordem: 8,
+    groups: {
+      impostos: { nome: "Impostos", items: ["Simples Nacional", "ISS", "IRPJ", "CSLL", "PIS/COFINS"] },
+      taxas: { nome: "Taxas e Licenças", items: ["Alvará de Funcionamento", "Licença Sanitária", "Anuidade CRO", "Taxa de Fiscalização"] },
+      contabilidade: { nome: "Contabilidade", items: ["Honorários Contábeis", "Certificado Digital"] },
+    },
+  },
+  pessoal: {
+    nome: "Pessoal / Folha",
+    icone: "Users",
+    ordem: 9,
+    groups: {
+      salarios: { nome: "Salários", items: ["Salário Recepcionista", "Salário ASB", "Salário Gerente", "Salário Limpeza", "Pró-Labore Sócio"] },
+      encargos: { nome: "Encargos", items: ["FGTS", "INSS Patronal", "GPS/DARF", "Provisão 13º", "Provisão Férias"] },
+      beneficios: { nome: "Benefícios", items: ["Vale Transporte", "Vale Refeição/Alimentação", "Plano de Saúde", "Plano Odontológico"] },
+      rescisoes: { nome: "Rescisões", items: ["Rescisão Contratual", "Aviso Prévio", "Multa FGTS"] },
+    },
+  },
+  marketing: {
+    nome: "Marketing / Comercial",
+    icone: "Sparkles",
+    ordem: 10,
+    groups: {
+      digital: { nome: "Marketing Digital", items: ["Google Ads", "Facebook/Instagram Ads", "Gestão de Redes Sociais", "Criação de Conteúdo"] },
+      tradicional: { nome: "Marketing Tradicional", items: ["Impressos/Panfletos", "Cartões de Visita", "Outdoor/Banner"] },
+      eventos: { nome: "Eventos e Brindes", items: ["Brindes para Pacientes", "Patrocínios", "Eventos"] },
+    },
+  },
+  manutencao: {
+    nome: "Manutenção / Infraestrutura",
+    icone: "Wrench",
+    ordem: 11,
+    groups: {
+      predial: { nome: "Manutenção Predial", items: ["Pintura", "Reparos Hidráulicos", "Reparos Elétricos", "Ar Condicionado"] },
+      equipamentos: { nome: "Manutenção de Equipamentos", items: ["Manutenção Cadeira", "Manutenção Compressor", "Manutenção Autoclave", "Calibração de Equipamentos"] },
+    },
+  },
+  tecnologia: {
+    nome: "Tecnologia / Sistemas",
+    icone: "Cog",
+    ordem: 12,
+    groups: {
+      software: { nome: "Software", items: ["Software de Gestão", "Licenças Microsoft", "Antivírus", "Backup em Nuvem"] },
+      suporte: { nome: "Suporte", items: ["Suporte Técnico TI", "Manutenção de Computadores"] },
+    },
+  },
+  consumo: {
+    nome: "Suprimentos Clínicos (Consumo)",
+    icone: "ShoppingCart",
+    ordem: 13,
+    groups: {
+      epis: { nome: "EPIs e Descartáveis", items: ["Luvas Procedimento", "Luvas Cirúrgicas", "Máscaras", "Gorros", "Óculos de Proteção"] },
+      descartaveis: { nome: "Materiais Descartáveis", items: ["Gaze", "Algodão", "Sugadores", "Seringas", "Agulhas Anestésicas"] },
+      consumiveis: { nome: "Consumíveis Clínicos", items: ["Resina Composta", "Cimento", "Anestésico", "Flúor", "Pasta Profilática"] },
+    },
+  },
+  limpeza: {
+    nome: "Limpeza / Higienização",
+    icone: "Sparkles",
+    ordem: 14,
+    groups: {
+      produtos: { nome: "Produtos de Limpeza", items: ["Desinfetante", "Detergente", "Álcool 70%", "Hipoclorito"] },
+      servicos: { nome: "Serviços de Limpeza", items: ["Serviço de Limpeza Terceirizado", "Lavagem de Uniformes"] },
+    },
+  },
+  cursos: {
+    nome: "Cursos / Desenvolvimento",
+    icone: "GraduationCap",
+    ordem: 15,
+    groups: {
+      capacitacao: { nome: "Capacitação", items: ["Cursos de Atualização", "Congressos", "Workshops", "Assinaturas/Plataformas"] },
+      livros: { nome: "Materiais", items: ["Livros Técnicos", "Revistas Científicas"] },
+    },
+  },
+};
+
+// Backward compatibility
+const MACRO_TYPES_SEED = Object.entries(CATALOG_SEED).map(([codigo, data]) => ({
+  codigo,
+  nome: data.nome,
+  icone: data.icone,
+  ordem: data.ordem,
+}));
 
 const CENTRO_CUSTO_OPTIONS = [
   "Clínica",
@@ -230,20 +369,89 @@ export const DespesasTabV2 = ({ clinicaId }: DespesasTabV2Props) => {
   const importCatalogoPadrao = async () => {
     setSaving(true);
     try {
-      // Insert macro types
-      for (const macro of MACRO_TYPES_SEED) {
-        const { error } = await supabase.from("expense_macro_types").upsert(
-          {
-            clinic_id: clinicaId,
-            codigo: macro.codigo,
-            nome: macro.nome,
-            icone: macro.icone,
-            ordem: macro.ordem,
-            is_system: true,
-          },
-          { onConflict: "clinic_id,codigo" }
-        );
-        if (error) console.error("Erro ao inserir macro:", error);
+      // Insert macro types, groups, and items
+      for (const [codigo, macroData] of Object.entries(CATALOG_SEED)) {
+        // 1. Upsert macro type
+        const { data: macroResult, error: macroError } = await supabase
+          .from("expense_macro_types")
+          .upsert(
+            {
+              clinic_id: clinicaId,
+              codigo,
+              nome: macroData.nome,
+              icone: macroData.icone,
+              ordem: macroData.ordem,
+              is_system: true,
+            },
+            { onConflict: "clinic_id,codigo" }
+          )
+          .select("id")
+          .single();
+
+        if (macroError) {
+          console.error("Erro ao inserir macro:", macroError);
+          continue;
+        }
+
+        const macroId = macroResult.id;
+
+        // 2. Insert groups for this macro
+        let groupOrder = 1;
+        for (const [groupCodigo, groupData] of Object.entries(macroData.groups)) {
+          const { data: groupResult, error: groupError } = await supabase
+            .from("expense_groups")
+            .upsert(
+              {
+                clinic_id: clinicaId,
+                macro_type_id: macroId,
+                nome: groupData.nome,
+                ordem: groupOrder++,
+              },
+              { onConflict: "clinic_id,macro_type_id,nome", ignoreDuplicates: true }
+            )
+            .select("id")
+            .single();
+
+          if (groupError) {
+            // Try to get existing group
+            const { data: existingGroup } = await supabase
+              .from("expense_groups")
+              .select("id")
+              .eq("clinic_id", clinicaId)
+              .eq("macro_type_id", macroId)
+              .eq("nome", groupData.nome)
+              .single();
+
+            if (!existingGroup) {
+              console.error("Erro ao inserir grupo:", groupError);
+              continue;
+            }
+
+            // 3. Insert items for existing group
+            for (const itemNome of groupData.items) {
+              await supabase.from("expense_items").upsert(
+                {
+                  clinic_id: clinicaId,
+                  group_id: existingGroup.id,
+                  nome: itemNome,
+                },
+                { onConflict: "clinic_id,group_id,nome", ignoreDuplicates: true }
+              );
+            }
+          } else if (groupResult) {
+            // 3. Insert items for new group
+            for (const itemNome of groupData.items) {
+              await supabase.from("expense_items").upsert(
+                {
+                  clinic_id: clinicaId,
+                  group_id: groupResult.id,
+                  nome: itemNome,
+                },
+                { onConflict: "clinic_id,group_id,nome", ignoreDuplicates: true }
+              );
+            }
+          }
+        }
       }
 
       toast({ title: "Catálogo padrão importado com sucesso!" });

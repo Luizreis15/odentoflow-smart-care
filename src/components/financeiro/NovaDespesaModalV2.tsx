@@ -7,9 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ChevronRight, Building2, Calendar, Repeat } from "lucide-react";
+import { ChevronRight, Building2, Calendar, Repeat, AlertCircle, Settings } from "lucide-react";
 
 interface NovaDespesaModalV2Props {
   open: boolean;
@@ -53,6 +55,7 @@ interface Caixa {
 }
 
 export const NovaDespesaModalV2 = ({ open, onOpenChange, clinicId, onSuccess }: NovaDespesaModalV2Props) => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   
@@ -62,6 +65,9 @@ export const NovaDespesaModalV2 = ({ open, onOpenChange, clinicId, onSuccess }: 
   const [items, setItems] = useState<ExpenseItem[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [caixas, setCaixas] = useState<Caixa[]>([]);
+  
+  // Check if catalog is empty
+  const isCatalogEmpty = groups.length === 0 && items.length === 0;
 
   // Form data
   const [formData, setFormData] = useState({
@@ -315,6 +321,31 @@ export const NovaDespesaModalV2 = ({ open, onOpenChange, clinicId, onSuccess }: 
               Selecione do Catálogo
             </div>
 
+            {isCatalogEmpty && (
+              <Alert className="border-amber-200 bg-amber-50">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-amber-800">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <span>
+                      O catálogo de despesas está vazio. Para ter grupos e itens disponíveis, importe o catálogo padrão.
+                    </span>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="border-amber-300 hover:bg-amber-100 shrink-0"
+                      onClick={() => {
+                        onOpenChange(false);
+                        navigate("/dashboard/configuracoes?tab=despesas");
+                      }}
+                    >
+                      <Settings className="h-4 w-4 mr-1" />
+                      Configurar Catálogo
+                    </Button>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label>Tipo Macro *</Label>
@@ -334,14 +365,20 @@ export const NovaDespesaModalV2 = ({ open, onOpenChange, clinicId, onSuccess }: 
               </div>
 
               <div>
-                <Label>Grupo</Label>
+                <Label>Grupo {!isCatalogEmpty && formData.macroTypeId && filteredGroups.length === 0 && "(nenhum)"}</Label>
                 <Select 
                   value={formData.groupId} 
                   onValueChange={(v) => setFormData({ ...formData, groupId: v, expenseItemId: "" })}
-                  disabled={!formData.macroTypeId}
+                  disabled={!formData.macroTypeId || filteredGroups.length === 0}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={formData.macroTypeId ? "Selecione..." : "Selecione tipo"} />
+                    <SelectValue placeholder={
+                      !formData.macroTypeId 
+                        ? "Selecione tipo" 
+                        : filteredGroups.length === 0 
+                          ? "Sem grupos" 
+                          : "Selecione..."
+                    } />
                   </SelectTrigger>
                   <SelectContent>
                     {filteredGroups.map((g) => (
@@ -352,14 +389,20 @@ export const NovaDespesaModalV2 = ({ open, onOpenChange, clinicId, onSuccess }: 
               </div>
 
               <div>
-                <Label>Item</Label>
+                <Label>Item {!isCatalogEmpty && formData.groupId && filteredItems.length === 0 && "(nenhum)"}</Label>
                 <Select 
                   value={formData.expenseItemId} 
                   onValueChange={(v) => setFormData({ ...formData, expenseItemId: v })}
-                  disabled={!formData.groupId}
+                  disabled={!formData.groupId || filteredItems.length === 0}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={formData.groupId ? "Selecione..." : "Selecione grupo"} />
+                    <SelectValue placeholder={
+                      !formData.groupId 
+                        ? "Selecione grupo" 
+                        : filteredItems.length === 0 
+                          ? "Sem itens" 
+                          : "Selecione..."
+                    } />
                   </SelectTrigger>
                   <SelectContent>
                     {filteredItems.map((i) => (
