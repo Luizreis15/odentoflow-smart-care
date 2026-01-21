@@ -5,6 +5,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { Button } from "@/components/ui/button";
 import { Shield, LayoutDashboard, FileText, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import logoFlowdent from '@/assets/logo-flowdent.png';
 
 interface SuperAdminLayoutProps {
   children: React.ReactNode;
@@ -64,9 +65,12 @@ export default function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
       {/* Sidebar */}
       <aside className="w-64 bg-card border-r border-border flex flex-col">
         <div className="p-6 border-b border-border">
-          <div className="flex items-center gap-2">
-            <Shield className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold">Super Admin</h1>
+          <div className="flex flex-col gap-3">
+            <img src={logoFlowdent} alt="Flowdent" className="h-8 w-auto" />
+            <div className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-primary" />
+              <span className="text-sm font-semibold text-muted-foreground">Super Admin</span>
+            </div>
           </div>
         </div>
 

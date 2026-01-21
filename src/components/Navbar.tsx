@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import logoFlowdent from '@/assets/logo-flowdent.png';
 
 interface NavbarProps {
   user?: {
@@ -44,10 +45,7 @@ const Navbar = ({ user }: NavbarProps) => {
     <nav className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-3 md:px-4 h-14 md:h-16 flex items-center justify-between">
         <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2">
-          <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-gradient-hero flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-base md:text-lg">F</span>
-          </div>
-          <span className="font-bold text-lg md:text-xl text-foreground">Flowdent</span>
+          <img src={logoFlowdent} alt="Flowdent" className="h-8 w-auto" />
         </Link>
 
         {user ? (

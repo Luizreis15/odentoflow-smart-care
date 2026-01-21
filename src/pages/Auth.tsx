@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 import TestimonialCarousel from "@/components/auth/TestimonialCarousel";
+import logoFlowdent from '@/assets/logo-flowdent.png';
 
 const signinSchema = z.object({
   email: z.string().email("Invalid email format").max(255, "Email must be less than 255 characters"),
@@ -295,12 +296,11 @@ const Auth = () => {
         {/* Header - Com gradiente no mobile */}
         <div className="bg-gradient-to-r from-[hsl(var(--flowdent-blue))] to-[hsl(var(--flow-turquoise))] lg:bg-none lg:bg-white p-6 lg:border-b">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-white/20 lg:bg-[hsl(var(--flowdent-blue))]/10 flex items-center justify-center">
-              <span className="text-2xl font-bold text-white lg:text-[hsl(var(--flowdent-blue))]">F</span>
-            </div>
-            <span className="text-2xl font-bold text-white lg:text-[hsl(var(--flowdent-blue))]">
-              Flowdent
-            </span>
+            <img 
+              src={logoFlowdent} 
+              alt="Flowdent" 
+              className="h-10 w-auto brightness-0 invert lg:brightness-100 lg:invert-0"
+            />
           </Link>
         </div>
 
