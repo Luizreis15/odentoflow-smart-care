@@ -776,10 +776,10 @@ export const DespesasTabV2 = ({ clinicaId }: DespesasTabV2Props) => {
               </CardDescription>
             </div>
             <div className="flex flex-wrap gap-2">
-              {macroTypes.length === 0 && (
+              {(macroTypes.length === 0 || groups.length === 0 || items.length === 0) && (
                 <Button onClick={importCatalogoPadrao} disabled={saving} variant="outline">
                   {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Importar Catálogo Padrão
+                  {macroTypes.length === 0 ? "Importar Catálogo Padrão" : "Completar Catálogo"}
                 </Button>
               )}
               <Button onClick={() => handleOpenMacroModal()}>
