@@ -13,6 +13,7 @@ import { ReceivablesTab } from "@/components/financeiro/ReceivablesTab";
 import { PayablesTab } from "@/components/financeiro/PayablesTab";
 import { RecorrenciasTab } from "@/components/financeiro/RecorrenciasTab";
 import { CalendarioFinanceiro } from "@/components/financeiro/CalendarioFinanceiro";
+import { RelatoriosFinanceiroTab } from "@/components/financeiro/RelatoriosFinanceiroTab";
 interface Transaction {
   id: string;
   type: string;
@@ -175,6 +176,9 @@ const Financeiro = () => {
               </TabsTrigger>
               <TabsTrigger value="comissoes" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
                 COMISSÕES
+              </TabsTrigger>
+              <TabsTrigger value="relatorios" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
+                RELATÓRIOS
               </TabsTrigger>
             </TabsList>
           </div>
@@ -362,6 +366,10 @@ const Financeiro = () => {
 
           <TabsContent value="comissoes" className="m-0 p-4 md:p-6">
             {clinicId && <ComissoesTab clinicId={clinicId} />}
+          </TabsContent>
+
+          <TabsContent value="relatorios" className="m-0 p-4 md:p-6">
+            {clinicId && <RelatoriosFinanceiroTab clinicId={clinicId} />}
           </TabsContent>
         </div>
       </Tabs>
