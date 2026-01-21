@@ -1286,6 +1286,189 @@ export type Database = {
           },
         ]
       }
+      expense_groups: {
+        Row: {
+          ativo: boolean | null
+          clinic_id: string | null
+          created_at: string | null
+          descricao: string | null
+          id: string
+          macro_type_id: string | null
+          nome: string
+          ordem: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          clinic_id?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          macro_type_id?: string | null
+          nome: string
+          ordem?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          clinic_id?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          macro_type_id?: string | null
+          nome?: string
+          ordem?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_groups_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_groups_macro_type_id_fkey"
+            columns: ["macro_type_id"]
+            isOneToOne: false
+            referencedRelation: "expense_macro_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_items: {
+        Row: {
+          ativo: boolean | null
+          centro_custo: string | null
+          clinic_id: string | null
+          created_at: string | null
+          descricao: string | null
+          dia_vencimento: number | null
+          e_investimento: boolean | null
+          forma_pagamento_padrao: string | null
+          fornecedor_padrao_id: string | null
+          frequencia: string | null
+          group_id: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          recorrente: boolean | null
+          updated_at: string | null
+          valor_padrao: number | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          centro_custo?: string | null
+          clinic_id?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          dia_vencimento?: number | null
+          e_investimento?: boolean | null
+          forma_pagamento_padrao?: string | null
+          fornecedor_padrao_id?: string | null
+          frequencia?: string | null
+          group_id?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          recorrente?: boolean | null
+          updated_at?: string | null
+          valor_padrao?: number | null
+        }
+        Update: {
+          ativo?: boolean | null
+          centro_custo?: string | null
+          clinic_id?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          dia_vencimento?: number | null
+          e_investimento?: boolean | null
+          forma_pagamento_padrao?: string | null
+          fornecedor_padrao_id?: string | null
+          frequencia?: string | null
+          group_id?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          recorrente?: boolean | null
+          updated_at?: string | null
+          valor_padrao?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_items_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_items_fornecedor_padrao_id_fkey"
+            columns: ["fornecedor_padrao_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_items_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "expense_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_macro_types: {
+        Row: {
+          ativo: boolean | null
+          clinic_id: string | null
+          codigo: string
+          created_at: string | null
+          descricao: string | null
+          icone: string | null
+          id: string
+          is_system: boolean | null
+          nome: string
+          ordem: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          clinic_id?: string | null
+          codigo: string
+          created_at?: string | null
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          is_system?: boolean | null
+          nome: string
+          ordem?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          clinic_id?: string | null
+          codigo?: string
+          created_at?: string | null
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          is_system?: boolean | null
+          nome?: string
+          ordem?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_macro_types_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expense_types: {
         Row: {
           ativo: boolean | null
@@ -1370,6 +1553,101 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "system_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_recurrences: {
+        Row: {
+          ativo: boolean | null
+          centro_custo: string | null
+          clinic_id: string
+          conta_bancaria_id: string | null
+          created_at: string | null
+          data_fim: string | null
+          data_inicio: string
+          descricao: string
+          dia_semana: number | null
+          dia_vencimento: number | null
+          expense_item_id: string | null
+          frequencia: string
+          id: string
+          proxima_geracao: string | null
+          supplier_id: string | null
+          tipo: string
+          ultima_geracao: string | null
+          updated_at: string | null
+          valor: number
+        }
+        Insert: {
+          ativo?: boolean | null
+          centro_custo?: string | null
+          clinic_id: string
+          conta_bancaria_id?: string | null
+          created_at?: string | null
+          data_fim?: string | null
+          data_inicio: string
+          descricao: string
+          dia_semana?: number | null
+          dia_vencimento?: number | null
+          expense_item_id?: string | null
+          frequencia: string
+          id?: string
+          proxima_geracao?: string | null
+          supplier_id?: string | null
+          tipo: string
+          ultima_geracao?: string | null
+          updated_at?: string | null
+          valor: number
+        }
+        Update: {
+          ativo?: boolean | null
+          centro_custo?: string | null
+          clinic_id?: string
+          conta_bancaria_id?: string | null
+          created_at?: string | null
+          data_fim?: string | null
+          data_inicio?: string
+          descricao?: string
+          dia_semana?: number | null
+          dia_vencimento?: number | null
+          expense_item_id?: string | null
+          frequencia?: string
+          id?: string
+          proxima_geracao?: string | null
+          supplier_id?: string | null
+          tipo?: string
+          ultima_geracao?: string | null
+          updated_at?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_recurrences_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_recurrences_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "caixas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_recurrences_expense_item_id_fkey"
+            columns: ["expense_item_id"]
+            isOneToOne: false
+            referencedRelation: "expense_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_recurrences_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -2042,60 +2320,84 @@ export type Database = {
           amount: number
           balance: number
           category_id: string | null
+          centro_custo: string | null
           clinic_id: string
+          competencia: string | null
+          conta_bancaria_id: string | null
           created_at: string | null
           created_by: string | null
           description: string
           document_number: string | null
           due_date: string
+          expense_item_id: string | null
           expense_type_id: string | null
           id: string
           notes: string | null
+          parcela_numero: number | null
+          parcelado: boolean | null
           payment_method: string | null
           recurrence: string | null
+          recurrence_id: string | null
           status: string | null
           supplier_id: string | null
           title_number: number
+          total_parcelas: number | null
           updated_at: string | null
         }
         Insert: {
           amount: number
           balance: number
           category_id?: string | null
+          centro_custo?: string | null
           clinic_id: string
+          competencia?: string | null
+          conta_bancaria_id?: string | null
           created_at?: string | null
           created_by?: string | null
           description: string
           document_number?: string | null
           due_date: string
+          expense_item_id?: string | null
           expense_type_id?: string | null
           id?: string
           notes?: string | null
+          parcela_numero?: number | null
+          parcelado?: boolean | null
           payment_method?: string | null
           recurrence?: string | null
+          recurrence_id?: string | null
           status?: string | null
           supplier_id?: string | null
           title_number?: number
+          total_parcelas?: number | null
           updated_at?: string | null
         }
         Update: {
           amount?: number
           balance?: number
           category_id?: string | null
+          centro_custo?: string | null
           clinic_id?: string
+          competencia?: string | null
+          conta_bancaria_id?: string | null
           created_at?: string | null
           created_by?: string | null
           description?: string
           document_number?: string | null
           due_date?: string
+          expense_item_id?: string | null
           expense_type_id?: string | null
           id?: string
           notes?: string | null
+          parcela_numero?: number | null
+          parcelado?: boolean | null
           payment_method?: string | null
           recurrence?: string | null
+          recurrence_id?: string | null
           status?: string | null
           supplier_id?: string | null
           title_number?: number
+          total_parcelas?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -2114,6 +2416,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "payable_titles_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "caixas"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "payable_titles_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
@@ -2121,10 +2430,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "payable_titles_expense_item_id_fkey"
+            columns: ["expense_item_id"]
+            isOneToOne: false
+            referencedRelation: "expense_items"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "payable_titles_expense_type_id_fkey"
             columns: ["expense_type_id"]
             isOneToOne: false
             referencedRelation: "expense_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payable_titles_recurrence_id_fkey"
+            columns: ["recurrence_id"]
+            isOneToOne: false
+            referencedRelation: "financial_recurrences"
             referencedColumns: ["id"]
           },
           {
@@ -3297,10 +3620,13 @@ export type Database = {
       receivable_titles: {
         Row: {
           amount: number
+          antecipado: boolean | null
           balance: number
           budget_id: string | null
           clinic_id: string
+          competencia: string | null
           created_at: string | null
+          data_repasse: string | null
           due_date: string
           id: string
           installment_number: number | null
@@ -3309,16 +3635,21 @@ export type Database = {
           patient_id: string
           payment_method: string | null
           status: string | null
+          taxa_adquirente: number | null
           title_number: number
           total_installments: number | null
           updated_at: string | null
+          valor_liquido: number | null
         }
         Insert: {
           amount: number
+          antecipado?: boolean | null
           balance: number
           budget_id?: string | null
           clinic_id: string
+          competencia?: string | null
           created_at?: string | null
+          data_repasse?: string | null
           due_date: string
           id?: string
           installment_number?: number | null
@@ -3327,16 +3658,21 @@ export type Database = {
           patient_id: string
           payment_method?: string | null
           status?: string | null
+          taxa_adquirente?: number | null
           title_number?: number
           total_installments?: number | null
           updated_at?: string | null
+          valor_liquido?: number | null
         }
         Update: {
           amount?: number
+          antecipado?: boolean | null
           balance?: number
           budget_id?: string | null
           clinic_id?: string
+          competencia?: string | null
           created_at?: string | null
+          data_repasse?: string | null
           due_date?: string
           id?: string
           installment_number?: number | null
@@ -3345,9 +3681,11 @@ export type Database = {
           patient_id?: string
           payment_method?: string | null
           status?: string | null
+          taxa_adquirente?: number | null
           title_number?: number
           total_installments?: number | null
           updated_at?: string | null
+          valor_liquido?: number | null
         }
         Relationships: [
           {
