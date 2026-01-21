@@ -14,6 +14,145 @@ interface ResendInviteRequest {
   clinicaId: string;
 }
 
+// Template HTML premium para reenvio de convite
+const generateResendInviteEmailHtml = (
+  name: string,
+  email: string,
+  roleName: string,
+  clinicName: string,
+  resetLink: string
+) => `
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reenvio de Convite - Flowdent</title>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f4f5;">
+      <tr>
+        <td align="center" style="padding: 40px 20px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);">
+            <!-- Header Premium -->
+            <tr>
+              <td style="background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%); padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center;">
+                <div style="font-size: 40px; margin-bottom: 8px;">🦷</div>
+                <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">FLOWDENT</h1>
+                <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 14px; font-weight: 500;">Sistema de Gestão Odontológica</p>
+              </td>
+            </tr>
+            
+            <!-- Content -->
+            <tr>
+              <td style="padding: 40px 30px;">
+                <h2 style="color: #18181b; margin: 0 0 24px 0; font-size: 24px; font-weight: 700;">Seu convite foi reenviado! 📬</h2>
+                
+                <p style="color: #3f3f46; font-size: 16px; line-height: 1.7; margin: 0 0 20px 0;">
+                  Olá <strong style="color: #0D9488;">${name}</strong>,
+                </p>
+                
+                <p style="color: #3f3f46; font-size: 16px; line-height: 1.7; margin: 0 0 28px 0;">
+                  Estamos reenviando seu convite para acessar o sistema da <strong>${clinicName}</strong>. Se você ainda não configurou sua senha, use o botão abaixo.
+                </p>
+                
+                <!-- Card de Informações -->
+                <div style="background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%); border-radius: 12px; padding: 24px; margin: 0 0 28px 0; border: 1px solid #99f6e4;">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td style="padding-bottom: 16px;">
+                        <table role="presentation" cellspacing="0" cellpadding="0">
+                          <tr>
+                            <td style="vertical-align: top; padding-right: 12px;">
+                              <span style="font-size: 20px;">👤</span>
+                            </td>
+                            <td>
+                              <p style="color: #0F766E; font-size: 12px; font-weight: 600; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.5px;">SEU PERFIL DE ACESSO</p>
+                              <p style="color: #0D9488; font-size: 18px; font-weight: 700; margin: 0;">${roleName}</p>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="border-top: 1px solid #99f6e4; padding-top: 16px;">
+                        <table role="presentation" cellspacing="0" cellpadding="0">
+                          <tr>
+                            <td style="vertical-align: top; padding-right: 12px;">
+                              <span style="font-size: 20px;">📧</span>
+                            </td>
+                            <td>
+                              <p style="color: #0F766E; font-size: 12px; font-weight: 600; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.5px;">SEU EMAIL</p>
+                              <p style="color: #0D9488; font-size: 16px; font-weight: 600; margin: 0;">${email}</p>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+                
+                <p style="color: #3f3f46; font-size: 16px; line-height: 1.7; margin: 0 0 32px 0;">
+                  Clique no botão abaixo para definir sua senha e começar a usar o sistema:
+                </p>
+                
+                <!-- CTA Button Premium -->
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td align="center" style="padding: 0 0 24px 0;">
+                      <a href="${resetLink}" 
+                         style="display: inline-block; background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%); color: #ffffff; padding: 18px 48px; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 16px; box-shadow: 0 8px 24px rgba(13, 148, 136, 0.4);">
+                        Definir Minha Senha
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+                
+                <!-- Aviso de Expiração -->
+                <div style="background-color: #fef3c7; border-radius: 10px; padding: 16px 20px; margin: 0 0 28px 0; border-left: 4px solid #f59e0b;">
+                  <p style="color: #92400e; font-size: 14px; margin: 0; font-weight: 600;">
+                    ⏰ Atenção: Este link expira em 1 hora
+                  </p>
+                </div>
+                
+                <!-- Link Alternativo -->
+                <p style="color: #71717a; font-size: 13px; line-height: 1.6; margin: 0 0 12px 0;">
+                  Se o botão não funcionar, copie e cole este link no navegador:
+                </p>
+                <p style="background-color: #f4f4f5; padding: 12px 16px; border-radius: 8px; font-size: 12px; line-height: 1.5; margin: 0 0 28px 0; word-break: break-all;">
+                  <a href="${resetLink}" style="color: #0D9488; text-decoration: none;">
+                    ${resetLink}
+                  </a>
+                </p>
+                
+                <!-- Aviso de Segurança -->
+                <div style="border-top: 1px solid #e4e4e7; padding-top: 24px;">
+                  <p style="color: #71717a; font-size: 13px; line-height: 1.6; margin: 0;">
+                    🔒 Se você não esperava este email ou já configurou sua senha, pode ignorá-lo com segurança.
+                  </p>
+                </div>
+              </td>
+            </tr>
+            
+            <!-- Footer Premium -->
+            <tr>
+              <td style="background: linear-gradient(135deg, #f4f4f5 0%, #e4e4e7 100%); padding: 28px 30px; border-radius: 0 0 16px 16px; text-align: center;">
+                <p style="color: #71717a; font-size: 14px; margin: 0 0 8px 0; font-weight: 500;">
+                  © ${new Date().getFullYear()} Flowdent. Todos os direitos reservados.
+                </p>
+                <p style="color: #a1a1aa; font-size: 12px; margin: 0;">
+                  <a href="https://flowdent.com.br" style="color: #0D9488; text-decoration: none; font-weight: 500;">flowdent.com.br</a>
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+`;
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -68,7 +207,7 @@ const handler = async (req: Request): Promise<Response> => {
     const clinicName = clinica?.nome || "Flowdent";
 
     // Gerar link de recuperação de senha
-    const origin = Deno.env.get("APP_URL") || "https://odentoflow-smart-care.lovable.app";
+    const origin = Deno.env.get("APP_URL") || "https://flowdent.com.br";
     
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: "recovery",
@@ -86,7 +225,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const resetLink = linkData.properties?.action_link;
+    const resetLink = linkData.properties?.action_link || '#';
 
     // Mapeamento de perfis para português
     const roleLabels: Record<string, string> = {
@@ -94,90 +233,14 @@ const handler = async (req: Request): Promise<Response> => {
       recepcionista: "Recepcionista",
       asb: "ASB",
       cirurgiao_dentista: "Cirurgião-Dentista",
-      dentista: "Dentista",
-      recepcao: "Recepção",
+      dentista: "Cirurgião-Dentista",
+      recepcao: "Recepcionista",
       assistente: "Assistente"
     };
 
     const roleLabel = roleLabels[usuario.perfil] || usuario.perfil;
 
-    // Email HTML content
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      </head>
-      <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4;">
-        <table role="presentation" style="width: 100%; border-collapse: collapse;">
-          <tr>
-            <td align="center" style="padding: 40px 0;">
-              <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                <!-- Header -->
-                <tr>
-                  <td style="padding: 40px 40px 20px 40px; text-align: center; background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%); border-radius: 8px 8px 0 0;">
-                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Flowdent</h1>
-                    <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">Sistema de Gestão Odontológica</p>
-                  </td>
-                </tr>
-                
-                <!-- Content -->
-                <tr>
-                  <td style="padding: 40px;">
-                    <h2 style="margin: 0 0 20px 0; color: #1f2937; font-size: 22px;">Olá, ${usuario.nome}!</h2>
-                    
-                    <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
-                      Você foi convidado(a) para fazer parte da equipe da clínica <strong>${clinicName}</strong> no Flowdent.
-                    </p>
-                    
-                    <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 20px 0; background-color: #f9fafb; border-radius: 8px;">
-                      <tr>
-                        <td style="padding: 20px;">
-                          <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;">Seu perfil de acesso:</p>
-                          <p style="margin: 0; color: #0D9488; font-size: 18px; font-weight: 600;">${roleLabel}</p>
-                        </td>
-                      </tr>
-                    </table>
-                    
-                    <p style="margin: 0 0 30px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
-                      Para começar a usar o sistema, clique no botão abaixo e crie sua senha de acesso:
-                    </p>
-                    
-                    <table role="presentation" style="width: 100%; border-collapse: collapse;">
-                      <tr>
-                        <td align="center">
-                          <a href="${resetLink}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 8px; box-shadow: 0 4px 6px rgba(13, 148, 136, 0.3);">
-                            Definir Minha Senha
-                          </a>
-                        </td>
-                      </tr>
-                    </table>
-                    
-                    <p style="margin: 30px 0 0 0; color: #9ca3af; font-size: 14px; line-height: 1.6;">
-                      Se o botão não funcionar, copie e cole este link no seu navegador:<br>
-                      <a href="${resetLink}" style="color: #0D9488; word-break: break-all;">${resetLink}</a>
-                    </p>
-                  </td>
-                </tr>
-                
-                <!-- Footer -->
-                <tr>
-                  <td style="padding: 20px 40px; background-color: #f9fafb; border-radius: 0 0 8px 8px; text-align: center;">
-                    <p style="margin: 0; color: #9ca3af; font-size: 12px;">
-                      Este é um email automático do Flowdent. Por favor, não responda.
-                    </p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </body>
-      </html>
-    `;
-
-    // Enviar email via Resend API
+    // Enviar email via Resend API com template premium
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -187,8 +250,14 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "Flowdent <noreply@flowdent.com.br>",
         to: [usuario.email],
-        subject: `Bem-vindo(a) ao Flowdent - ${clinicName}`,
-        html: htmlContent,
+        subject: `🦷 Reenvio de Convite - ${clinicName}`,
+        html: generateResendInviteEmailHtml(
+          usuario.nome,
+          usuario.email,
+          roleLabel,
+          clinicName,
+          resetLink
+        ),
       }),
     });
 
