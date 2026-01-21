@@ -103,7 +103,7 @@ const Configuracoes = () => {
 
       <Tabs defaultValue="clinica" className="space-y-6">
         <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
-          <TabsList className="w-max md:w-full md:grid md:grid-cols-13 h-auto">
+          <TabsList className="inline-flex w-max h-auto gap-1">
             <TabsTrigger value="clinica">Clínica</TabsTrigger>
             <TabsTrigger value="equipe">Equipe</TabsTrigger>
             <TabsTrigger value="usuarios">Usuários</TabsTrigger>
