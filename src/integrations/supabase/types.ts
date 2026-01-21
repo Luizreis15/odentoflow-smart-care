@@ -1051,6 +1051,82 @@ export type Database = {
           },
         ]
       }
+      commission_rules: {
+        Row: {
+          ativo: boolean
+          base_calculo: string
+          clinic_id: string
+          created_at: string
+          gatilho: string
+          id: string
+          minimo_garantido: number | null
+          nome: string
+          percentual: number | null
+          procedure_id: string | null
+          profissional_id: string | null
+          teto: number | null
+          tipo_calculo: string
+          updated_at: string
+          valor_fixo: number | null
+        }
+        Insert: {
+          ativo?: boolean
+          base_calculo?: string
+          clinic_id: string
+          created_at?: string
+          gatilho?: string
+          id?: string
+          minimo_garantido?: number | null
+          nome: string
+          percentual?: number | null
+          procedure_id?: string | null
+          profissional_id?: string | null
+          teto?: number | null
+          tipo_calculo?: string
+          updated_at?: string
+          valor_fixo?: number | null
+        }
+        Update: {
+          ativo?: boolean
+          base_calculo?: string
+          clinic_id?: string
+          created_at?: string
+          gatilho?: string
+          id?: string
+          minimo_garantido?: number | null
+          nome?: string
+          percentual?: number | null
+          procedure_id?: string | null
+          profissional_id?: string | null
+          teto?: number | null
+          tipo_calculo?: string
+          updated_at?: string
+          valor_fixo?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_rules_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_rules_procedure_id_fkey"
+            columns: ["procedure_id"]
+            isOneToOne: false
+            referencedRelation: "procedimentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_rules_profissional_id_fkey"
+            columns: ["profissional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       configuracoes_clinica: {
         Row: {
           clinica_id: string
