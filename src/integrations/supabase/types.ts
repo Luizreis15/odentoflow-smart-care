@@ -3125,6 +3125,7 @@ export type Database = {
           ativo: boolean | null
           chave_pix: string | null
           clinica_id: string
+          cor: string | null
           cpf: string | null
           created_at: string | null
           cro: string | null
@@ -3141,6 +3142,7 @@ export type Database = {
           ativo?: boolean | null
           chave_pix?: string | null
           clinica_id: string
+          cor?: string | null
           cpf?: string | null
           created_at?: string | null
           cro?: string | null
@@ -3157,6 +3159,7 @@ export type Database = {
           ativo?: boolean | null
           chave_pix?: string | null
           clinica_id?: string
+          cor?: string | null
           cpf?: string | null
           created_at?: string | null
           cro?: string | null

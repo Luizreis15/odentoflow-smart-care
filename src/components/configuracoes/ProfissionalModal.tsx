@@ -26,6 +26,7 @@ export const ProfissionalModal = ({ open, onClose, profissional, clinicaId }: Pr
     cpf: "",
     chave_pix: "",
     perfil: "dentista",
+    cor: "#3b82f6",
     ativo: true
   });
   const [saving, setSaving] = useState(false);
@@ -41,6 +42,7 @@ export const ProfissionalModal = ({ open, onClose, profissional, clinicaId }: Pr
         cpf: profissional.cpf || "",
         chave_pix: profissional.chave_pix || "",
         perfil: profissional.perfil || "dentista",
+        cor: profissional.cor || "#3b82f6",
         ativo: profissional.ativo ?? true
       });
     } else {
@@ -53,6 +55,7 @@ export const ProfissionalModal = ({ open, onClose, profissional, clinicaId }: Pr
         cpf: "",
         chave_pix: "",
         perfil: "dentista",
+        cor: "#3b82f6",
         ativo: true
       });
     }
@@ -226,6 +229,32 @@ export const ProfissionalModal = ({ open, onClose, profissional, clinicaId }: Pr
                   value={formData.chave_pix}
                   onChange={(e) => setFormData({ ...formData, chave_pix: e.target.value })}
                 />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="cor">Cor na Agenda</Label>
+                <div className="flex items-center gap-3">
+                  <input
+                    id="cor"
+                    type="color"
+                    value={formData.cor}
+                    onChange={(e) => setFormData({ ...formData, cor: e.target.value })}
+                    className="w-12 h-10 rounded border cursor-pointer"
+                  />
+                  <div className="flex gap-1.5 flex-wrap">
+                    {['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'].map(color => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, cor: color })}
+                        className={`w-6 h-6 rounded-full border-2 transition-all ${formData.cor === color ? 'border-foreground scale-110' : 'border-transparent'}`}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 

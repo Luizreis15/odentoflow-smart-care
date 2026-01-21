@@ -153,7 +153,7 @@ const Agenda = () => {
 
       const { data: dentistsData, error: dentistsError } = await supabase
         .from("profissionais")
-        .select("id, nome, cro, especialidade")
+        .select("id, nome, cro, especialidade, cor")
         .eq("clinica_id", profile.clinic_id)
         .eq("ativo", true)
         .order("nome");
@@ -196,7 +196,7 @@ const Agenda = () => {
           duration_minutes,
           status,
           patient:patients(id, full_name),
-          dentist:profissionais(id, nome)
+          dentist:profissionais(id, nome, cor)
         `)
         .order("appointment_date");
       
@@ -453,20 +453,23 @@ const Agenda = () => {
               const slotPassed = isPastSlot(selectedDate, time);
               
               if (appointment) {
-                // Slot with appointment
+                // Slot with appointment - usar cor do profissional
+                const dentistColor = appointment.dentist?.cor || '#3b82f6';
                 return (
                   <div
                     key={time}
-                    className={cn(
-                      "flex items-center gap-4 p-4 rounded-lg border-l-4 transition-all",
-                      "bg-[hsl(var(--card-blue))] border-l-[hsl(var(--flowdent-blue))]"
-                    )}
+                    className="flex items-center gap-4 p-4 rounded-lg border-l-4 transition-all bg-card"
+                    style={{ borderLeftColor: dentistColor }}
                   >
                     <div className="flex items-center justify-center w-16 shrink-0">
-                      <span className="text-lg font-bold text-[hsl(var(--flowdent-blue))]">{time}</span>
+                      <span className="text-lg font-bold" style={{ color: dentistColor }}>{time}</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
+                        <span 
+                          className="w-2.5 h-2.5 rounded-full shrink-0" 
+                          style={{ backgroundColor: dentistColor }}
+                        />
                         <p className="font-semibold text-foreground truncate">
                           {appointment.patient?.full_name}
                         </p>
@@ -566,7 +569,13 @@ const Agenda = () => {
               <SelectItem value="all">Todos Profissionais</SelectItem>
               {dentists.map(dentist => (
                 <SelectItem key={dentist.id} value={dentist.id}>
-                  {dentist.nome}
+                  <div className="flex items-center gap-2">
+                    <span 
+                      className="w-3 h-3 rounded-full shrink-0" 
+                      style={{ backgroundColor: dentist.cor || '#3b82f6' }}
+                    />
+                    {dentist.nome}
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>
