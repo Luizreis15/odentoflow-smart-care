@@ -17,6 +17,41 @@ const Welcome = () => {
         navigate("/auth");
         return;
       }
+
+      // Check if user is super admin - redirect to super-admin panel
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .eq("role", "super_admin")
+        .maybeSingle();
+
+      if (userRole) {
+        console.log("[WELCOME] Super admin detected, redirecting to /super-admin");
+        navigate("/super-admin");
+        return;
+      }
+
+      // Check if user already has completed onboarding
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("clinic_id")
+        .eq("id", session.user.id)
+        .single();
+
+      if (profile?.clinic_id) {
+        const { data: clinica } = await supabase
+          .from("clinicas")
+          .select("onboarding_status")
+          .eq("id", profile.clinic_id)
+          .single();
+
+        if (clinica?.onboarding_status === "completed") {
+          navigate("/dashboard");
+          return;
+        }
+      }
+
       setLoading(false);
     };
     checkAuth();
