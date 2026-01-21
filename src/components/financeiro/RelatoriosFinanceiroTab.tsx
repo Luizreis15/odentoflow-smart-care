@@ -5,16 +5,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, LineChart, Line, Legend, AreaChart, Area 
 } from "recharts";
 import { 
   TrendingUp, TrendingDown, DollarSign, Users, FileText, 
-  Download, Calendar, AlertTriangle, CreditCard, Percent 
+  Download, Calendar, AlertTriangle, CreditCard, Percent, FileSpreadsheet, Printer 
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useReportExport } from "@/hooks/useReportExport";
 
 interface RelatoriosFinanceiroTabProps {
   clinicId: string;
@@ -70,6 +72,7 @@ const COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"
 
 export const RelatoriosFinanceiroTab = ({ clinicId }: RelatoriosFinanceiroTabProps) => {
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("dre");
   const [periodo, setPeriodo] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -80,6 +83,29 @@ export const RelatoriosFinanceiroTab = ({ clinicId }: RelatoriosFinanceiroTabPro
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodData[]>([]);
   const [agingData, setAgingData] = useState<AgingData[]>([]);
   const [monthlyTrend, setMonthlyTrend] = useState<any[]>([]);
+
+  const { exportToPDF, exportToExcel } = useReportExport();
+
+  const getExportData = () => ({
+    dreData,
+    professionalRevenue,
+    procedureRevenue,
+    paymentMethods,
+    agingData,
+    periodo,
+  });
+
+  const handleExportPDF = (type: "all" | "dre" | "profissionais" | "procedimentos" | "pagamentos" | "inadimplencia") => {
+    exportToPDF(getExportData(), type);
+  };
+
+  const handleExportExcel = (type: "all" | "dre" | "profissionais" | "procedimentos" | "pagamentos" | "inadimplencia") => {
+    exportToExcel(getExportData(), type);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   useEffect(() => {
     loadAllData();
@@ -445,7 +471,7 @@ export const RelatoriosFinanceiroTab = ({ clinicId }: RelatoriosFinanceiroTabPro
   return (
     <div className="space-y-6">
       {/* Header com filtro de período */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 print:hidden">
         <div>
           <h2 className="text-xl font-semibold">Relatórios Financeiros</h2>
           <p className="text-sm text-muted-foreground">Análise completa do desempenho financeiro</p>
@@ -464,14 +490,57 @@ export const RelatoriosFinanceiroTab = ({ clinicId }: RelatoriosFinanceiroTabPro
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon">
-            <Download className="h-4 w-4" />
-          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Download className="h-4 w-4" />
+                Exportar
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Exportar PDF</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => handleExportPDF("all")} className="gap-2">
+                <FileText className="h-4 w-4" />
+                Relatório Completo
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExportPDF(activeTab as any)} className="gap-2">
+                <FileText className="h-4 w-4" />
+                Aba Atual ({activeTab === "dre" ? "DRE" : activeTab === "profissionais" ? "Profissionais" : activeTab === "procedimentos" ? "Procedimentos" : activeTab === "pagamentos" ? "Pagamentos" : "Inadimplência"})
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Exportar Excel</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => handleExportExcel("all")} className="gap-2">
+                <FileSpreadsheet className="h-4 w-4" />
+                Relatório Completo
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExportExcel(activeTab as any)} className="gap-2">
+                <FileSpreadsheet className="h-4 w-4" />
+                Aba Atual
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handlePrint} className="gap-2">
+                <Printer className="h-4 w-4" />
+                Imprimir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
-      <Tabs defaultValue="dre" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 gap-1">
+      {/* Print Header */}
+      <div className="hidden print:block mb-6">
+        <h1 className="text-2xl font-bold text-center">Relatórios Financeiros</h1>
+        <p className="text-center text-muted-foreground">
+          Período: {getMonthOptions().find(o => o.value === periodo)?.label}
+        </p>
+        <p className="text-center text-sm text-muted-foreground mt-1">
+          Gerado em: {new Date().toLocaleString("pt-BR")}
+        </p>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 gap-1 print:hidden">
           <TabsTrigger value="dre">DRE</TabsTrigger>
           <TabsTrigger value="profissionais">Por Profissional</TabsTrigger>
           <TabsTrigger value="procedimentos">Por Procedimento</TabsTrigger>
