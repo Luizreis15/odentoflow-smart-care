@@ -679,11 +679,12 @@ const Agenda = () => {
                             {patients.map((patient) => (
                               <CommandItem
                                 key={patient.id}
-                                value={`${patient.full_name}-${patient.id}`}
+                                value={patient.full_name}
                                 onSelect={() => {
-                                  setFormData({ ...formData, patientId: patient.id });
+                                  setFormData((prev) => ({ ...prev, patientId: patient.id }));
                                   setOpenPatientCombobox(false);
                                 }}
+                                className="cursor-pointer"
                               >
                                 <Check
                                   className={cn(
