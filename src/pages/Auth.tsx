@@ -299,7 +299,7 @@ const Auth = () => {
             <img 
               src={logoFlowdent} 
               alt="Flowdent" 
-              className="h-10 w-auto brightness-0 invert lg:brightness-100 lg:invert-0"
+              className="h-12 w-auto brightness-0 invert lg:brightness-100 lg:invert-0"
             />
           </Link>
         </div>
