@@ -24,6 +24,11 @@ interface ReceivableTitle {
   origin: string;
   payment_method: string | null;
   notes: string | null;
+  competencia: string | null;
+  taxa_adquirente: number | null;
+  data_repasse: string | null;
+  antecipado: boolean | null;
+  valor_liquido: number | null;
   patient?: {
     full_name: string;
     phone: string;
@@ -69,14 +74,43 @@ export const PaymentDrawer = ({
   const [cashAccounts, setCashAccounts] = useState<CashAccount[]>([]);
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string>("");
+  
+  // Campos de taxa de cartão
+  const [taxaPercentual, setTaxaPercentual] = useState("3.5");
+  const [diasRepasse, setDiasRepasse] = useState("30");
+  const [antecipado, setAntecipado] = useState(false);
+
+  const isCardPayment = method === "cartao_credito" || method === "cartao_debito";
+  const paymentAmount = parseFloat(amount) || 0;
+  const taxaValor = isCardPayment ? paymentAmount * (parseFloat(taxaPercentual) / 100) : 0;
+  const valorLiquido = paymentAmount - taxaValor;
 
   useEffect(() => {
     if (open) {
       loadCashAccounts();
       loadUserId();
       setAmount(title.balance.toString());
+      // Reset taxa para débito (geralmente menor)
+      if (method === "cartao_debito") {
+        setTaxaPercentual("1.5");
+        setDiasRepasse("1");
+      } else {
+        setTaxaPercentual("3.5");
+        setDiasRepasse("30");
+      }
     }
   }, [open, title]);
+
+  useEffect(() => {
+    // Ajustar taxa padrão baseado no método
+    if (method === "cartao_debito") {
+      setTaxaPercentual("1.5");
+      setDiasRepasse("1");
+    } else if (method === "cartao_credito") {
+      setTaxaPercentual("3.5");
+      setDiasRepasse("30");
+    }
+  }, [method]);
 
   const loadCashAccounts = async () => {
     const { data } = await supabase
@@ -108,7 +142,7 @@ export const PaymentDrawer = ({
   const handleSubmit = async () => {
     const paymentAmount = parseFloat(amount);
 
-    if (isNaN(paymentAmount) || paymentAmount <= 0) {
+    if (paymentAmount <= 0) {
       toast.error("Valor inválido");
       return;
     }
@@ -123,6 +157,13 @@ export const PaymentDrawer = ({
       return;
     }
 
+    // Calcular data de repasse
+    const dataRepasse = isCardPayment ? (() => {
+      const date = new Date(paidAt);
+      date.setDate(date.getDate() + parseInt(diasRepasse));
+      return date.toISOString().split("T")[0];
+    })() : null;
+
     setLoading(true);
 
     try {
@@ -136,6 +177,11 @@ export const PaymentDrawer = ({
           cash_account_id: cashAccountId || null,
           notes: notes || null,
           created_by: userId,
+          // Novos campos de taxa
+          taxa_adquirente: isCardPayment ? taxaValor : null,
+          valor_liquido: isCardPayment ? valorLiquido : paymentAmount,
+          data_repasse: dataRepasse,
+          antecipado: antecipado,
         },
       });
 
@@ -160,7 +206,7 @@ export const PaymentDrawer = ({
     }
   };
 
-  const isPartialPayment = parseFloat(amount) < title.balance;
+  const isPartialPayment = paymentAmount < title.balance && paymentAmount > 0;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -219,10 +265,79 @@ export const PaymentDrawer = ({
             {isPartialPayment && (
               <div className="flex items-center gap-2 text-yellow-600 text-sm">
                 <AlertCircle className="h-4 w-4" />
-                Pagamento parcial - restará {formatCurrency(title.balance - parseFloat(amount || "0"))}
+                Pagamento parcial - restará {formatCurrency(title.balance - paymentAmount)}
               </div>
             )}
           </div>
+
+          {/* Card Fee Section - Only for card payments */}
+          {isCardPayment && (
+            <div className="space-y-3 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+              <div className="flex items-center gap-2 text-sm font-medium text-orange-800">
+                <CreditCard className="h-4 w-4" />
+                Taxas do Cartão
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Taxa MDR (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="10"
+                    value={taxaPercentual}
+                    onChange={(e) => setTaxaPercentual(e.target.value)}
+                    className="h-9"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Dias p/ Repasse</Label>
+                  <Select value={diasRepasse} onValueChange={setDiasRepasse}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">D+1</SelectItem>
+                      <SelectItem value="2">D+2</SelectItem>
+                      <SelectItem value="14">D+14</SelectItem>
+                      <SelectItem value="30">D+30</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-sm">
+                <span>Antecipado?</span>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={antecipado}
+                    onChange={(e) => setAntecipado(e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  <span className="text-xs text-muted-foreground">Sim, antecipei</span>
+                </label>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Valor bruto:</span>
+                  <span>{formatCurrency(paymentAmount)}</span>
+                </div>
+                <div className="flex justify-between text-red-600">
+                  <span>Taxa ({taxaPercentual}%):</span>
+                  <span>-{formatCurrency(taxaValor)}</span>
+                </div>
+                <div className="flex justify-between font-medium text-green-700">
+                  <span>Valor líquido:</span>
+                  <span>{formatCurrency(valorLiquido)}</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Payment Date */}
           <div className="space-y-2">

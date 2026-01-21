@@ -14,6 +14,11 @@ interface PaymentRequest {
   cash_account_id?: string;
   notes?: string;
   created_by: string;
+  // Novos campos para taxas de cartão
+  taxa_adquirente?: number;
+  valor_liquido?: number;
+  data_repasse?: string;
+  antecipado?: boolean;
 }
 
 serve(async (req) => {
@@ -28,7 +33,19 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const body: PaymentRequest = await req.json();
-    const { title_id, amount, paid_at, method, cash_account_id, notes, created_by } = body;
+    const { 
+      title_id, 
+      amount, 
+      paid_at, 
+      method, 
+      cash_account_id, 
+      notes, 
+      created_by,
+      taxa_adquirente,
+      valor_liquido,
+      data_repasse,
+      antecipado
+    } = body;
 
     if (!title_id || !amount || !method || !created_by) {
       return new Response(
@@ -100,37 +117,85 @@ serve(async (req) => {
       );
     }
 
-    // 4. Update title balance and status
+    // 4. Update title balance, status, and card fee fields
     const newBalance = title.balance - amount;
     const newStatus = newBalance <= 0 ? "paid" : "partial";
+    const isCardPayment = method === "cartao_credito" || method === "cartao_debito";
+
+    const updateData: Record<string, unknown> = {
+      balance: newBalance,
+      status: newStatus,
+      payment_method: method,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Add card fee fields if applicable
+    if (isCardPayment) {
+      updateData.taxa_adquirente = taxa_adquirente || 0;
+      updateData.valor_liquido = valor_liquido || amount;
+      updateData.data_repasse = data_repasse || null;
+      updateData.antecipado = antecipado || false;
+    }
 
     const { error: updateTitleError } = await supabase
       .from("receivable_titles")
-      .update({
-        balance: newBalance,
-        status: newStatus,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq("id", title_id);
 
     if (updateTitleError) {
       console.error("Error updating title:", updateTitleError);
     }
 
-    // 5. Create financial transaction for cash flow
+    // 5. Create financial transaction for cash flow (using net value for card payments)
+    const transactionValue = isCardPayment && valor_liquido ? valor_liquido : amount;
+    
     const { error: transactionError } = await supabase
       .from("financial_transactions")
       .insert({
         clinic_id: title.clinic_id,
         date: paymentDate.split("T")[0],
         type: "receita",
-        value: amount,
+        value: transactionValue,
         category: "Recebimento de Tratamento",
         reference: `Pagamento título #${title.title_number} - Parcela ${title.installment_number}/${title.total_installments}`,
       });
 
     if (transactionError) {
       console.error("Error creating financial transaction:", transactionError);
+    }
+
+    // 5.1 Create expense for card fees if applicable
+    if (isCardPayment && taxa_adquirente && taxa_adquirente > 0) {
+      const { error: feeError } = await supabase
+        .from("payable_titles")
+        .insert({
+          clinic_id: title.clinic_id,
+          supplier_name: "Taxa de Cartão",
+          due_date: data_repasse || paymentDate.split("T")[0],
+          amount: taxa_adquirente,
+          balance: taxa_adquirente,
+          status: "paid", // Already deducted from receivable
+          category: "Despesas Financeiras",
+          notes: `Taxa ${method === "cartao_credito" ? "crédito" : "débito"} - Título #${title.title_number}`,
+          paid_at: paymentDate,
+          competencia: paymentDate.slice(0, 7) + "-01",
+        });
+
+      if (feeError) {
+        console.error("Error creating card fee expense:", feeError);
+      }
+
+      // Also create a financial transaction for the fee
+      await supabase
+        .from("financial_transactions")
+        .insert({
+          clinic_id: title.clinic_id,
+          date: paymentDate.split("T")[0],
+          type: "despesa",
+          value: taxa_adquirente,
+          category: "Taxas Financeiras",
+          reference: `Taxa cartão - Título #${title.title_number}`,
+        });
     }
 
     // 6. Update commissions if title is fully paid
@@ -178,6 +243,9 @@ serve(async (req) => {
         method,
         new_balance: newBalance,
         new_status: newStatus,
+        taxa_adquirente: taxa_adquirente || null,
+        valor_liquido: valor_liquido || amount,
+        data_repasse: data_repasse || null,
       },
       resultado: "success",
     });
@@ -188,7 +256,9 @@ serve(async (req) => {
         payment_id: payment.id,
         title_status: newStatus,
         title_balance: newBalance,
-        message: `Payment of ${amount} recorded. Title balance: ${newBalance}`,
+        valor_liquido: valor_liquido || amount,
+        taxa_adquirente: taxa_adquirente || 0,
+        message: `Payment of ${amount} recorded. Net value: ${valor_liquido || amount}. Title balance: ${newBalance}`,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
