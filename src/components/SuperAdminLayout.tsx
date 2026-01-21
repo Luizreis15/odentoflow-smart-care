@@ -66,7 +66,7 @@ export default function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
       <aside className="w-64 bg-card border-r border-border flex flex-col">
         <div className="p-6 border-b border-border">
           <div className="flex flex-col gap-3">
-            <img src={logoFlowdent} alt="Flowdent" className="h-8 w-auto" />
+            <img src={logoFlowdent} alt="Flowdent" className="h-10 w-auto" />
             <div className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />
               <span className="text-sm font-semibold text-muted-foreground">Super Admin</span>

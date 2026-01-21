@@ -278,7 +278,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between">
             {/* Logo Flowdent */}
             <div className="flex items-center gap-3">
-              <img src={logoFlowdent} alt="Flowdent" className="h-10 w-auto" />
+              <img src={logoFlowdent} alt="Flowdent" className="h-12 w-auto" />
             </div>
             
             {/* Barra de Busca Central */}

@@ -45,7 +45,7 @@ export default function LandingHeader() {
             <img 
               src={logoFlowdent} 
               alt="Flowdent" 
-              className="h-10 w-auto"
+              className="h-12 md:h-14 w-auto"
             />
           </div>
 
