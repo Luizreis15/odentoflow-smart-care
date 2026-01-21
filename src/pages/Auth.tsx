@@ -53,7 +53,8 @@ const Auth = () => {
           .maybeSingle();
 
         if (userRoles) {
-          navigate("/dashboard");
+          console.log("[AUTH] Super admin detected, redirecting to /super-admin");
+          navigate("/super-admin");
           return;
         }
 
@@ -98,7 +99,8 @@ const Auth = () => {
               .maybeSingle();
 
             if (userRoles) {
-              navigate("/dashboard");
+              console.log("[AUTH] Super admin detected (onAuthChange), redirecting to /super-admin");
+              navigate("/super-admin");
               return;
             }
 
