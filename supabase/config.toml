@@ -4,10 +4,13 @@ project_id = "aiavrxefjnoldukcdywd"
 verify_jwt = false
 
 [functions.whatsapp-qr-connect]
-verify_jwt = true
+verify_jwt = false
 
 [functions.approve-budget]
-verify_jwt = true
+verify_jwt = false
 
 [functions.record-payment]
-verify_jwt = true
+verify_jwt = false
+
+[functions.resend-invite]
+verify_jwt = false
