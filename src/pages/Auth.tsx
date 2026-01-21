@@ -296,9 +296,11 @@ const Auth = () => {
         {/* Header - Com gradiente no mobile */}
         <div className="bg-gradient-to-r from-[hsl(var(--flowdent-blue))] to-[hsl(var(--flow-turquoise))] lg:bg-none lg:bg-white p-6 lg:border-b">
           <Link to="/" className="flex items-center gap-2">
-            <div className="bg-white/90 rounded-lg px-4 py-2 lg:bg-transparent lg:p-0">
-              <img src={logoFlowdent} alt="Flowdent" className="h-14 lg:h-16 w-auto" />
-            </div>
+            <img 
+              src={logoFlowdent} 
+              alt="Flowdent" 
+              className="h-14 lg:h-16 w-auto brightness-0 invert lg:brightness-100 lg:invert-0"
+            />
           </Link>
         </div>
 
