@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Plus, Filter, X, UserPlus, ArrowLeft, Users, Check, ChevronsUpDown } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Plus, Filter, X, UserPlus, ArrowLeft, Users, Check, ChevronsUpDown, Search } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
@@ -69,6 +68,7 @@ const Agenda = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
   const [openPatientCombobox, setOpenPatientCombobox] = useState(false);
+  const [buscaPaciente, setBuscaPaciente] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [patients, setPatients] = useState<any[]>([]);
@@ -78,6 +78,11 @@ const Agenda = () => {
     status: "all",
     dentistId: "all",
   });
+  
+  // Filter patients based on search
+  const pacientesFiltrados = patients.filter((p) =>
+    p.full_name.toLowerCase().includes(buscaPaciente.toLowerCase())
+  );
   const [formData, setFormData] = useState({
     patientId: "",
     dentistId: "",
@@ -671,33 +676,46 @@ const Agenda = () => {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[400px] p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Digite o nome do paciente..." />
-                        <CommandList>
-                          <CommandEmpty>Nenhum paciente encontrado.</CommandEmpty>
-                          <CommandGroup>
-                            {patients.map((patient) => (
-                              <CommandItem
-                                key={patient.id}
-                                value={patient.full_name}
-                                onSelect={() => {
-                                  setFormData((prev) => ({ ...prev, patientId: patient.id }));
-                                  setOpenPatientCombobox(false);
-                                }}
-                                className="cursor-pointer"
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    formData.patientId === patient.id ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                {patient.full_name}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
+                      {/* Custom search input - avoids cmdk bugs */}
+                      <div className="flex items-center border-b px-3">
+                        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                        <input
+                          placeholder="Digite o nome do paciente..."
+                          value={buscaPaciente}
+                          onChange={(e) => setBuscaPaciente(e.target.value)}
+                          className="flex h-10 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+                          autoFocus
+                        />
+                      </div>
+                      
+                      {/* Custom list with onClick - guaranteed to work */}
+                      <div className="max-h-[300px] overflow-auto p-1">
+                        {pacientesFiltrados.length === 0 ? (
+                          <div className="py-6 text-center text-sm text-muted-foreground">
+                            Nenhum paciente encontrado.
+                          </div>
+                        ) : (
+                          pacientesFiltrados.map((patient) => (
+                            <div
+                              key={patient.id}
+                              onClick={() => {
+                                setFormData((prev) => ({ ...prev, patientId: patient.id }));
+                                setOpenPatientCombobox(false);
+                                setBuscaPaciente("");
+                              }}
+                              className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  formData.patientId === patient.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {patient.full_name}
+                            </div>
+                          ))
+                        )}
+                      </div>
                     </PopoverContent>
                   </Popover>
                 </div>
