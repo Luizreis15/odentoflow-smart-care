@@ -156,6 +156,8 @@ export function ClinicaTab({ clinicaId }: ClinicaTabProps) {
           whatsapp: config.whatsapp,
           imprimir_papel_timbrado: config.imprimir_papel_timbrado,
           horario_funcionamento: config.horario_funcionamento
+        }, { 
+          onConflict: 'clinica_id' 
         });
 
       if (configError) throw configError;
