@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 import TestimonialCarousel from "@/components/auth/TestimonialCarousel";
+import logoFlowdent from '@/assets/logo-flowdent.png';
 
 const signupSchema = z.object({
   email: z.string().email("Email inválido").max(255, "Email deve ter menos de 255 caracteres"),
@@ -227,9 +228,7 @@ const Cadastro = () => {
         {/* Header */}
         <div className="p-6 border-b">
           <Link to="/" className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-[hsl(var(--flowdent-blue))]">
-              Flowdent
-            </span>
+            <img src={logoFlowdent} alt="Flowdent" className="h-10 w-auto" />
           </Link>
         </div>
 

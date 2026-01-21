@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import logoFlowdent from '@/assets/logo-flowdent.png';
 
 interface Profile {
   full_name: string;
@@ -277,10 +278,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between">
             {/* Logo Flowdent */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--flowdent-blue))] to-[hsl(var(--flow-turquoise))] flex items-center justify-center shadow-md">
-                <span className="text-white font-bold text-xl">F</span>
-              </div>
-              <span className="font-bold text-xl text-[hsl(var(--flowdent-blue))]">Flowdent</span>
+              <img src={logoFlowdent} alt="Flowdent" className="h-10 w-auto" />
             </div>
             
             {/* Barra de Busca Central */}

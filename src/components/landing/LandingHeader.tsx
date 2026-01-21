@@ -10,6 +10,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
+import logoFlowdent from '@/assets/logo-flowdent.png';
 
 export default function LandingHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -41,9 +42,11 @@ export default function LandingHeader() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
-            <span className="text-2xl font-bold text-[hsl(var(--flowdent-blue))]">
-              Flowdent
-            </span>
+            <img 
+              src={logoFlowdent} 
+              alt="Flowdent" 
+              className="h-10 w-auto"
+            />
           </div>
 
           {/* Desktop Navigation */}
