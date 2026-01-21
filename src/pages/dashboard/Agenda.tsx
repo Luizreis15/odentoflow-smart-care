@@ -679,7 +679,7 @@ const Agenda = () => {
                             {patients.map((patient) => (
                               <CommandItem
                                 key={patient.id}
-                                value={patient.full_name}
+                                value={`${patient.full_name}-${patient.id}`}
                                 onSelect={() => {
                                   setFormData({ ...formData, patientId: patient.id });
                                   setOpenPatientCombobox(false);

@@ -32,6 +32,7 @@ export const CadastroRapidoPacienteModal = ({
     phone: "",
     email: "",
     cpf: "",
+    birth_date: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,6 +64,7 @@ export const CadastroRapidoPacienteModal = ({
           phone: validatedData.phone,
           email: validatedData.email || null,
           cpf: validatedData.cpf || null,
+          birth_date: formData.birth_date || null,
           clinic_id: profile.clinic_id,
         })
         .select()
@@ -78,6 +80,7 @@ export const CadastroRapidoPacienteModal = ({
         phone: "",
         email: "",
         cpf: "",
+        birth_date: "",
       });
 
       // Fechar modal e informar ID do paciente criado
@@ -137,6 +140,17 @@ export const CadastroRapidoPacienteModal = ({
               placeholder="email@exemplo.com"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              disabled={saving}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="birth_date">Data de Nascimento</Label>
+            <Input
+              id="birth_date"
+              type="date"
+              value={formData.birth_date}
+              onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
               disabled={saving}
             />
           </div>
