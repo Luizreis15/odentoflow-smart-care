@@ -216,9 +216,9 @@ const Agenda = () => {
       filtered = filtered.filter(apt => apt.status === filters.status);
     }
 
-    // Filtro por dentista
+    // Filtro por dentista - corrigido para usar apt.dentist?.id
     if (filters.dentistId !== "all") {
-      filtered = filtered.filter(apt => apt.dentist_id === filters.dentistId);
+      filtered = filtered.filter(apt => apt.dentist?.id === filters.dentistId);
     }
 
     return filtered;
@@ -306,22 +306,30 @@ const Agenda = () => {
     setViewMode("day-slots");
   };
 
-  // Get appointment for a specific time slot
-  const getAppointmentForSlot = (time: string) => {
+  // Get appointment for a specific time slot (filtrado por dentista se selecionado)
+  const getAppointmentForSlot = (time: string, dentistId?: string) => {
     const dayAppointments = getAppointmentsForDate(selectedDate);
     return dayAppointments.find(apt => {
+      // Se há filtro de dentista, ignorar agendamentos de outros profissionais
+      if (dentistId && apt.dentist?.id !== dentistId) {
+        return false;
+      }
       const aptTime = format(parseISO(apt.appointment_date), "HH:mm");
       return aptTime === time;
     });
   };
 
-  // Check if slot is within an appointment duration
-  const isSlotOccupied = (time: string) => {
+  // Check if slot is within an appointment duration (filtrado por dentista se selecionado)
+  const isSlotOccupied = (time: string, dentistId?: string) => {
     const dayAppointments = getAppointmentsForDate(selectedDate);
     const [slotHour, slotMinute] = time.split(":").map(Number);
     const slotMinutes = slotHour * 60 + slotMinute;
     
     return dayAppointments.some(apt => {
+      // Se há filtro de dentista, ignorar agendamentos de outros profissionais
+      if (dentistId && apt.dentist?.id !== dentistId) {
+        return false;
+      }
       const aptDate = parseISO(apt.appointment_date);
       const aptStartMinutes = aptDate.getHours() * 60 + aptDate.getMinutes();
       const aptEndMinutes = aptStartMinutes + (apt.duration_minutes || 30);
@@ -405,7 +413,9 @@ const Agenda = () => {
 
   // Day Slots View Component
   const DayTimeSlotsView = () => {
-    const availableSlots = TIME_SLOTS.filter(time => !isSlotOccupied(time)).length;
+    // Usar o dentista filtrado (se houver) para verificar disponibilidade
+    const selectedDentistId = filters.dentistId !== "all" ? filters.dentistId : undefined;
+    const availableSlots = TIME_SLOTS.filter(time => !isSlotOccupied(time, selectedDentistId)).length;
     
     return (
       <Card>
@@ -426,6 +436,7 @@ const Agenda = () => {
                 </CardTitle>
                 <CardDescription className="capitalize">
                   {format(selectedDate, "EEEE", { locale: ptBR })} • {availableSlots} horários disponíveis
+                  {selectedDentistId && ` para ${dentists.find(d => d.id === selectedDentistId)?.nome}`}
                 </CardDescription>
               </div>
             </div>
@@ -437,8 +448,8 @@ const Agenda = () => {
         <CardContent>
           <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
             {TIME_SLOTS.map((time) => {
-              const appointment = getAppointmentForSlot(time);
-              const occupied = isSlotOccupied(time);
+              const appointment = getAppointmentForSlot(time, selectedDentistId);
+              const occupied = isSlotOccupied(time, selectedDentistId);
               const slotPassed = isPastSlot(selectedDate, time);
               
               if (appointment) {
