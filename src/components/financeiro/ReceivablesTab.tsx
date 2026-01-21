@@ -24,6 +24,11 @@ interface ReceivableTitle {
   origin: string;
   payment_method: string | null;
   notes: string | null;
+  competencia: string | null;
+  taxa_adquirente: number | null;
+  data_repasse: string | null;
+  antecipado: boolean | null;
+  valor_liquido: number | null;
   patient?: {
     full_name: string;
     phone: string;
@@ -47,6 +52,7 @@ export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState("all");
   const [agingFilter, setAgingFilter] = useState("all");
   const [selectedTitle, setSelectedTitle] = useState<ReceivableTitle | null>(null);
   const [showPaymentDrawer, setShowPaymentDrawer] = useState(false);
@@ -60,7 +66,7 @@ export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
 
   useEffect(() => {
     loadTitles();
-  }, [clinicId, statusFilter]);
+  }, [clinicId, statusFilter, paymentMethodFilter]);
 
   const loadTitles = async () => {
     try {
@@ -79,6 +85,10 @@ export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
         query = query.eq("status", statusFilter);
       }
 
+      if (paymentMethodFilter !== "all") {
+        query = query.eq("payment_method", paymentMethodFilter);
+      }
+
       const { data, error } = await query;
 
       if (error) throw error;
@@ -91,6 +101,19 @@ export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getPaymentMethodLabel = (method: string | null) => {
+    const methods: Record<string, string> = {
+      dinheiro: "Dinheiro",
+      pix: "PIX",
+      cartao_debito: "Débito",
+      cartao_credito: "Crédito",
+      transferencia: "Transferência",
+      boleto: "Boleto",
+      cheque: "Cheque",
+    };
+    return method ? methods[method] || method : "—";
   };
 
   const calculateAging = (data: ReceivableTitle[]) => {
@@ -262,7 +285,7 @@ export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
         </div>
 
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full md:w-[180px]">
+          <SelectTrigger className="w-full md:w-[160px]">
             <Filter className="h-4 w-4 mr-2" />
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -272,6 +295,21 @@ export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
             <SelectItem value="partial">Parcial</SelectItem>
             <SelectItem value="paid">Pago</SelectItem>
             <SelectItem value="cancelled">Cancelado</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={paymentMethodFilter} onValueChange={setPaymentMethodFilter}>
+          <SelectTrigger className="w-full md:w-[160px]">
+            <SelectValue placeholder="Forma Pgto" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas formas</SelectItem>
+            <SelectItem value="pix">PIX</SelectItem>
+            <SelectItem value="dinheiro">Dinheiro</SelectItem>
+            <SelectItem value="cartao_credito">Cartão Crédito</SelectItem>
+            <SelectItem value="cartao_debito">Cartão Débito</SelectItem>
+            <SelectItem value="boleto">Boleto</SelectItem>
+            <SelectItem value="transferencia">Transferência</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -351,7 +389,11 @@ export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
                   <TableHead>Paciente</TableHead>
                   <TableHead>Parcela</TableHead>
                   <TableHead>Vencimento</TableHead>
-                  <TableHead>Valor</TableHead>
+                  <TableHead>Forma Pgto</TableHead>
+                  <TableHead>Bruto</TableHead>
+                  <TableHead>Taxa</TableHead>
+                  <TableHead>Líquido</TableHead>
+                  <TableHead>Repasse</TableHead>
                   <TableHead>Saldo</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -360,6 +402,8 @@ export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
               <TableBody>
                 {filteredTitles.map((title) => {
                   const daysOverdue = getDaysOverdue(title.due_date);
+                  const valorLiquido = title.valor_liquido ?? (title.amount - (title.taxa_adquirente || 0));
+                  const isCardPayment = title.payment_method?.includes("cartao");
                   return (
                     <TableRow key={title.id} className={daysOverdue > 0 && title.status !== "paid" && title.status !== "cancelled" ? "bg-red-50" : ""}>
                       <TableCell className="font-mono">#{title.title_number}</TableCell>
@@ -380,7 +424,34 @@ export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
                           )}
                         </div>
                       </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {getPaymentMethodLabel(title.payment_method)}
+                        </Badge>
+                      </TableCell>
                       <TableCell>{formatCurrency(title.amount)}</TableCell>
+                      <TableCell>
+                        {isCardPayment && title.taxa_adquirente ? (
+                          <span className="text-red-600 text-sm">-{formatCurrency(title.taxa_adquirente)}</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {isCardPayment ? formatCurrency(valorLiquido) : formatCurrency(title.amount)}
+                      </TableCell>
+                      <TableCell>
+                        {title.data_repasse ? (
+                          <div className="text-xs">
+                            <div>{new Date(title.data_repasse).toLocaleDateString("pt-BR")}</div>
+                            {title.antecipado && (
+                              <Badge className="bg-purple-100 text-purple-700 text-[10px]">Antecipado</Badge>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell className="font-medium">
                         {formatCurrency(title.balance)}
                       </TableCell>
