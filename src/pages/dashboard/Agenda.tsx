@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Plus, Filter, X, UserPlus, ArrowLeft, Users, Check, ChevronsUpDown, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Plus, Filter, X, UserPlus, ArrowLeft, Users, Check, ChevronsUpDown, Search, RefreshCw, Printer, LayoutGrid, List } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -416,28 +416,20 @@ const Agenda = () => {
     // Usar o dentista filtrado (se houver) para verificar disponibilidade
     const selectedDentistId = filters.dentistId !== "all" ? filters.dentistId : undefined;
     const availableSlots = TIME_SLOTS.filter(time => !isSlotOccupied(time, selectedDentistId)).length;
+    const occupiedSlots = TIME_SLOTS.length - availableSlots;
     
     return (
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={() => setViewMode("calendar")}
-                className="h-8 w-8"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <div>
-                <CardTitle className="text-2xl capitalize">
-                  {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
-                </CardTitle>
-                <CardDescription className="capitalize">
-                  {format(selectedDate, "EEEE", { locale: ptBR })} • {availableSlots} horários disponíveis
-                  {selectedDentistId && ` para ${dentists.find(d => d.id === selectedDentistId)?.nome}`}
-                </CardDescription>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="w-3 h-3 rounded bg-[hsl(var(--card-green))] border border-[hsl(var(--success-green))]" />
+                <span className="text-muted-foreground">{availableSlots} disponíveis</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="w-3 h-3 rounded bg-muted border" />
+                <span className="text-muted-foreground">{occupiedSlots} ocupados</span>
               </div>
             </div>
             <Badge variant="secondary" className="text-sm">
@@ -553,105 +545,196 @@ const Agenda = () => {
 
   return (
     <div className="space-y-4">
-      {/* Header Compacto com Filtro de Profissional Visível */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-3">
-          {/* Filtro por Profissional - Sempre Visível */}
-          <Select 
-            value={filters.dentistId} 
-            onValueChange={(value) => setFilters({ ...filters, dentistId: value })}
-          >
-            <SelectTrigger className="w-[220px]">
-              <Users className="mr-2 h-4 w-4 text-muted-foreground" />
-              <SelectValue placeholder="Todos Profissionais" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos Profissionais</SelectItem>
-              {dentists.map(dentist => (
-                <SelectItem key={dentist.id} value={dentist.id}>
-                  <div className="flex items-center gap-2">
-                    <span 
-                      className="w-3 h-3 rounded-full shrink-0" 
-                      style={{ backgroundColor: dentist.cor || '#3b82f6' }}
-                    />
-                    {dentist.nome}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* Header Estilo Clinicorp */}
+      <div className="bg-card border rounded-lg p-4 space-y-4">
+        {/* Linha 1: Data atual + Navegação + Ações */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+          {/* Data e Navegação */}
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="h-9 w-9"
+              onClick={() => {
+                if (viewMode === "day-slots") {
+                  setSelectedDate(addDays(selectedDate, -1));
+                } else {
+                  setCurrentMonth(subMonths(currentMonth, 1));
+                }
+              }}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            
+            <div className="text-center min-w-[200px]">
+              <h2 className="text-lg font-semibold capitalize">
+                {viewMode === "day-slots" 
+                  ? format(selectedDate, "EEEE, dd 'de' MMMM yyyy", { locale: ptBR })
+                  : format(currentMonth, "MMMM 'de' yyyy", { locale: ptBR })
+                }
+              </h2>
+            </div>
+            
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="h-9 w-9"
+              onClick={() => {
+                if (viewMode === "day-slots") {
+                  setSelectedDate(addDays(selectedDate, 1));
+                } else {
+                  setCurrentMonth(addMonths(currentMonth, 1));
+                }
+              }}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            
+            <Button 
+              variant="secondary" 
+              size="sm"
+              onClick={() => {
+                setSelectedDate(new Date());
+                setCurrentMonth(new Date());
+              }}
+            >
+              Hoje
+            </Button>
+          </div>
+          
+          {/* Ações Rápidas */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-9 w-9"
+              onClick={() => loadAppointments()}
+              title="Atualizar"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-9 w-9"
+              onClick={() => window.print()}
+              title="Imprimir"
+            >
+              <Printer className="h-4 w-4" />
+            </Button>
+            
+            <div className="h-6 w-px bg-border mx-1" />
+            
+            {/* Alternância de Visão */}
+            <div className="flex items-center border rounded-lg p-1 bg-muted/30">
+              <Button 
+                variant={viewMode === "calendar" ? "secondary" : "ghost"} 
+                size="sm"
+                className="h-7 px-3"
+                onClick={() => setViewMode("calendar")}
+              >
+                <LayoutGrid className="h-4 w-4 mr-1.5" />
+                Mês
+              </Button>
+              <Button 
+                variant={viewMode === "day-slots" ? "secondary" : "ghost"} 
+                size="sm"
+                className="h-7 px-3"
+                onClick={() => setViewMode("day-slots")}
+              >
+                <List className="h-4 w-4 mr-1.5" />
+                Dia
+              </Button>
+            </div>
+          </div>
         </div>
         
-        <div className="flex gap-2">
-          <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Filter className="mr-2 h-4 w-4" />
-                Mais Filtros
-                {filters.status !== "all" && (
-                  <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center">
-                    1
-                  </Badge>
-                )}
+        {/* Linha 2: Filtros + Novo Agendamento */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-2 border-t">
+          {/* Filtros */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Filtro por Profissional */}
+            <Select 
+              value={filters.dentistId} 
+              onValueChange={(value) => setFilters({ ...filters, dentistId: value })}
+            >
+              <SelectTrigger className="w-[200px] h-9">
+                <Users className="mr-2 h-4 w-4 text-muted-foreground" />
+                <SelectValue placeholder="Todos Profissionais" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos Profissionais</SelectItem>
+                {dentists.map(dentist => (
+                  <SelectItem key={dentist.id} value={dentist.id}>
+                    <div className="flex items-center gap-2">
+                      <span 
+                        className="w-3 h-3 rounded-full shrink-0" 
+                        style={{ backgroundColor: dentist.cor || '#3b82f6' }}
+                      />
+                      {dentist.nome}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            {/* Filtro por Status */}
+            <Select 
+              value={filters.status} 
+              onValueChange={(value) => setFilters({ ...filters, status: value })}
+            >
+              <SelectTrigger className="w-[160px] h-9">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos Status</SelectItem>
+                <SelectItem value="scheduled">Agendado</SelectItem>
+                <SelectItem value="confirmed">Confirmado</SelectItem>
+                <SelectItem value="completed">Concluído</SelectItem>
+                <SelectItem value="cancelled">Cancelado</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            {(filters.status !== "all" || filters.dentistId !== "all") && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-9 text-muted-foreground"
+                onClick={clearFilters}
+              >
+                <X className="h-4 w-4 mr-1" />
+                Limpar
               </Button>
-            </SheetTrigger>
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Filtros</SheetTitle>
-                <SheetDescription>
-                  Filtre os agendamentos por status e profissional
-                </SheetDescription>
-              </SheetHeader>
-              <div className="space-y-4 mt-6">
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select value={filters.status} onValueChange={(value) => setFilters({ ...filters, status: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="scheduled">Agendado</SelectItem>
-                      <SelectItem value="confirmed">Confirmado</SelectItem>
-                      <SelectItem value="completed">Concluído</SelectItem>
-                      <SelectItem value="cancelled">Cancelado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Profissional</Label>
-                  <Select value={filters.dentistId} onValueChange={(value) => setFilters({ ...filters, dentistId: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      {dentists.map(dentist => (
-                        <SelectItem key={dentist.id} value={dentist.id}>
-                          {dentist.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex gap-2 pt-4">
-                  <Button variant="outline" className="flex-1" onClick={clearFilters}>
-                    <X className="mr-2 h-4 w-4" />
-                    Limpar
-                  </Button>
-                  <Button className="flex-1" onClick={() => setIsFilterOpen(false)}>
-                    Aplicar
-                  </Button>
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
-
+            )}
+          </div>
+          
+          {/* Legenda de Profissionais */}
+          {dentists.length > 0 && filters.dentistId === "all" && (
+            <div className="hidden md:flex items-center gap-3 flex-wrap">
+              {dentists.slice(0, 5).map(dentist => (
+                <button
+                  key={dentist.id}
+                  onClick={() => setFilters({ ...filters, dentistId: dentist.id })}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <span 
+                    className="w-2.5 h-2.5 rounded-full shrink-0" 
+                    style={{ backgroundColor: dentist.cor || '#3b82f6' }}
+                  />
+                  {dentist.nome}
+                </button>
+              ))}
+              {dentists.length > 5 && (
+                <span className="text-xs text-muted-foreground">+{dentists.length - 5}</span>
+              )}
+            </div>
+          )}
+          
+          {/* Botão Novo Agendamento */}
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
-              <Button size="sm">
+              <Button size="sm" className="h-9">
                 <Plus className="mr-2 h-4 w-4" />
                 Novo Agendamento
               </Button>
@@ -832,29 +915,8 @@ const Agenda = () => {
         <div className="grid lg:grid-cols-[1fr_350px] gap-4">
           {/* Calendário Visual */}
           <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-2xl capitalize">
-                    {format(currentMonth, "MMMM 'de' yyyy", { locale: ptBR })}
-                  </CardTitle>
-                  <CardDescription>Clique em um dia para ver os horários</CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="icon" onClick={previousMonth}>
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => {
-                    setCurrentMonth(new Date());
-                    setSelectedDate(new Date());
-                  }}>
-                    Hoje
-                  </Button>
-                  <Button variant="outline" size="icon" onClick={nextMonth}>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+            <CardHeader className="pb-3">
+              <CardDescription>Clique em um dia para ver os horários disponíveis</CardDescription>
             </CardHeader>
             <CardContent>
               {loading ? (
