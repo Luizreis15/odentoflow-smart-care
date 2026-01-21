@@ -661,63 +661,63 @@ const Agenda = () => {
                       Novo Paciente
                     </Button>
                   </div>
-                  <Popover open={openPatientCombobox} onOpenChange={setOpenPatientCombobox}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={openPatientCombobox}
-                        className="w-full justify-between font-normal"
-                      >
-                        {formData.patientId
-                          ? patients.find((p) => p.id === formData.patientId)?.full_name
-                          : "Pesquisar paciente..."}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[400px] p-0" align="start">
-                      {/* Custom search input - avoids cmdk bugs */}
-                      <div className="flex items-center border-b px-3">
-                        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                        <input
-                          placeholder="Digite o nome do paciente..."
-                          value={buscaPaciente}
-                          onChange={(e) => setBuscaPaciente(e.target.value)}
-                          className="flex h-10 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
-                          autoFocus
-                        />
-                      </div>
-                      
-                      {/* Custom list with onClick - guaranteed to work */}
-                      <div className="max-h-[300px] overflow-auto p-1">
-                        {pacientesFiltrados.length === 0 ? (
-                          <div className="py-6 text-center text-sm text-muted-foreground">
-                            Nenhum paciente encontrado.
-                          </div>
-                        ) : (
-                          pacientesFiltrados.map((patient) => (
-                            <div
-                              key={patient.id}
-                              onClick={() => {
-                                setFormData((prev) => ({ ...prev, patientId: patient.id }));
-                                setOpenPatientCombobox(false);
-                                setBuscaPaciente("");
-                              }}
-                              className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  formData.patientId === patient.id ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              {patient.full_name}
+                  <div className="relative">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between font-normal"
+                      onClick={() => setOpenPatientCombobox(!openPatientCombobox)}
+                    >
+                      {formData.patientId
+                        ? patients.find((p) => p.id === formData.patientId)?.full_name
+                        : "Pesquisar paciente..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                    
+                    {openPatientCombobox && (
+                      <div className="absolute top-full left-0 mt-1 w-full min-w-[400px] border rounded-lg bg-popover shadow-lg z-[9999] max-h-[350px] overflow-hidden">
+                        <div className="flex items-center border-b px-3 bg-popover">
+                          <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                          <input
+                            placeholder="Digite o nome do paciente..."
+                            value={buscaPaciente}
+                            onChange={(e) => setBuscaPaciente(e.target.value)}
+                            className="flex h-10 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+                            autoFocus
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                        <div className="max-h-[300px] overflow-auto p-1 bg-popover">
+                          {pacientesFiltrados.length === 0 ? (
+                            <div className="py-6 text-center text-sm text-muted-foreground">
+                              Nenhum paciente encontrado.
                             </div>
-                          ))
-                        )}
+                          ) : (
+                            pacientesFiltrados.map((patient) => (
+                              <div
+                                key={patient.id}
+                                onClick={() => {
+                                  setFormData((prev) => ({ ...prev, patientId: patient.id }));
+                                  setOpenPatientCombobox(false);
+                                  setBuscaPaciente("");
+                                }}
+                                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    formData.patientId === patient.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {patient.full_name}
+                              </div>
+                            ))
+                          )}
+                        </div>
                       </div>
-                    </PopoverContent>
-                  </Popover>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
