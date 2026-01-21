@@ -11,7 +11,8 @@ import { NovaTransacaoModal } from "@/components/financeiro/NovaTransacaoModal";
 import { ComissoesTab } from "@/components/financeiro/ComissoesTab";
 import { ReceivablesTab } from "@/components/financeiro/ReceivablesTab";
 import { PayablesTab } from "@/components/financeiro/PayablesTab";
-
+import { RecorrenciasTab } from "@/components/financeiro/RecorrenciasTab";
+import { CalendarioFinanceiro } from "@/components/financeiro/CalendarioFinanceiro";
 interface Transaction {
   id: string;
   type: string;
@@ -160,17 +161,17 @@ const Financeiro = () => {
               <TabsTrigger value="fluxo" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
                 FLUXO
               </TabsTrigger>
+              <TabsTrigger value="calendario" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
+                CALENDÁRIO
+              </TabsTrigger>
               <TabsTrigger value="receber" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
                 RECEBER
               </TabsTrigger>
               <TabsTrigger value="pagar" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
                 PAGAR
               </TabsTrigger>
-              <TabsTrigger value="transacoes" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
-                TRANSAÇÕES
-              </TabsTrigger>
-              <TabsTrigger value="nota" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
-                NF-E
+              <TabsTrigger value="recorrencias" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
+                RECORRÊNCIAS
               </TabsTrigger>
               <TabsTrigger value="comissoes" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
                 COMISSÕES
@@ -351,26 +352,16 @@ const Financeiro = () => {
             {clinicId && <PayablesTab clinicId={clinicId} />}
           </TabsContent>
 
-          <TabsContent value="transacoes" className="m-0 p-4 md:p-6">
-            <div className="text-center py-8 md:py-12">
-              <p className="text-muted-foreground">Módulo de transações em desenvolvimento</p>
-            </div>
+          <TabsContent value="calendario" className="m-0 p-4 md:p-6">
+            {clinicId && <CalendarioFinanceiro clinicId={clinicId} />}
           </TabsContent>
 
-          <TabsContent value="nota" className="m-0 p-4 md:p-6">
-            <div className="text-center py-8 md:py-12">
-              <p className="text-muted-foreground">Módulo de notas fiscais em desenvolvimento</p>
-            </div>
+          <TabsContent value="recorrencias" className="m-0 p-4 md:p-6">
+            {clinicId && <RecorrenciasTab clinicId={clinicId} />}
           </TabsContent>
 
           <TabsContent value="comissoes" className="m-0 p-4 md:p-6">
             {clinicId && <ComissoesTab clinicId={clinicId} />}
-          </TabsContent>
-
-          <TabsContent value="carteira" className="m-0 p-4 md:p-6">
-            <div className="text-center py-8 md:py-12">
-              <p className="text-muted-foreground">Módulo de carteira digital em desenvolvimento</p>
-            </div>
           </TabsContent>
         </div>
       </Tabs>
