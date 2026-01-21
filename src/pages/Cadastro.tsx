@@ -228,7 +228,7 @@ const Cadastro = () => {
         {/* Header */}
         <div className="p-6 border-b">
           <Link to="/" className="flex items-center gap-2">
-            <img src={logoFlowdent} alt="Flowdent" className="h-10 w-auto" />
+            <img src={logoFlowdent} alt="Flowdent" className="h-14 lg:h-16 w-auto" />
           </Link>
         </div>
 

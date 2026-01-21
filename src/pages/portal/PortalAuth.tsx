@@ -197,7 +197,7 @@ const PortalAuth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <img src={logoFlowdent} alt="Flowdent" className="h-10 w-auto" />
+            <img src={logoFlowdent} alt="Flowdent" className="h-14 w-auto" />
           </div>
           <CardTitle className="text-2xl">Portal do Paciente</CardTitle>
           <CardDescription>
