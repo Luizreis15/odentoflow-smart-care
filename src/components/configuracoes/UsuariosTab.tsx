@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Mail } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { UsuariosTable } from "./UsuariosTable";
 import { InviteUserModal } from "./InviteUserModal";
@@ -97,37 +97,23 @@ export const UsuariosTab = ({ clinicaId }: UsuariosTabProps) => {
     toast.info("Funcionalidade de ativar/desativar usuários será implementada em breve");
   };
 
-  const handleTestEmail = async () => {
+  const handleResendInvite = async (usuario: Usuario) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.email) {
-        toast.error("Usuário não encontrado");
-        return;
-      }
+      toast.loading("Reenviando convite...", { id: "resend-invite" });
 
-      const { data: clinica } = await supabase
-        .from("clinicas")
-        .select("nome")
-        .eq("id", clinicaId)
-        .single();
-
-      toast.loading("Enviando email de teste...");
-
-      const { error } = await supabase.functions.invoke("send-welcome-email", {
+      const { error } = await supabase.functions.invoke("resend-invite", {
         body: {
-          name: user.user_metadata?.full_name || "Usuário",
-          email: user.email,
-          role: "admin",
-          clinicName: clinica?.nome || "Flowdent"
+          userId: usuario.id,
+          clinicaId: clinicaId
         }
       });
 
       if (error) throw error;
       
-      toast.success("Email de teste enviado com sucesso! Verifique sua caixa de entrada.");
+      toast.success(`Convite reenviado para ${usuario.email}!`, { id: "resend-invite" });
     } catch (error: any) {
-      console.error("Erro ao enviar email:", error);
-      toast.error("Erro ao enviar email: " + error.message);
+      console.error("Erro ao reenviar convite:", error);
+      toast.error("Erro ao reenviar convite: " + error.message, { id: "resend-invite" });
     }
   };
 
@@ -143,16 +129,10 @@ export const UsuariosTab = ({ clinicaId }: UsuariosTabProps) => {
             className="pl-9"
           />
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleTestEmail}>
-            <Mail className="h-4 w-4 mr-2" />
-            Testar Email
-          </Button>
-          <Button onClick={() => setInviteModalOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Usuário
-          </Button>
-        </div>
+        <Button onClick={() => setInviteModalOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Novo Usuário
+        </Button>
       </div>
 
       <UsuariosTable
@@ -160,6 +140,7 @@ export const UsuariosTab = ({ clinicaId }: UsuariosTabProps) => {
         loading={loading}
         onEdit={handleEdit}
         onToggleStatus={handleToggleStatus}
+        onResendInvite={handleResendInvite}
       />
 
       <InviteUserModal

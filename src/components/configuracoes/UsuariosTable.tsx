@@ -1,8 +1,9 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit } from "lucide-react";
+import { Edit, Mail } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Usuario {
   id: string;
@@ -18,6 +19,7 @@ interface UsuariosTableProps {
   loading: boolean;
   onEdit: (usuario: Usuario) => void;
   onToggleStatus: (usuario: Usuario) => void;
+  onResendInvite: (usuario: Usuario) => void;
 }
 
 const perfilLabels: Record<string, string> = {
@@ -40,7 +42,7 @@ const perfilColors: Record<string, string> = {
   assistente: "bg-green-100 text-green-800"
 };
 
-export const UsuariosTable = ({ usuarios, loading, onEdit, onToggleStatus }: UsuariosTableProps) => {
+export const UsuariosTable = ({ usuarios, loading, onEdit, onToggleStatus, onResendInvite }: UsuariosTableProps) => {
   if (loading) {
     return (
       <div className="space-y-3">
@@ -60,43 +62,66 @@ export const UsuariosTable = ({ usuarios, loading, onEdit, onToggleStatus }: Usu
   }
 
   return (
-    <div className="border rounded-lg">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>E-mail</TableHead>
-            <TableHead>Cargo</TableHead>
-            <TableHead>Perfil</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {usuarios.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell className="font-medium">{user.nome}</TableCell>
-              <TableCell>{user.email}</TableCell>
-              <TableCell>{user.cargo || "-"}</TableCell>
-              <TableCell>
-                <Badge className={perfilColors[user.perfil] || ""}>
-                  {perfilLabels[user.perfil] || user.perfil}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEdit(user)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
+    <TooltipProvider>
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nome</TableHead>
+              <TableHead>E-mail</TableHead>
+              <TableHead>Cargo</TableHead>
+              <TableHead>Perfil</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {usuarios.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell className="font-medium">{user.nome}</TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>{user.cargo || "-"}</TableCell>
+                <TableCell>
+                  <Badge className={perfilColors[user.perfil] || ""}>
+                    {perfilLabels[user.perfil] || user.perfil}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onResendInvite(user)}
+                        >
+                          <Mail className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Reenviar convite</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onEdit(user)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Editar usuário</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </TooltipProvider>
   );
 };
