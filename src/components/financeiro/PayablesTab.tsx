@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Filter, AlertTriangle, Clock, CheckCircle, XCircle, DollarSign, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { NovaDespesaModal } from "./NovaDespesaModal";
+import { NovaDespesaModalV2 } from "./NovaDespesaModalV2";
 import { PagamentoDespesaDrawer } from "./PagamentoDespesaDrawer";
 
 interface PayableTitle {
@@ -457,7 +457,7 @@ export const PayablesTab = ({ clinicId }: PayablesTabProps) => {
       </div>
 
       {/* Nova Despesa Modal */}
-      <NovaDespesaModal
+      <NovaDespesaModalV2
         open={showNovaDespesa}
         onOpenChange={setShowNovaDespesa}
         clinicId={clinicId}
