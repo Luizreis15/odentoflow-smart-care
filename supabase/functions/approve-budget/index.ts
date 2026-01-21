@@ -192,30 +192,93 @@ serve(async (req) => {
       );
     }
 
-    // 7. Create commission entries (provisões) for each professional
+    // 7. Create commission entries (provisões) for each professional using commission rules
     const commissionEntries = [];
     for (const item of budget.budget_items) {
       if (item.professional_id) {
-        // Get professional's commission rule (simplified - could be more complex)
-        const { data: professional } = await supabase
-          .from("profissionais")
+        // Buscar regra de comissão específica para este profissional/procedimento
+        // Prioridade: regra específica (prof + proc) > regra do profissional > regra do procedimento > regra geral
+        let commissionRule = null;
+        
+        // 1. Tentar encontrar regra específica (profissional + procedimento)
+        const { data: specificRule } = await supabase
+          .from("commission_rules")
           .select("*")
-          .eq("id", item.professional_id)
+          .eq("clinic_id", clinicId)
+          .eq("profissional_id", item.professional_id)
+          .eq("procedure_id", item.procedure_id)
+          .eq("ativo", true)
+          .eq("gatilho", "aprovacao")
           .single();
+        
+        if (specificRule) {
+          commissionRule = specificRule;
+        } else {
+          // 2. Tentar regra só do profissional
+          const { data: profRule } = await supabase
+            .from("commission_rules")
+            .select("*")
+            .eq("clinic_id", clinicId)
+            .eq("profissional_id", item.professional_id)
+            .is("procedure_id", null)
+            .eq("ativo", true)
+            .eq("gatilho", "aprovacao")
+            .single();
+          
+          if (profRule) {
+            commissionRule = profRule;
+          } else {
+            // 3. Tentar regra geral (sem profissional específico)
+            const { data: generalRule } = await supabase
+              .from("commission_rules")
+              .select("*")
+              .eq("clinic_id", clinicId)
+              .is("profissional_id", null)
+              .is("procedure_id", null)
+              .eq("ativo", true)
+              .eq("gatilho", "aprovacao")
+              .single();
+            
+            if (generalRule) {
+              commissionRule = generalRule;
+            }
+          }
+        }
 
-        // Default to 30% commission if no rule defined
-        const commissionRate = 0.30;
-        const commissionAmount = (item.total_price || 0) * commissionRate;
+        // Calcular comissão baseado na regra encontrada ou usar padrão 30%
+        let commissionAmount = 0;
+        const baseValue = item.total_price || 0;
+        
+        if (commissionRule) {
+          if (commissionRule.tipo_calculo === "percentual") {
+            commissionAmount = baseValue * ((commissionRule.percentual || 30) / 100);
+          } else {
+            commissionAmount = commissionRule.valor_fixo || 0;
+          }
+          
+          // Aplicar mínimo garantido e teto
+          if (commissionRule.minimo_garantido && commissionAmount < commissionRule.minimo_garantido) {
+            commissionAmount = commissionRule.minimo_garantido;
+          }
+          if (commissionRule.teto && commissionAmount > commissionRule.teto) {
+            commissionAmount = commissionRule.teto;
+          }
+        } else {
+          // Sem regra: usar padrão de 30%
+          commissionAmount = baseValue * 0.30;
+        }
 
-        commissionEntries.push({
-          clinic_id: clinicId,
-          profissional_id: item.professional_id,
-          competencia: new Date().toISOString().slice(0, 7), // YYYY-MM
-          valor_provisionado: commissionAmount,
-          valor_devido: commissionAmount,
-          status: "provisao",
-          observacoes: `Orçamento ${budget.title || budget_id} - ${item.procedure_name}`,
-        });
+        if (commissionAmount > 0) {
+          commissionEntries.push({
+            clinic_id: clinicId,
+            profissional_id: item.professional_id,
+            competencia: new Date().toISOString().slice(0, 7), // YYYY-MM
+            valor_provisionado: commissionAmount,
+            valor_devido: commissionAmount,
+            status: "provisao",
+            observacoes: `Orçamento ${budget.title || budget_id} - ${item.procedure_name}`,
+          });
+        }
       }
     }
 

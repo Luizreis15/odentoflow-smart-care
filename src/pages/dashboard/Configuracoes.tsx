@@ -17,6 +17,7 @@ import { CadeirasTab } from "@/components/configuracoes/CadeirasTab";
 import { LocaisEstoqueTab } from "@/components/configuracoes/LocaisEstoqueTab";
 import { FornecedoresTab } from "@/components/configuracoes/FornecedoresTab";
 import { DespesasTabV2 } from "@/components/configuracoes/DespesasTabV2";
+import { RegrasComissaoTab } from "@/components/configuracoes/RegrasComissaoTab";
 
 const Configuracoes = () => {
   const navigate = useNavigate();
@@ -117,6 +118,7 @@ const Configuracoes = () => {
             <TabsTrigger value="locais-estoque">Estoque</TabsTrigger>
             <TabsTrigger value="fornecedores">Fornecedores</TabsTrigger>
             <TabsTrigger value="despesas">Despesas</TabsTrigger>
+            <TabsTrigger value="comissoes">Comissões</TabsTrigger>
           </TabsList>
         </div>
 
@@ -172,6 +174,10 @@ const Configuracoes = () => {
 
         <TabsContent value="despesas">
           <DespesasTabV2 clinicaId={profile.clinic_id} />
+        </TabsContent>
+
+        <TabsContent value="comissoes">
+          <RegrasComissaoTab clinicId={profile.clinic_id} />
         </TabsContent>
       </Tabs>
     </div>
