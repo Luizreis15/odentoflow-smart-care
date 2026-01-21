@@ -151,7 +151,7 @@ export default function LandingHeader() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="md:hidden mt-4"
+              className="md:hidden mt-4 bg-white rounded-lg shadow-lg border border-gray-100"
             >
               <nav className="flex flex-col space-y-4 py-4">
                 <button 
