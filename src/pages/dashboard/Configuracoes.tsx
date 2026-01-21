@@ -16,7 +16,7 @@ import { CaixasTab } from "@/components/configuracoes/CaixasTab";
 import { CadeirasTab } from "@/components/configuracoes/CadeirasTab";
 import { LocaisEstoqueTab } from "@/components/configuracoes/LocaisEstoqueTab";
 import { FornecedoresTab } from "@/components/configuracoes/FornecedoresTab";
-import { DespesasTab } from "@/components/configuracoes/DespesasTab";
+import { DespesasTabV2 } from "@/components/configuracoes/DespesasTabV2";
 
 const Configuracoes = () => {
   const navigate = useNavigate();
@@ -171,7 +171,7 @@ const Configuracoes = () => {
         </TabsContent>
 
         <TabsContent value="despesas">
-          <DespesasTab clinicaId={profile.clinic_id} />
+          <DespesasTabV2 clinicaId={profile.clinic_id} />
         </TabsContent>
       </Tabs>
     </div>
