@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-
+import { HorarioFuncionamentoCard, HorarioFuncionamento, DEFAULT_HORARIO } from "./HorarioFuncionamentoCard";
 interface ClinicaTabProps {
   clinicaId: string;
 }
@@ -55,6 +55,7 @@ export function ClinicaTab({ clinicaId }: ClinicaTabProps) {
         whatsapp: configData?.whatsapp || "",
         telefone: clinicaData?.telefone || "",
         imprimir_papel_timbrado: configData?.imprimir_papel_timbrado || false,
+        horario_funcionamento: configData?.horario_funcionamento || DEFAULT_HORARIO,
         // Extrair endereço do JSONB
         cep: address?.cep || "",
         rua: address?.rua || "",
@@ -238,54 +239,10 @@ export function ClinicaTab({ clinicaId }: ClinicaTabProps) {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Horário de Funcionamento</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Horário inicial da clínica *</Label>
-              <Select defaultValue="7">
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 24 }, (_, i) => (
-                    <SelectItem key={i} value={String(i)}>{i}:00</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Horário final da clínica *</Label>
-              <Select defaultValue="22">
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 24 }, (_, i) => (
-                    <SelectItem key={i} value={String(i)}>{i}:00</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Fuso horário *</Label>
-              <Select defaultValue="brasilia">
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="brasilia">Brasília/São Paulo</SelectItem>
-                  <SelectItem value="manaus">Manaus</SelectItem>
-                  <SelectItem value="rio-branco">Rio Branco</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <HorarioFuncionamentoCard
+        value={config?.horario_funcionamento}
+        onChange={(horario) => setConfig({ ...config, horario_funcionamento: horario })}
+      />
 
       <Card>
         <CardHeader>
