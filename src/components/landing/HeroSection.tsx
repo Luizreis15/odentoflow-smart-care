@@ -6,7 +6,7 @@ import heroImage from '@/assets/flowdent-hero.jpg';
 
 export default function HeroSection() {
   return (
-    <section id="home" className="relative min-h-[85vh] flex items-center pt-24 pb-6 overflow-hidden">
+    <section id="home" className="relative min-h-[75vh] flex items-center pt-24 pb-6 overflow-hidden">
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--flow-turquoise)/0.05)] via-white to-[hsl(var(--health-mint)/0.05)] -z-10"></div>
       
@@ -21,24 +21,13 @@ export default function HeroSection() {
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
-            className="space-y-5"
+            className="space-y-4"
           >
-            {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <Badge className="bg-[hsl(var(--flow-turquoise))] text-white px-4 py-2 text-sm font-semibold">
-                🎉 Novidade: Integração com WhatsApp Business
-              </Badge>
-            </motion.div>
-
             {/* Headline */}
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.2 }}
               className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[hsl(var(--slate-gray))] leading-tight"
             >
               O Software que <span className="text-[hsl(var(--flowdent-blue))]">Liberta</span> seu Tempo
@@ -48,7 +37,7 @@ export default function HeroSection() {
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
+              transition={{ delay: 0.3 }}
               className="text-xl text-[hsl(var(--silver-cloud))] leading-relaxed"
             >
               Sabemos que gerenciar uma clínica vai muito além dos atendimentos. 
@@ -61,7 +50,7 @@ export default function HeroSection() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
+              transition={{ delay: 0.4 }}
               className="flex flex-col sm:flex-row gap-4"
             >
               <Button 
@@ -89,7 +78,7 @@ export default function HeroSection() {
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
+              transition={{ delay: 0.5 }}
               className="text-[hsl(var(--silver-cloud))] text-sm"
             >
               Sem contrato de fidelidade. Cancele quando quiser. 💙
@@ -99,7 +88,7 @@ export default function HeroSection() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
+              transition={{ delay: 0.6 }}
               className="flex items-center gap-4 pt-4"
             >
               <div className="flex -space-x-2">
