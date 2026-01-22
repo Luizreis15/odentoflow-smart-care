@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Plus, Filter, X, UserPlus, ArrowLeft, Users, Check, ChevronsUpDown, Search, RefreshCw, Printer, LayoutGrid, List } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Plus, Filter, X, UserPlus, ArrowLeft, Users, Check, ChevronsUpDown, Search, RefreshCw, Printer, LayoutGrid, List, AlertTriangle } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -74,6 +74,7 @@ const Agenda = () => {
   const [patients, setPatients] = useState<any[]>([]);
   const [dentists, setDentists] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
+  const [patientNoShowStats, setPatientNoShowStats] = useState<Record<string, number>>({});
   const [filters, setFilters] = useState({
     status: "all",
     dentistId: "all",
@@ -195,6 +196,7 @@ const Agenda = () => {
           appointment_date,
           duration_minutes,
           status,
+          patient_id,
           patient:patients(id, full_name),
           dentist:profissionais(id, nome, cor)
         `)
@@ -202,6 +204,15 @@ const Agenda = () => {
       
       if (error) throw error;
       setAppointments(data || []);
+      
+      // Calcular estatísticas de faltas por paciente
+      const noShowCounts: Record<string, number> = {};
+      data?.forEach(apt => {
+        if (apt.status === 'cancelled' && apt.patient_id) {
+          noShowCounts[apt.patient_id] = (noShowCounts[apt.patient_id] || 0) + 1;
+        }
+      });
+      setPatientNoShowStats(noShowCounts);
     } catch (error: any) {
       console.error("Erro ao carregar agendamentos:", error);
       toast.error("Erro ao carregar agendamentos: " + error.message);
@@ -417,10 +428,99 @@ const Agenda = () => {
     const selectedDentistId = filters.dentistId !== "all" ? filters.dentistId : undefined;
     const availableSlots = TIME_SLOTS.filter(time => !isSlotOccupied(time, selectedDentistId)).length;
     const occupiedSlots = TIME_SLOTS.length - availableSlots;
+    const occupancyRate = Math.round((occupiedSlots / TIME_SLOTS.length) * 100);
+    
+    // Detectar gaps de horários ociosos (mais de 2 slots consecutivos vazios = 1h+)
+    const findIdleGaps = () => {
+      const gaps: { start: string; end: string; slots: number }[] = [];
+      let currentGap: { start: string; slots: number } | null = null;
+      
+      TIME_SLOTS.forEach((time, index) => {
+        const isOccupied = isSlotOccupied(time, selectedDentistId);
+        const isPast = isPastSlot(selectedDate, time);
+        
+        if (!isOccupied && !isPast) {
+          if (!currentGap) {
+            currentGap = { start: time, slots: 1 };
+          } else {
+            currentGap.slots++;
+          }
+        } else {
+          if (currentGap && currentGap.slots >= 3) { // 1.5h+ de gap
+            gaps.push({
+              start: currentGap.start,
+              end: TIME_SLOTS[index - 1] || time,
+              slots: currentGap.slots
+            });
+          }
+          currentGap = null;
+        }
+      });
+      
+      // Verificar último gap
+      if (currentGap && currentGap.slots >= 3) {
+        gaps.push({
+          start: currentGap.start,
+          end: TIME_SLOTS[TIME_SLOTS.length - 1],
+          slots: currentGap.slots
+        });
+      }
+      
+      return gaps;
+    };
+    
+    const idleGaps = findIdleGaps();
     
     return (
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 space-y-3">
+          {/* Taxa de Ocupação */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Taxa de ocupação do dia</span>
+              <span className={cn(
+                "font-semibold",
+                occupancyRate >= 70 ? "text-[hsl(var(--success-green))]" : 
+                occupancyRate >= 40 ? "text-yellow-500" : "text-destructive"
+              )}>
+                {occupancyRate}%
+              </span>
+            </div>
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div 
+                className={cn(
+                  "h-full transition-all duration-500 rounded-full",
+                  occupancyRate >= 70 ? "bg-[hsl(var(--success-green))]" : 
+                  occupancyRate >= 40 ? "bg-yellow-500" : "bg-destructive"
+                )}
+                style={{ width: `${occupancyRate}%` }}
+              />
+            </div>
+          </div>
+          
+          {/* Alerta de Horários Ociosos */}
+          {idleGaps.length > 0 && (
+            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+              <div className="flex items-start gap-2">
+                <Clock className="h-4 w-4 text-yellow-600 mt-0.5 shrink-0" />
+                <div className="text-sm">
+                  <p className="font-medium text-yellow-600">
+                    {idleGaps.length} período{idleGaps.length !== 1 && "s"} ocioso{idleGaps.length !== 1 && "s"} detectado{idleGaps.length !== 1 && "s"}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {idleGaps.map((gap, i) => (
+                      <span key={i}>
+                        {gap.start}-{gap.end} ({gap.slots * 30}min)
+                        {i < idleGaps.length - 1 && ", "}
+                      </span>
+                    ))}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Legenda de Slots */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm">
@@ -447,6 +547,8 @@ const Agenda = () => {
               if (appointment) {
                 // Slot with appointment - usar cor do profissional
                 const dentistColor = appointment.dentist?.cor || '#3b82f6';
+                const patientNoShows = patientNoShowStats[appointment.patient_id] || 0;
+                
                 return (
                   <div
                     key={time}
@@ -457,7 +559,7 @@ const Agenda = () => {
                       <span className="text-lg font-bold" style={{ color: dentistColor }}>{time}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span 
                           className="w-2.5 h-2.5 rounded-full shrink-0" 
                           style={{ backgroundColor: dentistColor }}
@@ -468,6 +570,16 @@ const Agenda = () => {
                         <Badge className={statusColors[appointment.status as keyof typeof statusColors]}>
                           {statusLabels[appointment.status as keyof typeof statusLabels]}
                         </Badge>
+                        {/* Indicador de histórico de faltas */}
+                        {patientNoShows >= 2 && (
+                          <span 
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-destructive/10 text-destructive"
+                            title={`Este paciente tem ${patientNoShows} falta(s) registrada(s)`}
+                          >
+                            <AlertTriangle className="h-3 w-3" />
+                            {patientNoShows} falta{patientNoShows !== 1 && "s"}
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm text-muted-foreground">
                         {appointment.title} • {appointment.dentist?.nome} • {appointment.duration_minutes} min
