@@ -35,6 +35,24 @@ const TIPOS_PROCEDIMENTO = [
   "Outro",
 ];
 
+const MATERIAIS = [
+  "Zircônia",
+  "Porcelana",
+  "Metal-Porcelana",
+  "Resina Acrílica",
+  "E-max",
+  "Dissilicato de Lítio",
+  "Metal",
+  "Outro",
+];
+
+const CORES_VITA = [
+  "A1", "A2", "A3", "A3.5", "A4",
+  "B1", "B2", "B3", "B4",
+  "C1", "C2", "C3", "C4",
+  "D2", "D3", "D4",
+];
+
 interface NovaProteseModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -49,21 +67,29 @@ export function NovaProteseModal({
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [labModalOpen, setLabModalOpen] = useState(false);
-  const [currentTab, setCurrentTab] = useState("paciente");
+  const [currentTab, setCurrentTab] = useState("trabalho");
 
   const [formData, setFormData] = useState({
+    // Dados gerais do trabalho
     paciente_id: "",
     profissional_id: "",
     procedimento_tipo: "",
     procedimento_nome: "",
+    dente_elemento: "",
+    material: "",
+    cor_final: "",
+    observacoes: "",
+    // Primeira etapa
+    etapa_nome: "Coleta de Moldagem",
     tipo_laboratorio: "externo",
     laboratorio_id: "",
     data_envio_prevista: "",
-    data_entrega_prevista: "",
-    data_instalacao_prevista: "",
-    custo_laboratorial: "",
+    data_retorno_prevista: "",
+    etapa_custo: "",
+    etapa_observacoes: "",
+    // Financeiro geral
+    custo_total_estimado: "",
     forma_pagamento: "",
-    observacoes: "",
   });
 
   const { data: pacientes } = useQuery({
@@ -116,7 +142,7 @@ export function NovaProteseModal({
     try {
       const { data: profile } = await supabase.from("profiles").select("clinic_id").single();
 
-      // Criar prótese
+      // 1. Criar prótese com novos campos
       const { data: protese, error: proteseError } = await supabase
         .from("proteses")
         .insert({
@@ -125,12 +151,14 @@ export function NovaProteseModal({
           profissional_id: formData.profissional_id,
           procedimento_tipo: formData.procedimento_tipo,
           procedimento_nome: formData.procedimento_nome,
+          dente_elemento: formData.dente_elemento || null,
+          material: formData.material || null,
+          cor_final: formData.cor_final || null,
           tipo_laboratorio: formData.tipo_laboratorio as "interno" | "externo",
           laboratorio_id: formData.laboratorio_id || null,
           data_envio_prevista: formData.data_envio_prevista || null,
-          data_entrega_prevista: formData.data_entrega_prevista || null,
-          data_instalacao_prevista: formData.data_instalacao_prevista || null,
-          custo_laboratorial: formData.custo_laboratorial ? parseFloat(formData.custo_laboratorial) : null,
+          data_entrega_prevista: formData.data_retorno_prevista || null,
+          custo_laboratorial: formData.custo_total_estimado ? parseFloat(formData.custo_total_estimado) : null,
           forma_pagamento: formData.forma_pagamento || null,
           observacoes: formData.observacoes || null,
         })
@@ -139,44 +167,55 @@ export function NovaProteseModal({
 
       if (proteseError) throw proteseError;
 
-      // Se tem custo, criar despesa
-      if (formData.custo_laboratorial && parseFloat(formData.custo_laboratorial) > 0) {
-        const { error: despesaError } = await supabase
+      // 2. Criar primeira etapa
+      const { data: etapa, error: etapaError } = await supabase
+        .from("protese_etapas")
+        .insert({
+          protese_id: protese.id,
+          ordem: 1,
+          nome_etapa: formData.etapa_nome || "Coleta de Moldagem",
+          status: "pendente",
+          laboratorio_id: formData.laboratorio_id || null,
+          cor: formData.cor_final || null,
+          data_envio: formData.data_envio_prevista || null,
+          data_retorno_prevista: formData.data_retorno_prevista || null,
+          custo: formData.etapa_custo ? parseFloat(formData.etapa_custo) : null,
+          observacoes: formData.etapa_observacoes || null,
+        })
+        .select()
+        .single();
+
+      if (etapaError) throw etapaError;
+
+      // 3. Atualizar prótese com etapa atual
+      await supabase
+        .from("proteses")
+        .update({ etapa_atual_id: etapa.id })
+        .eq("id", protese.id);
+
+      // 4. Se tem custo, criar despesa
+      const custoEtapa = formData.etapa_custo ? parseFloat(formData.etapa_custo) : 0;
+      if (custoEtapa > 0) {
+        await supabase
           .from("financial_transactions")
           .insert({
             clinic_id: profile?.clinic_id,
             type: "expense",
             category: "Laboratório Protético",
-            value: parseFloat(formData.custo_laboratorial),
-            date: formData.data_entrega_prevista || new Date().toISOString().split("T")[0],
-            reference: `Prótese - ${formData.procedimento_nome}`,
+            value: custoEtapa,
+            date: formData.data_retorno_prevista || new Date().toISOString().split("T")[0],
+            reference: `Prótese - ${formData.procedimento_nome} - Etapa 1`,
           });
-
-        if (despesaError) throw despesaError;
       }
 
       toast({
         title: "Prótese criada!",
-        description: "O item foi adicionado ao Kanban",
+        description: "O trabalho foi adicionado ao Kanban com a primeira etapa",
       });
 
       onSuccess();
       onOpenChange(false);
-      setFormData({
-        paciente_id: "",
-        profissional_id: "",
-        procedimento_tipo: "",
-        procedimento_nome: "",
-        tipo_laboratorio: "externo",
-        laboratorio_id: "",
-        data_envio_prevista: "",
-        data_entrega_prevista: "",
-        data_instalacao_prevista: "",
-        custo_laboratorial: "",
-        forma_pagamento: "",
-        observacoes: "",
-      });
-      setCurrentTab("paciente");
+      resetForm();
     } catch (error: any) {
       toast({
         title: "Erro ao criar prótese",
@@ -188,6 +227,29 @@ export function NovaProteseModal({
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      paciente_id: "",
+      profissional_id: "",
+      procedimento_tipo: "",
+      procedimento_nome: "",
+      dente_elemento: "",
+      material: "",
+      cor_final: "",
+      observacoes: "",
+      etapa_nome: "Coleta de Moldagem",
+      tipo_laboratorio: "externo",
+      laboratorio_id: "",
+      data_envio_prevista: "",
+      data_retorno_prevista: "",
+      etapa_custo: "",
+      etapa_observacoes: "",
+      custo_total_estimado: "",
+      forma_pagamento: "",
+    });
+    setCurrentTab("trabalho");
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -197,67 +259,136 @@ export function NovaProteseModal({
           </DialogHeader>
 
           <Tabs value={currentTab} onValueChange={setCurrentTab}>
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="paciente">Paciente</TabsTrigger>
-              <TabsTrigger value="laboratorio">Laboratório</TabsTrigger>
-              <TabsTrigger value="prazos">Prazos</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="trabalho">Trabalho</TabsTrigger>
+              <TabsTrigger value="etapa">1ª Etapa</TabsTrigger>
               <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="paciente" className="space-y-4">
-              <div className="space-y-2">
-                <Label>Paciente *</Label>
-                <Select value={formData.paciente_id} onValueChange={(v) => setFormData({ ...formData, paciente_id: v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o paciente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {pacientes?.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {/* Tab 1: Dados Gerais do Trabalho */}
+            <TabsContent value="trabalho" className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Paciente *</Label>
+                  <Select value={formData.paciente_id} onValueChange={(v) => setFormData({ ...formData, paciente_id: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o paciente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {pacientes?.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Profissional *</Label>
+                  <Select value={formData.profissional_id} onValueChange={(v) => setFormData({ ...formData, profissional_id: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {profissionais?.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Tipo de Procedimento *</Label>
+                  <Select value={formData.procedimento_tipo} onValueChange={(v) => setFormData({ ...formData, procedimento_tipo: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIPOS_PROCEDIMENTO.map((tipo) => (
+                        <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Dente/Elemento</Label>
+                  <Input
+                    value={formData.dente_elemento}
+                    onChange={(e) => setFormData({ ...formData, dente_elemento: e.target.value })}
+                    placeholder="Ex: 11, 11-14, 46"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
-                <Label>Profissional Responsável *</Label>
-                <Select value={formData.profissional_id} onValueChange={(v) => setFormData({ ...formData, profissional_id: v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o profissional" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {profissionais?.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Tipo de Procedimento *</Label>
-                <Select value={formData.procedimento_tipo} onValueChange={(v) => setFormData({ ...formData, procedimento_tipo: v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIPOS_PROCEDIMENTO.map((tipo) => (
-                      <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Descrição do Procedimento *</Label>
+                <Label>Descrição do Trabalho *</Label>
                 <Input
                   value={formData.procedimento_nome}
                   onChange={(e) => setFormData({ ...formData, procedimento_nome: e.target.value })}
                   placeholder="Ex: Coroa de Porcelana Elemento 11"
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Material</Label>
+                  <Select value={formData.material} onValueChange={(v) => setFormData({ ...formData, material: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MATERIAIS.map((mat) => (
+                        <SelectItem key={mat} value={mat}>{mat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Cor Final (VITA)</Label>
+                  <Select value={formData.cor_final} onValueChange={(v) => setFormData({ ...formData, cor_final: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CORES_VITA.map((cor) => (
+                        <SelectItem key={cor} value={cor}>{cor}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Observações Gerais</Label>
+                <Textarea
+                  value={formData.observacoes}
+                  onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                  rows={2}
+                  placeholder="Observações sobre o trabalho..."
+                />
+              </div>
             </TabsContent>
 
-            <TabsContent value="laboratorio" className="space-y-4">
+            {/* Tab 2: Primeira Etapa */}
+            <TabsContent value="etapa" className="space-y-4">
+              <div className="p-3 bg-muted/50 rounded-lg mb-4">
+                <p className="text-sm text-muted-foreground">
+                  Configure os dados da primeira etapa do trabalho. Você poderá adicionar mais etapas depois.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Nome da Etapa</Label>
+                <Input
+                  value={formData.etapa_nome}
+                  onChange={(e) => setFormData({ ...formData, etapa_nome: e.target.value })}
+                  placeholder="Ex: Coleta de Moldagem"
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label>Tipo de Laboratório</Label>
                 <Select value={formData.tipo_laboratorio} onValueChange={(v) => setFormData({ ...formData, tipo_laboratorio: v })}>
@@ -282,7 +413,7 @@ export function NovaProteseModal({
                       onClick={() => setLabModalOpen(true)}
                     >
                       <Plus className="w-4 h-4 mr-1" />
-                      Novo Laboratório
+                      Novo Lab
                     </Button>
                   </div>
                   <Select value={formData.laboratorio_id} onValueChange={(v) => setFormData({ ...formData, laboratorio_id: v })}>
@@ -297,47 +428,63 @@ export function NovaProteseModal({
                   </Select>
                 </div>
               )}
-            </TabsContent>
 
-            <TabsContent value="prazos" className="space-y-4">
-              <div className="space-y-2">
-                <Label>Data de Envio Prevista</Label>
-                <Input
-                  type="date"
-                  value={formData.data_envio_prevista}
-                  onChange={(e) => setFormData({ ...formData, data_envio_prevista: e.target.value })}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Data de Envio</Label>
+                  <Input
+                    type="date"
+                    value={formData.data_envio_prevista}
+                    onChange={(e) => setFormData({ ...formData, data_envio_prevista: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Retorno Previsto</Label>
+                  <Input
+                    type="date"
+                    value={formData.data_retorno_prevista}
+                    onChange={(e) => setFormData({ ...formData, data_retorno_prevista: e.target.value })}
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
-                <Label>Data de Entrega Prevista</Label>
-                <Input
-                  type="date"
-                  value={formData.data_entrega_prevista}
-                  onChange={(e) => setFormData({ ...formData, data_entrega_prevista: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Data de Instalação Prevista</Label>
-                <Input
-                  type="date"
-                  value={formData.data_instalacao_prevista}
-                  onChange={(e) => setFormData({ ...formData, data_instalacao_prevista: e.target.value })}
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="financeiro" className="space-y-4">
-              <div className="space-y-2">
-                <Label>Custo Laboratorial (R$)</Label>
+                <Label>Custo desta Etapa (R$)</Label>
                 <Input
                   type="number"
                   step="0.01"
-                  value={formData.custo_laboratorial}
-                  onChange={(e) => setFormData({ ...formData, custo_laboratorial: e.target.value })}
+                  value={formData.etapa_custo}
+                  onChange={(e) => setFormData({ ...formData, etapa_custo: e.target.value })}
                   placeholder="0,00"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Observações da Etapa</Label>
+                <Textarea
+                  value={formData.etapa_observacoes}
+                  onChange={(e) => setFormData({ ...formData, etapa_observacoes: e.target.value })}
+                  rows={2}
+                  placeholder="Observações específicas desta etapa..."
+                />
+              </div>
+            </TabsContent>
+
+            {/* Tab 3: Financeiro */}
+            <TabsContent value="financeiro" className="space-y-4">
+              <div className="space-y-2">
+                <Label>Custo Total Estimado (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.custo_total_estimado}
+                  onChange={(e) => setFormData({ ...formData, custo_total_estimado: e.target.value })}
+                  placeholder="0,00"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Estimativa do custo total de todas as etapas do trabalho
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -354,15 +501,6 @@ export function NovaProteseModal({
                     <SelectItem value="cartao">Cartão</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Observações</Label>
-                <Textarea
-                  value={formData.observacoes}
-                  onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                  rows={3}
-                />
               </div>
             </TabsContent>
           </Tabs>
