@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Palette, Layers } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { NovaProteseModal } from "@/components/proteses/NovaProteseModal";
@@ -25,6 +25,7 @@ export default function Proteses() {
   const [proteseSelecionada, setProteseSelecionada] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
 
+  // Buscar próteses com etapa atual
   const { data: proteses, refetch } = useQuery({
     queryKey: ["proteses"],
     queryFn: async () => {
@@ -34,12 +35,34 @@ export default function Proteses() {
           *,
           paciente:patients!proteses_paciente_id_fkey(full_name),
           profissional:profissionais!proteses_profissional_id_fkey(nome),
-          laboratorio:laboratorios(nome)
+          laboratorio:laboratorios(nome),
+          etapa_atual:protese_etapas!proteses_etapa_atual_id_fkey(
+            id, ordem, nome_etapa, status, cor
+          )
         `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data;
+    },
+  });
+
+  // Buscar total de etapas por prótese
+  const { data: etapasCount } = useQuery({
+    queryKey: ["proteses-etapas-count"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("protese_etapas")
+        .select("protese_id");
+
+      if (error) throw error;
+
+      // Contar etapas por prótese
+      const countMap: Record<string, number> = {};
+      data?.forEach((etapa) => {
+        countMap[etapa.protese_id] = (countMap[etapa.protese_id] || 0) + 1;
+      });
+      return countMap;
     },
   });
 
@@ -74,7 +97,9 @@ export default function Proteses() {
         p.paciente?.full_name?.toLowerCase().includes(busca.toLowerCase()) ||
         p.procedimento_nome?.toLowerCase().includes(busca.toLowerCase()) ||
         p.profissional?.nome?.toLowerCase().includes(busca.toLowerCase()) ||
-        p.laboratorio?.nome?.toLowerCase().includes(busca.toLowerCase());
+        p.laboratorio?.nome?.toLowerCase().includes(busca.toLowerCase()) ||
+        p.dente_elemento?.toLowerCase().includes(busca.toLowerCase()) ||
+        p.cor_final?.toLowerCase().includes(busca.toLowerCase());
       
       return matchStatus && matchBusca;
     }) || [];
@@ -91,7 +116,7 @@ export default function Proteses() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Controle de Prótese</h1>
-          <p className="text-muted-foreground">Gestão completa do fluxo protético</p>
+          <p className="text-muted-foreground">Gestão completa do fluxo protético com múltiplas etapas</p>
         </div>
         <Button onClick={() => setNovaProteseOpen(true)}>
           <Plus className="w-4 h-4 mr-2" />
@@ -103,7 +128,7 @@ export default function Proteses() {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
         <Input
-          placeholder="Buscar por paciente, procedimento, dentista ou laboratório..."
+          placeholder="Buscar por paciente, procedimento, dentista, laboratório, dente ou cor..."
           className="pl-10"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
@@ -128,56 +153,92 @@ export default function Proteses() {
               </div>
               
               <div className="bg-muted/30 rounded-b-lg p-2 min-h-[500px] space-y-2">
-                {protesesColuna.map((protese: any) => (
-                  <Card
-                    key={protese.id}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, protese.id)}
-                    className="cursor-move hover:shadow-lg transition-shadow"
-                    onClick={() => abrirDetalhes(protese.id)}
-                  >
-                    <CardHeader className="p-3 pb-2">
-                      <CardTitle className="text-sm font-semibold">
-                        {protese.paciente?.full_name}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-3 pt-0 space-y-2">
-                      <p className="text-xs font-medium text-muted-foreground">
-                        {protese.procedimento_nome}
-                      </p>
-                      
-                      <div className="text-xs space-y-1">
-                        <p className="text-muted-foreground">
-                          <strong>Dr(a):</strong> {protese.profissional?.nome}
+                {protesesColuna.map((protese: any) => {
+                  const totalEtapas = etapasCount?.[protese.id] || 0;
+                  const etapaAtual = protese.etapa_atual;
+                  
+                  return (
+                    <Card
+                      key={protese.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, protese.id)}
+                      className="cursor-move hover:shadow-lg transition-shadow"
+                      onClick={() => abrirDetalhes(protese.id)}
+                    >
+                      <CardHeader className="p-3 pb-2">
+                        <CardTitle className="text-sm font-semibold flex items-center justify-between">
+                          <span className="truncate">{protese.paciente?.full_name}</span>
+                          {protese.dente_elemento && (
+                            <Badge variant="outline" className="text-xs ml-1 shrink-0">
+                              {protese.dente_elemento}
+                            </Badge>
+                          )}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-3 pt-0 space-y-2">
+                        <p className="text-xs font-medium text-muted-foreground">
+                          {protese.procedimento_nome}
                         </p>
-                        {protese.laboratorio && (
-                          <p className="text-muted-foreground">
-                            <strong>Lab:</strong> {protese.laboratorio.nome}
-                          </p>
+                        
+                        {/* Etapa Atual */}
+                        {etapaAtual && totalEtapas > 0 && (
+                          <div className="flex items-center gap-1 text-xs bg-primary/10 text-primary rounded px-2 py-1">
+                            <Layers className="w-3 h-3" />
+                            <span className="truncate">{etapaAtual.nome_etapa}</span>
+                            <Badge variant="secondary" className="text-[10px] px-1 py-0">
+                              {etapaAtual.ordem}/{totalEtapas}
+                            </Badge>
+                          </div>
                         )}
-                      </div>
 
-                      {protese.data_entrega_prevista && (
-                        <div className="flex items-center justify-between">
-                          <Badge variant={protese.atrasado ? "destructive" : "outline"} className="text-xs">
-                            {format(new Date(protese.data_entrega_prevista), "dd/MM/yyyy", { locale: ptBR })}
-                          </Badge>
-                          {protese.custo_laboratorial && (
-                            <span className="text-xs font-semibold">
-                              R$ {Number(protese.custo_laboratorial).toFixed(2)}
-                            </span>
+                        {/* Cor e Material */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {(protese.cor_final || etapaAtual?.cor) && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Palette className="w-3 h-3" />
+                              <span>{protese.cor_final || etapaAtual?.cor}</span>
+                            </div>
+                          )}
+                          {protese.material && (
+                            <Badge variant="outline" className="text-[10px]">
+                              {protese.material}
+                            </Badge>
                           )}
                         </div>
-                      )}
+                        
+                        <div className="text-xs space-y-1">
+                          <p className="text-muted-foreground">
+                            <strong>Dr(a):</strong> {protese.profissional?.nome}
+                          </p>
+                          {protese.laboratorio && (
+                            <p className="text-muted-foreground">
+                              <strong>Lab:</strong> {protese.laboratorio.nome}
+                            </p>
+                          )}
+                        </div>
 
-                      {protese.atrasado && (
-                        <Badge variant="destructive" className="text-xs w-full justify-center">
-                          ⚠️ Atrasado
-                        </Badge>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+                        {protese.data_entrega_prevista && (
+                          <div className="flex items-center justify-between">
+                            <Badge variant={protese.atrasado ? "destructive" : "outline"} className="text-xs">
+                              {format(new Date(protese.data_entrega_prevista), "dd/MM/yyyy", { locale: ptBR })}
+                            </Badge>
+                            {protese.custo_laboratorial && (
+                              <span className="text-xs font-semibold">
+                                R$ {Number(protese.custo_laboratorial).toFixed(2)}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {protese.atrasado && (
+                          <Badge variant="destructive" className="text-xs w-full justify-center">
+                            ⚠️ Atrasado
+                          </Badge>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
           );

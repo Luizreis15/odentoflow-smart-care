@@ -3392,6 +3392,72 @@ export type Database = {
           },
         ]
       }
+      protese_etapas: {
+        Row: {
+          cor: string | null
+          created_at: string
+          custo: number | null
+          data_envio: string | null
+          data_retorno_prevista: string | null
+          data_retorno_real: string | null
+          id: string
+          laboratorio_id: string | null
+          nome_etapa: string
+          observacoes: string | null
+          ordem: number
+          protese_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cor?: string | null
+          created_at?: string
+          custo?: number | null
+          data_envio?: string | null
+          data_retorno_prevista?: string | null
+          data_retorno_real?: string | null
+          id?: string
+          laboratorio_id?: string | null
+          nome_etapa: string
+          observacoes?: string | null
+          ordem?: number
+          protese_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cor?: string | null
+          created_at?: string
+          custo?: number | null
+          data_envio?: string | null
+          data_retorno_prevista?: string | null
+          data_retorno_real?: string | null
+          id?: string
+          laboratorio_id?: string | null
+          nome_etapa?: string
+          observacoes?: string | null
+          ordem?: number
+          protese_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "protese_etapas_laboratorio_id_fkey"
+            columns: ["laboratorio_id"]
+            isOneToOne: false
+            referencedRelation: "laboratorios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "protese_etapas_protese_id_fkey"
+            columns: ["protese_id"]
+            isOneToOne: false
+            referencedRelation: "proteses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       protese_movimentacoes: {
         Row: {
           created_at: string | null
@@ -3441,6 +3507,7 @@ export type Database = {
         Row: {
           atrasado: boolean | null
           clinica_id: string
+          cor_final: string | null
           created_at: string | null
           custo_laboratorial: number | null
           data_entrega_prevista: string | null
@@ -3449,10 +3516,13 @@ export type Database = {
           data_envio_real: string | null
           data_instalacao_prevista: string | null
           data_instalacao_real: string | null
+          dente_elemento: string | null
           despesa_id: string | null
+          etapa_atual_id: string | null
           forma_pagamento: string | null
           id: string
           laboratorio_id: string | null
+          material: string | null
           observacoes: string | null
           orcamento_id: string | null
           paciente_id: string
@@ -3466,6 +3536,7 @@ export type Database = {
         Insert: {
           atrasado?: boolean | null
           clinica_id: string
+          cor_final?: string | null
           created_at?: string | null
           custo_laboratorial?: number | null
           data_entrega_prevista?: string | null
@@ -3474,10 +3545,13 @@ export type Database = {
           data_envio_real?: string | null
           data_instalacao_prevista?: string | null
           data_instalacao_real?: string | null
+          dente_elemento?: string | null
           despesa_id?: string | null
+          etapa_atual_id?: string | null
           forma_pagamento?: string | null
           id?: string
           laboratorio_id?: string | null
+          material?: string | null
           observacoes?: string | null
           orcamento_id?: string | null
           paciente_id: string
@@ -3491,6 +3565,7 @@ export type Database = {
         Update: {
           atrasado?: boolean | null
           clinica_id?: string
+          cor_final?: string | null
           created_at?: string | null
           custo_laboratorial?: number | null
           data_entrega_prevista?: string | null
@@ -3499,10 +3574,13 @@ export type Database = {
           data_envio_real?: string | null
           data_instalacao_prevista?: string | null
           data_instalacao_real?: string | null
+          dente_elemento?: string | null
           despesa_id?: string | null
+          etapa_atual_id?: string | null
           forma_pagamento?: string | null
           id?: string
           laboratorio_id?: string | null
+          material?: string | null
           observacoes?: string | null
           orcamento_id?: string | null
           paciente_id?: string
@@ -3519,6 +3597,13 @@ export type Database = {
             columns: ["clinica_id"]
             isOneToOne: false
             referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proteses_etapa_atual_id_fkey"
+            columns: ["etapa_atual_id"]
+            isOneToOne: false
+            referencedRelation: "protese_etapas"
             referencedColumns: ["id"]
           },
           {
