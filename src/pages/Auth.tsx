@@ -43,6 +43,13 @@ const Auth = () => {
 
   useEffect(() => {
     const checkUser = async () => {
+      // CRÍTICO: Se está em modo reset, NÃO redirecionar automaticamente
+      // O usuário precisa definir a nova senha primeiro
+      if (searchParams.get('reset') === 'true') {
+        console.log("[AUTH] Reset mode detected - skipping auto-redirect");
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         // Verificar se é super admin - redireciona para dashboard com acesso total
@@ -87,6 +94,24 @@ const Auth = () => {
     checkUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("[AUTH] onAuthStateChange - Event:", event, "Session:", !!session);
+      
+      // CRÍTICO: Se é um evento de PASSWORD_RECOVERY, NÃO redirecionar
+      // O usuário precisa definir a nova senha primeiro
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log("[AUTH] PASSWORD_RECOVERY detected - staying on reset password screen");
+        setIsResetPassword(true);
+        return; // NÃO redirecionar
+      }
+      
+      // Se está em modo reset e tem sessão, ainda não redirecionar
+      // Aguardar o usuário definir a senha
+      if (isResetPassword && session?.user) {
+        console.log("[AUTH] Reset mode active - waiting for password update");
+        return; // NÃO redirecionar
+      }
+
+      // Para outros eventos (SIGNED_IN normal), prosseguir com redirect
       if (session?.user) {
         // Use setTimeout to defer Supabase calls and prevent deadlocks
         setTimeout(async () => {
@@ -281,11 +306,13 @@ const Auth = () => {
     } else {
       toast({
         title: "Senha redefinida!",
-        description: "Sua senha foi alterada com sucesso. Você será redirecionado para o login.",
+        description: "Sua senha foi alterada com sucesso.",
       });
-      setTimeout(() => {
-        navigate("/auth");
-      }, 2000);
+      
+      // Limpar estado de reset ANTES de redirecionar
+      // O usuário já está autenticado, redireciona direto para dashboard
+      setIsResetPassword(false);
+      navigate("/dashboard");
     }
   };
 
