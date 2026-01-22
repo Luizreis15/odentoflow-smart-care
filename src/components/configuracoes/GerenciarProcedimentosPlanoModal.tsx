@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import EditarProcedimentoModal from "./EditarProcedimentoModal";
 import AdicionarProcedimentoPlanoModal from "./AdicionarProcedimentoPlanoModal";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { formatCurrency } from "@/lib/utils";
 
 interface Plano {
   id: string;
@@ -131,9 +132,6 @@ export default function GerenciarProcedimentosPlanoModal({
     return matchSearch && matchEspecialidade;
   });
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-  };
 
   return (
     <>

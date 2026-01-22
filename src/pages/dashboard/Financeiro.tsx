@@ -14,6 +14,7 @@ import { PayablesTab } from "@/components/financeiro/PayablesTab";
 import { RecorrenciasTab } from "@/components/financeiro/RecorrenciasTab";
 import { CalendarioFinanceiro } from "@/components/financeiro/CalendarioFinanceiro";
 import { RelatoriosFinanceiroTab } from "@/components/financeiro/RelatoriosFinanceiroTab";
+import { formatCurrency } from "@/lib/utils";
 interface Transaction {
   id: string;
   type: string;
@@ -238,7 +239,7 @@ const Financeiro = () => {
                     </div>
                   </div>
                   <div className="text-xl lg:text-2xl font-bold text-[hsl(var(--success-green))]">
-                    R$ {receitas.toFixed(2)}
+                    {formatCurrency(receitas)}
                   </div>
                   <p className="text-xs text-foreground/60 mt-1">
                     A receber R$ 0,00
@@ -255,7 +256,7 @@ const Financeiro = () => {
                     </div>
                   </div>
                   <div className="text-xl lg:text-2xl font-bold text-[hsl(var(--error-red))]">
-                    R$ {despesas.toFixed(2)}
+                    {formatCurrency(despesas)}
                   </div>
                   <p className="text-xs text-foreground/60 mt-1">
                     A pagar R$ 0,00
@@ -272,7 +273,7 @@ const Financeiro = () => {
                     </div>
                   </div>
                   <div className={`text-xl lg:text-2xl font-bold ${saldo >= 0 ? 'text-[hsl(var(--flowdent-blue))]' : 'text-[hsl(var(--error-red))]'}`}>
-                    R$ {saldo.toFixed(2)}
+                    {formatCurrency(saldo)}
                   </div>
                   <div className="mt-1 text-xs text-foreground/60">
                     Total previsto
@@ -310,7 +311,7 @@ const Financeiro = () => {
                           </p>
                         </div>
                         <span className={`font-bold whitespace-nowrap ${transaction.type === "receita" ? "text-green-600" : "text-red-600"}`}>
-                          {transaction.type === "receita" ? "+" : "-"}R$ {transaction.value.toFixed(2)}
+                          {transaction.type === "receita" ? "+" : ""}{formatCurrency(transaction.type === "receita" ? transaction.value : -transaction.value)}
                         </span>
                       </div>
                     ))}
@@ -336,7 +337,7 @@ const Financeiro = () => {
                           <TableCell>{transaction.category}</TableCell>
                           <TableCell className="text-right">
                             <span className={transaction.type === "receita" ? "text-green-600" : "text-red-600"}>
-                              {transaction.type === "receita" ? "+" : "-"}R$ {transaction.value.toFixed(2)}
+                              {transaction.type === "receita" ? "+" : ""}{formatCurrency(transaction.type === "receita" ? transaction.value : -transaction.value)}
                             </span>
                           </TableCell>
                         </TableRow>

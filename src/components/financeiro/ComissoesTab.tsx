@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { DollarSign, TrendingUp, Clock, CheckCircle, Plus } from "lucide-react";
 import { FechamentoComissoesModal } from "./FechamentoComissoesModal";
 import { AdiantamentoModal } from "./AdiantamentoModal";
+import { formatCurrency } from "@/lib/utils";
 
 interface ComissoesTabProps {
   clinicId: string;
@@ -166,7 +167,7 @@ export const ComissoesTab = ({ clinicId }: ComissoesTabProps) => {
               <Clock className="h-5 w-5 text-yellow-500" />
             </div>
             <div className="text-2xl font-bold text-yellow-600">
-              R$ {provisionado.toFixed(2)}
+              {formatCurrency(provisionado)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Aguardando fechamento
@@ -181,7 +182,7 @@ export const ComissoesTab = ({ clinicId }: ComissoesTabProps) => {
               <TrendingUp className="h-5 w-5 text-blue-500" />
             </div>
             <div className="text-2xl font-bold text-blue-600">
-              R$ {aprovado.toFixed(2)}
+              {formatCurrency(aprovado)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Aguardando pagamento
@@ -196,7 +197,7 @@ export const ComissoesTab = ({ clinicId }: ComissoesTabProps) => {
               <CheckCircle className="h-5 w-5 text-green-500" />
             </div>
             <div className="text-2xl font-bold text-green-600">
-              R$ {pago.toFixed(2)}
+              {formatCurrency(pago)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Pagamentos realizados
@@ -245,13 +246,13 @@ export const ComissoesTab = ({ clinicId }: ComissoesTabProps) => {
                   </TableCell>
                   <TableCell>{provisao.profissional?.nome}</TableCell>
                   <TableCell className="text-right">
-                    R$ {parseFloat(provisao.valor_provisionado || 0).toFixed(2)}
+                    {formatCurrency(parseFloat(provisao.valor_provisionado || 0))}
                   </TableCell>
                   <TableCell className="text-right">
-                    R$ {parseFloat(provisao.valor_devido || 0).toFixed(2)}
+                    {formatCurrency(parseFloat(provisao.valor_devido || 0))}
                   </TableCell>
                   <TableCell className="text-right">
-                    R$ {parseFloat(provisao.valor_liquido_pagar || provisao.valor_devido || 0).toFixed(2)}
+                    {formatCurrency(parseFloat(provisao.valor_liquido_pagar || provisao.valor_devido || 0))}
                   </TableCell>
                   <TableCell>
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(provisao.status)}`}>

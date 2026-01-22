@@ -17,6 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { formatCurrency } from "@/lib/utils";
 
 interface CommissionRule {
   id: string;
@@ -107,12 +108,9 @@ export const RegrasComissaoTab = ({ clinicId }: RegrasComissaoTabProps) => {
     }
   };
 
-  const formatCurrency = (value: number | null) => {
+  const formatCurrencyValue = (value: number | null) => {
     if (!value) return "—";
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
+    return formatCurrency(value);
   };
 
   const getGatilhoLabel = (gatilho: string) => {

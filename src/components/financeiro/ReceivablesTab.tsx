@@ -9,6 +9,7 @@ import { Search, Filter, AlertTriangle, Clock, CheckCircle, XCircle, DollarSign 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PaymentDrawer } from "./PaymentDrawer";
+import { formatCurrency } from "@/lib/utils";
 
 interface ReceivableTitle {
   id: string;
@@ -210,12 +211,6 @@ export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
     setShowPaymentDrawer(true);
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
 
   return (
     <div className="space-y-4 md:space-y-6">

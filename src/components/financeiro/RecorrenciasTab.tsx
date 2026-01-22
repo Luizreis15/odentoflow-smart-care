@@ -17,6 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { formatCurrency } from "@/lib/utils";
 
 interface Recurrence {
   id: string;
@@ -110,12 +111,6 @@ export const RecorrenciasTab = ({ clinicId }: RecorrenciasTabProps) => {
     }
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
 
   const getFrequencyLabel = (freq: string) => {
     const labels: Record<string, string> = {

@@ -3,6 +3,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/utils";
 
 interface DREData {
   receitaBruta: number;
@@ -55,13 +56,6 @@ interface ExportData {
   periodo: string;
   clinicName?: string;
 }
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
-};
 
 const formatPeriod = (periodo: string) => {
   const [year, month] = periodo.split("-");

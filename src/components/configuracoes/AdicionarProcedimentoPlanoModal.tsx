@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Search, Plus, Check } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 interface Procedimento {
   id: string;
@@ -211,9 +212,6 @@ export default function AdicionarProcedimentoPlanoModal({
     }
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
