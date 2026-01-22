@@ -16,6 +16,7 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addM
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { CadastroRapidoPacienteModal } from "@/components/agenda/CadastroRapidoPacienteModal";
+import { HorarioFuncionamento, DiaConfig, DEFAULT_HORARIO } from "@/components/configuracoes/HorarioFuncionamentoCard";
 
 const appointmentSchema = z.object({
   patientId: z.string().uuid("Selecione um paciente válido"),
@@ -26,17 +27,83 @@ const appointmentSchema = z.object({
   duration: z.string().min(1, "Duração é obrigatória"),
 });
 
-// Generate time slots from 08:00 to 18:00 in 30min intervals
-const generateTimeSlots = () => {
+// Map day index to day key
+const DAY_KEYS: (keyof HorarioFuncionamento["dias"])[] = [
+  "domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"
+];
+
+const DAY_LABELS: Record<keyof HorarioFuncionamento["dias"], string> = {
+  domingo: "Domingo", segunda: "Segunda", terca: "Terça", quarta: "Quarta",
+  quinta: "Quinta", sexta: "Sexta", sabado: "Sábado"
+};
+
+// Generate time slots dynamically based on clinic config
+const generateDynamicTimeSlots = (
+  diaKey: keyof HorarioFuncionamento["dias"],
+  config: HorarioFuncionamento
+): string[] => {
+  const diaConfig = config.dias[diaKey];
+  if (!diaConfig?.ativo) return [];
+  
   const slots: string[] = [];
-  for (let hour = 8; hour < 18; hour++) {
-    slots.push(`${hour.toString().padStart(2, '0')}:00`);
-    slots.push(`${hour.toString().padStart(2, '0')}:30`);
+  const intervalo = config.intervalo_padrao || 30;
+  const [inicioH, inicioM] = diaConfig.inicio.split(':').map(Number);
+  const [fimH, fimM] = diaConfig.fim.split(':').map(Number);
+  
+  let current = inicioH * 60 + inicioM;
+  const end = fimH * 60 + fimM;
+  
+  while (current < end) {
+    const hour = Math.floor(current / 60);
+    const min = current % 60;
+    
+    // Check if slot is in lunch break
+    if (diaConfig.almoco_inicio && diaConfig.almoco_fim) {
+      const [almocoInicioH, almocoInicioM] = diaConfig.almoco_inicio.split(':').map(Number);
+      const [almocoFimH, almocoFimM] = diaConfig.almoco_fim.split(':').map(Number);
+      const almocoInicio = almocoInicioH * 60 + almocoInicioM;
+      const almocoFim = almocoFimH * 60 + almocoFimM;
+      
+      if (current >= almocoInicio && current < almocoFim) {
+        current += intervalo;
+        continue;
+      }
+    }
+    
+    slots.push(`${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`);
+    current += intervalo;
   }
+  
   return slots;
 };
 
-const TIME_SLOTS = generateTimeSlots();
+// Get all unique time slots for multiple days (for week view)
+const getAllTimeSlotsForDays = (
+  dayKeys: (keyof HorarioFuncionamento["dias"])[],
+  config: HorarioFuncionamento
+): string[] => {
+  const allSlots = new Set<string>();
+  dayKeys.forEach(dayKey => {
+    const slots = generateDynamicTimeSlots(dayKey, config);
+    slots.forEach(slot => allSlots.add(slot));
+  });
+  return Array.from(allSlots).sort();
+};
+
+// Check if a slot is in lunch break
+const isLunchBreak = (time: string, diaConfig: DiaConfig): boolean => {
+  if (!diaConfig.almoco_inicio || !diaConfig.almoco_fim) return false;
+  
+  const [h, m] = time.split(':').map(Number);
+  const currentMin = h * 60 + m;
+  
+  const [almocoInicioH, almocoInicioM] = diaConfig.almoco_inicio.split(':').map(Number);
+  const [almocoFimH, almocoFimM] = diaConfig.almoco_fim.split(':').map(Number);
+  const almocoInicio = almocoInicioH * 60 + almocoInicioM;
+  const almocoFim = almocoFimH * 60 + almocoFimM;
+  
+  return currentMin >= almocoInicio && currentMin < almocoFim;
+};
 
 // Helper to check if a date is in the past
 const isPastDate = (date: Date) => {
@@ -75,6 +142,8 @@ const Agenda = () => {
   const [dentists, setDentists] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
   const [patientNoShowStats, setPatientNoShowStats] = useState<Record<string, number>>({});
+  const [clinicConfig, setClinicConfig] = useState<HorarioFuncionamento>(DEFAULT_HORARIO);
+  const [clinicId, setClinicId] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     status: "all",
     dentistId: "all",
@@ -92,6 +161,10 @@ const Agenda = () => {
     time: "",
     duration: "30",
   });
+
+  // Compute TIME_SLOTS based on selected date and clinic config
+  const selectedDayKey = DAY_KEYS[selectedDate.getDay()];
+  const TIME_SLOTS = generateDynamicTimeSlots(selectedDayKey, clinicConfig);
 
   // Handle URL params for pre-selecting date/time
   useEffect(() => {
@@ -151,6 +224,19 @@ const Agenda = () => {
         .single();
 
       if (!profile?.clinic_id) throw new Error("Clínica não encontrada");
+      
+      setClinicId(profile.clinic_id);
+
+      // Load clinic config
+      const { data: configData } = await supabase
+        .from("configuracoes_clinica")
+        .select("horario_funcionamento")
+        .eq("clinica_id", profile.clinic_id)
+        .maybeSingle();
+
+      if (configData?.horario_funcionamento) {
+        setClinicConfig(configData.horario_funcionamento as unknown as HorarioFuncionamento);
+      }
 
       const { data: dentistsData, error: dentistsError } = await supabase
         .from("profissionais")
@@ -658,8 +744,20 @@ const Agenda = () => {
   // Week View Slots Component (Estilo Clinicorp)
   const WeekViewSlots = () => {
     const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
-    const weekDays = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"];
     const selectedDentistId = filters.dentistId !== "all" ? filters.dentistId : undefined;
+    
+    // Get active days from clinic config
+    const activeDayKeys = (Object.entries(clinicConfig.dias) as [keyof HorarioFuncionamento["dias"], DiaConfig][])
+      .filter(([_, cfg]) => cfg.ativo)
+      .map(([key]) => key);
+    
+    // Map day keys to their corresponding offsets from Monday (weekStart)
+    const dayOffsets: Record<keyof HorarioFuncionamento["dias"], number> = {
+      segunda: 0, terca: 1, quarta: 2, quinta: 3, sexta: 4, sabado: 5, domingo: 6
+    };
+    
+    // Get all unique time slots for active days
+    const weekTimeSlots = getAllTimeSlotsForDays(activeDayKeys, clinicConfig);
     
     // Helper para obter agendamento para data e horário específicos
     const getAppointmentForDateTime = (date: Date, time: string) => {
@@ -674,28 +772,37 @@ const Agenda = () => {
       });
     };
     
+    // Check if time slot is valid for a specific day
+    const isSlotValidForDay = (dayKey: keyof HorarioFuncionamento["dias"], time: string): boolean => {
+      const daySlots = generateDynamicTimeSlots(dayKey, clinicConfig);
+      return daySlots.includes(time);
+    };
+    
     return (
       <Card>
         <CardContent className="p-4">
           <div className="overflow-x-auto">
-            <div className="min-w-[800px]">
+            <div style={{ minWidth: `${100 + activeDayKeys.length * 140}px` }}>
               {/* Header com dias da semana */}
-              <div className="grid grid-cols-[80px_repeat(5,1fr)] gap-1 mb-2 sticky top-0 bg-card z-10">
+              <div 
+                className="grid gap-1 mb-2 sticky top-0 bg-card z-10"
+                style={{ gridTemplateColumns: `80px repeat(${activeDayKeys.length}, 1fr)` }}
+              >
                 <div className="text-center text-sm font-medium text-muted-foreground py-3 border-b">
                   Horário
                 </div>
-                {weekDays.map((day, index) => {
-                  const date = addDays(weekStart, index);
+                {activeDayKeys.map((dayKey) => {
+                  const date = addDays(weekStart, dayOffsets[dayKey]);
                   const isTodayDate = isSameDay(date, new Date());
                   return (
                     <div 
-                      key={index} 
+                      key={dayKey} 
                       className={cn(
                         "text-center py-2 rounded-t border-b",
                         isTodayDate && "bg-primary/10"
                       )}
                     >
-                      <div className="text-sm font-semibold">{day}</div>
+                      <div className="text-sm font-semibold">{DAY_LABELS[dayKey]}</div>
                       <div className={cn(
                         "text-sm",
                         isTodayDate ? "text-primary font-bold" : "text-muted-foreground"
@@ -709,24 +816,44 @@ const Agenda = () => {
 
               {/* Grid de horários */}
               <div className="space-y-1">
-                {TIME_SLOTS.map((time) => (
-                  <div key={time} className="grid grid-cols-[80px_repeat(5,1fr)] gap-1">
+                {weekTimeSlots.map((time) => (
+                  <div 
+                    key={time} 
+                    className="grid gap-1"
+                    style={{ gridTemplateColumns: `80px repeat(${activeDayKeys.length}, 1fr)` }}
+                  >
                     {/* Coluna de horário à esquerda */}
                     <div className="flex items-center justify-center text-sm font-medium text-muted-foreground bg-muted/30 rounded py-3">
                       {time}
                     </div>
                     
                     {/* Slots para cada dia */}
-                    {weekDays.map((_, dayIndex) => {
-                      const targetDate = addDays(weekStart, dayIndex);
+                    {activeDayKeys.map((dayKey) => {
+                      const targetDate = addDays(weekStart, dayOffsets[dayKey]);
                       const apt = getAppointmentForDateTime(targetDate, time);
                       const slotPassed = isPastSlot(targetDate, time);
                       const dentistColor = apt?.dentist?.cor || '#3b82f6';
                       const patientNoShows = apt?.patient_id ? (patientNoShowStats[apt.patient_id] || 0) : 0;
+                      const isValidSlot = isSlotValidForDay(dayKey, time);
+                      const isLunch = isLunchBreak(time, clinicConfig.dias[dayKey]);
+                      
+                      // Slot não disponível para este dia (horário de almoço ou fora do expediente)
+                      if (!isValidSlot || isLunch) {
+                        return (
+                          <div
+                            key={dayKey}
+                            className="min-h-[48px] rounded border bg-muted/20 border-muted/30 flex items-center justify-center"
+                          >
+                            {isLunch && (
+                              <span className="text-[10px] text-muted-foreground">Almoço</span>
+                            )}
+                          </div>
+                        );
+                      }
                       
                       return (
                         <div
-                          key={dayIndex}
+                          key={dayKey}
                           onClick={() => !apt && !slotPassed && handleSlotClick(targetDate, time)}
                           className={cn(
                             "min-h-[48px] rounded border transition-all p-1.5 relative",
@@ -776,7 +903,11 @@ const Agenda = () => {
               <div className="w-3 h-3 rounded border-2 border-[hsl(var(--success-green))] bg-[hsl(var(--card-green))]"></div>
               <span className="text-muted-foreground">Disponível</span>
             </div>
-            {dentists.slice(0, 4).map(dentist => (
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded bg-muted/40"></div>
+              <span className="text-muted-foreground">Almoço/Fechado</span>
+            </div>
+            {dentists.slice(0, 3).map(dentist => (
               <div key={dentist.id} className="flex items-center gap-2">
                 <div 
                   className="w-3 h-3 rounded" 

@@ -272,6 +272,7 @@ export type Database = {
           created_at: string | null
           dentist_id: string
           description: string | null
+          duracao_minutos: number | null
           duration_minutes: number | null
           id: string
           patient_id: string
@@ -284,6 +285,7 @@ export type Database = {
           created_at?: string | null
           dentist_id: string
           description?: string | null
+          duracao_minutos?: number | null
           duration_minutes?: number | null
           id?: string
           patient_id: string
@@ -296,6 +298,7 @@ export type Database = {
           created_at?: string | null
           dentist_id?: string
           description?: string | null
+          duracao_minutos?: number | null
           duration_minutes?: number | null
           id?: string
           patient_id?: string
