@@ -63,7 +63,7 @@ const Agenda = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<"calendar" | "day-slots">("calendar");
+  const [viewMode, setViewMode] = useState<"calendar" | "week" | "day-slots">("calendar");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
@@ -655,6 +655,142 @@ const Agenda = () => {
     );
   };
 
+  // Week View Slots Component (Estilo Clinicorp)
+  const WeekViewSlots = () => {
+    const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
+    const weekDays = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"];
+    const selectedDentistId = filters.dentistId !== "all" ? filters.dentistId : undefined;
+    
+    // Helper para obter agendamento para data e horário específicos
+    const getAppointmentForDateTime = (date: Date, time: string) => {
+      const [hours, minutes] = time.split(":").map(Number);
+      
+      return appointments.find(apt => {
+        const aptDate = new Date(apt.appointment_date);
+        const matchesTime = aptDate.getHours() === hours && aptDate.getMinutes() === minutes;
+        const matchesDate = isSameDay(aptDate, date);
+        const matchesDentist = !selectedDentistId || apt.dentist_id === selectedDentistId;
+        return matchesTime && matchesDate && matchesDentist;
+      });
+    };
+    
+    return (
+      <Card>
+        <CardContent className="p-4">
+          <div className="overflow-x-auto">
+            <div className="min-w-[800px]">
+              {/* Header com dias da semana */}
+              <div className="grid grid-cols-[80px_repeat(5,1fr)] gap-1 mb-2 sticky top-0 bg-card z-10">
+                <div className="text-center text-sm font-medium text-muted-foreground py-3 border-b">
+                  Horário
+                </div>
+                {weekDays.map((day, index) => {
+                  const date = addDays(weekStart, index);
+                  const isTodayDate = isSameDay(date, new Date());
+                  return (
+                    <div 
+                      key={index} 
+                      className={cn(
+                        "text-center py-2 rounded-t border-b",
+                        isTodayDate && "bg-primary/10"
+                      )}
+                    >
+                      <div className="text-sm font-semibold">{day}</div>
+                      <div className={cn(
+                        "text-sm",
+                        isTodayDate ? "text-primary font-bold" : "text-muted-foreground"
+                      )}>
+                        {format(date, "dd/MM")}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Grid de horários */}
+              <div className="space-y-1">
+                {TIME_SLOTS.map((time) => (
+                  <div key={time} className="grid grid-cols-[80px_repeat(5,1fr)] gap-1">
+                    {/* Coluna de horário à esquerda */}
+                    <div className="flex items-center justify-center text-sm font-medium text-muted-foreground bg-muted/30 rounded py-3">
+                      {time}
+                    </div>
+                    
+                    {/* Slots para cada dia */}
+                    {weekDays.map((_, dayIndex) => {
+                      const targetDate = addDays(weekStart, dayIndex);
+                      const apt = getAppointmentForDateTime(targetDate, time);
+                      const slotPassed = isPastSlot(targetDate, time);
+                      const dentistColor = apt?.dentist?.cor || '#3b82f6';
+                      const patientNoShows = apt?.patient_id ? (patientNoShowStats[apt.patient_id] || 0) : 0;
+                      
+                      return (
+                        <div
+                          key={dayIndex}
+                          onClick={() => !apt && !slotPassed && handleSlotClick(targetDate, time)}
+                          className={cn(
+                            "min-h-[48px] rounded border transition-all p-1.5 relative",
+                            apt 
+                              ? "cursor-pointer hover:shadow-md" 
+                              : slotPassed
+                                ? "bg-muted/30 cursor-not-allowed"
+                                : "bg-[hsl(var(--card-green))] border-[hsl(var(--success-green))]/30 hover:border-[hsl(var(--success-green))] cursor-pointer group"
+                          )}
+                          style={apt ? { 
+                            borderLeftColor: dentistColor, 
+                            borderLeftWidth: '3px',
+                            backgroundColor: `${dentistColor}15`
+                          } : {}}
+                        >
+                          {apt ? (
+                            <div className="h-full flex flex-col justify-center">
+                              <div className="flex items-center gap-1">
+                                <div className="text-xs font-semibold truncate">
+                                  {apt.patient?.full_name?.split(' ')[0]}
+                                </div>
+                                {patientNoShows >= 2 && (
+                                  <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
+                                )}
+                              </div>
+                              <div className="text-[10px] text-muted-foreground truncate">
+                                {apt.title}
+                              </div>
+                            </div>
+                          ) : !slotPassed && (
+                            <div className="h-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Plus className="h-4 w-4 text-[hsl(var(--success-green))]" />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          {/* Legenda */}
+          <div className="flex items-center gap-4 mt-4 pt-3 border-t flex-wrap text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded border-2 border-[hsl(var(--success-green))] bg-[hsl(var(--card-green))]"></div>
+              <span className="text-muted-foreground">Disponível</span>
+            </div>
+            {dentists.slice(0, 4).map(dentist => (
+              <div key={dentist.id} className="flex items-center gap-2">
+                <div 
+                  className="w-3 h-3 rounded" 
+                  style={{ backgroundColor: dentist.cor || '#3b82f6' }}
+                />
+                <span className="text-muted-foreground">{dentist.nome}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="space-y-4">
       {/* Header Estilo Clinicorp */}
@@ -670,6 +806,8 @@ const Agenda = () => {
               onClick={() => {
                 if (viewMode === "day-slots") {
                   setSelectedDate(addDays(selectedDate, -1));
+                } else if (viewMode === "week") {
+                  setSelectedDate(addDays(selectedDate, -7));
                 } else {
                   setCurrentMonth(subMonths(currentMonth, 1));
                 }
@@ -682,7 +820,9 @@ const Agenda = () => {
               <h2 className="text-lg font-semibold capitalize">
                 {viewMode === "day-slots" 
                   ? format(selectedDate, "EEEE, dd 'de' MMMM yyyy", { locale: ptBR })
-                  : format(currentMonth, "MMMM 'de' yyyy", { locale: ptBR })
+                  : viewMode === "week"
+                    ? `${format(startOfWeek(selectedDate, { weekStartsOn: 1 }), "dd/MM")} - ${format(addDays(startOfWeek(selectedDate, { weekStartsOn: 1 }), 4), "dd/MM/yyyy")}`
+                    : format(currentMonth, "MMMM 'de' yyyy", { locale: ptBR })
                 }
               </h2>
             </div>
@@ -694,6 +834,8 @@ const Agenda = () => {
               onClick={() => {
                 if (viewMode === "day-slots") {
                   setSelectedDate(addDays(selectedDate, 1));
+                } else if (viewMode === "week") {
+                  setSelectedDate(addDays(selectedDate, 7));
                 } else {
                   setCurrentMonth(addMonths(currentMonth, 1));
                 }
@@ -748,6 +890,15 @@ const Agenda = () => {
               >
                 <LayoutGrid className="h-4 w-4 mr-1.5" />
                 Mês
+              </Button>
+              <Button 
+                variant={viewMode === "week" ? "secondary" : "ghost"} 
+                size="sm"
+                className="h-7 px-3"
+                onClick={() => setViewMode("week")}
+              >
+                <CalendarIcon className="h-4 w-4 mr-1.5" />
+                Semana
               </Button>
               <Button 
                 variant={viewMode === "day-slots" ? "secondary" : "ghost"} 
@@ -843,14 +994,8 @@ const Agenda = () => {
             </div>
           )}
           
-          {/* Botão Novo Agendamento */}
+          {/* Sheet para Novo Agendamento (acionado ao clicar em slot vazio) */}
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-            <SheetTrigger asChild>
-              <Button size="sm" className="h-9">
-                <Plus className="mr-2 h-4 w-4" />
-                Novo Agendamento
-              </Button>
-            </SheetTrigger>
             <SheetContent className="sm:max-w-[500px] overflow-y-auto">
               <SheetHeader>
                 <SheetTitle>Novo Agendamento</SheetTitle>
@@ -1023,6 +1168,8 @@ const Agenda = () => {
       {/* Conditional rendering based on view mode */}
       {viewMode === "day-slots" ? (
         <DayTimeSlotsView />
+      ) : viewMode === "week" ? (
+        <WeekViewSlots />
       ) : (
         <div className="grid lg:grid-cols-[1fr_350px] gap-4">
           {/* Calendário Visual */}
