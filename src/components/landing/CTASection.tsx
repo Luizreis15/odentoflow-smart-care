@@ -4,7 +4,7 @@ import { ArrowRight, Play, CheckCircle } from 'lucide-react';
 
 export default function CTASection() {
   return (
-    <section id="contato" className="py-12 relative overflow-hidden">
+    <section id="contato" className="py-10 relative overflow-hidden">
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--flowdent-blue))] via-[hsl(var(--flow-turquoise))] to-[hsl(var(--health-mint))] -z-10"></div>
       
@@ -32,7 +32,7 @@ export default function CTASection() {
           </p>
 
           {/* Benefits */}
-          <div className="flex flex-wrap justify-center gap-6 mb-10">
+          <div className="flex flex-wrap justify-center gap-4 mb-6">
             <div className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5" />
               <span>7 dias grátis</span>

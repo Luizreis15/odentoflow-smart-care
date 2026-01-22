@@ -59,14 +59,14 @@ function DiferencialCard({ diferencial, index }: { diferencial: Diferencial; ind
       transition={{ duration: 0.5, delay: index * 0.1 }}
       viewport={{ once: true }}
     >
-      <Card className="bg-white rounded-2xl p-8 shadow-md hover:shadow-xl transition-all duration-300 border border-[hsl(var(--cloud-white))] group h-full">
+      <Card className="bg-white rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 border border-[hsl(var(--cloud-white))] group h-full">
         {/* Icon */}
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[hsl(var(--flow-turquoise))] to-[hsl(var(--health-mint))] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-          <Icon className="w-8 h-8 text-white" />
+        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[hsl(var(--flow-turquoise))] to-[hsl(var(--health-mint))] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+          <Icon className="w-7 h-7 text-white" />
         </div>
 
         {/* Title */}
-        <h3 className="text-xl font-bold text-[hsl(var(--slate-gray))] mb-3">
+        <h3 className="text-lg font-bold text-[hsl(var(--slate-gray))] mb-2">
           {diferencial.title}
         </h3>
 
@@ -81,14 +81,14 @@ function DiferencialCard({ diferencial, index }: { diferencial: Diferencial; ind
 
 export default function DiferenciaisSection() {
   return (
-    <section className="py-12 bg-gradient-to-br from-[hsl(var(--cloud-white))] to-white">
+    <section className="py-8 bg-gradient-to-br from-[hsl(var(--cloud-white))] to-white">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          className="text-center mb-8"
         >
           <h2 className="text-4xl font-bold text-[hsl(var(--slate-gray))] mb-4">
             Por Que Escolher o Flowdent?
@@ -98,7 +98,7 @@ export default function DiferenciaisSection() {
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
           {diferenciais.map((diferencial, index) => (
             <DiferencialCard key={index} diferencial={diferencial} index={index} />
           ))}

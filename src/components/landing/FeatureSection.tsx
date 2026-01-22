@@ -30,16 +30,16 @@ export default function FeatureSection({
   const isImageLeft = imagePosition === 'left';
 
   return (
-    <section id={id} className="py-12 relative overflow-hidden">
+    <section id={id} className="py-8 relative overflow-hidden">
       <div className="container mx-auto px-4">
-        <div className={`grid md:grid-cols-2 gap-12 items-center ${isImageLeft ? 'md:flex-row-reverse' : ''}`}>
+        <div className={`grid md:grid-cols-2 gap-6 lg:gap-10 items-center ${isImageLeft ? 'md:flex-row-reverse' : ''}`}>
           {/* Content Column */}
           <motion.div
             initial={{ opacity: 0, x: isImageLeft ? 50 : -50 }}
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className={`space-y-6 ${isImageLeft ? 'md:order-2' : ''}`}
+            className={`space-y-4 ${isImageLeft ? 'md:order-2' : ''}`}
           >
             {/* Badge */}
             <motion.div
