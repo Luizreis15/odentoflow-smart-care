@@ -6,7 +6,7 @@ import heroImage from '@/assets/flowdent-hero.jpg';
 
 export default function HeroSection() {
   return (
-    <section id="home" className="relative min-h-screen flex items-center pt-20 pb-8 overflow-hidden">
+    <section id="home" className="relative min-h-[85vh] flex items-center pt-24 pb-6 overflow-hidden">
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--flow-turquoise)/0.05)] via-white to-[hsl(var(--health-mint)/0.05)] -z-10"></div>
       
@@ -15,13 +15,13 @@ export default function HeroSection() {
       <div className="absolute bottom-20 left-10 w-96 h-96 bg-gradient-to-br from-[hsl(var(--flowdent-blue)/0.1)] to-[hsl(var(--flow-turquoise)/0.1)] rounded-full blur-3xl -z-10"></div>
 
       <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+        <div className="grid md:grid-cols-2 gap-8 items-center">
           {/* Content Column */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
-            className="space-y-8"
+            className="space-y-5"
           >
             {/* Badge */}
             <motion.div
@@ -39,11 +39,9 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-5xl md:text-6xl font-extrabold text-[hsl(var(--slate-gray))] leading-tight"
+              className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[hsl(var(--slate-gray))] leading-tight"
             >
-              O Software que{' '}
-              <span className="text-[hsl(var(--flowdent-blue))]">Liberta</span>{' '}
-              seu Tempo
+              O Software que <span className="text-[hsl(var(--flowdent-blue))]">Liberta</span> seu Tempo
             </motion.h1>
 
             {/* Subheadline */}

@@ -37,14 +37,14 @@ function StatItem({ value, suffix = '', label, index }: StatItemProps) {
 
 export default function StatsSection() {
   return (
-    <section className="py-12 bg-gradient-to-br from-[hsl(var(--cloud-white))] to-white">
+    <section className="py-8 bg-gradient-to-br from-[hsl(var(--cloud-white))] to-white">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          className="text-center mb-8"
         >
           <h2 className="text-4xl font-bold text-[hsl(var(--slate-gray))] mb-4">
             Números que Comprovam Nossa Eficiência
@@ -54,7 +54,7 @@ export default function StatsSection() {
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-12">
+        <div className="grid md:grid-cols-3 gap-6">
           <StatItem value={500} suffix="+" label="Clínicas Ativas" index={0} />
           <StatItem value={50000} suffix="+" label="Consultas Agendadas/Mês" index={1} />
           <StatItem value={98} suffix="%" label="Satisfação dos Clientes" index={2} />

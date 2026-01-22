@@ -86,14 +86,14 @@ function TestimonialCard({ testimonial, index }: { testimonial: Testimonial; ind
 
 export default function TestimonialsSection() {
   return (
-    <section id="depoimentos" className="py-12 bg-white">
+    <section id="depoimentos" className="py-8 bg-white">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          className="text-center mb-8"
         >
           <h2 className="text-4xl font-bold text-[hsl(var(--slate-gray))] mb-4">
             O Que Nossos Clientes Dizem
@@ -103,7 +103,7 @@ export default function TestimonialsSection() {
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-3 gap-4 lg:gap-6">
           {testimonials.map((testimonial, index) => (
             <TestimonialCard key={index} testimonial={testimonial} index={index} />
           ))}
