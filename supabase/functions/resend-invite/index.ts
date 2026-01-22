@@ -206,12 +206,78 @@ const handler = async (req: Request): Promise<Response> => {
 
     const clinicName = clinica?.nome || "Flowdent";
 
+    // Verificar se usuário existe no Supabase Auth
+    const normalizedEmail = usuario.email.toLowerCase();
+    const { data: authUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    
+    if (listError) {
+      console.error("Erro ao listar usuários do auth:", listError);
+      return new Response(
+        JSON.stringify({ error: "Erro ao verificar usuário" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const authUserExists = authUsers?.users.find(u => u.email?.toLowerCase() === normalizedEmail);
+    let authUserId: string;
+
+    if (!authUserExists) {
+      // Usuário não existe no Auth - criar com senha temporária
+      console.log("Usuário não existe no Auth, criando...", normalizedEmail);
+      
+      const tempPassword = crypto.randomUUID();
+      
+      const { data: newAuthUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email: normalizedEmail,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: { full_name: usuario.nome }
+      });
+
+      if (createError || !newAuthUser.user) {
+        console.error("Erro ao criar usuário no auth:", createError);
+        return new Response(
+          JSON.stringify({ error: "Erro ao criar usuário: " + (createError?.message || "Falha desconhecida") }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      authUserId = newAuthUser.user.id;
+      console.log("Usuário criado no Auth com ID:", authUserId);
+
+      // Atualizar o ID na tabela usuarios para corresponder ao Auth
+      const { error: updateError } = await supabaseAdmin
+        .from("usuarios")
+        .update({ id: authUserId })
+        .eq("id", userId)
+        .eq("clinica_id", clinicaId);
+
+      if (updateError) {
+        console.error("Erro ao atualizar ID do usuário:", updateError);
+        // Continua mesmo com erro, pois o usuário foi criado no Auth
+      }
+
+      // Criar profile para o novo usuário
+      await supabaseAdmin
+        .from("profiles")
+        .upsert({
+          id: authUserId,
+          full_name: usuario.nome,
+          email: normalizedEmail,
+          clinic_id: clinicaId
+        }, { onConflict: "id" });
+
+    } else {
+      authUserId = authUserExists.id;
+      console.log("Usuário já existe no Auth com ID:", authUserId);
+    }
+
     // Gerar link de recuperação de senha
     const origin = Deno.env.get("APP_URL") || "https://flowdent.com.br";
     
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: "recovery",
-      email: usuario.email,
+      email: normalizedEmail,
       options: {
         redirectTo: `${origin}/auth?reset=true`
       }
@@ -220,7 +286,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (linkError || !linkData) {
       console.error("Erro ao gerar link:", linkError);
       return new Response(
-        JSON.stringify({ error: "Erro ao gerar link de acesso" }),
+        JSON.stringify({ error: "Erro ao gerar link de acesso: " + (linkError?.message || "Falha desconhecida") }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
