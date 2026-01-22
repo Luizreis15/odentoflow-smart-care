@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { startOfMonth, startOfDay, endOfDay } from "date-fns";
 import { cn, formatCurrency } from "@/lib/utils";
+import { HorarioFuncionamento } from "@/components/configuracoes/HorarioFuncionamentoCard";
 
 interface DashboardMetricsProps {
   clinicId: string;
@@ -63,6 +64,40 @@ export const DashboardMetrics = ({ clinicId }: DashboardMetricsProps) => {
   // Data de início de produção - contar novos pacientes apenas a partir desta data
   const productionStartDate = new Date("2024-12-01T00:00:00");
 
+  // Mapeamento de dia da semana para chave do horário
+  const dayMap: Record<number, keyof HorarioFuncionamento['dias']> = {
+    0: 'domingo', 1: 'segunda', 2: 'terca', 3: 'quarta',
+    4: 'quinta', 5: 'sexta', 6: 'sabado'
+  };
+
+  // Função para calcular slots disponíveis no dia
+  const calculateDailySlots = (config: HorarioFuncionamento | null): number => {
+    if (!config) return 16; // Fallback: 8h de atendimento com 30min = 16 slots
+
+    const todayKey = dayMap[today.getDay()];
+    const diaConfig = config.dias?.[todayKey];
+    
+    if (!diaConfig?.ativo) return 0; // Dia não ativo
+
+    const intervalo = config.intervalo_padrao || 30;
+    
+    // Calcular minutos de trabalho
+    const [inicioH, inicioM] = diaConfig.inicio.split(':').map(Number);
+    const [fimH, fimM] = diaConfig.fim.split(':').map(Number);
+    
+    let minutosTrabalho = (fimH * 60 + fimM) - (inicioH * 60 + inicioM);
+    
+    // Subtrair horário de almoço se existir
+    if (diaConfig.almoco_inicio && diaConfig.almoco_fim) {
+      const [almocoInicioH, almocoInicioM] = diaConfig.almoco_inicio.split(':').map(Number);
+      const [almocoFimH, almocoFimM] = diaConfig.almoco_fim.split(':').map(Number);
+      const minutosAlmoco = (almocoFimH * 60 + almocoFimM) - (almocoInicioH * 60 + almocoInicioM);
+      minutosTrabalho -= minutosAlmoco;
+    }
+    
+    return Math.floor(minutosTrabalho / intervalo);
+  };
+
   // Consultas do dia
   const { data: appointmentsToday, isLoading: loadingAppointments } = useQuery({
     queryKey: ["appointments-today", clinicId],
@@ -76,6 +111,36 @@ export const DashboardMetrics = ({ clinicId }: DashboardMetricsProps) => {
       
       if (error) throw error;
       return data || [];
+    },
+  });
+
+  // Profissionais ativos da clínica
+  const { data: activeDentists, isLoading: loadingDentists } = useQuery({
+    queryKey: ["active-dentists", clinicId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profissionais")
+        .select("id")
+        .eq("clinica_id", clinicId)
+        .eq("ativo", true);
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Configurações da clínica (horário de funcionamento)
+  const { data: clinicConfig, isLoading: loadingConfig } = useQuery({
+    queryKey: ["clinic-config", clinicId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("configuracoes_clinica")
+        .select("horario_funcionamento")
+        .eq("clinica_id", clinicId)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data?.horario_funcionamento as unknown as HorarioFuncionamento | null;
     },
   });
 
@@ -129,7 +194,17 @@ export const DashboardMetrics = ({ clinicId }: DashboardMetricsProps) => {
 
   const totalAppointments = appointmentsToday?.length || 0;
   const confirmedAppointments = appointmentsToday?.filter(a => a.status === "scheduled").length || 0;
-  const occupationRate = totalAppointments > 0 ? Math.round((confirmedAppointments / totalAppointments) * 100) : 0;
+  
+  // Cálculo correto da taxa de ocupação
+  // Capacidade total = slots por dentista × número de dentistas ativos
+  const slotsPerDentist = calculateDailySlots(clinicConfig);
+  const totalDentists = activeDentists?.length || 1;
+  const totalCapacity = slotsPerDentist * totalDentists;
+  
+  // Taxa de ocupação = agendamentos do dia / capacidade total
+  const occupationRate = totalCapacity > 0 
+    ? Math.min(Math.round((totalAppointments / totalCapacity) * 100), 100) 
+    : 0;
 
   const formatCurrencyCompact = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -139,7 +214,7 @@ export const DashboardMetrics = ({ clinicId }: DashboardMetricsProps) => {
     }).format(value);
   };
 
-  if (loadingAppointments || loadingPayments || loadingPatients) {
+  if (loadingAppointments || loadingPayments || loadingPatients || loadingDentists || loadingConfig) {
     return (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
         {[...Array(4)].map((_, i) => (
@@ -169,6 +244,7 @@ export const DashboardMetrics = ({ clinicId }: DashboardMetricsProps) => {
     {
       ...metricConfigs[3],
       value: `${occupationRate}%`,
+      subValue: `${totalAppointments} de ${totalCapacity} slots`,
       progress: occupationRate,
     },
   ];
