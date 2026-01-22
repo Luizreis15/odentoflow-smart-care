@@ -291,7 +291,18 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const resetLink = linkData.properties?.action_link || '#';
+    // O action_link do Supabase já inclui o redirect correto
+    const resetLink = linkData.properties?.action_link;
+    
+    if (!resetLink) {
+      console.error("Link de ação não gerado:", linkData);
+      return new Response(
+        JSON.stringify({ error: "Erro ao gerar link de acesso" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    console.log("Link de recuperação gerado:", resetLink);
 
     // Mapeamento de perfis para português
     const roleLabels: Record<string, string> = {
