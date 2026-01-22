@@ -17,6 +17,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useReportExport } from "@/hooks/useReportExport";
+import { formatCurrency } from "@/lib/utils";
 
 interface RelatoriosFinanceiroTabProps {
   clinicId: string;
@@ -441,12 +442,6 @@ export const RelatoriosFinanceiroTab = ({ clinicId }: RelatoriosFinanceiroTabPro
     })));
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
 
   const getMonthOptions = () => {
     const options = [];

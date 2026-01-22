@@ -6,6 +6,7 @@ import { useState, useCallback } from "react";
 import MobileMetrics from "@/components/mobile/MobileMetrics";
 import MobileQuickActions from "@/components/mobile/MobileQuickActions";
 import MobileAgendaList from "@/components/mobile/MobileAgendaList";
+import { formatCurrency } from "@/lib/utils";
 
 interface MobileHomeProps {
   user?: {
@@ -119,7 +120,7 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
     [handleRefresh]
   );
 
-  const formatCurrency = (value: number) => {
+  const formatCurrencyCompact = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",

@@ -12,6 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { formatCurrency } from "@/lib/utils";
 
 interface CalendarItem {
   id: string;
@@ -148,12 +149,6 @@ export const CalendarioFinanceiro = ({ clinicId }: CalendarioFinanceiroProps) =>
       .filter(item => filter === "all" || item.type === filter || (filter === "receber" && item.type === "repasse"));
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
 
   const isOverdue = (dateStr: string, status: string) => {
     if (status === "paid" || status === "received") return false;

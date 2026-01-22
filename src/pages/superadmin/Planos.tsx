@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatCurrency } from "@/lib/utils";
 
 interface Plan {
   id: string;
@@ -58,12 +59,9 @@ export default function Planos() {
     }
   };
 
-  const formatCurrency = (value: number | null) => {
+  const formatCurrencyValue = (value: number | null) => {
     if (value === null) return "-";
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
+    return formatCurrency(value);
   };
 
   const togglePlanStatus = async (id: string, currentStatus: boolean) => {
@@ -132,14 +130,14 @@ export default function Planos() {
                 <div className="space-y-4">
                   <div>
                     <div className="text-3xl font-bold">
-                      {formatCurrency(plan.monthly_price)}
+                      {formatCurrencyValue(plan.monthly_price)}
                       <span className="text-base font-normal text-muted-foreground">
                         /mês
                       </span>
                     </div>
                     {plan.yearly_price && (
                       <div className="text-sm text-muted-foreground">
-                        ou {formatCurrency(plan.yearly_price)}/ano
+                        ou {formatCurrencyValue(plan.yearly_price)}/ano
                       </div>
                     )}
                   </div>
@@ -205,8 +203,8 @@ export default function Planos() {
                 {plans.map((plan) => (
                   <TableRow key={plan.id}>
                     <TableCell className="font-medium">{plan.name}</TableCell>
-                    <TableCell>{formatCurrency(plan.monthly_price)}</TableCell>
-                    <TableCell>{formatCurrency(plan.yearly_price)}</TableCell>
+                    <TableCell>{formatCurrencyValue(plan.monthly_price)}</TableCell>
+                    <TableCell>{formatCurrencyValue(plan.yearly_price)}</TableCell>
                     <TableCell>{plan.trial_days} dias</TableCell>
                     <TableCell>
                       <div className="text-xs space-y-1">

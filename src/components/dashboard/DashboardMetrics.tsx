@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { startOfMonth, startOfDay, endOfDay } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 
 interface DashboardMetricsProps {
   clinicId: string;
@@ -131,7 +131,7 @@ export const DashboardMetrics = ({ clinicId }: DashboardMetricsProps) => {
   const confirmedAppointments = appointmentsToday?.filter(a => a.status === "scheduled").length || 0;
   const occupationRate = totalAppointments > 0 ? Math.round((confirmedAppointments / totalAppointments) * 100) : 0;
 
-  const formatCurrency = (value: number) => {
+  const formatCurrencyCompact = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",

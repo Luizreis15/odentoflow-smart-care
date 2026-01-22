@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { AlertCircle, CheckCircle, DollarSign, Calendar, User, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/utils";
 
 interface ReceivableTitle {
   id: string;
@@ -132,12 +133,6 @@ export const PaymentDrawer = ({
     }
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
 
   const handleSubmit = async () => {
     const paymentAmount = parseFloat(amount);

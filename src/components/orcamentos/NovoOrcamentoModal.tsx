@@ -16,6 +16,7 @@ import { X, Camera, Info, DollarSign, Calendar, User, CreditCard } from "lucide-
 import { AdicionarTratamentoSection } from "./AdicionarTratamentoSection";
 import { ListaTratamentosSection } from "./ListaTratamentosSection";
 import { format, addMonths } from "date-fns";
+import { formatCurrency } from "@/lib/utils";
 
 interface NovoOrcamentoModalProps {
   open: boolean;
@@ -215,12 +216,6 @@ export const NovoOrcamentoModal = ({
     return paymentPlan.parcelas > 0 ? valorRestante / paymentPlan.parcelas : 0;
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
 
   const handleSalvar = async (aprovar: boolean = false) => {
     if (!descricao.trim()) {

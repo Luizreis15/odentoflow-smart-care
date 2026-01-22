@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { NovaDespesaModalV2 } from "./NovaDespesaModalV2";
 import { PagamentoDespesaDrawer } from "./PagamentoDespesaDrawer";
+import { formatCurrency } from "@/lib/utils";
 
 interface PayableTitle {
   id: string;
@@ -206,12 +207,6 @@ export const PayablesTab = ({ clinicId }: PayablesTabProps) => {
     setShowPaymentDrawer(true);
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
 
   return (
     <div className="space-y-4 md:space-y-6">

@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Check, FileText, Calendar, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { formatCurrency } from "@/lib/utils";
 
 interface Budget {
   id: string;
@@ -65,12 +66,6 @@ export const OrcamentosTab = ({ budgets, onRefresh, onNewBudget }: OrcamentosTab
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString("pt-BR");
