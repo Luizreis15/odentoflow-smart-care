@@ -181,15 +181,41 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Buscar dados do usuário
-    const { data: usuario, error: userError } = await supabaseAdmin
+    // Buscar dados do usuário - primeiro por ID
+    let usuario: { nome: string; email: string; perfil: string; id: string } | null = null;
+    
+    const { data: usuarioById, error: userError } = await supabaseAdmin
       .from("usuarios")
-      .select("nome, email, perfil")
+      .select("id, nome, email, perfil")
       .eq("id", userId)
       .eq("clinica_id", clinicaId)
-      .single();
+      .maybeSingle();
 
-    if (userError || !usuario) {
+    if (usuarioById) {
+      usuario = usuarioById;
+    } else {
+      // Se não encontrou por ID, pode ser que o ID foi atualizado após sincronização com Auth
+      // Buscar qualquer usuário da clínica que corresponda ao userId como fallback
+      console.log("Usuário não encontrado por ID, buscando por email via Auth...");
+      
+      // Buscar o email do usuário no Auth
+      const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+      
+      if (authUser?.user?.email) {
+        const { data: usuarioByEmail } = await supabaseAdmin
+          .from("usuarios")
+          .select("id, nome, email, perfil")
+          .eq("email", authUser.user.email.toLowerCase())
+          .eq("clinica_id", clinicaId)
+          .maybeSingle();
+        
+        if (usuarioByEmail) {
+          usuario = usuarioByEmail;
+        }
+      }
+    }
+
+    if (!usuario) {
       console.error("Erro ao buscar usuário:", userError);
       return new Response(
         JSON.stringify({ error: "Usuário não encontrado" }),
