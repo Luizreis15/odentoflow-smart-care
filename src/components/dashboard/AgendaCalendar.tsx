@@ -52,11 +52,12 @@ export const AgendaCalendar = ({ clinicId }: AgendaCalendarProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "scheduled": return "bg-primary/90 hover:bg-primary border-primary/20";
-      case "confirmed": return "bg-primary/90 hover:bg-primary border-primary/20";
+      case "confirmed": return "bg-emerald-600/90 hover:bg-emerald-600 border-emerald-500/20";
       case "waiting": return "bg-yellow-500/90 hover:bg-yellow-500 border-yellow-400/20";
       case "completed": return "bg-accent/90 hover:bg-accent border-accent/20";
       case "paid": return "bg-green-600/90 hover:bg-green-600 border-green-500/20";
       case "cancelled": return "bg-destructive/90 hover:bg-destructive border-destructive/20";
+      case "no_show": return "bg-amber-500/90 hover:bg-amber-500 border-amber-400/20";
       default: return "bg-muted";
     }
   };
@@ -228,12 +229,16 @@ export const AgendaCalendar = ({ clinicId }: AgendaCalendarProps) => {
         {/* Legenda */}
         <div className="flex items-center gap-4 mt-4 pt-3 border-t flex-wrap">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-primary"></div>
+            <div className="w-3 h-3 rounded bg-emerald-600"></div>
             <span className="text-sm text-muted-foreground">Confirmado</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-yellow-500"></div>
-            <span className="text-sm text-muted-foreground">Aguardando</span>
+            <div className="w-3 h-3 rounded bg-primary"></div>
+            <span className="text-sm text-muted-foreground">Agendado</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-amber-500"></div>
+            <span className="text-sm text-muted-foreground">Faltou</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded bg-accent"></div>

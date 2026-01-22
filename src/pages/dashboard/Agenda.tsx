@@ -16,6 +16,7 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addM
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { CadastroRapidoPacienteModal } from "@/components/agenda/CadastroRapidoPacienteModal";
+import { DetalhesAgendamentoModal } from "@/components/agenda/DetalhesAgendamentoModal";
 import { HorarioFuncionamento, DiaConfig, DEFAULT_HORARIO } from "@/components/configuracoes/HorarioFuncionamentoCard";
 
 const appointmentSchema = z.object({
@@ -134,6 +135,8 @@ const Agenda = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [openPatientCombobox, setOpenPatientCombobox] = useState(false);
   const [buscaPaciente, setBuscaPaciente] = useState("");
   const [loading, setLoading] = useState(true);
@@ -367,18 +370,26 @@ const Agenda = () => {
     return aptDate >= weekStart && aptDate <= weekEnd;
   });
 
-  const statusColors = {
-    confirmed: "bg-secondary text-secondary-foreground",
+  const statusColors: Record<string, string> = {
+    confirmed: "bg-emerald-600 text-white",
     scheduled: "bg-primary/10 text-primary",
     completed: "bg-muted text-muted-foreground",
     cancelled: "bg-destructive/10 text-destructive",
+    no_show: "bg-amber-500 text-white",
   };
 
-  const statusLabels = {
+  const statusLabels: Record<string, string> = {
     confirmed: "Confirmado",
     scheduled: "Agendado",
     completed: "Concluído",
     cancelled: "Cancelado",
+    no_show: "Faltou",
+  };
+
+  // Handle appointment click to open details modal
+  const handleAppointmentClick = (appointment: any) => {
+    setSelectedAppointment(appointment);
+    setIsDetailsModalOpen(true);
   };
 
   // Handle slot click - pre-fill form and open sheet
@@ -638,8 +649,9 @@ const Agenda = () => {
                 return (
                   <div
                     key={time}
-                    className="flex items-center gap-4 p-4 rounded-lg border-l-4 transition-all bg-card"
+                    className="flex items-center gap-4 p-4 rounded-lg border-l-4 transition-all bg-card hover:shadow-md cursor-pointer"
                     style={{ borderLeftColor: dentistColor }}
+                    onClick={() => handleAppointmentClick(appointment)}
                   >
                     <div className="flex items-center justify-center w-16 shrink-0">
                       <span className="text-lg font-bold" style={{ color: dentistColor }}>{time}</span>
@@ -671,9 +683,6 @@ const Agenda = () => {
                         {appointment.title} • {appointment.dentist?.nome} • {appointment.duration_minutes} min
                       </p>
                     </div>
-                    <Button variant="outline" size="sm">
-                      Ver Detalhes
-                    </Button>
                   </div>
                 );
               }
@@ -854,7 +863,7 @@ const Agenda = () => {
                       return (
                         <div
                           key={dayKey}
-                          onClick={() => !apt && !slotPassed && handleSlotClick(targetDate, time)}
+                          onClick={() => apt ? handleAppointmentClick(apt) : (!slotPassed && handleSlotClick(targetDate, time))}
                           className={cn(
                             "min-h-[48px] rounded border transition-all p-1.5 relative",
                             apt 
@@ -872,8 +881,8 @@ const Agenda = () => {
                           {apt ? (
                             <div className="h-full flex flex-col justify-center">
                               <div className="flex items-center gap-1">
-                                <div className="text-xs font-semibold truncate">
-                                  {apt.patient?.full_name?.split(' ')[0]}
+                                <div className="text-xs font-semibold truncate" title={apt.patient?.full_name}>
+                                  {apt.patient?.full_name?.split(' ').slice(0, 2).join(' ')}
                                 </div>
                                 {patientNoShows >= 2 && (
                                   <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
@@ -1087,6 +1096,7 @@ const Agenda = () => {
                 <SelectItem value="confirmed">Confirmado</SelectItem>
                 <SelectItem value="completed">Concluído</SelectItem>
                 <SelectItem value="cancelled">Cancelado</SelectItem>
+                <SelectItem value="no_show">Faltou</SelectItem>
               </SelectContent>
             </Select>
             
@@ -1370,7 +1380,7 @@ const Agenda = () => {
                                     apt.status === "cancelled" && "bg-destructive/20 text-destructive"
                                   )}
                                 >
-                                  {format(parseISO(apt.appointment_date), "HH:mm")} {apt.patient?.full_name?.split(' ')[0]}
+                                  {format(parseISO(apt.appointment_date), "HH:mm")} {apt.patient?.full_name?.split(' ').slice(0, 2).join(' ')}
                                 </div>
                               ))}
                               {dayAppointments.length > 2 && (
@@ -1445,10 +1455,11 @@ const Agenda = () => {
                       .map((apt) => {
                         const aptTime = format(parseISO(apt.appointment_date), "HH:mm");
                         
-                        return (
+                          return (
                           <div
                             key={apt.id}
-                            className="p-4 rounded-lg border bg-card hover:shadow-md transition-shadow space-y-2"
+                            className="p-4 rounded-lg border bg-card hover:shadow-md transition-shadow space-y-2 cursor-pointer"
+                            onClick={() => handleAppointmentClick(apt)}
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
@@ -1468,9 +1479,6 @@ const Agenda = () => {
                                 Duração: {apt.duration_minutes} min
                               </p>
                             </div>
-                            <Button variant="outline" size="sm" className="w-full">
-                              Ver Detalhes
-                            </Button>
                           </div>
                         );
                       })}
@@ -1496,6 +1504,14 @@ const Agenda = () => {
         open={isNewPatientModalOpen}
         onOpenChange={setIsNewPatientModalOpen}
         onPatientCreated={handlePatientCreated}
+      />
+
+      <DetalhesAgendamentoModal
+        open={isDetailsModalOpen}
+        onOpenChange={setIsDetailsModalOpen}
+        appointment={selectedAppointment}
+        dentists={dentists}
+        onUpdate={loadAppointments}
       />
     </div>
   );
