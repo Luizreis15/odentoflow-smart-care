@@ -172,53 +172,92 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { userId, clinicaId }: ResendInviteRequest = await req.json();
+    const { userId, clinicaId, email: requestEmail } = await req.json() as { userId?: string; clinicaId: string; email?: string };
 
-    if (!userId || !clinicaId) {
+    if (!clinicaId) {
       return new Response(
-        JSON.stringify({ error: "userId e clinicaId são obrigatórios" }),
+        JSON.stringify({ error: "clinicaId é obrigatório" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Buscar dados do usuário - primeiro por ID
+    if (!userId && !requestEmail) {
+      return new Response(
+        JSON.stringify({ error: "userId ou email são obrigatórios" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    // Buscar dados do usuário - priorizar email se fornecido
     let usuario: { nome: string; email: string; perfil: string; id: string } | null = null;
     
-    const { data: usuarioById, error: userError } = await supabaseAdmin
-      .from("usuarios")
-      .select("id, nome, email, perfil")
-      .eq("id", userId)
-      .eq("clinica_id", clinicaId)
-      .maybeSingle();
-
-    if (usuarioById) {
-      usuario = usuarioById;
-    } else {
-      // Se não encontrou por ID, pode ser que o ID foi atualizado após sincronização com Auth
-      // Buscar qualquer usuário da clínica que corresponda ao userId como fallback
-      console.log("Usuário não encontrado por ID, buscando por email via Auth...");
+    // Estratégia 1: Buscar por email (mais confiável, nunca muda)
+    if (requestEmail) {
+      console.log("Buscando usuário por email:", requestEmail);
+      const { data: usuarioByEmail } = await supabaseAdmin
+        .from("usuarios")
+        .select("id, nome, email, perfil")
+        .eq("email", requestEmail.toLowerCase())
+        .eq("clinica_id", clinicaId)
+        .maybeSingle();
       
-      // Buscar o email do usuário no Auth
+      if (usuarioByEmail) {
+        usuario = usuarioByEmail;
+        console.log("Usuário encontrado por email:", usuario.id);
+      }
+    }
+    
+    // Estratégia 2: Buscar por ID (fallback)
+    if (!usuario && userId) {
+      console.log("Buscando usuário por ID:", userId);
+      const { data: usuarioById } = await supabaseAdmin
+        .from("usuarios")
+        .select("id, nome, email, perfil")
+        .eq("id", userId)
+        .eq("clinica_id", clinicaId)
+        .maybeSingle();
+
+      if (usuarioById) {
+        usuario = usuarioById;
+        console.log("Usuário encontrado por ID:", usuario.id);
+      }
+    }
+    
+    // Estratégia 3: Buscar email via Auth ID (último recurso)
+    if (!usuario && userId) {
+      console.log("Usuário não encontrado, buscando por email via Auth...");
       const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
       
       if (authUser?.user?.email) {
-        const { data: usuarioByEmail } = await supabaseAdmin
+        const { data: usuarioByAuthEmail } = await supabaseAdmin
           .from("usuarios")
           .select("id, nome, email, perfil")
           .eq("email", authUser.user.email.toLowerCase())
           .eq("clinica_id", clinicaId)
           .maybeSingle();
         
-        if (usuarioByEmail) {
-          usuario = usuarioByEmail;
+        if (usuarioByAuthEmail) {
+          usuario = usuarioByAuthEmail;
+          console.log("Usuário encontrado via Auth email:", usuario.id);
         }
       }
     }
 
     if (!usuario) {
-      console.error("Erro ao buscar usuário:", userError);
+      // Log para debug
+      const { data: allUsers } = await supabaseAdmin
+        .from("usuarios")
+        .select("id, email")
+        .eq("clinica_id", clinicaId);
+      
+      console.error("Usuário não encontrado. Usuários da clínica:", allUsers);
+      console.error("ID solicitado:", userId, "Email solicitado:", requestEmail);
+      
       return new Response(
-        JSON.stringify({ error: "Usuário não encontrado" }),
+        JSON.stringify({ 
+          error: "Usuário não encontrado. Recarregue a página e tente novamente.",
+          debug: { requestedId: userId, requestedEmail: requestEmail }
+        }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

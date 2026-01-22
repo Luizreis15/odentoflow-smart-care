@@ -104,6 +104,7 @@ export const UsuariosTab = ({ clinicaId }: UsuariosTabProps) => {
       const { error } = await supabase.functions.invoke("resend-invite", {
         body: {
           userId: usuario.id,
+          email: usuario.email,
           clinicaId: clinicaId
         }
       });
