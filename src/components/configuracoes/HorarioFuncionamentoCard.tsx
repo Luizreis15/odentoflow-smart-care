@@ -69,7 +69,19 @@ interface HorarioFuncionamentoCardProps {
 }
 
 export function HorarioFuncionamentoCard({ value, onChange }: HorarioFuncionamentoCardProps) {
-  const horario = value || DEFAULT_HORARIO;
+  // Ensure we always have a valid structure - merge with defaults for safety
+  const horario: HorarioFuncionamento = {
+    intervalo_padrao: value?.intervalo_padrao ?? DEFAULT_HORARIO.intervalo_padrao,
+    dias: {
+      segunda: value?.dias?.segunda ?? DEFAULT_HORARIO.dias.segunda,
+      terca: value?.dias?.terca ?? DEFAULT_HORARIO.dias.terca,
+      quarta: value?.dias?.quarta ?? DEFAULT_HORARIO.dias.quarta,
+      quinta: value?.dias?.quinta ?? DEFAULT_HORARIO.dias.quinta,
+      sexta: value?.dias?.sexta ?? DEFAULT_HORARIO.dias.sexta,
+      sabado: value?.dias?.sabado ?? DEFAULT_HORARIO.dias.sabado,
+      domingo: value?.dias?.domingo ?? DEFAULT_HORARIO.dias.domingo,
+    }
+  };
 
   const updateDia = (diaKey: keyof typeof horario.dias, updates: Partial<DiaConfig>) => {
     onChange({
