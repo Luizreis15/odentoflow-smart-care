@@ -18,6 +18,7 @@ All colors MUST be HSL.
     --silver-cloud: 204 6% 61%;          /* #95A5A6 */
     --cloud-white: 192 15% 94%;          /* #ECF0F1 */
     --pure-white: 0 0% 100%;             /* #FFFFFF */
+    --warm-sand: 30 50% 60%;             /* Tom bege/areia */
     
     /* Status Colors */
     --success-green: 145 63% 42%;        /* #27AE60 */
