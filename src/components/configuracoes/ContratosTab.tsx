@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Plus, Loader2, Pencil, Trash2, FileText } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PapelTimbradoModal } from "./PapelTimbradoModal";
 
 interface ContratosTabProps {
   clinicaId: string;
@@ -21,6 +22,7 @@ export function ContratosTab({ clinicaId }: ContratosTabProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [templates, setTemplates] = useState<any[]>([]);
+  const [showPapelTimbradoModal, setShowPapelTimbradoModal] = useState(false);
 
   useEffect(() => {
     loadTemplates();
@@ -66,10 +68,16 @@ export function ContratosTab({ clinicaId }: ContratosTabProps) {
             Gerencie modelos de contratos e termos de consentimento
           </p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Template
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowPapelTimbradoModal(true)}>
+            <FileText className="h-4 w-4 mr-2" />
+            Papel Timbrado
+          </Button>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Template
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -136,6 +144,12 @@ export function ContratosTab({ clinicaId }: ContratosTabProps) {
           </div>
         </CardContent>
       </Card>
+
+      <PapelTimbradoModal
+        open={showPapelTimbradoModal}
+        onOpenChange={setShowPapelTimbradoModal}
+        clinicaId={clinicaId}
+      />
     </div>
   );
 }

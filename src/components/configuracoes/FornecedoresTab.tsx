@@ -8,9 +8,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Search, Pencil, Trash2, Building2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Search, Pencil, Trash2, Building2, FileSpreadsheet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { UploadPlanilhaLabModal } from "./UploadPlanilhaLabModal";
 
 interface FornecedoresTabProps {
   clinicaId: string;
@@ -26,8 +28,16 @@ interface Supplier {
   contato_telefone: string | null;
   contato_whatsapp: string | null;
   condicoes_pagamento: string | null;
+  tipo: string | null;
   ativo: boolean;
 }
+
+const TIPO_FORNECEDOR_LABELS: Record<string, string> = {
+  geral: "Geral",
+  laboratorio_protetico: "Laboratório Protético",
+  material_consumo: "Material de Consumo",
+  equipamentos: "Equipamentos",
+};
 
 export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -35,6 +45,8 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedSupplierForUpload, setSelectedSupplierForUpload] = useState<Supplier | null>(null);
   const [formData, setFormData] = useState({
     razao_social: "",
     nome_fantasia: "",
@@ -44,6 +56,7 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
     contato_telefone: "",
     contato_whatsapp: "",
     condicoes_pagamento: "",
+    tipo: "geral",
     ativo: true,
   });
 
@@ -82,6 +95,7 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
         contato_telefone: supplier.contato_telefone || "",
         contato_whatsapp: supplier.contato_whatsapp || "",
         condicoes_pagamento: supplier.condicoes_pagamento || "",
+        tipo: supplier.tipo || "geral",
         ativo: supplier.ativo,
       });
     } else {
@@ -95,10 +109,16 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
         contato_telefone: "",
         contato_whatsapp: "",
         condicoes_pagamento: "",
+        tipo: "geral",
         ativo: true,
       });
     }
     setShowModal(true);
+  };
+
+  const handleOpenUpload = (supplier: Supplier) => {
+    setSelectedSupplierForUpload(supplier);
+    setShowUploadModal(true);
   };
 
   const handleSubmit = async () => {
@@ -120,6 +140,7 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
             contato_telefone: formData.contato_telefone || null,
             contato_whatsapp: formData.contato_whatsapp || null,
             condicoes_pagamento: formData.condicoes_pagamento || null,
+            tipo: formData.tipo as any,
             ativo: formData.ativo,
           })
           .eq("id", editingSupplier.id);
@@ -137,6 +158,7 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
           contato_telefone: formData.contato_telefone || null,
           contato_whatsapp: formData.contato_whatsapp || null,
           condicoes_pagamento: formData.condicoes_pagamento || null,
+          tipo: formData.tipo as any,
           ativo: formData.ativo,
         });
 
@@ -219,9 +241,9 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
+                <TableHead>Tipo</TableHead>
                 <TableHead>CNPJ</TableHead>
                 <TableHead>Contato</TableHead>
-                <TableHead>Telefone</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -237,9 +259,13 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
                       )}
                     </div>
                   </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-xs">
+                      {TIPO_FORNECEDOR_LABELS[supplier.tipo || "geral"]}
+                    </Badge>
+                  </TableCell>
                   <TableCell>{supplier.cnpj || "—"}</TableCell>
                   <TableCell>{supplier.contato_nome || "—"}</TableCell>
-                  <TableCell>{supplier.contato_telefone || "—"}</TableCell>
                   <TableCell>
                     {supplier.ativo ? (
                       <Badge className="bg-green-100 text-green-800">Ativo</Badge>
@@ -248,7 +274,17 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end gap-1">
+                      {supplier.tipo === "laboratorio_protetico" && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          title="Importar Planilha de Preços"
+                          onClick={() => handleOpenUpload(supplier)}
+                        >
+                          <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" onClick={() => handleOpenModal(supplier)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -356,6 +392,24 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
                 />
               </div>
 
+              <div>
+                <Label htmlFor="tipo">Tipo de Fornecedor</Label>
+                <Select 
+                  value={formData.tipo}
+                  onValueChange={(value) => setFormData({ ...formData, tipo: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="geral">Geral</SelectItem>
+                    <SelectItem value="laboratorio_protetico">Laboratório Protético</SelectItem>
+                    <SelectItem value="material_consumo">Material de Consumo</SelectItem>
+                    <SelectItem value="equipamentos">Equipamentos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="flex items-center justify-between">
                 <Label htmlFor="ativo">Fornecedor ativo</Label>
                 <Switch
@@ -376,6 +430,18 @@ export const FornecedoresTab = ({ clinicaId }: FornecedoresTabProps) => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Modal Upload Planilha Laboratório */}
+        {selectedSupplierForUpload && (
+          <UploadPlanilhaLabModal
+            open={showUploadModal}
+            onOpenChange={setShowUploadModal}
+            clinicId={clinicaId}
+            supplierId={selectedSupplierForUpload.id}
+            supplierName={selectedSupplierForUpload.nome_fantasia || selectedSupplierForUpload.razao_social}
+            onSuccess={() => setSelectedSupplierForUpload(null)}
+          />
+        )}
       </CardContent>
     </Card>
   );
