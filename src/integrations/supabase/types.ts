@@ -1132,6 +1132,7 @@ export type Database = {
       }
       configuracoes_clinica: {
         Row: {
+          cabecalho_personalizado: Json | null
           clinica_id: string
           created_at: string | null
           email_contato: string | null
@@ -1139,10 +1140,12 @@ export type Database = {
           id: string
           imprimir_papel_timbrado: boolean | null
           logotipo_url: string | null
+          rodape_personalizado: Json | null
           updated_at: string | null
           whatsapp: string | null
         }
         Insert: {
+          cabecalho_personalizado?: Json | null
           clinica_id: string
           created_at?: string | null
           email_contato?: string | null
@@ -1150,10 +1153,12 @@ export type Database = {
           id?: string
           imprimir_papel_timbrado?: boolean | null
           logotipo_url?: string | null
+          rodape_personalizado?: Json | null
           updated_at?: string | null
           whatsapp?: string | null
         }
         Update: {
+          cabecalho_personalizado?: Json | null
           clinica_id?: string
           created_at?: string | null
           email_contato?: string | null
@@ -1161,6 +1166,7 @@ export type Database = {
           id?: string
           imprimir_papel_timbrado?: boolean | null
           logotipo_url?: string | null
+          rodape_personalizado?: Json | null
           updated_at?: string | null
           whatsapp?: string | null
         }
@@ -1771,6 +1777,66 @@ export type Database = {
             columns: ["clinic_id"]
             isOneToOne: false
             referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lab_price_table: {
+        Row: {
+          ativo: boolean | null
+          clinic_id: string
+          codigo_servico: string | null
+          cor: string | null
+          created_at: string | null
+          id: string
+          material: string | null
+          nome_servico: string
+          prazo_dias: number | null
+          supplier_id: string
+          updated_at: string | null
+          valor: number
+        }
+        Insert: {
+          ativo?: boolean | null
+          clinic_id: string
+          codigo_servico?: string | null
+          cor?: string | null
+          created_at?: string | null
+          id?: string
+          material?: string | null
+          nome_servico: string
+          prazo_dias?: number | null
+          supplier_id: string
+          updated_at?: string | null
+          valor?: number
+        }
+        Update: {
+          ativo?: boolean | null
+          clinic_id?: string
+          codigo_servico?: string | null
+          cor?: string | null
+          created_at?: string | null
+          id?: string
+          material?: string | null
+          nome_servico?: string
+          prazo_dias?: number | null
+          supplier_id?: string
+          updated_at?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lab_price_table_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lab_price_table_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -4292,6 +4358,7 @@ export type Database = {
           lead_time_medio_dias: number | null
           nome_fantasia: string | null
           razao_social: string
+          tipo: Database["public"]["Enums"]["tipo_fornecedor"] | null
           updated_at: string
         }
         Insert: {
@@ -4310,6 +4377,7 @@ export type Database = {
           lead_time_medio_dias?: number | null
           nome_fantasia?: string | null
           razao_social: string
+          tipo?: Database["public"]["Enums"]["tipo_fornecedor"] | null
           updated_at?: string
         }
         Update: {
@@ -4328,6 +4396,7 @@ export type Database = {
           lead_time_medio_dias?: number | null
           nome_fantasia?: string | null
           razao_social?: string
+          tipo?: Database["public"]["Enums"]["tipo_fornecedor"] | null
           updated_at?: string
         }
         Relationships: [
@@ -5060,6 +5129,65 @@ export type Database = {
           },
         ]
       }
+      whatsapp_config: {
+        Row: {
+          clinic_id: string
+          confirmacao_automatica: boolean | null
+          connected: boolean | null
+          created_at: string | null
+          id: string
+          instance_id: string | null
+          instance_token: string | null
+          lembrete_1h: boolean | null
+          lembrete_24h: boolean | null
+          mensagem_confirmacao: string | null
+          mensagem_lembrete: string | null
+          phone_connected: string | null
+          provider: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          clinic_id: string
+          confirmacao_automatica?: boolean | null
+          connected?: boolean | null
+          created_at?: string | null
+          id?: string
+          instance_id?: string | null
+          instance_token?: string | null
+          lembrete_1h?: boolean | null
+          lembrete_24h?: boolean | null
+          mensagem_confirmacao?: string | null
+          mensagem_lembrete?: string | null
+          phone_connected?: string | null
+          provider?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          clinic_id?: string
+          confirmacao_automatica?: boolean | null
+          connected?: boolean | null
+          created_at?: string | null
+          id?: string
+          instance_id?: string | null
+          instance_token?: string | null
+          lembrete_1h?: boolean | null
+          lembrete_24h?: boolean | null
+          mensagem_confirmacao?: string | null
+          mensagem_lembrete?: string | null
+          phone_connected?: string | null
+          provider?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_config_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: true
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_configs: {
         Row: {
           access_token: string | null
@@ -5177,6 +5305,11 @@ export type Database = {
         | "em_execucao"
         | "pronto_instalacao"
         | "instalado"
+      tipo_fornecedor:
+        | "geral"
+        | "laboratorio_protetico"
+        | "material_consumo"
+        | "equipamentos"
       tipo_laboratorio: "interno" | "externo"
       tipo_movimentacao_estoque:
         | "entrada"
@@ -5344,6 +5477,12 @@ export const Constants = {
         "em_execucao",
         "pronto_instalacao",
         "instalado",
+      ],
+      tipo_fornecedor: [
+        "geral",
+        "laboratorio_protetico",
+        "material_consumo",
+        "equipamentos",
       ],
       tipo_laboratorio: ["interno", "externo"],
       tipo_movimentacao_estoque: [
