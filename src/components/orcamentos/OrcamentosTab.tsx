@@ -34,21 +34,24 @@ export const OrcamentosTab = ({ budgets, onRefresh, onNewBudget }: OrcamentosTab
     try {
       setApproving(budgetId);
       
-      const { error } = await supabase
-        .from("budgets")
-        .update({ 
-          status: "approved",
-          approved_at: new Date().toISOString()
-        })
-        .eq("id", budgetId);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+      
+      const { data, error } = await supabase.functions.invoke("approve-budget", {
+        body: { 
+          budget_id: budgetId, 
+          approved_by: user.id 
+        },
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       
-      toast.success("Orçamento aprovado com sucesso!");
+      toast.success(`Orçamento aprovado! ${data?.titles?.length || 0} parcela(s) criada(s).`);
       onRefresh();
     } catch (error: any) {
       console.error("Erro ao aprovar orçamento:", error);
-      toast.error("Erro ao aprovar orçamento");
+      toast.error(error.message || "Erro ao aprovar orçamento");
     } finally {
       setApproving(null);
     }
