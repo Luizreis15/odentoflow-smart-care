@@ -3,10 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Bell, RefreshCw, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useCallback } from "react";
-import MobileMetrics from "@/components/mobile/MobileMetrics";
 import MobileQuickActions from "@/components/mobile/MobileQuickActions";
 import MobileAgendaList from "@/components/mobile/MobileAgendaList";
-import { formatCurrency } from "@/lib/utils";
 
 interface MobileHomeProps {
   user?: {
@@ -51,50 +49,10 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
     },
   });
 
-  // Fetch today's receivables
-  const { data: receivablesData, refetch: refetchReceivables } = useQuery({
-    queryKey: ["mobile-receivables-today", clinicId],
-    queryFn: async () => {
-      const today = new Date().toISOString().split("T")[0];
-
-      const { data, error } = await supabase
-        .from("receivable_titles")
-        .select("amount, balance")
-        .eq("clinic_id", clinicId)
-        .eq("due_date", today);
-
-      if (error) throw error;
-      const total = data?.reduce((sum, r) => sum + (r.balance || 0), 0) || 0;
-      return total;
-    },
-  });
-
-  // Fetch new patients this month
-  const { data: newPatientsData, refetch: refetchPatients } = useQuery({
-    queryKey: ["mobile-new-patients", clinicId],
-    queryFn: async () => {
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-
-      const { count, error } = await supabase
-        .from("patients")
-        .select("id", { count: "exact", head: true })
-        .eq("clinic_id", clinicId)
-        .gte("created_at", startOfMonth.toISOString());
-
-      if (error) throw error;
-      return count || 0;
-    },
-  });
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await Promise.all([
-      refetchAppointments(),
-      refetchReceivables(),
-      refetchPatients(),
-    ]);
+    await refetchAppointments();
     setTimeout(() => setIsRefreshing(false), 500);
   };
 
@@ -120,42 +78,6 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
     [handleRefresh]
   );
 
-  const formatCurrencyCompact = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
-
-  const metrics = [
-    {
-      label: "Consultas Hoje",
-      value: appointmentsData?.total || 0,
-      color: "bg-primary",
-      type: "appointments" as const,
-    },
-    {
-      label: "A Receber Hoje",
-      value: formatCurrency(receivablesData || 0),
-      color: "bg-green-500",
-      type: "revenue" as const,
-    },
-    {
-      label: "Novos Pacientes",
-      value: newPatientsData || 0,
-      color: "bg-blue-500",
-      type: "patients" as const,
-    },
-    {
-      label: "Pendentes",
-      value: appointmentsData?.pending || 0,
-      color: "bg-amber-500",
-      type: "pending" as const,
-    },
-  ];
-
   const todayFormatted = new Date().toLocaleDateString("pt-BR", {
     weekday: "long",
     day: "numeric",
@@ -164,8 +86,8 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
 
   return (
     <div
-      className="min-h-screen pb-24 overflow-y-auto overflow-x-hidden"
-      style={{ width: '100vw', maxWidth: '100vw', background: 'linear-gradient(to bottom, hsl(var(--flowdent-blue)) 0%, hsl(var(--flowdent-blue)) 200px, hsl(var(--background)) 200px)' }}
+      className="min-h-screen pb-24 overflow-y-auto overflow-x-hidden -mt-16 touch-pan-y"
+      style={{ width: '100vw', maxWidth: '100vw', touchAction: 'pan-y', background: 'linear-gradient(to bottom, hsl(var(--flowdent-blue)) 0%, hsl(var(--flowdent-blue)) 200px, hsl(var(--background)) 200px)' }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -225,18 +147,8 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
 
       {/* Content - directly touching hero */}
       <div className="w-full max-w-full space-y-6 bg-background rounded-t-3xl pt-4">
-        {/* Metrics Cards */}
-        <MobileMetrics metrics={metrics} />
-
         {/* Quick Actions */}
         <MobileQuickActions clinicId={clinicId} />
-
-        {/* Swipe Instructions */}
-        <div className="px-4">
-          <p className="text-xs text-center text-muted-foreground bg-muted/50 rounded-lg py-2 px-4">
-            💡 Deslize para a direita para confirmar ou esquerda para cancelar
-          </p>
-        </div>
 
         {/* Upcoming Appointments with Swipe Actions */}
         <MobileAgendaList clinicId={clinicId} />
