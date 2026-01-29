@@ -620,7 +620,7 @@ const PatientDetails = () => {
           </TabsContent>
 
           <TabsContent value="financeiro" className="mt-0">
-            <FinanceiroTab patientId={id!} />
+            <FinanceiroTab patientId={id!} clinicId={clinicaId} />
           </TabsContent>
 
           <TabsContent value="odontograma" className="mt-0">

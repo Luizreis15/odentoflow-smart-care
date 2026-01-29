@@ -27,13 +27,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { PaymentDrawer } from "@/components/financeiro/PaymentDrawer";
 
 interface FinanceiroTabProps {
   patientId: string;
+  clinicId: string;
 }
 
 interface Titulo {
   id: string;
+  title_number: number;
+  patient_id: string;
   notes: string | null;
   amount: number;
   balance: number;
@@ -42,6 +46,18 @@ interface Titulo {
   created_at: string;
   origin: string | null;
   installment_number: number | null;
+  total_installments: number;
+  budget_id: string | null;
+  payment_method: string | null;
+  competencia: string | null;
+  taxa_adquirente: number | null;
+  data_repasse: string | null;
+  antecipado: boolean | null;
+  valor_liquido: number | null;
+  patient?: {
+    full_name: string;
+    phone: string;
+  };
 }
 
 interface Pagamento {
@@ -54,11 +70,13 @@ interface Pagamento {
   created_at: string;
 }
 
-export const FinanceiroTab = ({ patientId }: FinanceiroTabProps) => {
+export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
   const [titulos, setTitulos] = useState<Titulo[]>([]);
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSubTab, setActiveSubTab] = useState("resumo");
+  const [selectedTitulo, setSelectedTitulo] = useState<Titulo | null>(null);
+  const [paymentDrawerOpen, setPaymentDrawerOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -68,10 +86,10 @@ export const FinanceiroTab = ({ patientId }: FinanceiroTabProps) => {
     try {
       setLoading(true);
 
-      // Carregar títulos a receber
+      // Carregar títulos a receber com dados do paciente
       const { data: titulosData, error: titulosError } = await supabase
         .from("receivable_titles")
-        .select("*")
+        .select("*, patient:patients(full_name, phone)")
         .eq("patient_id", patientId)
         .order("due_date", { ascending: true });
 
@@ -137,6 +155,17 @@ export const FinanceiroTab = ({ patientId }: FinanceiroTabProps) => {
       transferencia: "Transferência"
     };
     return methods[method || ""] || method || "Não informado";
+  };
+
+  const handleOpenPayment = (titulo: Titulo) => {
+    setSelectedTitulo(titulo);
+    setPaymentDrawerOpen(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    setPaymentDrawerOpen(false);
+    setSelectedTitulo(null);
+    loadData();
   };
 
   if (loading) {
@@ -319,13 +348,18 @@ export const FinanceiroTab = ({ patientId }: FinanceiroTabProps) => {
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead className="text-right">Saldo</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {titulos.map((titulo) => (
-                      <TableRow key={titulo.id}>
+                      <TableRow 
+                        key={titulo.id}
+                        className={titulo.status !== "paid" ? "cursor-pointer hover:bg-muted/80" : ""}
+                        onClick={() => titulo.status !== "paid" && handleOpenPayment(titulo)}
+                      >
                         <TableCell className="font-medium">
-                          {titulo.origin || `Parcela ${titulo.installment_number || 1}`}
+                          {titulo.notes || titulo.origin || `Parcela ${titulo.installment_number || 1}`}
                         </TableCell>
                         <TableCell>
                           {format(new Date(titulo.due_date), "dd/MM/yyyy", { locale: ptBR })}
@@ -337,6 +371,21 @@ export const FinanceiroTab = ({ patientId }: FinanceiroTabProps) => {
                           {titulo.balance.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                         </TableCell>
                         <TableCell>{getStatusBadge(titulo.status)}</TableCell>
+                        <TableCell className="text-right">
+                          {titulo.status !== "paid" && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenPayment(titulo);
+                              }}
+                            >
+                              <DollarSign className="h-4 w-4 mr-1" />
+                              Pagar
+                            </Button>
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -400,6 +449,17 @@ export const FinanceiroTab = ({ patientId }: FinanceiroTabProps) => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Payment Drawer */}
+      {selectedTitulo && (
+        <PaymentDrawer
+          open={paymentDrawerOpen}
+          onOpenChange={setPaymentDrawerOpen}
+          title={selectedTitulo}
+          clinicId={clinicId}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
     </div>
   );
 };
