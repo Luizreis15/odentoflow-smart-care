@@ -10,7 +10,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/hooks/use-toast";
 
 const CentralFAB = () => {
   const [open, setOpen] = useState(false);
@@ -57,10 +56,7 @@ const CentralFAB = () => {
       color: "text-orange-500",
       bgColor: "bg-orange-500/10",
       onClick: () => {
-        toast({
-          title: "Em breve",
-          description: "Novo orçamento rápido chegando em breve!",
-        });
+        navigate("/dashboard/prontuario");
         setOpen(false);
       },
     },
