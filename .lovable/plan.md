@@ -1,131 +1,149 @@
 
-# Plano: Integrar Aprovação de Orçamento com Aba Financeiro do Paciente
+# Plano: Corrigir Aprovação de Orçamento e Formatação Monetária
 
-## Problema Identificado
+## Problemas Identificados
 
-Ao clicar em "Aprovar Orçamento" na aba de orçamentos do paciente, o sistema apenas atualiza o status no banco de dados diretamente, **sem chamar a Edge Function `approve-budget`** que é responsável por:
-1. Criar os títulos a receber (`receivable_titles`)
-2. Criar o tratamento associado
-3. Provisionar comissões dos profissionais
+### 1. Erro ao Aprovar Orçamento
+A Edge Function `approve-budget` está falhando com o erro:
+```
+null value in column "professional_id" of relation "treatments" violates not-null constraint
+```
 
-Por isso, a aba Financeiro mostra R$ 0,00 mesmo com orçamentos aprovados.
+**Causa**: A tabela `treatments` exige `professional_id` NOT NULL, mas a Edge Function não envia esse campo ao criar o tratamento.
+
+### 2. Orçamento Aprovado Aparecendo como Rascunho
+Quando a aprovação falha, o orçamento permanece com status `draft` e o botão "Aprovar" continua visível, permitindo tentativas repetidas.
+
+### 3. Formatação Monetária Inconsistente
+A `FinanceiroTab.tsx` usa `toLocaleString("pt-BR", { style: "currency", currency: "BRL" })` diretamente, enquanto existe uma função centralizada `formatCurrency()` em `src/lib/utils.ts`.
 
 ---
 
 ## Solução Proposta
 
-### Parte 1: Corrigir o fluxo de aprovação
+### Parte 1: Corrigir Edge Function `approve-budget`
 
-Modificar `OrcamentosTab.tsx` para chamar a Edge Function em vez de fazer update direto:
+Modificar a lógica para extrair o `professional_id` do primeiro item do orçamento (já que os budget_items têm professional_id):
 
-```text
-ANTES:
-supabase.from("budgets").update({ status: "approved" })
+```typescript
+// Extrair professional_id do primeiro item ou do orçamento
+const defaultProfessionalId = budget.budget_items[0]?.professional_id || null;
 
-DEPOIS:  
-supabase.functions.invoke("approve-budget", { 
-  body: { budget_id, approved_by } 
-})
+// Permitir treatment sem professional_id (tornar nullable)
+// OU usar o professional do primeiro item
+const { data: treatment, error: treatmentError } = await supabase
+  .from("treatments")
+  .insert({
+    patient_id: patientId,
+    clinic_id: clinicId,
+    budget_id: budget_id,
+    professional_id: defaultProfessionalId,  // <-- ADICIONAR
+    name: budget.title || "Tratamento",
+    value: totalValue,
+    status: "planned",
+    observations: budget.notes,
+  })
 ```
 
-### Parte 2: Adicionar funcionalidade de registro de pagamento na aba Financeiro
+### Parte 2: Opção de Migração do Banco
 
-Atualizar `FinanceiroTab.tsx` para permitir:
-1. Clicar em um título a receber para abrir o Drawer de pagamento
-2. Registrar a forma de pagamento do paciente
-3. Dar baixa parcial ou total
+Alternativamente, tornar a coluna `professional_id` nullable na tabela `treatments`:
 
-### Parte 3: Verificar reprocessamento de orçamentos já aprovados
+```sql
+ALTER TABLE public.treatments 
+ALTER COLUMN professional_id DROP NOT NULL;
+```
 
-Para orçamentos que já foram aprovados sem gerar títulos, adicionar botão de "Reprocessar" que chama a Edge Function.
+**Decisão**: Usar a primeira opção (pegar do budget_items) para manter a integridade dos dados.
+
+### Parte 3: Padronizar Formatação Monetária
+
+Substituir todas as ocorrências de `toLocaleString("pt-BR", { style: "currency", currency: "BRL" })` por `formatCurrency()`:
+
+```typescript
+// ANTES:
+{titulo.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+
+// DEPOIS:
+import { formatCurrency } from "@/lib/utils";
+{formatCurrency(titulo.amount)}
+```
 
 ---
 
 ## Arquivos a Modificar
 
-| Arquivo | Ação |
-|---------|------|
-| `src/components/orcamentos/OrcamentosTab.tsx` | Chamar Edge Function `approve-budget` |
-| `src/components/pacientes/FinanceiroTab.tsx` | Adicionar PaymentDrawer e interatividade |
+| Arquivo | Alteração |
+|---------|-----------|
+| `supabase/functions/approve-budget/index.ts` | Extrair e usar `professional_id` do primeiro item |
+| `src/components/pacientes/FinanceiroTab.tsx` | Substituir `toLocaleString` por `formatCurrency` |
 
 ---
 
 ## Detalhes Técnicos
 
-### 1. OrcamentosTab.tsx - Novo fluxo de aprovação
+### 1. Edge Function - Extração de Professional ID
+
+Na linha 92-103, adicionar a extração do `professional_id`:
 
 ```typescript
-const handleApproveBudget = async (budgetId: string) => {
-  try {
-    setApproving(budgetId);
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Usuário não autenticado");
-    
-    const { data, error } = await supabase.functions.invoke("approve-budget", {
-      body: { 
-        budget_id: budgetId, 
-        approved_by: user.id 
-      },
-    });
+// 4. Create treatment
+// Usar o profissional do primeiro item como responsável principal
+const defaultProfessionalId = budget.budget_items.find(
+  (item: any) => item.professional_id
+)?.professional_id || null;
 
-    if (error) throw error;
-    if (data.error) throw new Error(data.error);
-    
-    toast.success(`Orçamento aprovado! ${data.titles?.length || 0} parcelas criadas.`);
-    onRefresh();
-  } catch (error: any) {
-    console.error("Erro ao aprovar orçamento:", error);
-    toast.error(error.message || "Erro ao aprovar orçamento");
-  } finally {
-    setApproving(null);
-  }
-};
+const { data: treatment, error: treatmentError } = await supabase
+  .from("treatments")
+  .insert({
+    patient_id: patientId,
+    clinic_id: clinicId,
+    budget_id: budget_id,
+    professional_id: defaultProfessionalId,
+    name: budget.title || "Tratamento",
+    value: totalValue,
+    status: "planned",
+    observations: budget.notes,
+  })
 ```
 
-### 2. FinanceiroTab.tsx - Adicionar interação com títulos
+### 2. Validação Prévia
 
-- Importar `PaymentDrawer` existente
-- Adicionar estado para controle do drawer
-- Tornar linhas da tabela clicáveis para abrir o drawer
-- Passar `clinicId` como prop necessária
-- Adicionar botão "Registrar Pagamento" em cada linha
-- Atualizar interface para receber `clinicId`
+Adicionar validação antes de criar o tratamento:
 
-### 3. Fluxo Visual Esperado
+```typescript
+// Verificar se há pelo menos um profissional definido
+const hasProfessional = budget.budget_items.some(
+  (item: any) => item.professional_id
+);
 
-```text
-1. Usuário aprova orçamento
-   ↓
-2. Edge Function cria:
-   - Tratamento
-   - Títulos a receber (parcelas)
-   - Comissões provisionadas
-   ↓
-3. Aba Financeiro exibe:
-   - Cards com totais (Em Aberto, Pago, Vencido)
-   - Lista de títulos/parcelas
-   - Histórico de pagamentos
-   ↓
-4. Usuário clica em parcela
-   ↓
-5. PaymentDrawer abre para:
-   - Escolher forma de pagamento
-   - Registrar valor
-   - Dar baixa total ou parcial
+if (!hasProfessional) {
+  return new Response(
+    JSON.stringify({ 
+      error: "Pelo menos um item deve ter um profissional responsável" 
+    }),
+    { status: 400, headers: corsHeaders }
+  );
+}
 ```
+
+### 3. Substituições na FinanceiroTab.tsx
+
+Total de **8 ocorrências** a substituir:
+- Linha 191: `totalAberto.toLocaleString(...)` → `formatCurrency(totalAberto)`
+- Linha 207: `totalPago.toLocaleString(...)` → `formatCurrency(totalPago)`
+- Linha 223: `totalVencido.toLocaleString(...)` → `formatCurrency(totalVencido)`
+- Linha 274: `titulo.balance.toLocaleString(...)` → `formatCurrency(titulo.balance)`
+- Linha 311: `pagamento.value.toLocaleString(...)` → `formatCurrency(pagamento.value)`
+- Linha 368: `titulo.amount.toLocaleString(...)` → `formatCurrency(titulo.amount)`
+- Linha 371: `titulo.balance.toLocaleString(...)` → `formatCurrency(titulo.balance)`
+- Linha 433: `pagamento.value.toLocaleString(...)` → `formatCurrency(pagamento.value)`
 
 ---
 
 ## Resultado Esperado
 
-1. Ao aprovar um orçamento de R$ 11.200,00:
-   - O título aparece na aba Financeiro do paciente
-   - Os cards mostram "Total em Aberto: R$ 11.200,00"
-   - O usuário pode clicar no título para registrar pagamento
-
-2. Ao registrar pagamento:
-   - O valor vai para "Total Pago"
-   - O saldo é atualizado
-   - O histórico de pagamentos é alimentado
-   - Os dashboards são atualizados automaticamente
+1. **Aprovação funciona**: Ao aprovar orçamento com profissionais definidos nos itens, o tratamento é criado corretamente
+2. **Erro claro**: Se nenhum item tiver profissional, mensagem de erro clara é exibida
+3. **Formatação correta**: Todos os valores monetários exibem no padrão brasileiro (R$ 11.200,00 ao invés de R$11200)
+4. **Sem redundância**: Orçamentos aprovados não mostram mais o botão de aprovação (a lógica já filtra por status, basta a aprovação funcionar)
