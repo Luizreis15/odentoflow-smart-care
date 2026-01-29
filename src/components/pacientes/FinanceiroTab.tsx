@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatCurrency } from "@/lib/utils";
 import { 
   Table, 
   TableBody, 
@@ -188,7 +189,7 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
               <div>
                 <p className="text-sm text-muted-foreground">Total em Aberto</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {totalAberto.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  {formatCurrency(totalAberto)}
                 </p>
               </div>
               <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
@@ -204,7 +205,7 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
               <div>
                 <p className="text-sm text-muted-foreground">Total Pago</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {totalPago.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  {formatCurrency(totalPago)}
                 </p>
               </div>
               <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
@@ -220,7 +221,7 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
               <div>
                 <p className="text-sm text-muted-foreground">Total Vencido</p>
                 <p className="text-2xl font-bold text-red-600">
-                  {totalVencido.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  {formatCurrency(totalVencido)}
                 </p>
               </div>
               <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
@@ -271,7 +272,7 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
                           </div>
                           <div className="text-right">
                             <p className="font-semibold">
-                              {titulo.balance.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                              {formatCurrency(titulo.balance)}
                             </p>
                             {getStatusBadge(titulo.status)}
                           </div>
@@ -308,7 +309,7 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
                           </p>
                         </div>
                         <p className="font-semibold text-green-600">
-                          {pagamento.value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                          {formatCurrency(pagamento.value)}
                         </p>
                       </div>
                     ))}
@@ -365,10 +366,10 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
                           {format(new Date(titulo.due_date), "dd/MM/yyyy", { locale: ptBR })}
                         </TableCell>
                         <TableCell className="text-right">
-                          {titulo.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                          {formatCurrency(titulo.amount)}
                         </TableCell>
                         <TableCell className="text-right font-semibold">
-                          {titulo.balance.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                          {formatCurrency(titulo.balance)}
                         </TableCell>
                         <TableCell>{getStatusBadge(titulo.status)}</TableCell>
                         <TableCell className="text-right">
@@ -430,7 +431,7 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
                         </TableCell>
                         <TableCell>{getPaymentMethodLabel(pagamento.payment_method)}</TableCell>
                         <TableCell className="text-right font-semibold text-green-600">
-                          {pagamento.value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                          {formatCurrency(pagamento.value)}
                         </TableCell>
                         <TableCell>
                           <Badge variant={pagamento.status === "completed" ? "default" : "secondary"}>

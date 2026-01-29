@@ -88,13 +88,28 @@ serve(async (req) => {
       }
     }
 
-    // 4. Create treatment
+    // 4. Validate that at least one item has a professional assigned
+    const defaultProfessionalId = budget.budget_items.find(
+      (item: any) => item.professional_id
+    )?.professional_id || null;
+
+    if (!defaultProfessionalId) {
+      return new Response(
+        JSON.stringify({ 
+          error: "Pelo menos um item deve ter um profissional responsável" 
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 5. Create treatment with professional_id from first item
     const { data: treatment, error: treatmentError } = await supabase
       .from("treatments")
       .insert({
         patient_id: patientId,
         clinic_id: clinicId,
         budget_id: budget_id,
+        professional_id: defaultProfessionalId,
         name: budget.title || "Tratamento",
         value: totalValue,
         status: "planned",
