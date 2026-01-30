@@ -1,184 +1,278 @@
 
-# Plano: Corrigir Responsividade Mobile e Simplificar Interface
+# Plano: Redesign Mobile da Tela de Detalhes do Paciente
 
-## Problemas Identificados
+## Problemas Identificados na Análise
 
-### 1. Tela "Balança" Horizontalmente
-**Causa**: O componente `MobileMetrics.tsx` possui um container com scroll horizontal (`overflow-x-auto`) que permite arrastar a tela para os lados. Os cards de métricas têm `min-w-[130px]` e são scrolláveis horizontalmente.
+### 1. Header Desorganizado (IMG_8080.png)
+- Avatar, nome e botoes empilhados verticalmente sem estrutura
+- Telefone quebrado em 3 linhas ("11", "98361-", "2450")
+- Botoes de acao empilhados verticalmente ocupando muito espaco
+- Nome truncado sem indicador visual adequado
 
-### 2. Espaço em Branco Entre Topo e Primeira Seção
-**Causa**: O `Navbar.tsx` é exibido no mobile (`lg:hidden`) com altura de ~56px, criando um gap visual entre a barra superior e o Hero do `MobileHome`. O Hero inicia dentro do `DashboardLayout` que aplica padding/margin adicional.
+### 2. Tabs em Multiplas Linhas (IMG_8080.png)
+- 9 tabs distribuidas em 3 linhas (Cadastro, Orcamentos, Financeiro / Odontograma, Tratamentos, Anamnese / Imagens, Documentos, Agendamentos)
+- Nao eh scrollavel horizontalmente como apps nativos
+- Ocupa muito espaco vertical
 
-### 3. Botão "Novo Orçamento" Não Funciona
-**Causa**: No arquivo `CentralFAB.tsx`, o botão "Novo Orçamento" apenas exibe um toast com "Em breve" em vez de navegar para a criação de orçamento:
-```typescript
-onClick: () => {
-  toast({ title: "Em breve", description: "..." });
-  setOpen(false);
-}
-```
+### 3. Dados Sem Estrutura Visual (IMG_8081.png, IMG_8082.png)
+- Cards com campos empilhados sem separacao visual adequada
+- Nao parece interface de app nativo
+- Espacamento uniforme demais sem hierarquia visual
+- Botao "Editar" pequeno e pouco visivel
 
-### 4. Cards de Métricas "Poluindo" a Interface
-**Causa**: Os 4 cards (`Consultas Hoje`, `A Receber`, `Novos Pacientes`, `Pendentes`) ocupam espaço desnecessário e são redundantes, já que o resumo de consultas já aparece no badge do Hero.
+### 4. Menu Lateral Inapropriado para Mobile
+- O menu de secoes (Dados Cadastrais, Contato, Dados Complementares) aparece como menu lateral que nao funciona bem em telas pequenas
 
 ---
 
-## Solução Proposta
+## Solucao: Design Mobile-First Inspirado em Apps Nativos
 
-### Parte 1: Eliminar o "Balanço" Horizontal
+### Parte 1: Header Compacto e Profissional
 
-Remover o componente `MobileMetrics` completamente do `MobileHome.tsx`, pois a informação de "X consultas hoje" já está no Hero badge.
+**Antes:**
+```
+┌────────────────────────────┐
+│ ←  [Avatar]  JONATHAN L... │
+│    (545555)  [Ativo]       │
+│    11                      │
+│    98361-                  │
+│    2450      Nao informado │
+│                            │
+│    [Editar]                │
+│    [WhatsApp]              │
+│    [Copiar Link]           │
+│    [🖨️] [📤] [🗑️]          │
+└────────────────────────────┘
+```
 
-### Parte 2: Remover Espaço em Branco no Topo
+**Depois:**
+```
+┌────────────────────────────┐
+│ ← Jonathan Lessa    [Ativo]│
+│                            │
+│ [Avatar]  [Editar] [WhatsApp] [⋮] │
+│ 📞 (11) 98361-2450         │
+│ ✉️ email@email.com         │
+└────────────────────────────┘
+```
 
-Modificar o `MobileHome.tsx` para usar posicionamento que compense o espaço do Navbar, ou aplicar margin negativa para que o Hero toque o topo visual.
+### Parte 2: Tabs Horizontais Scrollaveis
 
-### Parte 3: Corrigir Botão "Novo Orçamento"
+**Antes:** 3 linhas de tabs
+**Depois:** 1 linha scrollavel com indicador visual
 
-Alterar o `CentralFAB.tsx` para navegar para a página de prontuário e abrir a seção de orçamentos:
-- Opção A: Navegar para `/dashboard/prontuario?openBudget=true`
-- Opção B: Navegar para prontuário com instrução de selecionar paciente
+```
+┌────────────────────────────┐
+│ [Cadastro] [Orcamentos] [Financeiro] [Odonto...] → │
+└────────────────────────────┘
+```
 
-### Parte 4: Simplificar Interface Mobile
+### Parte 3: Campos de Dados em Grid Compacto
 
-- Remover os cards de métricas
-- Remover a dica de "deslize para confirmar/cancelar"
-- Manter apenas: Hero, Ações Rápidas e Lista de Agendamentos
+**Antes:** Lista simples empilhada
+**Depois:** Grid 2x2 com cards visuais
+
+```
+┌────────────────────────────┐
+│ Dados Cadastrais    [Edit] │
+├────────────┬───────────────┤
+│ Nome       │ Apelido       │
+│ Jonathan   │ -             │
+├────────────┼───────────────┤
+│ Nascimento │ Idade         │
+│ 15/03/1990 │ 35 anos       │
+├────────────┼───────────────┤
+│ Sexo       │ CPF           │
+│ Masculino  │ 123.456.789-00│
+└────────────┴───────────────┘
+```
 
 ---
 
 ## Arquivos a Modificar
 
-| Arquivo | Alteração |
+| Arquivo | Alteracao |
 |---------|-----------|
-| `src/pages/mobile/MobileHome.tsx` | Remover MobileMetrics, ajustar espaçamento do topo |
-| `src/components/mobile/CentralFAB.tsx` | Corrigir navegação "Novo Orçamento" |
-| `src/components/DashboardLayout.tsx` | Ajustar container mobile para eliminar gaps |
+| `src/pages/dashboard/PatientDetails.tsx` | Implementar layout responsivo mobile-first |
 
 ---
 
-## Detalhes Técnicos
+## Detalhes Tecnicos
 
-### 1. MobileHome.tsx - Simplificação
+### 1. Header Mobile Compacto
 
-Remover as seguintes seções:
 ```typescript
-// REMOVER: Import e uso de MobileMetrics
-import MobileMetrics from "@/components/mobile/MobileMetrics";
-<MobileMetrics metrics={metrics} />
-
-// REMOVER: Array de metrics (linhas 132-157)
-const metrics = [...];
-
-// REMOVER: Dica de swipe
-<div className="px-4">
-  <p className="text-xs text-center...">
-    💡 Deslize para a direita...
-  </p>
+{/* Mobile Header */}
+<div className="lg:hidden bg-card rounded-xl border shadow-sm overflow-hidden">
+  {/* Top bar com nome e status */}
+  <div className="bg-gradient-to-r from-[hsl(var(--flowdent-blue))] to-[hsl(var(--flow-turquoise))] px-4 py-4 text-white">
+    <div className="flex items-center gap-3">
+      <Button variant="ghost" size="icon" className="text-white">
+        <ArrowLeft className="h-5 w-5" />
+      </Button>
+      <div className="flex-1 min-w-0">
+        <h1 className="font-bold text-lg truncate">
+          {patient.full_name}
+        </h1>
+        <p className="text-white/80 text-sm">#{patientCode}</p>
+      </div>
+      <Badge className="bg-white/20 text-white">
+        {isActive ? "Ativo" : "Inativo"}
+      </Badge>
+    </div>
+  </div>
+  
+  {/* Avatar e acoes rapidas */}
+  <div className="px-4 py-4">
+    <div className="flex items-center gap-4">
+      <Avatar className="h-16 w-16 border-4 border-white shadow-lg -mt-10">
+        <AvatarFallback>J</AvatarFallback>
+      </Avatar>
+      <div className="flex-1 flex gap-2">
+        <Button size="sm" variant="outline" className="flex-1">
+          <Edit className="h-4 w-4 mr-1" /> Editar
+        </Button>
+        <Button size="sm" variant="outline" className="flex-1">
+          <MessageCircle className="h-4 w-4 mr-1" /> WhatsApp
+        </Button>
+        <Button size="icon" variant="outline">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+    
+    {/* Contato inline */}
+    <div className="mt-3 flex flex-wrap gap-4 text-sm text-muted-foreground">
+      <div className="flex items-center gap-1">
+        <Phone className="h-4 w-4" />
+        <span>{formatPhone(patient.phone)}</span>
+      </div>
+      <div className="flex items-center gap-1">
+        <Mail className="h-4 w-4" />
+        <span className="truncate max-w-[150px]">{patient.email || "Nao informado"}</span>
+      </div>
+    </div>
+  </div>
 </div>
-
-// REMOVER: Queries desnecessárias
-// Manter apenas appointmentsData para o badge do Hero
 ```
 
-### 2. MobileHome.tsx - Eliminar Espaço no Topo
-
-Ajustar o container para iniciar no topo visual:
-```typescript
-// Adicionar margin negativa para compensar altura da Navbar
-<div 
-  className="min-h-screen pb-24 overflow-y-auto overflow-x-hidden -mt-16"
-  style={{ width: '100vw', maxWidth: '100vw' }}
->
-```
-
-### 3. CentralFAB.tsx - Corrigir Novo Orçamento
+### 2. Tabs Horizontais Scrollaveis
 
 ```typescript
-{
-  icon: ClipboardList,
-  label: "Novo Orçamento",
-  description: "Criar orçamento para paciente",
-  color: "text-orange-500",
-  bgColor: "bg-orange-500/10",
-  onClick: () => {
-    // Navegar para prontuário - usuário seleciona paciente e abre orçamentos
-    navigate("/dashboard/prontuario");
-    setOpen(false);
-  },
-},
+<TabsList className="w-full justify-start overflow-x-auto scrollbar-hide flex-nowrap h-12 px-2 bg-transparent gap-1">
+  {["cadastro", "orcamentos", "financeiro", "odontograma", "tratamentos", "anamnese", "imagens", "documentos", "agendamentos"].map((tab) => (
+    <TabsTrigger 
+      key={tab}
+      value={tab} 
+      className="flex-shrink-0 rounded-full px-4 py-2 text-sm data-[state=active]:bg-primary data-[state=active]:text-white"
+    >
+      {tab.charAt(0).toUpperCase() + tab.slice(1)}
+    </TabsTrigger>
+  ))}
+</TabsList>
 ```
 
-### 4. Prevenir Scroll Horizontal
+### 3. Grid de Dados Mobile
 
-Adicionar ao container principal:
 ```typescript
-<div className="... touch-pan-y" style={{ touchAction: 'pan-y' }}>
+{/* Grid 2 colunas no mobile */}
+<div className="grid grid-cols-2 gap-3">
+  <div className="bg-muted/30 rounded-lg p-3">
+    <span className="text-xs text-muted-foreground block">Nome</span>
+    <span className="font-medium text-sm">{patient.full_name}</span>
+  </div>
+  <div className="bg-muted/30 rounded-lg p-3">
+    <span className="text-xs text-muted-foreground block">Apelido</span>
+    <span className="font-medium text-sm">{patient.nickname || "-"}</span>
+  </div>
+  {/* ... mais campos */}
+</div>
 ```
 
-Isso garante que apenas scroll vertical seja permitido.
+### 4. Menu de Secoes como Pills Horizontais
+
+```typescript
+{/* No mobile: pills horizontais em vez de menu lateral */}
+<div className="lg:hidden flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+  {["dados", "contato", "complementares"].map((section) => (
+    <button
+      key={section}
+      onClick={() => scrollToSection(section)}
+      className={cn(
+        "flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors",
+        activeSection === section
+          ? "bg-primary text-white"
+          : "bg-muted hover:bg-muted/80"
+      )}
+    >
+      {section === "dados" ? "Dados" : section === "contato" ? "Contato" : "Complementares"}
+    </button>
+  ))}
+</div>
+```
 
 ---
 
 ## Resultado Visual Esperado
 
-### ANTES
+### Mobile (Antes)
 ```
 ┌─────────────────────┐
-│ Navbar (Flowdent)   │
+│ ← [J] JONATHAN L... │
+│   (545555) [Ativo]  │
+│   11 98361-         │
+│   2450    Nao inf.  │
+│                     │
+│ [Editar          ]  │
+│ [WhatsApp        ]  │
+│ [Copiar Link     ]  │
+│ [🖨️] [📤] [🗑️]     │
 ├─────────────────────┤
-│ [espaço em branco]  │
+│ Cadastro|Orcamentos │
+│ Financeiro|Odonto   │
+│ Tratam|Anamnese|Img │
 ├─────────────────────┤
-│ Hero (Bom dia...)   │
+│ [Dados Cadastrais]  │
+│ [Contato]           │
+│ [Complementares]    │
 ├─────────────────────┤
-│ Cards rolantes ←→   │  ← "balança" ao tocar
-├─────────────────────┤
-│ Ações Rápidas       │
-├─────────────────────┤
-│ Dica de swipe       │
-├─────────────────────┤
-│ Lista Agendamentos  │
+│ Nome                │
+│ Jonathan Lessa      │
+│ Apelido             │
+│ Nao informado       │
+│ ...                 │
 └─────────────────────┘
 ```
 
-### DEPOIS
+### Mobile (Depois)
 ```
-┌─────────────────────┐
-│ Navbar (Flowdent)   │
-│ Hero (Bom dia...)   │  ← colado ao topo
-├─────────────────────┤
-│ Ações Rápidas       │  ← apenas 4 botões úteis
-├─────────────────────┤
-│ Lista Agendamentos  │  ← direto ao ponto
-└─────────────────────┘
+┌─────────────────────────┐
+│ ← Jonathan Lessa [Ativo]│  ← Header gradiente
+│ #545555                 │
+├─────────────────────────┤
+│ [J] [Editar][WhatsApp][⋮]│  ← Avatar flutuante
+│ 📞 (11) 98361-2450      │  ← Contato inline
+│ ✉️ email@email.com      │
+├─────────────────────────┤
+│ [Cadastro][Orcam][Finan] →│ ← Tabs scroll
+├─────────────────────────┤
+│ [Dados][Contato][Compl] │  ← Pills subsecao
+├───────────┬─────────────┤
+│ Nome      │ Apelido     │  ← Grid 2x2
+│ Jonathan  │ -           │
+├───────────┼─────────────┤
+│ Nascimento│ Idade       │
+│ 15/03/90  │ 35 anos     │
+└───────────┴─────────────┘
 ```
 
 ---
 
-## Fluxo do Botão "Novo Orçamento"
+## Beneficios
 
-```
-1. Usuário clica no FAB (+)
-   ↓
-2. Sheet abre com opções
-   ↓
-3. Clica em "Novo Orçamento"
-   ↓
-4. Navega para /dashboard/prontuario
-   ↓
-5. Usuário busca/seleciona paciente
-   ↓
-6. Acessa aba "Orçamentos" do paciente
-   ↓
-7. Clica em "Novo Orçamento" dentro da aba
-```
-
----
-
-## Benefícios
-
-1. **Interface mais limpa**: Sem cards de métricas desnecessários
-2. **Navegação estável**: Sem "balanço" horizontal
-3. **Botões funcionais**: Todas as ações rápidas navegam corretamente
-4. **Foco no essencial**: Ações rápidas e lista de agendamentos
-5. **Performance**: Menos queries ao banco de dados
+1. **Visual de App Nativo**: Header com gradiente e avatar flutuante
+2. **Navegacao Eficiente**: Tabs scrollaveis horizontalmente em 1 linha
+3. **Hierarquia Visual**: Grid 2x2 para dados com background diferenciado
+4. **Touch-Friendly**: Botoes com tamanho adequado (min 44px)
+5. **Espaco Otimizado**: Menos scroll vertical, mais informacao visivel
+6. **Consistencia**: Usa mesmos padroes de cores/gradientes do MobileHome
