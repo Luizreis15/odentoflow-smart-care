@@ -86,21 +86,22 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
 
   return (
     <div
-      className="min-h-screen pb-24 overflow-y-auto overflow-x-hidden -mt-16 touch-pan-y"
-      style={{ width: '100vw', maxWidth: '100vw', touchAction: 'pan-y', background: 'linear-gradient(to bottom, hsl(var(--flowdent-blue)) 0%, hsl(var(--flowdent-blue)) 200px, hsl(var(--background)) 200px)' }}
+      className="min-h-screen pb-24 overflow-y-auto overflow-x-hidden touch-pan-y"
+      style={{ width: '100vw', maxWidth: '100vw', touchAction: 'pan-y' }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
       {/* Pull-to-refresh indicator */}
       {isRefreshing && (
-        <div className="flex justify-center py-2">
+        <div className="flex justify-center py-2 bg-[hsl(var(--flowdent-blue))]">
           <RefreshCw className="h-5 w-5 animate-spin text-white" />
         </div>
       )}
 
-      {/* Hero Header with Gradient */}
+      {/* Hero Header with Gradient - now occupies top of screen */}
       <div className="bg-gradient-to-br from-[hsl(var(--flowdent-blue))] via-[hsl(var(--flow-turquoise))] to-[hsl(var(--health-mint))] text-white">
-        <div className="px-4 py-4 pb-6">
+        {/* Safe area top for iPhone notches */}
+        <div className="px-4 pt-12 pb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-white/80 text-sm capitalize">{todayFormatted}</p>
@@ -145,8 +146,8 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
         </div>
       </div>
 
-      {/* Content - directly touching hero */}
-      <div className="w-full max-w-full space-y-6 bg-background rounded-t-3xl pt-4">
+      {/* Content with rounded corners overlapping hero */}
+      <div className="w-full max-w-full space-y-6 bg-background rounded-t-3xl -mt-4 pt-6 relative z-10">
         {/* Quick Actions */}
         <MobileQuickActions clinicId={clinicId} />
 
