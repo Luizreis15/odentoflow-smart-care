@@ -1,278 +1,183 @@
 
-# Plano: Redesign Mobile da Tela de Detalhes do Paciente
+# Plano: Corrigir Layout Mobile do Dashboard
 
-## Problemas Identificados na Análise
+## Problema Identificado
 
-### 1. Header Desorganizado (IMG_8080.png)
-- Avatar, nome e botoes empilhados verticalmente sem estrutura
-- Telefone quebrado em 3 linhas ("11", "98361-", "2450")
-- Botoes de acao empilhados verticalmente ocupando muito espaco
-- Nome truncado sem indicador visual adequado
+Analisando a screenshot (IMG_8096.png), identifico os seguintes problemas:
 
-### 2. Tabs em Multiplas Linhas (IMG_8080.png)
-- 9 tabs distribuidas em 3 linhas (Cadastro, Orcamentos, Financeiro / Odontograma, Tratamentos, Anamnese / Imagens, Documentos, Agendamentos)
-- Nao eh scrollavel horizontalmente como apps nativos
-- Ocupa muito espaco vertical
+1. **Header Branco Redundante**: O `Navbar.tsx` esta sendo renderizado no mobile mostrando logo + icone de usuario
+2. **Espaco em Branco**: Gap visivel entre o header branco e a area gradiente azul
+3. **Saudacao Cortada**: O texto "Bom dia, X!" esta sendo cortado/oculto pelo hack de `-mt-16`
+4. **Visual Amador**: Dois cabecalhos empilhados, sem integracao visual
 
-### 3. Dados Sem Estrutura Visual (IMG_8081.png, IMG_8082.png)
-- Cards com campos empilhados sem separacao visual adequada
-- Nao parece interface de app nativo
-- Espacamento uniforme demais sem hierarquia visual
-- Botao "Editar" pequeno e pouco visivel
+## Causa Raiz
 
-### 4. Menu Lateral Inapropriado para Mobile
-- O menu de secoes (Dados Cadastrais, Contato, Dados Complementares) aparece como menu lateral que nao funciona bem em telas pequenas
-
----
-
-## Solucao: Design Mobile-First Inspirado em Apps Nativos
-
-### Parte 1: Header Compacto e Profissional
-
-**Antes:**
-```
-┌────────────────────────────┐
-│ ←  [Avatar]  JONATHAN L... │
-│    (545555)  [Ativo]       │
-│    11                      │
-│    98361-                  │
-│    2450      Nao informado │
-│                            │
-│    [Editar]                │
-│    [WhatsApp]              │
-│    [Copiar Link]           │
-│    [🖨️] [📤] [🗑️]          │
-└────────────────────────────┘
+No `DashboardLayout.tsx` (linhas 213-215):
+```typescript
+<div className="lg:hidden">
+  <Navbar user={user} />  // <-- Exibe header branco no mobile
+</div>
 ```
 
-**Depois:**
-```
-┌────────────────────────────┐
-│ ← Jonathan Lessa    [Ativo]│
-│                            │
-│ [Avatar]  [Editar] [WhatsApp] [⋮] │
-│ 📞 (11) 98361-2450         │
-│ ✉️ email@email.com         │
-└────────────────────────────┘
+E no `MobileHome.tsx` (linha 89):
+```typescript
+className="... -mt-16 ..."  // <-- Tenta compensar mas corta o conteudo
 ```
 
-### Parte 2: Tabs Horizontais Scrollaveis
+## Solucao Proposta
 
-**Antes:** 3 linhas de tabs
-**Depois:** 1 linha scrollavel com indicador visual
+### Estrategia: Ocultar Navbar na Home Mobile
 
-```
-┌────────────────────────────┐
-│ [Cadastro] [Orcamentos] [Financeiro] [Odonto...] → │
-└────────────────────────────┘
-```
+O `MobileHome` ja possui seu proprio header hero com gradiente, saudacao, e botoes de acao. O Navbar branco eh redundante e quebra o visual nativo.
 
-### Parte 3: Campos de Dados em Grid Compacto
-
-**Antes:** Lista simples empilhada
-**Depois:** Grid 2x2 com cards visuais
-
-```
-┌────────────────────────────┐
-│ Dados Cadastrais    [Edit] │
-├────────────┬───────────────┤
-│ Nome       │ Apelido       │
-│ Jonathan   │ -             │
-├────────────┼───────────────┤
-│ Nascimento │ Idade         │
-│ 15/03/1990 │ 35 anos       │
-├────────────┼───────────────┤
-│ Sexo       │ CPF           │
-│ Masculino  │ 123.456.789-00│
-└────────────┴───────────────┘
-```
-
----
-
-## Arquivos a Modificar
+### Arquivos a Modificar
 
 | Arquivo | Alteracao |
 |---------|-----------|
-| `src/pages/dashboard/PatientDetails.tsx` | Implementar layout responsivo mobile-first |
+| `src/components/DashboardLayout.tsx` | Condicional para ocultar Navbar na rota "/dashboard" mobile |
+| `src/pages/mobile/MobileHome.tsx` | Remover hack de `-mt-16` e ajustar layout |
 
 ---
 
 ## Detalhes Tecnicos
 
-### 1. Header Mobile Compacto
+### 1. DashboardLayout.tsx - Ocultar Navbar na Home
 
 ```typescript
-{/* Mobile Header */}
-<div className="lg:hidden bg-card rounded-xl border shadow-sm overflow-hidden">
-  {/* Top bar com nome e status */}
-  <div className="bg-gradient-to-r from-[hsl(var(--flowdent-blue))] to-[hsl(var(--flow-turquoise))] px-4 py-4 text-white">
-    <div className="flex items-center gap-3">
-      <Button variant="ghost" size="icon" className="text-white">
-        <ArrowLeft className="h-5 w-5" />
-      </Button>
-      <div className="flex-1 min-w-0">
-        <h1 className="font-bold text-lg truncate">
-          {patient.full_name}
-        </h1>
-        <p className="text-white/80 text-sm">#{patientCode}</p>
-      </div>
-      <Badge className="bg-white/20 text-white">
-        {isActive ? "Ativo" : "Inativo"}
-      </Badge>
-    </div>
-  </div>
+const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
+  const location = useLocation();
+  // ...
   
-  {/* Avatar e acoes rapidas */}
-  <div className="px-4 py-4">
-    <div className="flex items-center gap-4">
-      <Avatar className="h-16 w-16 border-4 border-white shadow-lg -mt-10">
-        <AvatarFallback>J</AvatarFallback>
-      </Avatar>
-      <div className="flex-1 flex gap-2">
-        <Button size="sm" variant="outline" className="flex-1">
-          <Edit className="h-4 w-4 mr-1" /> Editar
-        </Button>
-        <Button size="sm" variant="outline" className="flex-1">
-          <MessageCircle className="h-4 w-4 mr-1" /> WhatsApp
-        </Button>
-        <Button size="icon" variant="outline">
-          <MoreVertical className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-    
-    {/* Contato inline */}
-    <div className="mt-3 flex flex-wrap gap-4 text-sm text-muted-foreground">
-      <div className="flex items-center gap-1">
-        <Phone className="h-4 w-4" />
-        <span>{formatPhone(patient.phone)}</span>
-      </div>
-      <div className="flex items-center gap-1">
-        <Mail className="h-4 w-4" />
-        <span className="truncate max-w-[150px]">{patient.email || "Nao informado"}</span>
-      </div>
-    </div>
-  </div>
-</div>
-```
+  // Verificar se estamos na home do dashboard
+  const isHomePage = location.pathname === "/dashboard";
 
-### 2. Tabs Horizontais Scrollaveis
+  return (
+    <div className="min-h-screen bg-background">
+      {/* ... impersonation banner ... */}
 
-```typescript
-<TabsList className="w-full justify-start overflow-x-auto scrollbar-hide flex-nowrap h-12 px-2 bg-transparent gap-1">
-  {["cadastro", "orcamentos", "financeiro", "odontograma", "tratamentos", "anamnese", "imagens", "documentos", "agendamentos"].map((tab) => (
-    <TabsTrigger 
-      key={tab}
-      value={tab} 
-      className="flex-shrink-0 rounded-full px-4 py-2 text-sm data-[state=active]:bg-primary data-[state=active]:text-white"
-    >
-      {tab.charAt(0).toUpperCase() + tab.slice(1)}
-    </TabsTrigger>
-  ))}
-</TabsList>
-```
-
-### 3. Grid de Dados Mobile
-
-```typescript
-{/* Grid 2 colunas no mobile */}
-<div className="grid grid-cols-2 gap-3">
-  <div className="bg-muted/30 rounded-lg p-3">
-    <span className="text-xs text-muted-foreground block">Nome</span>
-    <span className="font-medium text-sm">{patient.full_name}</span>
-  </div>
-  <div className="bg-muted/30 rounded-lg p-3">
-    <span className="text-xs text-muted-foreground block">Apelido</span>
-    <span className="font-medium text-sm">{patient.nickname || "-"}</span>
-  </div>
-  {/* ... mais campos */}
-</div>
-```
-
-### 4. Menu de Secoes como Pills Horizontais
-
-```typescript
-{/* No mobile: pills horizontais em vez de menu lateral */}
-<div className="lg:hidden flex gap-2 overflow-x-auto scrollbar-hide pb-2">
-  {["dados", "contato", "complementares"].map((section) => (
-    <button
-      key={section}
-      onClick={() => scrollToSection(section)}
-      className={cn(
-        "flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors",
-        activeSection === section
-          ? "bg-primary text-white"
-          : "bg-muted hover:bg-muted/80"
+      {/* Navbar mobile - ocultar na home pois MobileHome tem proprio header */}
+      {!isHomePage && (
+        <div className="lg:hidden">
+          <Navbar user={user} />
+        </div>
       )}
-    >
-      {section === "dados" ? "Dados" : section === "contato" ? "Contato" : "Complementares"}
-    </button>
-  ))}
-</div>
+      
+      {/* Ajustar padding baseado se mostra Navbar ou nao */}
+      <div className={cn(
+        "flex", 
+        impersonation ? "lg:pt-[44px]" : "lg:pt-0",
+        // No mobile: sem padding-top na home (hero fullscreen), com padding nas outras paginas
+        isHomePage ? "pt-0" : "pt-16"
+      )}>
+        {/* ... resto do layout ... */}
+      </div>
+      
+      <MobileBottomNav user={user} />
+    </div>
+  );
+};
+```
+
+### 2. MobileHome.tsx - Remover Hack e Ajustar Layout
+
+```typescript
+return (
+  <div
+    className="min-h-screen pb-24 overflow-y-auto overflow-x-hidden touch-pan-y"
+    style={{ 
+      width: '100vw', 
+      maxWidth: '100vw', 
+      touchAction: 'pan-y'
+    }}
+    onTouchStart={handleTouchStart}
+    onTouchEnd={handleTouchEnd}
+  >
+    {/* Pull-to-refresh indicator */}
+    {isRefreshing && (
+      <div className="flex justify-center py-2 bg-[hsl(var(--flowdent-blue))]">
+        <RefreshCw className="h-5 w-5 animate-spin text-white" />
+      </div>
+    )}
+
+    {/* Hero Header with Gradient - agora ocupa topo da tela */}
+    <div className="bg-gradient-to-br from-[hsl(var(--flowdent-blue))] via-[hsl(var(--flow-turquoise))] to-[hsl(var(--health-mint))] text-white pt-safe">
+      {/* Safe area top para notch de iPhones */}
+      <div className="px-4 pt-12 pb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-white/80 text-sm capitalize">{todayFormatted}</p>
+            <h1 className="text-2xl font-bold mt-1">
+              {getGreeting()}, {firstName}!
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* ... botoes ... */}
+          </div>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="flex items-center gap-3 mt-2">
+          {/* ... pills de estatisticas ... */}
+        </div>
+      </div>
+    </div>
+
+    {/* Content com cantos arredondados */}
+    <div className="w-full max-w-full space-y-6 bg-background rounded-t-3xl -mt-4 pt-6 relative z-10">
+      <MobileQuickActions clinicId={clinicId} />
+      <MobileAgendaList clinicId={clinicId} />
+    </div>
+  </div>
+);
 ```
 
 ---
 
 ## Resultado Visual Esperado
 
-### Mobile (Antes)
+### Antes (Atual)
 ```
-┌─────────────────────┐
-│ ← [J] JONATHAN L... │
-│   (545555) [Ativo]  │
-│   11 98361-         │
-│   2450    Nao inf.  │
-│                     │
-│ [Editar          ]  │
-│ [WhatsApp        ]  │
-│ [Copiar Link     ]  │
-│ [🖨️] [📤] [🗑️]     │
-├─────────────────────┤
-│ Cadastro|Orcamentos │
-│ Financeiro|Odonto   │
-│ Tratam|Anamnese|Img │
-├─────────────────────┤
-│ [Dados Cadastrais]  │
-│ [Contato]           │
-│ [Complementares]    │
-├─────────────────────┤
-│ Nome                │
-│ Jonathan Lessa      │
-│ Apelido             │
-│ Nao informado       │
-│ ...                 │
-└─────────────────────┘
+┌────────────────────────┐
+│ [Logo Flowdent]    [👤]│ ← Header branco (Navbar)
+├────────────────────────┤
+│                        │ ← Espaco em branco
+├────────────────────────┤
+│ ████████████████████████│
+│ ██ [Hero cortado] ██████│ ← Saudacao invisivel
+│ ██ 7 consultas hoje ████│
+├────────────────────────┤
+│ ACOES RAPIDAS          │
+└────────────────────────┘
 ```
 
-### Mobile (Depois)
+### Depois (Corrigido)
 ```
-┌─────────────────────────┐
-│ ← Jonathan Lessa [Ativo]│  ← Header gradiente
-│ #545555                 │
-├─────────────────────────┤
-│ [J] [Editar][WhatsApp][⋮]│  ← Avatar flutuante
-│ 📞 (11) 98361-2450      │  ← Contato inline
-│ ✉️ email@email.com      │
-├─────────────────────────┤
-│ [Cadastro][Orcam][Finan] →│ ← Tabs scroll
-├─────────────────────────┤
-│ [Dados][Contato][Compl] │  ← Pills subsecao
-├───────────┬─────────────┤
-│ Nome      │ Apelido     │  ← Grid 2x2
-│ Jonathan  │ -           │
-├───────────┼─────────────┤
-│ Nascimento│ Idade       │
-│ 15/03/90  │ 35 anos     │
-└───────────┴─────────────┘
+┌────────────────────────┐
+│ ████████████████████████│
+│ ██ Sexta, 31 janeiro ███│ ← Sem header branco
+│ ██ Boa noite, Fulano! ██│ ← Saudacao visivel
+│ ██ [🔄] [🔔]         ███│
+│ ██ [7 consultas hoje] ██│
+├────────────────────────┤
+│ ACOES RAPIDAS          │
+│ [Agendar] [Buscar]     │
+│ [Receber] [Confirmar]  │
+├────────────────────────┤
+│ PROXIMOS ATENDIMENTOS  │
+└────────────────────────┘
 ```
 
 ---
 
+## Impacto em Outras Paginas
+
+- **Agenda, Prontuario, Financeiro, etc**: Continuam mostrando o Navbar branco normalmente
+- **Apenas a Home ("/dashboard")**: Usa o header hero integrado do MobileHome
+
 ## Beneficios
 
-1. **Visual de App Nativo**: Header com gradiente e avatar flutuante
-2. **Navegacao Eficiente**: Tabs scrollaveis horizontalmente em 1 linha
-3. **Hierarquia Visual**: Grid 2x2 para dados com background diferenciado
-4. **Touch-Friendly**: Botoes com tamanho adequado (min 44px)
-5. **Espaco Otimizado**: Menos scroll vertical, mais informacao visivel
-6. **Consistencia**: Usa mesmos padroes de cores/gradientes do MobileHome
+1. **Visual Nativo**: Hero fullscreen como apps modernos (Instagram, Uber, etc)
+2. **Saudacao Visivel**: Texto "Bom dia, X!" aparece corretamente
+3. **Sem Duplicacao**: Um unico cabecalho integrado
+4. **Consistencia**: Usa os padroes de gradiente da marca Flowdent
+5. **Safe Area**: Respeita notch de iPhones com `pt-safe` ou `pt-12`
