@@ -139,16 +139,16 @@ export const PagamentoDespesaDrawer = ({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
-        <div className="mx-auto w-full max-w-lg p-6">
-          <DrawerHeader className="px-0">
+      <DrawerContent className="max-h-[90vh]">
+        <div className="mx-auto w-full max-w-lg flex flex-col max-h-[85vh]">
+          <DrawerHeader className="px-6 pb-2 flex-shrink-0">
             <DrawerTitle>Baixar Pagamento</DrawerTitle>
             <DrawerDescription>
               #{title.title_number} - {title.description}
             </DrawerDescription>
           </DrawerHeader>
 
-          <div className="space-y-4">
+          <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-4">
             {/* Info do título */}
             <div className="bg-muted p-4 rounded-lg space-y-2">
               <div className="flex justify-between text-sm">
@@ -240,7 +240,7 @@ export const PagamentoDespesaDrawer = ({
               />
             </div>
 
-            <div className="flex gap-3 pt-4">
+            <div className="flex gap-3 pt-4 pb-2">
               <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
                 Cancelar
               </Button>
