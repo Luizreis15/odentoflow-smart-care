@@ -130,6 +130,9 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { isSuperAdmin } = usePermissions();
   const [impersonation, setImpersonation] = useState<ImpersonationState | null>(null);
+  
+  // Check if we're on the dashboard home page (MobileHome has its own header)
+  const isHomePage = location.pathname === "/dashboard";
 
   const handleMouseEnter = () => {
     if (hoverTimeoutRef.current) {
@@ -210,11 +213,19 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
         </div>
       )}
 
-      <div className="lg:hidden">
-        <Navbar user={user} />
-      </div>
+      {/* Mobile Navbar - hidden on home page since MobileHome has its own hero header */}
+      {!isHomePage && (
+        <div className="lg:hidden">
+          <Navbar user={user} />
+        </div>
+      )}
       
-      <div className={cn("flex", impersonation ? "lg:pt-[44px] pt-[104px]" : "lg:pt-0 pt-16")}>
+      <div className={cn(
+        "flex", 
+        impersonation ? "lg:pt-[44px]" : "lg:pt-0",
+        // Mobile: no padding on home (fullscreen hero), with padding on other pages
+        isHomePage ? "pt-0" : (impersonation ? "pt-[104px]" : "pt-16")
+      )}>
         {/* Sidebar retrátil no desktop - expande ao passar mouse */}
         <TooltipProvider delayDuration={0}>
           <aside
