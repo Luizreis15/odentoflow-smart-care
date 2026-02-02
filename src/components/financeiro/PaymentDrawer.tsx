@@ -205,8 +205,8 @@ export const PaymentDrawer = ({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg">
-        <SheetHeader>
+      <SheetContent className="sm:max-w-lg flex flex-col max-h-[100dvh]">
+        <SheetHeader className="flex-shrink-0">
           <SheetTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5 text-green-600" />
             Registrar Pagamento
@@ -216,7 +216,7 @@ export const PaymentDrawer = ({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-6 space-y-6">
+        <div className="flex-1 overflow-y-auto mt-6 space-y-6 pr-1">
           {/* Patient Info */}
           <div className="bg-muted/50 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -399,7 +399,7 @@ export const PaymentDrawer = ({
           </div>
         </div>
 
-        <SheetFooter className="mt-6">
+        <SheetFooter className="flex-shrink-0 mt-6 pt-4 border-t">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
