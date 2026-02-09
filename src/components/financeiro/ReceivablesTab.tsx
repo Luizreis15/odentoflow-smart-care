@@ -5,11 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, AlertTriangle, Clock, CheckCircle, XCircle, DollarSign } from "lucide-react";
+import { Search, Filter, AlertTriangle, Clock, CheckCircle, XCircle, DollarSign, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PaymentDrawer } from "./PaymentDrawer";
 import { formatCurrency } from "@/lib/utils";
+import { generateRecibo, type ReciboData } from "@/utils/generateRecibo";
 
 interface ReceivableTitle {
   id: string;
@@ -211,6 +212,46 @@ export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
     setShowPaymentDrawer(true);
   };
 
+  const handleRecibo = async (title: ReceivableTitle) => {
+    try {
+      const { data: clinic } = await supabase
+        .from("clinicas")
+        .select("nome, cnpj, telefone, address")
+        .eq("id", clinicId)
+        .single();
+
+      const { data: patient } = await supabase
+        .from("patients")
+        .select("cpf")
+        .eq("id", title.patient_id)
+        .single();
+
+      const addressObj = clinic?.address as Record<string, string> | null;
+      const addressStr = addressObj
+        ? [addressObj.street, addressObj.number, addressObj.neighborhood, addressObj.city, addressObj.state].filter(Boolean).join(", ")
+        : undefined;
+
+      const reciboData: ReciboData = {
+        titleNumber: title.title_number,
+        installmentNumber: title.installment_number,
+        totalInstallments: title.total_installments,
+        patientName: title.patient?.full_name || "Paciente",
+        patientCpf: patient?.cpf || undefined,
+        amount: title.amount,
+        paymentMethod: title.payment_method || "dinheiro",
+        paymentDate: title.due_date,
+        clinicName: clinic?.nome || "Clínica",
+        clinicCnpj: clinic?.cnpj || undefined,
+        clinicPhone: clinic?.telefone || undefined,
+        clinicAddress: addressStr,
+      };
+
+      generateRecibo(reciboData);
+    } catch (error) {
+      console.error("Erro ao gerar recibo:", error);
+      toast.error("Erro ao gerar recibo");
+    }
+  };
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -371,6 +412,17 @@ export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
                         Baixar Pagamento
                       </Button>
                     )}
+                    {title.status === "paid" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleRecibo(title)}
+                        className="w-full"
+                      >
+                        <FileText className="h-4 w-4 mr-1" />
+                        Emitir Recibo
+                      </Button>
+                    )}
                   </div>
                 );
               })}
@@ -462,6 +514,16 @@ export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
                           >
                             <DollarSign className="h-4 w-4 mr-1" />
                             Baixar
+                          </Button>
+                        )}
+                        {title.status === "paid" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleRecibo(title)}
+                          >
+                            <FileText className="h-4 w-4 mr-1" />
+                            Recibo
                           </Button>
                         )}
                       </TableCell>

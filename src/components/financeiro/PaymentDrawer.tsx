@@ -6,10 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { AlertCircle, CheckCircle, DollarSign, Calendar, User, CreditCard } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertCircle, CheckCircle, DollarSign, Calendar, User, CreditCard, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
+import { generateRecibo, type ReciboData } from "@/utils/generateRecibo";
 
 interface ReceivableTitle {
   id: string;
@@ -75,6 +77,8 @@ export const PaymentDrawer = ({
   const [cashAccounts, setCashAccounts] = useState<CashAccount[]>([]);
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string>("");
+  const [showReciboDialog, setShowReciboDialog] = useState(false);
+  const [lastPaymentData, setLastPaymentData] = useState<{ amount: number; method: string; date: string } | null>(null);
   
   // Campos de taxa de cartão
   const [taxaPercentual, setTaxaPercentual] = useState("3.5");
@@ -192,7 +196,8 @@ export const PaymentDrawer = ({
       }
 
       toast.success(`Pagamento de ${formatCurrency(paymentAmount)} registrado com sucesso!`);
-      onSuccess();
+      setLastPaymentData({ amount: paymentAmount, method, date: paidAt });
+      setShowReciboDialog(true);
     } catch (error) {
       console.error("Error:", error);
       toast.error("Erro ao registrar pagamento");
@@ -203,222 +208,301 @@ export const PaymentDrawer = ({
 
   const isPartialPayment = paymentAmount < title.balance && paymentAmount > 0;
 
+  const handleEmitirRecibo = async () => {
+    if (!lastPaymentData) return;
+    
+    try {
+      // Fetch clinic data
+      const { data: clinic } = await supabase
+        .from("clinicas")
+        .select("nome, cnpj, telefone, address")
+        .eq("id", clinicId)
+        .single();
+
+      // Fetch patient CPF
+      const { data: patient } = await supabase
+        .from("patients")
+        .select("cpf")
+        .eq("id", title.patient_id)
+        .single();
+
+      const addressObj = clinic?.address as Record<string, string> | null;
+      const addressStr = addressObj
+        ? [addressObj.street, addressObj.number, addressObj.neighborhood, addressObj.city, addressObj.state].filter(Boolean).join(", ")
+        : undefined;
+
+      const reciboData: ReciboData = {
+        titleNumber: title.title_number,
+        installmentNumber: title.installment_number,
+        totalInstallments: title.total_installments,
+        patientName: title.patient?.full_name || "Paciente",
+        patientCpf: patient?.cpf || undefined,
+        amount: lastPaymentData.amount,
+        paymentMethod: lastPaymentData.method,
+        paymentDate: lastPaymentData.date,
+        clinicName: clinic?.nome || "Clínica",
+        clinicCnpj: clinic?.cnpj || undefined,
+        clinicPhone: clinic?.telefone || undefined,
+        clinicAddress: addressStr,
+      };
+
+      generateRecibo(reciboData);
+    } catch (error) {
+      console.error("Erro ao gerar recibo:", error);
+      toast.error("Erro ao gerar recibo");
+    } finally {
+      setShowReciboDialog(false);
+      onSuccess();
+    }
+  };
+
+  const handleCloseReciboDialog = () => {
+    setShowReciboDialog(false);
+    onSuccess();
+  };
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg flex flex-col max-h-[100dvh]">
-        <SheetHeader className="flex-shrink-0">
-          <SheetTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-green-600" />
-            Registrar Pagamento
-          </SheetTitle>
-          <SheetDescription>
-            Título #{title.title_number} - Parcela {title.installment_number}/{title.total_installments}
-          </SheetDescription>
-        </SheetHeader>
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent className="sm:max-w-lg flex flex-col max-h-[100dvh]">
+          <SheetHeader className="flex-shrink-0">
+            <SheetTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-green-600" />
+              Registrar Pagamento
+            </SheetTitle>
+            <SheetDescription>
+              Título #{title.title_number} - Parcela {title.installment_number}/{title.total_installments}
+            </SheetDescription>
+          </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto mt-6 space-y-6 pr-1">
-          {/* Patient Info */}
-          <div className="bg-muted/50 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">{title.patient?.full_name}</span>
-            </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-muted-foreground">Vencimento:</span>
-                <div className="font-medium">{new Date(title.due_date).toLocaleDateString("pt-BR")}</div>
+          <div className="flex-1 overflow-y-auto mt-6 space-y-6 pr-1">
+            {/* Patient Info */}
+            <div className="bg-muted/50 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">{title.patient?.full_name}</span>
               </div>
-              <div>
-                <span className="text-muted-foreground">Valor original:</span>
-                <div className="font-medium">{formatCurrency(title.amount)}</div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Vencimento:</span>
+                  <div className="font-medium">{new Date(title.due_date).toLocaleDateString("pt-BR")}</div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Valor original:</span>
+                  <div className="font-medium">{formatCurrency(title.amount)}</div>
+                </div>
               </div>
             </div>
-          </div>
 
-          <Separator />
+            <Separator />
 
-          {/* Payment Amount */}
-          <div className="space-y-2">
-            <Label htmlFor="amount">Valor do Pagamento</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                min="0.01"
-                max={title.balance}
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="pl-10 text-lg font-medium"
-              />
+            {/* Payment Amount */}
+            <div className="space-y-2">
+              <Label htmlFor="amount">Valor do Pagamento</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  max={title.balance}
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="pl-10 text-lg font-medium"
+                />
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Saldo devedor:</span>
+                <span className="font-medium">{formatCurrency(title.balance)}</span>
+              </div>
+              {isPartialPayment && (
+                <div className="flex items-center gap-2 text-yellow-600 text-sm">
+                  <AlertCircle className="h-4 w-4" />
+                  Pagamento parcial - restará {formatCurrency(title.balance - paymentAmount)}
+                </div>
+              )}
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Saldo devedor:</span>
-              <span className="font-medium">{formatCurrency(title.balance)}</span>
-            </div>
-            {isPartialPayment && (
-              <div className="flex items-center gap-2 text-yellow-600 text-sm">
-                <AlertCircle className="h-4 w-4" />
-                Pagamento parcial - restará {formatCurrency(title.balance - paymentAmount)}
+
+            {/* Card Fee Section */}
+            {isCardPayment && (
+              <div className="space-y-3 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                <div className="flex items-center gap-2 text-sm font-medium text-orange-800">
+                  <CreditCard className="h-4 w-4" />
+                  Taxas do Cartão
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Taxa MDR (%)</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="10"
+                      value={taxaPercentual}
+                      onChange={(e) => setTaxaPercentual(e.target.value)}
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Dias p/ Repasse</Label>
+                    <Select value={diasRepasse} onValueChange={setDiasRepasse}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">D+1</SelectItem>
+                        <SelectItem value="2">D+2</SelectItem>
+                        <SelectItem value="14">D+14</SelectItem>
+                        <SelectItem value="30">D+30</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                  <span>Antecipado?</span>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={antecipado}
+                      onChange={(e) => setAntecipado(e.target.checked)}
+                      className="rounded border-gray-300"
+                    />
+                    <span className="text-xs text-muted-foreground">Sim, antecipei</span>
+                  </label>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Valor bruto:</span>
+                    <span>{formatCurrency(paymentAmount)}</span>
+                  </div>
+                  <div className="flex justify-between text-red-600">
+                    <span>Taxa ({taxaPercentual}%):</span>
+                    <span>-{formatCurrency(taxaValor)}</span>
+                  </div>
+                  <div className="flex justify-between font-medium text-green-700">
+                    <span>Valor líquido:</span>
+                    <span>{formatCurrency(valorLiquido)}</span>
+                  </div>
+                </div>
               </div>
             )}
-          </div>
 
-          {/* Card Fee Section - Only for card payments */}
-          {isCardPayment && (
-            <div className="space-y-3 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-              <div className="flex items-center gap-2 text-sm font-medium text-orange-800">
-                <CreditCard className="h-4 w-4" />
-                Taxas do Cartão
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">Taxa MDR (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="10"
-                    value={taxaPercentual}
-                    onChange={(e) => setTaxaPercentual(e.target.value)}
-                    className="h-9"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Dias p/ Repasse</Label>
-                  <Select value={diasRepasse} onValueChange={setDiasRepasse}>
-                    <SelectTrigger className="h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">D+1</SelectItem>
-                      <SelectItem value="2">D+2</SelectItem>
-                      <SelectItem value="14">D+14</SelectItem>
-                      <SelectItem value="30">D+30</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between text-sm">
-                <span>Antecipado?</span>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={antecipado}
-                    onChange={(e) => setAntecipado(e.target.checked)}
-                    className="rounded border-gray-300"
-                  />
-                  <span className="text-xs text-muted-foreground">Sim, antecipei</span>
-                </label>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Valor bruto:</span>
-                  <span>{formatCurrency(paymentAmount)}</span>
-                </div>
-                <div className="flex justify-between text-red-600">
-                  <span>Taxa ({taxaPercentual}%):</span>
-                  <span>-{formatCurrency(taxaValor)}</span>
-                </div>
-                <div className="flex justify-between font-medium text-green-700">
-                  <span>Valor líquido:</span>
-                  <span>{formatCurrency(valorLiquido)}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Payment Date */}
-          <div className="space-y-2">
-            <Label htmlFor="paidAt">Data do Pagamento</Label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="paidAt"
-                type="date"
-                value={paidAt}
-                onChange={(e) => setPaidAt(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-
-          {/* Payment Method */}
-          <div className="space-y-2">
-            <Label>Forma de Pagamento</Label>
-            <Select value={method} onValueChange={setMethod}>
-              <SelectTrigger>
-                <CreditCard className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                {PAYMENT_METHODS.map((pm) => (
-                  <SelectItem key={pm.value} value={pm.value}>
-                    {pm.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Cash Account */}
-          {cashAccounts.length > 0 && (
+            {/* Payment Date */}
             <div className="space-y-2">
-              <Label>Conta/Caixa de Destino</Label>
-              <Select value={cashAccountId} onValueChange={setCashAccountId}>
+              <Label htmlFor="paidAt">Data do Pagamento</Label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="paidAt"
+                  type="date"
+                  value={paidAt}
+                  onChange={(e) => setPaidAt(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            {/* Payment Method */}
+            <div className="space-y-2">
+              <Label>Forma de Pagamento</Label>
+              <Select value={method} onValueChange={setMethod}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o caixa..." />
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {cashAccounts.map((account) => (
-                    <SelectItem key={account.id} value={account.id}>
-                      {account.nome} ({account.tipo})
+                  {PAYMENT_METHODS.map((pm) => (
+                    <SelectItem key={pm.value} value={pm.value}>
+                      {pm.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          )}
 
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Observações (opcional)</Label>
-            <Textarea
-              id="notes"
-              placeholder="Observações sobre o pagamento..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-            />
-          </div>
-        </div>
-
-        <SheetFooter className="flex-shrink-0 mt-6 pt-4 border-t">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
-          <Button 
-            onClick={handleSubmit} 
-            disabled={loading}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            {loading ? (
-              "Processando..."
-            ) : (
-              <>
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Confirmar Pagamento
-              </>
+            {/* Cash Account */}
+            {cashAccounts.length > 0 && (
+              <div className="space-y-2">
+                <Label>Conta/Caixa de Destino</Label>
+                <Select value={cashAccountId} onValueChange={setCashAccountId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o caixa..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cashAccounts.map((account) => (
+                      <SelectItem key={account.id} value={account.id}>
+                        {account.nome} ({account.tipo})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
-          </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label htmlFor="notes">Observações (opcional)</Label>
+              <Textarea
+                id="notes"
+                placeholder="Observações sobre o pagamento..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <SheetFooter className="flex-shrink-0 mt-6 pt-4 border-t">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleSubmit} 
+              disabled={loading}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {loading ? (
+                "Processando..."
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Confirmar Pagamento
+                </>
+              )}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      {/* Receipt Dialog */}
+      <Dialog open={showReciboDialog} onOpenChange={handleCloseReciboDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-green-600" />
+              Pagamento Registrado!
+            </DialogTitle>
+            <DialogDescription>
+              Deseja emitir o recibo de pagamento para o paciente?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <Button variant="outline" onClick={handleCloseReciboDialog}>
+              Não
+            </Button>
+            <Button onClick={handleEmitirRecibo} className="bg-green-600 hover:bg-green-700">
+              <FileText className="h-4 w-4 mr-2" />
+              Sim, emitir recibo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
