@@ -1,183 +1,136 @@
 
-# Plano: Corrigir Layout Mobile do Dashboard
 
-## Problema Identificado
+# Modulo de Emissao de Recibo de Pagamento
 
-Analisando a screenshot (IMG_8096.png), identifico os seguintes problemas:
+## Objetivo
 
-1. **Header Branco Redundante**: O `Navbar.tsx` esta sendo renderizado no mobile mostrando logo + icone de usuario
-2. **Espaco em Branco**: Gap visivel entre o header branco e a area gradiente azul
-3. **Saudacao Cortada**: O texto "Bom dia, X!" esta sendo cortado/oculto pelo hack de `-mt-16`
-4. **Visual Amador**: Dois cabecalhos empilhados, sem integracao visual
+Criar um sistema de emissao de recibo PDF apos a baixa de pagamentos, permitindo que a clinica gere um comprovante profissional para entregar ao paciente.
 
-## Causa Raiz
+## Estrategia
 
-No `DashboardLayout.tsx` (linhas 213-215):
-```typescript
-<div className="lg:hidden">
-  <Navbar user={user} />  // <-- Exibe header branco no mobile
-</div>
-```
+Criar um componente utilitario que gera o recibo em PDF usando a biblioteca `jsPDF` (ja instalada no projeto). O recibo sera oferecido automaticamente apos a confirmacao do pagamento, e tambem disponivel como botao nos titulos ja pagos.
 
-E no `MobileHome.tsx` (linha 89):
-```typescript
-className="... -mt-16 ..."  // <-- Tenta compensar mas corta o conteudo
-```
+## Arquivos a Criar
 
-## Solucao Proposta
-
-### Estrategia: Ocultar Navbar na Home Mobile
-
-O `MobileHome` ja possui seu proprio header hero com gradiente, saudacao, e botoes de acao. O Navbar branco eh redundante e quebra o visual nativo.
-
-### Arquivos a Modificar
-
-| Arquivo | Alteracao |
+| Arquivo | Descricao |
 |---------|-----------|
-| `src/components/DashboardLayout.tsx` | Condicional para ocultar Navbar na rota "/dashboard" mobile |
-| `src/pages/mobile/MobileHome.tsx` | Remover hack de `-mt-16` e ajustar layout |
+| `src/utils/generateRecibo.ts` | Funcao utilitaria que gera o PDF do recibo |
+
+## Arquivos a Modificar
+
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/components/financeiro/PaymentDrawer.tsx` | Apos confirmar pagamento, perguntar se deseja emitir recibo |
+| `src/components/financeiro/ReceivablesTab.tsx` | Adicionar botao "Recibo" nos titulos com status "paid" |
 
 ---
 
 ## Detalhes Tecnicos
 
-### 1. DashboardLayout.tsx - Ocultar Navbar na Home
+### 1. generateRecibo.ts - Gerador de PDF
+
+Funcao que recebe os dados do pagamento e da clinica e gera um recibo profissional em PDF com:
+
+- Cabecalho com dados da clinica (nome, CNPJ, endereco, telefone)
+- Numero do recibo (baseado no title_number)
+- Data de emissao
+- Dados do paciente (nome, CPF se disponivel)
+- Descricao do servico (referencia ao orcamento/parcela)
+- Valor pago (por extenso e numerico), forma de pagamento
+- Linha de assinatura
+- Rodape com informacoes legais
+
+A funcao buscara os dados da clinica na tabela `clinicas` e os dados do paciente na tabela `patients`.
 
 ```typescript
-const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
-  const location = useLocation();
-  // ...
-  
-  // Verificar se estamos na home do dashboard
-  const isHomePage = location.pathname === "/dashboard";
+interface ReciboData {
+  titleNumber: number;
+  installmentNumber: number;
+  totalInstallments: number;
+  patientName: string;
+  patientCpf?: string;
+  amount: number;
+  paymentMethod: string;
+  paymentDate: string;
+  clinicName: string;
+  clinicCnpj?: string;
+  clinicPhone?: string;
+  clinicAddress?: string;
+}
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* ... impersonation banner ... */}
-
-      {/* Navbar mobile - ocultar na home pois MobileHome tem proprio header */}
-      {!isHomePage && (
-        <div className="lg:hidden">
-          <Navbar user={user} />
-        </div>
-      )}
-      
-      {/* Ajustar padding baseado se mostra Navbar ou nao */}
-      <div className={cn(
-        "flex", 
-        impersonation ? "lg:pt-[44px]" : "lg:pt-0",
-        // No mobile: sem padding-top na home (hero fullscreen), com padding nas outras paginas
-        isHomePage ? "pt-0" : "pt-16"
-      )}>
-        {/* ... resto do layout ... */}
-      </div>
-      
-      <MobileBottomNav user={user} />
-    </div>
-  );
-};
+export async function generateRecibo(data: ReciboData): Promise<void> {
+  // Gera PDF usando jsPDF com layout profissional
+  // Abre em nova aba ou faz download
+}
 ```
 
-### 2. MobileHome.tsx - Remover Hack e Ajustar Layout
+### 2. PaymentDrawer.tsx - Oferecer recibo apos baixa
 
-```typescript
-return (
-  <div
-    className="min-h-screen pb-24 overflow-y-auto overflow-x-hidden touch-pan-y"
-    style={{ 
-      width: '100vw', 
-      maxWidth: '100vw', 
-      touchAction: 'pan-y'
-    }}
-    onTouchStart={handleTouchStart}
-    onTouchEnd={handleTouchEnd}
-  >
-    {/* Pull-to-refresh indicator */}
-    {isRefreshing && (
-      <div className="flex justify-center py-2 bg-[hsl(var(--flowdent-blue))]">
-        <RefreshCw className="h-5 w-5 animate-spin text-white" />
-      </div>
-    )}
+Apos o `toast.success` de pagamento confirmado, exibir um dialog perguntando se deseja emitir o recibo. Se sim, chama `generateRecibo` com os dados do pagamento recem-registrado.
 
-    {/* Hero Header with Gradient - agora ocupa topo da tela */}
-    <div className="bg-gradient-to-br from-[hsl(var(--flowdent-blue))] via-[hsl(var(--flow-turquoise))] to-[hsl(var(--health-mint))] text-white pt-safe">
-      {/* Safe area top para notch de iPhones */}
-      <div className="px-4 pt-12 pb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-white/80 text-sm capitalize">{todayFormatted}</p>
-            <h1 className="text-2xl font-bold mt-1">
-              {getGreeting()}, {firstName}!
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* ... botoes ... */}
-          </div>
-        </div>
+Fluxo:
+1. Usuario confirma pagamento
+2. Toast de sucesso aparece
+3. Dialog simples: "Deseja emitir o recibo de pagamento?" com botoes "Sim, emitir" e "Nao"
+4. Se "Sim", gera o PDF e faz download
 
-        {/* Quick Stats */}
-        <div className="flex items-center gap-3 mt-2">
-          {/* ... pills de estatisticas ... */}
-        </div>
-      </div>
-    </div>
+### 3. ReceivablesTab.tsx - Botao de recibo em titulos pagos
 
-    {/* Content com cantos arredondados */}
-    <div className="w-full max-w-full space-y-6 bg-background rounded-t-3xl -mt-4 pt-6 relative z-10">
-      <MobileQuickActions clinicId={clinicId} />
-      <MobileAgendaList clinicId={clinicId} />
-    </div>
-  </div>
-);
+Na tabela desktop e nos cards mobile, para titulos com `status === "paid"`, adicionar um botao/icone "Recibo" (icone FileText) que permite gerar o recibo a qualquer momento.
+
+```
+Desktop (coluna Acoes):
+- Titulo em aberto: [Baixar]
+- Titulo pago: [Recibo]
+
+Mobile (cards):
+- Titulo pago: Botao "Emitir Recibo"
 ```
 
 ---
 
-## Resultado Visual Esperado
+## Layout do Recibo PDF
 
-### Antes (Atual)
+```text
+┌─────────────────────────────────────┐
+│         NOME DA CLINICA             │
+│   CNPJ: XX.XXX.XXX/XXXX-XX         │
+│   Endereco | Telefone               │
+├─────────────────────────────────────┤
+│                                     │
+│     RECIBO DE PAGAMENTO             │
+│     No 0001                         │
+│                                     │
+│  Recebi de: [Nome do Paciente]      │
+│  CPF: XXX.XXX.XXX-XX               │
+│                                     │
+│  A quantia de: R$ 500,00            │
+│  (quinhentos reais)                 │
+│                                     │
+│  Referente a: Tratamento odonto...  │
+│  Parcela 1/6 - Titulo #42          │
+│                                     │
+│  Forma de pagamento: PIX            │
+│  Data: 09/02/2026                   │
+│                                     │
+│                                     │
+│  _________________________________  │
+│          Assinatura                  │
+│                                     │
+├─────────────────────────────────────┤
+│  Gerado em DD/MM/AAAA HH:MM        │
+│  Documento sem valor fiscal         │
+└─────────────────────────────────────┘
 ```
-┌────────────────────────┐
-│ [Logo Flowdent]    [👤]│ ← Header branco (Navbar)
-├────────────────────────┤
-│                        │ ← Espaco em branco
-├────────────────────────┤
-│ ████████████████████████│
-│ ██ [Hero cortado] ██████│ ← Saudacao invisivel
-│ ██ 7 consultas hoje ████│
-├────────────────────────┤
-│ ACOES RAPIDAS          │
-└────────────────────────┘
-```
 
-### Depois (Corrigido)
-```
-┌────────────────────────┐
-│ ████████████████████████│
-│ ██ Sexta, 31 janeiro ███│ ← Sem header branco
-│ ██ Boa noite, Fulano! ██│ ← Saudacao visivel
-│ ██ [🔄] [🔔]         ███│
-│ ██ [7 consultas hoje] ██│
-├────────────────────────┤
-│ ACOES RAPIDAS          │
-│ [Agendar] [Buscar]     │
-│ [Receber] [Confirmar]  │
-├────────────────────────┤
-│ PROXIMOS ATENDIMENTOS  │
-└────────────────────────┘
-```
+## Dados Necessarios
 
----
+Os dados serao obtidos de:
+- **Clinica**: tabela `clinicas` (nome, cnpj, phone, endereco)
+- **Paciente**: ja disponivel no titulo (`patient.full_name`) + busca CPF na tabela `patients`
+- **Pagamento**: dados do proprio titulo e do formulario de baixa
 
-## Impacto em Outras Paginas
+## Dependencias
 
-- **Agenda, Prontuario, Financeiro, etc**: Continuam mostrando o Navbar branco normalmente
-- **Apenas a Home ("/dashboard")**: Usa o header hero integrado do MobileHome
+Nenhuma nova dependencia necessaria - `jsPDF` ja esta instalada no projeto.
 
-## Beneficios
-
-1. **Visual Nativo**: Hero fullscreen como apps modernos (Instagram, Uber, etc)
-2. **Saudacao Visivel**: Texto "Bom dia, X!" aparece corretamente
-3. **Sem Duplicacao**: Um unico cabecalho integrado
-4. **Consistencia**: Usa os padroes de gradiente da marca Flowdent
-5. **Safe Area**: Respeita notch de iPhones com `pt-safe` ou `pt-12`
