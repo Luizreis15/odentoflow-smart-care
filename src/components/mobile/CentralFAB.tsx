@@ -9,7 +9,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 
 const CentralFAB = () => {
   const [open, setOpen] = useState(false);
@@ -22,21 +21,15 @@ const CentralFAB = () => {
       description: "Agendar consulta ou procedimento",
       color: "text-primary",
       bgColor: "bg-primary/10",
-      onClick: () => {
-        navigate("/dashboard/agenda");
-        setOpen(false);
-      },
+      onClick: () => { navigate("/dashboard/agenda"); setOpen(false); },
     },
     {
       icon: UserPlus,
       label: "Novo Paciente",
       description: "Cadastrar um novo paciente",
-      color: "text-emerald-500",
-      bgColor: "bg-emerald-500/10",
-      onClick: () => {
-        navigate("/dashboard/prontuario");
-        setOpen(false);
-      },
+      color: "text-[hsl(var(--success-green))]",
+      bgColor: "bg-[hsl(var(--success-green))]/10",
+      onClick: () => { navigate("/dashboard/prontuario"); setOpen(false); },
     },
     {
       icon: DollarSign,
@@ -44,21 +37,15 @@ const CentralFAB = () => {
       description: "Registrar recebimento",
       color: "text-green-600",
       bgColor: "bg-green-600/10",
-      onClick: () => {
-        navigate("/dashboard/financeiro");
-        setOpen(false);
-      },
+      onClick: () => { navigate("/dashboard/financeiro"); setOpen(false); },
     },
     {
       icon: ClipboardList,
       label: "Novo Orçamento",
       description: "Criar orçamento para paciente",
-      color: "text-orange-500",
-      bgColor: "bg-orange-500/10",
-      onClick: () => {
-        navigate("/dashboard/prontuario");
-        setOpen(false);
-      },
+      color: "text-[hsl(var(--warning-amber))]",
+      bgColor: "bg-[hsl(var(--warning-amber))]/10",
+      onClick: () => { navigate("/dashboard/prontuario"); setOpen(false); },
     },
   ];
 
@@ -71,7 +58,7 @@ const CentralFAB = () => {
             "h-14 w-14 rounded-full",
             "bg-primary text-primary-foreground",
             "shadow-lg shadow-primary/30",
-            "transition-all duration-200",
+            "transition-transform duration-200",
             "active:scale-95",
             open && "rotate-45"
           )}
@@ -82,31 +69,23 @@ const CentralFAB = () => {
       <SheetContent side="bottom" className="rounded-t-3xl px-4 pb-8">
         <SheetHeader className="pb-4">
           <div className="mx-auto w-12 h-1.5 bg-muted rounded-full mb-4" />
-          <SheetTitle className="text-center">Ações Rápidas</SheetTitle>
+          <SheetTitle className="text-center text-section">Ações Rápidas</SheetTitle>
         </SheetHeader>
-        <div className="space-y-2">
+        <div className="space-y-1">
           {actions.map((action, index) => (
-            <Button
+            <button
               key={index}
-              variant="ghost"
-              className="w-full justify-start h-16 px-4 hover:bg-accent/50"
+              className="w-full flex items-center gap-4 h-16 px-4 rounded-btn press-scale hover:bg-muted/50 transition-colors"
               onClick={action.onClick}
             >
-              <div
-                className={cn(
-                  "h-10 w-10 rounded-full flex items-center justify-center mr-4",
-                  action.bgColor
-                )}
-              >
+              <div className={cn("h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0", action.bgColor)}>
                 <action.icon className={cn("h-5 w-5", action.color)} />
               </div>
-              <div className="text-left">
-                <p className="font-medium">{action.label}</p>
-                <p className="text-sm text-muted-foreground">
-                  {action.description}
-                </p>
+              <div className="text-left min-w-0">
+                <p className="text-body font-medium text-foreground">{action.label}</p>
+                <p className="text-caption text-muted-foreground truncate">{action.description}</p>
               </div>
-            </Button>
+            </button>
           ))}
         </div>
       </SheetContent>

@@ -1,8 +1,7 @@
 import { useState, useRef } from "react";
 import { useDrag } from "@use-gesture/react";
 import { animated, useSpring } from "@react-spring/web";
-import { Check, X, MessageCircle, Clock, ChevronRight, User } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Check, X, MessageCircle, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
@@ -26,6 +25,71 @@ interface SwipeableAppointmentCardProps {
 
 const SWIPE_THRESHOLD = 80;
 
+const getStatusConfig = (status: string | null) => {
+  switch (status?.toLowerCase()) {
+    case "confirmed":
+    case "confirmado":
+      return {
+        variant: "default" as const,
+        label: "Confirmado",
+        borderClass: "border-l-[hsl(var(--success-green))]",
+        bgClass: "bg-[hsl(var(--card-green))]",
+        avatarClass: "bg-[hsl(var(--success-green))]/20 text-[hsl(var(--success-green))]",
+      };
+    case "cancelled":
+    case "cancelado":
+      return {
+        variant: "destructive" as const,
+        label: "Cancelado",
+        borderClass: "border-l-[hsl(var(--error-red))]",
+        bgClass: "bg-[hsl(var(--card-amber))]",
+        avatarClass: "bg-[hsl(var(--error-red))]/20 text-[hsl(var(--error-red))]",
+      };
+    case "completed":
+    case "concluido":
+      return {
+        variant: "secondary" as const,
+        label: "Concluído",
+        borderClass: "border-l-muted-foreground",
+        bgClass: "bg-muted/50",
+        avatarClass: "bg-muted text-muted-foreground",
+      };
+    case "scheduled":
+    case "agendado":
+      return {
+        variant: "outline" as const,
+        label: "Agendado",
+        borderClass: "border-l-[hsl(var(--flowdent-blue))]",
+        bgClass: "bg-[hsl(var(--card-blue))]",
+        avatarClass: "bg-[hsl(var(--flowdent-blue))]/20 text-[hsl(var(--flowdent-blue))]",
+      };
+    case "no_show":
+      return {
+        variant: "destructive" as const,
+        label: "Faltou",
+        borderClass: "border-l-[hsl(var(--error-red))]",
+        bgClass: "bg-[hsl(var(--card-amber))]",
+        avatarClass: "bg-[hsl(var(--error-red))]/20 text-[hsl(var(--error-red))]",
+      };
+    case "waiting":
+      return {
+        variant: "outline" as const,
+        label: "Aguardando",
+        borderClass: "border-l-[hsl(var(--warning-amber))]",
+        bgClass: "bg-[hsl(var(--card-amber))]",
+        avatarClass: "bg-[hsl(var(--warning-amber))]/20 text-[hsl(var(--warning-amber))]",
+      };
+    default:
+      return {
+        variant: "outline" as const,
+        label: status || "Pendente",
+        borderClass: "border-l-[hsl(var(--warning-amber))]",
+        bgClass: "bg-[hsl(var(--card-amber))]",
+        avatarClass: "bg-[hsl(var(--warning-amber))]/20 text-[hsl(var(--warning-amber))]",
+      };
+  }
+};
+
 const SwipeableAppointmentCard = ({
   appointment,
   onConfirm,
@@ -39,10 +103,8 @@ const SwipeableAppointmentCard = ({
   const [{ x }, api] = useSpring(() => ({ x: 0 }));
 
   const bind = useDrag(
-    ({ down, movement: [mx], direction: [xDir], cancel }) => {
+    ({ down, movement: [mx], direction: [xDir] }) => {
       if (swiped) return;
-
-      // Limit swipe distance
       const clampedX = Math.max(-120, Math.min(120, mx));
 
       if (!down) {
@@ -51,13 +113,11 @@ const SwipeableAppointmentCard = ({
           setSwiped(direction);
           api.start({ x: direction === "right" ? 120 : -120 });
 
-          // Auto-reset after action
           setTimeout(() => {
             setSwiped(null);
             api.start({ x: 0 });
           }, 300);
 
-          // Trigger action
           if (direction === "right") {
             onConfirm(appointment.id);
           } else {
@@ -73,71 +133,6 @@ const SwipeableAppointmentCard = ({
     { axis: "x", filterTaps: true }
   );
 
-  const getStatusConfig = (status: string | null) => {
-    switch (status?.toLowerCase()) {
-      case "confirmed":
-      case "confirmado":
-        return {
-          variant: "default" as const,
-          label: "Confirmado",
-          borderClass: "border-l-4 border-l-[hsl(var(--success-green))]",
-          bgClass: "bg-[hsl(var(--card-green))]",
-          avatarClass: "bg-[hsl(var(--success-green))]/20 text-[hsl(var(--success-green))]",
-        };
-      case "cancelled":
-      case "cancelado":
-        return {
-          variant: "destructive" as const,
-          label: "Cancelado",
-          borderClass: "border-l-4 border-l-[hsl(var(--error-red))]",
-          bgClass: "bg-red-50",
-          avatarClass: "bg-[hsl(var(--error-red))]/20 text-[hsl(var(--error-red))]",
-        };
-      case "completed":
-      case "concluido":
-        return {
-          variant: "secondary" as const,
-          label: "Concluído",
-          borderClass: "border-l-4 border-l-muted-foreground",
-          bgClass: "bg-muted/50",
-          avatarClass: "bg-muted text-muted-foreground",
-        };
-      case "scheduled":
-      case "agendado":
-        return {
-          variant: "outline" as const,
-          label: "Agendado",
-          borderClass: "border-l-4 border-l-[hsl(var(--flowdent-blue))]",
-          bgClass: "bg-[hsl(var(--card-blue))]",
-          avatarClass: "bg-[hsl(var(--flowdent-blue))]/20 text-[hsl(var(--flowdent-blue))]",
-        };
-      case "no_show":
-        return {
-          variant: "destructive" as const,
-          label: "Faltou",
-          borderClass: "border-l-4 border-l-[hsl(var(--error-red))]",
-          bgClass: "bg-red-50",
-          avatarClass: "bg-[hsl(var(--error-red))]/20 text-[hsl(var(--error-red))]",
-        };
-      case "waiting":
-        return {
-          variant: "outline" as const,
-          label: "Aguardando",
-          borderClass: "border-l-4 border-l-[hsl(var(--warning-amber))]",
-          bgClass: "bg-[hsl(var(--card-amber))]",
-          avatarClass: "bg-[hsl(var(--warning-amber))]/20 text-[hsl(var(--warning-amber))]",
-        };
-      default:
-        return {
-          variant: "outline" as const,
-          label: status || "Pendente",
-          borderClass: "border-l-4 border-l-[hsl(var(--warning-amber))]",
-          bgClass: "bg-[hsl(var(--card-amber))]",
-          avatarClass: "bg-[hsl(var(--warning-amber))]/20 text-[hsl(var(--warning-amber))]",
-        };
-    }
-  };
-
   const statusConfig = getStatusConfig(appointment.status);
   const patient = appointment.patients;
   const professional = appointment.profissionais;
@@ -146,22 +141,20 @@ const SwipeableAppointmentCard = ({
     : "P";
 
   return (
-    <div ref={containerRef} className="relative overflow-hidden rounded-xl">
+    <div ref={containerRef} className="relative overflow-hidden rounded-card min-h-[72px]">
       {/* Background actions */}
       <div className="absolute inset-0 flex">
-        {/* Left action (confirm) - shown when swiping right */}
         <div className="flex-1 bg-gradient-to-r from-[hsl(var(--success-green))] to-emerald-500 flex items-center justify-start px-4">
           <div className="flex items-center gap-2 text-white">
             <div className="p-2 rounded-full bg-white/20">
               <Check className="h-5 w-5" />
             </div>
-            <span className="font-medium text-sm">Confirmar</span>
+            <span className="text-body font-medium">Confirmar</span>
           </div>
         </div>
-        {/* Right action (cancel) - shown when swiping left */}
         <div className="flex-1 bg-gradient-to-l from-[hsl(var(--error-red))] to-red-500 flex items-center justify-end px-4">
           <div className="flex items-center gap-2 text-white">
-            <span className="font-medium text-sm">Cancelar</span>
+            <span className="text-body font-medium">Cancelar</span>
             <div className="p-2 rounded-full bg-white/20">
               <X className="h-5 w-5" />
             </div>
@@ -175,45 +168,39 @@ const SwipeableAppointmentCard = ({
         style={{ x, touchAction: "pan-y" }}
         className="relative"
       >
-        <Card
+        <div
           className={cn(
-            "cursor-pointer active:scale-[0.98] transition-transform border-none shadow-md",
-            "touch-pan-y",
+            "cursor-pointer press-scale border-l-4 border-none shadow-sm rounded-card",
             statusConfig.borderClass,
             statusConfig.bgClass
           )}
           onClick={onClick}
         >
-          <CardContent className="p-4 flex items-center gap-3">
+          <div className="p-3 flex items-center gap-3">
             <div className={cn(
-              "h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-sm",
+              "h-11 w-11 rounded-full flex items-center justify-center flex-shrink-0 font-semibold text-caption",
               statusConfig.avatarClass
             )}>
               {patientInitials}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold truncate text-foreground">
+              <p className="font-semibold text-body text-foreground truncate">
                 {patient?.full_name || "Paciente"}
               </p>
-              <p className="text-sm text-foreground/60 truncate">
+              <p className="text-caption text-muted-foreground truncate">
                 {appointment.title}
                 {professional ? ` • ${professional.nome}` : ""}
               </p>
             </div>
             <div className="text-right flex-shrink-0">
-              <p className="font-bold text-sm text-foreground">
-                {format(parseISO(appointment.appointment_date), "HH:mm", {
-                  locale: ptBR,
-                })}
+              <p className="font-bold text-body text-foreground">
+                {format(parseISO(appointment.appointment_date), "HH:mm", { locale: ptBR })}
               </p>
-              <Badge
-                variant={statusConfig.variant}
-                className="text-xs mt-1"
-              >
+              <Badge variant={statusConfig.variant} className="chip mt-0.5">
                 {statusConfig.label}
               </Badge>
             </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
+            <div className="flex items-center gap-0.5 flex-shrink-0">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -223,10 +210,10 @@ const SwipeableAppointmentCard = ({
               >
                 <MessageCircle className="h-4 w-4 text-[hsl(var(--flowdent-blue))]" />
               </button>
-              <ChevronRight className="h-5 w-5 text-foreground/40" />
+              <ChevronRight className="h-4 w-4 text-foreground/30" />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </animated.div>
     </div>
   );
