@@ -1,49 +1,27 @@
 
-# Ortodontia: Lista Compacta com Indicador de Agendamento
+# Correcao: Indicador de Agendamento na Ortodontia
 
-## O que muda
+## Problema Identificado
 
-Trocar o layout atual de **cards grandes em grid** por uma **lista compacta em tabela/linhas**, ordenada alfabeticamente pelo nome do paciente. Cada linha mostra as informacoes essenciais de forma condensada e inclui um indicador visual claro de "agendado" ou "sem agendamento futuro".
+O codigo atual consulta a tabela `appointments` (agenda geral) para verificar agendamentos futuros dos pacientes de orto. Porem, os agendamentos ortodonticos ficam na tabela `ortho_appointments`, no campo `proxima_consulta_prevista`. Por isso, a query retorna vazio e todos aparecem como "Sem agendamento".
 
-## Layout proposto (uma linha por caso)
+## Dados confirmados no banco
 
-```text
-| Nome Paciente     | Tipo         | Profissional   | Status  | Progresso | Agendamento        |
-|-------------------|-------------|----------------|---------|-----------|---------------------|
-| Ana Silva         | Ap. Fixo    | Dr. Carlos     | Ativo   | 8/24m     | 15/03 - 14:00  (verde) |
-| Bruno Costa       | Alinhadores | Dra. Maria     | Ativo   | 3/18m     | Sem agendamento (vermelho) |
-```
+A consulta direta ao banco mostrou que existem 3 pacientes com `proxima_consulta_prevista` futura (21/03/2026), confirmando que o dado existe mas nao esta sendo lido.
 
-- Indicador verde com data do proximo agendamento quando existe
-- Indicador vermelho "Sem agendamento" quando nao ha consulta futura
-- Ordem alfabetica por nome do paciente
+## Solucao
 
-## Novo filtro: Agendamento
+Alterar a query de agendamentos em `src/pages/dashboard/Ortodontia.tsx` para consultar **ambas** as fontes:
 
-Adicionar um Select ao lado dos filtros existentes:
-- **Todos**
-- **Com agendamento** (tem consulta futura)
-- **Sem agendamento** (alerta para recepcionista agendar)
-
-## Implementacao tecnica
+1. **`ortho_appointments`** -- buscar o `proxima_consulta_prevista` mais recente por `case_id` (fonte principal para orto)
+2. **`appointments`** -- manter como fallback (paciente pode ter agendamento na agenda geral)
+3. Cruzar por `patient_id` e usar a data mais proxima entre as duas fontes
 
 ### Arquivo modificado: `src/pages/dashboard/Ortodontia.tsx`
 
-1. **Nova query**: buscar o proximo agendamento futuro de cada paciente de orto
-   - Query na tabela `appointments` onde `patient_id` esta nos pacientes dos casos e `appointment_date > now()` e `status` nao e cancelado
-   - Agrupar por `patient_id` pegando o `MIN(appointment_date)` mais proximo
-
-2. **Ordenacao**: trocar `order("created_at")` para ordenar no frontend por `patient.full_name` alfabeticamente
-
-3. **Layout**: substituir o grid de cards por uma lista compacta usando `Card` com linhas horizontais (cada linha = 1 caso, informacoes lado a lado em flex row)
-
-4. **Filtro de agendamento**: novo state `filtroAgendamento` com opcoes "todos", "com_agendamento", "sem_agendamento"
-
-5. **Indicador visual**: Badge verde "dd/MM HH:mm" ou Badge vermelha "Sem agendamento" na extremidade direita de cada linha
-
-### Dados
-
-A query de agendamentos futuros sera feita em paralelo com a query de casos via `useQuery` separado, cruzando `patient_id` no frontend para determinar quem tem ou nao agendamento.
+Substituir a query atual que consulta apenas `appointments` por uma que:
+- Busca de `ortho_appointments` agrupando por case_id/patient_id, filtrando `proxima_consulta_prevista >= hoje`
+- Busca de `appointments` como esta hoje (fallback)
+- Combina os resultados pegando a data mais proxima por paciente
 
 ### Sem alteracao no banco de dados
-Tudo usa tabelas existentes (`ortho_cases`, `appointments`, `patients`, `profissionais`).
