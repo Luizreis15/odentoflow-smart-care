@@ -86,8 +86,8 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
 
   return (
     <div
-      className="min-h-screen pb-24 overflow-y-auto overflow-x-hidden touch-pan-y"
-      style={{ width: '100vw', maxWidth: '100vw', touchAction: 'pan-y' }}
+      className="min-h-[100dvh] overflow-y-auto overflow-x-hidden touch-pan-y"
+      style={{ width: '100%', maxWidth: '100%', touchAction: 'pan-y' }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -147,7 +147,7 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
       </div>
 
       {/* Content with rounded corners overlapping hero */}
-      <div className="w-full max-w-full space-y-6 bg-background rounded-t-3xl -mt-4 pt-6 relative z-10">
+      <div className="w-full space-y-6 bg-background rounded-t-3xl -mt-4 pt-6 relative z-10 pb-[calc(72px+env(safe-area-inset-bottom,0px)+24px)]">
         {/* Quick Actions */}
         <MobileQuickActions clinicId={clinicId} />
 
