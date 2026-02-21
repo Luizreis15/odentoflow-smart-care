@@ -125,7 +125,7 @@ function AppRoutes() {
         <Route path="/dashboard/estoque" element={<EstoqueWrapper />} />
         <Route path="/dashboard/produtos" element={<ProdutosWrapper />} />
         <Route path="/dashboard/movimentacoes" element={<MovimentacoesWrapper />} />
-        <Route path="/dashboard/profile" element={<PerfilWrapper />} />
+        <Route path="/dashboard/perfil" element={<PerfilWrapper />} />
         <Route path="/dashboard/assinatura" element={<AssinaturaWrapper />} />
         <Route path="/dashboard/configuracoes" element={<ConfiguracoesWrapper />} />
         <Route path="/dashboard/relatorios" element={<RelatoriosWrapper />} />
