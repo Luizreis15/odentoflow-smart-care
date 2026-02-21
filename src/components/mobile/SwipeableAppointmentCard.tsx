@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, memo } from "react";
 import { useDrag } from "@use-gesture/react";
 import { animated, useSpring } from "@react-spring/web";
 import { Check, X, MessageCircle, ChevronRight } from "lucide-react";
@@ -90,7 +90,7 @@ const getStatusConfig = (status: string | null) => {
   }
 };
 
-const SwipeableAppointmentCard = ({
+const SwipeableAppointmentCard = memo(({
   appointment,
   onConfirm,
   onCancel,
@@ -217,6 +217,8 @@ const SwipeableAppointmentCard = ({
       </animated.div>
     </div>
   );
-};
+});
+
+SwipeableAppointmentCard.displayName = "SwipeableAppointmentCard";
 
 export default SwipeableAppointmentCard;

@@ -1,142 +1,152 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { isAppDomain } from "@/config/domains";
+import { lazy, Suspense } from "react";
+import MobileHomeSkeleton from "@/components/mobile/MobileHomeSkeleton";
 
-// Site Pages (flowdent.com.br)
-import Landing from "@/pages/Landing";
-import Precos from "@/pages/Precos";
-import AgendaRecurso from "@/pages/recursos/Agenda";
-import ProntuarioRecurso from "@/pages/recursos/Prontuario";
-import DocumentosRecurso from "@/pages/recursos/Documentos";
-import FinanceiroRecurso from "@/pages/recursos/Financeiro";
-import AdminAuth from "@/pages/admin/AdminAuth";
-import AdminLayout from "@/components/AdminLayout";
-import AdminDashboard from "@/pages/admin/Dashboard";
-import AdminUsers from "@/pages/admin/Users";
-import AdminClinics from "@/pages/admin/Clinics";
-import AdminLeads from "@/pages/admin/Leads";
-import AdminMarketing from "@/pages/admin/Marketing";
-import AdminSubscriptions from "@/pages/admin/Subscriptions";
-import AdminModules from "@/pages/admin/Modules";
-import AdminAudit from "@/pages/admin/Audit";
+// Lightweight loading fallback
+const PageLoader = () => (
+  <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
-// App Pages (app.flowdent.com.br)
-import Auth from "@/pages/Auth";
-import Cadastro from "@/pages/Cadastro";
-import Index from "@/pages/Index";
-import Onboarding from "@/pages/Onboarding";
-import Welcome from "@/pages/onboarding/Welcome";
-import Tipo from "@/pages/onboarding/Tipo";
-import Clinica from "@/pages/onboarding/Clinica";
-import Profissional from "@/pages/onboarding/Profissional";
-import Dashboard from "@/pages/Dashboard";
-import AgendaWrapper from "@/pages/dashboard/AgendaWrapper";
-import ProntuarioWrapper from "@/pages/dashboard/ProntuarioWrapper";
-import PatientDetails from "@/pages/dashboard/PatientDetails";
-import FinanceiroWrapper from "@/pages/dashboard/FinanceiroWrapper";
-import CRMWrapper from "@/pages/dashboard/CRMWrapper";
-import CRMAtendimentoWrapper from "@/pages/dashboard/CRMAtendimentoWrapper";
-import PortalPacienteWrapper from "@/pages/dashboard/PortalPacienteWrapper";
-import PortalAuth from "@/pages/portal/PortalAuth";
-import PortalDashboard from "@/pages/portal/PortalDashboard";
-import IAAssistenteWrapper from "@/pages/dashboard/IAAssistenteWrapper";
-import ProtesesWrapper from "@/pages/dashboard/ProtesesWrapper";
-import OrtodontiaWrapper from "@/pages/dashboard/OrtodontiaWrapper";
-import EstoqueWrapper from "@/pages/dashboard/EstoqueWrapper";
-import ProdutosWrapper from "@/pages/dashboard/ProdutosWrapper";
-import MovimentacoesWrapper from "@/pages/dashboard/MovimentacoesWrapper";
-import PerfilWrapper from "@/pages/dashboard/PerfilWrapper";
-import ConfiguracoesWrapper from "@/pages/dashboard/ConfiguracoesWrapper";
-import AssinaturaWrapper from "@/pages/dashboard/AssinaturaWrapper";
-import SuperAdminDashboardWrapper from "@/pages/superadmin/DashboardWrapper";
-import GlobalAnamneseWrapper from "@/pages/superadmin/GlobalAnamneseWrapper";
-import PlanosWrapper from "@/pages/superadmin/PlanosWrapper";
-import ModulosWrapper from "@/pages/superadmin/ModulosWrapper";
-import LocatariosWrapper from "@/pages/superadmin/LocatariosWrapper";
-import AuditoriaWrapper from "@/pages/superadmin/AuditoriaWrapper";
-import NotFound from "@/pages/NotFound";
+// Site Pages (lazy)
+const Landing = lazy(() => import("@/pages/Landing"));
+const Precos = lazy(() => import("@/pages/Precos"));
+const AgendaRecurso = lazy(() => import("@/pages/recursos/Agenda"));
+const ProntuarioRecurso = lazy(() => import("@/pages/recursos/Prontuario"));
+const DocumentosRecurso = lazy(() => import("@/pages/recursos/Documentos"));
+const FinanceiroRecurso = lazy(() => import("@/pages/recursos/Financeiro"));
+const AdminAuth = lazy(() => import("@/pages/admin/AdminAuth"));
+const AdminLayout = lazy(() => import("@/components/AdminLayout"));
+const AdminDashboard = lazy(() => import("@/pages/admin/Dashboard"));
+const AdminUsers = lazy(() => import("@/pages/admin/Users"));
+const AdminClinics = lazy(() => import("@/pages/admin/Clinics"));
+const AdminLeads = lazy(() => import("@/pages/admin/Leads"));
+const AdminMarketing = lazy(() => import("@/pages/admin/Marketing"));
+const AdminSubscriptions = lazy(() => import("@/pages/admin/Subscriptions"));
+const AdminModules = lazy(() => import("@/pages/admin/Modules"));
+const AdminAudit = lazy(() => import("@/pages/admin/Audit"));
+
+// App Pages (lazy)
+const Auth = lazy(() => import("@/pages/Auth"));
+const Cadastro = lazy(() => import("@/pages/Cadastro"));
+const Index = lazy(() => import("@/pages/Index"));
+const Onboarding = lazy(() => import("@/pages/Onboarding"));
+const Welcome = lazy(() => import("@/pages/onboarding/Welcome"));
+const Tipo = lazy(() => import("@/pages/onboarding/Tipo"));
+const Clinica = lazy(() => import("@/pages/onboarding/Clinica"));
+const Profissional = lazy(() => import("@/pages/onboarding/Profissional"));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const AgendaWrapper = lazy(() => import("@/pages/dashboard/AgendaWrapper"));
+const ProntuarioWrapper = lazy(() => import("@/pages/dashboard/ProntuarioWrapper"));
+const PatientDetails = lazy(() => import("@/pages/dashboard/PatientDetails"));
+const FinanceiroWrapper = lazy(() => import("@/pages/dashboard/FinanceiroWrapper"));
+const CRMWrapper = lazy(() => import("@/pages/dashboard/CRMWrapper"));
+const CRMAtendimentoWrapper = lazy(() => import("@/pages/dashboard/CRMAtendimentoWrapper"));
+const PortalPacienteWrapper = lazy(() => import("@/pages/dashboard/PortalPacienteWrapper"));
+const PortalAuth = lazy(() => import("@/pages/portal/PortalAuth"));
+const PortalDashboard = lazy(() => import("@/pages/portal/PortalDashboard"));
+const IAAssistenteWrapper = lazy(() => import("@/pages/dashboard/IAAssistenteWrapper"));
+const ProtesesWrapper = lazy(() => import("@/pages/dashboard/ProtesesWrapper"));
+const OrtodontiaWrapper = lazy(() => import("@/pages/dashboard/OrtodontiaWrapper"));
+const EstoqueWrapper = lazy(() => import("@/pages/dashboard/EstoqueWrapper"));
+const ProdutosWrapper = lazy(() => import("@/pages/dashboard/ProdutosWrapper"));
+const MovimentacoesWrapper = lazy(() => import("@/pages/dashboard/MovimentacoesWrapper"));
+const PerfilWrapper = lazy(() => import("@/pages/dashboard/PerfilWrapper"));
+const ConfiguracoesWrapper = lazy(() => import("@/pages/dashboard/ConfiguracoesWrapper"));
+const AssinaturaWrapper = lazy(() => import("@/pages/dashboard/AssinaturaWrapper"));
+const SuperAdminDashboardWrapper = lazy(() => import("@/pages/superadmin/DashboardWrapper"));
+const GlobalAnamneseWrapper = lazy(() => import("@/pages/superadmin/GlobalAnamneseWrapper"));
+const PlanosWrapper = lazy(() => import("@/pages/superadmin/PlanosWrapper"));
+const ModulosWrapper = lazy(() => import("@/pages/superadmin/ModulosWrapper"));
+const LocatariosWrapper = lazy(() => import("@/pages/superadmin/LocatariosWrapper"));
+const AuditoriaWrapper = lazy(() => import("@/pages/superadmin/AuditoriaWrapper"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
 
 // Rotas do Site (flowdent.com.br)
 function SiteRoutes() {
   return (
-    <Routes>
-      <Route path="/" element={<Landing />} />
-      <Route path="/precos" element={<Precos />} />
-      <Route path="/recursos/agenda" element={<AgendaRecurso />} />
-      <Route path="/recursos/prontuario" element={<ProntuarioRecurso />} />
-      <Route path="/recursos/documentos" element={<DocumentosRecurso />} />
-      <Route path="/recursos/financeiro" element={<FinanceiroRecurso />} />
-      
-      {/* Admin Routes */}
-      <Route path="/admin" element={<AdminAuth />} />
-      <Route element={<AdminLayout />}>
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/users" element={<AdminUsers />} />
-        <Route path="/admin/clinics" element={<AdminClinics />} />
-        <Route path="/admin/leads" element={<AdminLeads />} />
-        <Route path="/admin/marketing" element={<AdminMarketing />} />
-        <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
-        <Route path="/admin/modules" element={<AdminModules />} />
-        <Route path="/admin/audit" element={<AdminAudit />} />
-      </Route>
-      
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/precos" element={<Precos />} />
+        <Route path="/recursos/agenda" element={<AgendaRecurso />} />
+        <Route path="/recursos/prontuario" element={<ProntuarioRecurso />} />
+        <Route path="/recursos/documentos" element={<DocumentosRecurso />} />
+        <Route path="/recursos/financeiro" element={<FinanceiroRecurso />} />
+        
+        {/* Admin Routes */}
+        <Route path="/admin" element={<AdminAuth />} />
+        <Route element={<AdminLayout />}>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/clinics" element={<AdminClinics />} />
+          <Route path="/admin/leads" element={<AdminLeads />} />
+          <Route path="/admin/marketing" element={<AdminMarketing />} />
+          <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
+          <Route path="/admin/modules" element={<AdminModules />} />
+          <Route path="/admin/audit" element={<AdminAudit />} />
+        </Route>
+        
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 }
 
 // Rotas do App (app.flowdent.com.br)
 function AppRoutes() {
   return (
-    <Routes>
-      {/* Redireciona / para /auth no domínio do app */}
-      <Route path="/" element={<Navigate to="/auth" replace />} />
-      
-      <Route path="/old-dashboard" element={<Index />} />
-      <Route path="/auth" element={<Auth />} />
-      <Route path="/cadastro" element={<Cadastro />} />
-      <Route path="/onboarding" element={<Onboarding />} />
-      <Route path="/onboarding/welcome" element={<Welcome />} />
-      <Route path="/onboarding/tipo" element={<Tipo />} />
-      <Route path="/onboarding/clinica" element={<Clinica />} />
-      <Route path="/onboarding/profissional" element={<Profissional />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/dashboard/agenda" element={<AgendaWrapper />} />
-      <Route path="/dashboard/prontuario" element={<ProntuarioWrapper />} />
-      <Route path="/dashboard/prontuario/:id" element={<PatientDetails />} />
-      <Route path="/dashboard/financeiro" element={<FinanceiroWrapper />} />
-      <Route path="/dashboard/crm" element={<CRMWrapper />} />
-      <Route path="/dashboard/crm/atendimento" element={<CRMAtendimentoWrapper />} />
-      <Route path="/dashboard/portal-paciente" element={<PortalPacienteWrapper />} />
-      <Route path="/dashboard/ia-assistente" element={<IAAssistenteWrapper />} />
-      <Route path="/dashboard/proteses" element={<ProtesesWrapper />} />
-      <Route path="/dashboard/ortodontia" element={<OrtodontiaWrapper />} />
-      <Route path="/dashboard/estoque" element={<EstoqueWrapper />} />
-      <Route path="/dashboard/produtos" element={<ProdutosWrapper />} />
-      <Route path="/dashboard/movimentacoes" element={<MovimentacoesWrapper />} />
-      <Route path="/dashboard/profile" element={<PerfilWrapper />} />
-      <Route path="/dashboard/assinatura" element={<AssinaturaWrapper />} />
-      <Route path="/dashboard/configuracoes" element={<ConfiguracoesWrapper />} />
-      
-      {/* Super Admin Routes */}
-      <Route path="/super-admin" element={<SuperAdminDashboardWrapper />} />
-      <Route path="/super-admin/planos" element={<PlanosWrapper />} />
-      <Route path="/super-admin/modulos" element={<ModulosWrapper />} />
-      <Route path="/super-admin/anamnese" element={<GlobalAnamneseWrapper />} />
-      <Route path="/super-admin/locatarios" element={<LocatariosWrapper />} />
-      <Route path="/super-admin/auditoria" element={<AuditoriaWrapper />} />
-      
-      {/* Portal do Paciente - Rotas Públicas */}
-      <Route path="/portal/auth" element={<PortalAuth />} />
-      <Route path="/portal/dashboard" element={<PortalDashboard />} />
-      
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/" element={<Navigate to="/auth" replace />} />
+        
+        <Route path="/old-dashboard" element={<Index />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/cadastro" element={<Cadastro />} />
+        <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/onboarding/welcome" element={<Welcome />} />
+        <Route path="/onboarding/tipo" element={<Tipo />} />
+        <Route path="/onboarding/clinica" element={<Clinica />} />
+        <Route path="/onboarding/profissional" element={<Profissional />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard/agenda" element={<AgendaWrapper />} />
+        <Route path="/dashboard/prontuario" element={<ProntuarioWrapper />} />
+        <Route path="/dashboard/prontuario/:id" element={<PatientDetails />} />
+        <Route path="/dashboard/financeiro" element={<FinanceiroWrapper />} />
+        <Route path="/dashboard/crm" element={<CRMWrapper />} />
+        <Route path="/dashboard/crm/atendimento" element={<CRMAtendimentoWrapper />} />
+        <Route path="/dashboard/portal-paciente" element={<PortalPacienteWrapper />} />
+        <Route path="/dashboard/ia-assistente" element={<IAAssistenteWrapper />} />
+        <Route path="/dashboard/proteses" element={<ProtesesWrapper />} />
+        <Route path="/dashboard/ortodontia" element={<OrtodontiaWrapper />} />
+        <Route path="/dashboard/estoque" element={<EstoqueWrapper />} />
+        <Route path="/dashboard/produtos" element={<ProdutosWrapper />} />
+        <Route path="/dashboard/movimentacoes" element={<MovimentacoesWrapper />} />
+        <Route path="/dashboard/profile" element={<PerfilWrapper />} />
+        <Route path="/dashboard/assinatura" element={<AssinaturaWrapper />} />
+        <Route path="/dashboard/configuracoes" element={<ConfiguracoesWrapper />} />
+        
+        {/* Super Admin Routes */}
+        <Route path="/super-admin" element={<SuperAdminDashboardWrapper />} />
+        <Route path="/super-admin/planos" element={<PlanosWrapper />} />
+        <Route path="/super-admin/modulos" element={<ModulosWrapper />} />
+        <Route path="/super-admin/anamnese" element={<GlobalAnamneseWrapper />} />
+        <Route path="/super-admin/locatarios" element={<LocatariosWrapper />} />
+        <Route path="/super-admin/auditoria" element={<AuditoriaWrapper />} />
+        
+        {/* Portal do Paciente */}
+        <Route path="/portal/auth" element={<PortalAuth />} />
+        <Route path="/portal/dashboard" element={<PortalDashboard />} />
+        
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 }
 
 export default function DomainRouter() {
-  // Em desenvolvimento ou no domínio do app, mostra rotas do app
-  // No domínio do site, mostra rotas do site
   if (isAppDomain()) {
     return <AppRoutes />;
   }

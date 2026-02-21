@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Calendar, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
-import { useState, useCallback } from "react";
+import { useState, useCallback, memo } from "react";
 import SwipeableAppointmentCard from "./SwipeableAppointmentCard";
 import MobileEmptyState from "./MobileEmptyState";
 
@@ -12,7 +12,7 @@ interface MobileAgendaListProps {
   clinicId: string;
 }
 
-const MobileAgendaList = ({ clinicId }: MobileAgendaListProps) => {
+const MobileAgendaList = memo(({ clinicId }: MobileAgendaListProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -150,6 +150,8 @@ const MobileAgendaList = ({ clinicId }: MobileAgendaListProps) => {
       </div>
     </div>
   );
-};
+});
+
+MobileAgendaList.displayName = "MobileAgendaList";
 
 export default MobileAgendaList;
