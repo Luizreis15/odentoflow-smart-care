@@ -119,7 +119,7 @@ const DashboardLayout = ({ children, user }: DashboardLayoutProps) => {
           "pb-[calc(72px+env(safe-area-inset-bottom,0px)+8px)] lg:pb-4"
         )}>
           <div className={cn(
-            "w-full min-w-0 mx-auto min-h-0 overflow-y-auto overflow-x-hidden",
+            "w-full min-w-0 mx-auto min-h-0 overflow-y-auto overflow-x-hidden max-w-[1600px]",
             isHomePage ? "px-0 lg:p-8" : "px-4 lg:p-8"
           )}>
             {children}

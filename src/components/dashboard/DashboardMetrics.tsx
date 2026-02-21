@@ -1,3 +1,4 @@
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, DollarSign, Users, PieChart } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -35,7 +36,7 @@ const metricConfigs = [
   },
 ];
 
-export const DashboardMetrics = ({ clinicId }: DashboardMetricsProps) => {
+export const DashboardMetrics = React.memo(({ clinicId }: DashboardMetricsProps) => {
   const today = new Date();
   const startOfToday = startOfDay(today);
   const endOfToday = endOfDay(today);
@@ -259,4 +260,6 @@ export const DashboardMetrics = ({ clinicId }: DashboardMetricsProps) => {
       })}
     </div>
   );
-};
+});
+
+DashboardMetrics.displayName = "DashboardMetrics";
