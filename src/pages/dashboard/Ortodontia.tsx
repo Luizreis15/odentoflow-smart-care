@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Calendar, User, Clock, AlertTriangle, TrendingUp } from "lucide-react";
+import { Plus, Search, Calendar, TrendingUp, AlertCircle, CheckCircle2 } from "lucide-react";
 import { NovoCasoModal } from "@/components/ortodontia/NovoCasoModal";
 import { DetalhesCasoModal } from "@/components/ortodontia/DetalhesCasoModal";
 import { ReajusteAnualModal } from "@/components/ortodontia/ReajusteAnualModal";
@@ -22,7 +22,7 @@ const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondar
 };
 
 const TIPO_MAP: Record<string, string> = {
-  aparelho_fixo: "Aparelho Fixo",
+  aparelho_fixo: "Ap. Fixo",
   alinhadores: "Alinhadores",
   movel: "Móvel",
   contencao: "Contenção",
@@ -36,6 +36,7 @@ export default function Ortodontia() {
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
   const [filtroTipo, setFiltroTipo] = useState<string>("todos");
+  const [filtroAgendamento, setFiltroAgendamento] = useState<string>("todos");
   const [reajusteOpen, setReajusteOpen] = useState(false);
 
   const { data: casos, refetch } = useQuery({
@@ -46,25 +47,63 @@ export default function Ortodontia() {
         .select(`
           *,
           patient:patients!ortho_cases_patient_id_fkey(full_name),
-          professional:profissionais!ortho_cases_professional_id_fkey(nome),
-          responsible:patient_contacts!ortho_cases_responsible_contact_id_fkey(name)
+          professional:profissionais!ortho_cases_professional_id_fkey(nome)
         `)
         .order("created_at", { ascending: false });
-
       if (error) throw error;
       return data;
     },
   });
 
-  const casosFiltrados = casos?.filter((c: any) => {
-    const matchBusca =
-      busca === "" ||
-      c.patient?.full_name?.toLowerCase().includes(busca.toLowerCase()) ||
-      c.professional?.nome?.toLowerCase().includes(busca.toLowerCase());
-    const matchStatus = filtroStatus === "todos" || c.status === filtroStatus;
-    const matchTipo = filtroTipo === "todos" || c.tipo_tratamento === filtroTipo;
-    return matchBusca && matchStatus && matchTipo;
-  }) || [];
+  // Query próximos agendamentos futuros por paciente
+  const patientIds = useMemo(() => {
+    if (!casos) return [];
+    return [...new Set(casos.map((c: any) => c.patient_id))];
+  }, [casos]);
+
+  const { data: nextAppointments } = useQuery({
+    queryKey: ["ortho-next-appointments", patientIds],
+    enabled: patientIds.length > 0,
+    queryFn: async () => {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from("appointments")
+        .select("patient_id, appointment_date")
+        .in("patient_id", patientIds)
+        .gt("appointment_date", now)
+        .neq("status", "cancelled")
+        .order("appointment_date", { ascending: true });
+      if (error) throw error;
+      // Agrupar: primeiro agendamento por paciente
+      const map: Record<string, string> = {};
+      data?.forEach((a: any) => {
+        if (!map[a.patient_id]) map[a.patient_id] = a.appointment_date;
+      });
+      return map;
+    },
+  });
+
+  const casosFiltrados = useMemo(() => {
+    if (!casos) return [];
+    return casos
+      .filter((c: any) => {
+        const matchBusca =
+          busca === "" ||
+          c.patient?.full_name?.toLowerCase().includes(busca.toLowerCase()) ||
+          c.professional?.nome?.toLowerCase().includes(busca.toLowerCase());
+        const matchStatus = filtroStatus === "todos" || c.status === filtroStatus;
+        const matchTipo = filtroTipo === "todos" || c.tipo_tratamento === filtroTipo;
+        const hasAppt = nextAppointments?.[c.patient_id];
+        const matchAgendamento =
+          filtroAgendamento === "todos" ||
+          (filtroAgendamento === "com_agendamento" && hasAppt) ||
+          (filtroAgendamento === "sem_agendamento" && !hasAppt);
+        return matchBusca && matchStatus && matchTipo && matchAgendamento;
+      })
+      .sort((a: any, b: any) =>
+        (a.patient?.full_name || "").localeCompare(b.patient?.full_name || "", "pt-BR")
+      );
+  }, [casos, busca, filtroStatus, filtroTipo, filtroAgendamento, nextAppointments]);
 
   const getProgresso = (caso: any) => {
     if (!caso.total_meses || !caso.data_inicio) return null;
@@ -104,7 +143,7 @@ export default function Ortodontia() {
           />
         </div>
         <Select value={filtroStatus} onValueChange={setFiltroStatus}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-full sm:w-[160px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -117,7 +156,7 @@ export default function Ortodontia() {
           </SelectContent>
         </Select>
         <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-full sm:w-[160px]">
             <SelectValue placeholder="Tipo" />
           </SelectTrigger>
           <SelectContent>
@@ -129,9 +168,19 @@ export default function Ortodontia() {
             <SelectItem value="ortopedia">Ortopedia</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={filtroAgendamento} onValueChange={setFiltroAgendamento}>
+          <SelectTrigger className="w-full sm:w-[190px]">
+            <SelectValue placeholder="Agendamento" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos</SelectItem>
+            <SelectItem value="com_agendamento">Com agendamento</SelectItem>
+            <SelectItem value="sem_agendamento">Sem agendamento</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Lista de Casos */}
+      {/* Lista compacta */}
       {casosFiltrados.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
@@ -141,95 +190,75 @@ export default function Ortodontia() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {casosFiltrados.map((caso: any) => {
-            const progresso = getProgresso(caso);
-            const statusInfo = STATUS_MAP[caso.status] || { label: caso.status, variant: "outline" as const };
+        <Card>
+          {/* Header da lista */}
+          <div className="hidden md:grid grid-cols-[1fr_100px_120px_100px_90px_160px] gap-2 px-4 py-2.5 border-b bg-muted/50 text-xs font-medium text-muted-foreground rounded-t-lg">
+            <span>Paciente</span>
+            <span>Tipo</span>
+            <span>Profissional</span>
+            <span>Status</span>
+            <span>Progresso</span>
+            <span>Agendamento</span>
+          </div>
+          <div className="divide-y">
+            {casosFiltrados.map((caso: any) => {
+              const progresso = getProgresso(caso);
+              const statusInfo = STATUS_MAP[caso.status] || { label: caso.status, variant: "outline" as const };
+              const nextAppt = nextAppointments?.[caso.patient_id];
 
-            return (
-              <Card key={caso.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => { setSelectedCasoId(caso.id); setDetalhesOpen(true); }}>
-                <CardContent className="p-5 space-y-3">
-                  {/* Header do card */}
-                  <div className="flex items-start justify-between">
-                    <div className="min-w-0">
-                      <h3 className="font-semibold text-foreground truncate">
-                        {caso.patient?.full_name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {TIPO_MAP[caso.tipo_tratamento] || caso.tipo_tratamento}
-                      </p>
-                    </div>
-                    <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
-                  </div>
+              return (
+                <div
+                  key={caso.id}
+                  className="grid grid-cols-1 md:grid-cols-[1fr_100px_120px_100px_90px_160px] gap-1 md:gap-2 items-center px-4 py-3 hover:bg-muted/30 cursor-pointer transition-colors"
+                  onClick={() => { setSelectedCasoId(caso.id); setDetalhesOpen(true); }}
+                >
+                  {/* Paciente */}
+                  <span className="font-medium text-sm text-foreground truncate">
+                    {caso.patient?.full_name}
+                  </span>
+
+                  {/* Tipo */}
+                  <span className="text-xs text-muted-foreground">
+                    {TIPO_MAP[caso.tipo_tratamento] || caso.tipo_tratamento}
+                  </span>
 
                   {/* Profissional */}
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <User className="w-3.5 h-3.5" />
-                    <span>Dr(a). {caso.professional?.nome}</span>
-                  </div>
+                  <span className="text-xs text-muted-foreground truncate">
+                    Dr(a). {caso.professional?.nome}
+                  </span>
 
-                  {/* Responsável financeiro */}
-                  {caso.responsible?.name && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                      <span>Resp.: {caso.responsible.name}</span>
-                    </div>
-                  )}
+                  {/* Status */}
+                  <Badge variant={statusInfo.variant} className="w-fit text-[10px]">
+                    {statusInfo.label}
+                  </Badge>
 
                   {/* Progresso */}
-                  {progresso && (
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Progresso</span>
-                        <span>{progresso.atual}/{progresso.total} meses</span>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div
-                          className="bg-primary rounded-full h-2 transition-all"
-                          style={{ width: `${Math.min((progresso.atual / progresso.total) * 100, 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
+                  <span className="text-xs text-muted-foreground">
+                    {progresso ? `${progresso.atual}/${progresso.total}m` : "—"}
+                  </span>
 
-                  {/* Datas */}
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Clock className="w-3 h-3" />
-                    <span>Início: {format(parseISO(caso.data_inicio), "dd/MM/yyyy", { locale: ptBR })}</span>
-                    {caso.previsao_termino && (
-                      <span>• Prev.: {format(parseISO(caso.previsao_termino), "dd/MM/yyyy", { locale: ptBR })}</span>
-                    )}
-                  </div>
-
-                  {/* Valor */}
-                  {caso.valor_mensalidade && (
-                    <div className="text-sm font-medium text-foreground">
-                      R$ {Number(caso.valor_mensalidade).toFixed(2)}/mês
-                    </div>
+                  {/* Agendamento */}
+                  {nextAppt ? (
+                    <Badge className="w-fit gap-1 bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100 text-[10px]">
+                      <CheckCircle2 className="w-3 h-3" />
+                      {format(parseISO(nextAppt), "dd/MM - HH:mm", { locale: ptBR })}
+                    </Badge>
+                  ) : (
+                    <Badge className="w-fit gap-1 bg-red-100 text-red-700 border-red-200 hover:bg-red-100 text-[10px]">
+                      <AlertCircle className="w-3 h-3" />
+                      Sem agendamento
+                    </Badge>
                   )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
       )}
 
-      <NovoCasoModal
-        open={novoCasoOpen}
-        onOpenChange={setNovoCasoOpen}
-        onSuccess={refetch}
-      />
-      <DetalhesCasoModal
-        open={detalhesOpen}
-        onOpenChange={setDetalhesOpen}
-        casoId={selectedCasoId}
-        onRefresh={refetch}
-      />
-      <ReajusteAnualModal
-        open={reajusteOpen}
-        onOpenChange={setReajusteOpen}
-        onSuccess={refetch}
-      />
+      <NovoCasoModal open={novoCasoOpen} onOpenChange={setNovoCasoOpen} onSuccess={refetch} />
+      <DetalhesCasoModal open={detalhesOpen} onOpenChange={setDetalhesOpen} casoId={selectedCasoId} onRefresh={refetch} />
+      <ReajusteAnualModal open={reajusteOpen} onOpenChange={setReajusteOpen} onSuccess={refetch} />
     </div>
   );
 }
