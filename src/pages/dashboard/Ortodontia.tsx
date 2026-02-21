@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, Calendar, User, Clock, AlertTriangle } from "lucide-react";
 import { NovoCasoModal } from "@/components/ortodontia/NovoCasoModal";
+import { DetalhesCasoModal } from "@/components/ortodontia/DetalhesCasoModal";
 import { format, differenceInMonths, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -29,6 +30,8 @@ const TIPO_MAP: Record<string, string> = {
 
 export default function Ortodontia() {
   const [novoCasoOpen, setNovoCasoOpen] = useState(false);
+  const [detalhesOpen, setDetalhesOpen] = useState(false);
+  const [selectedCasoId, setSelectedCasoId] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
   const [filtroTipo, setFiltroTipo] = useState<string>("todos");
@@ -136,7 +139,7 @@ export default function Ortodontia() {
             const statusInfo = STATUS_MAP[caso.status] || { label: caso.status, variant: "outline" as const };
 
             return (
-              <Card key={caso.id} className="hover:shadow-md transition-shadow cursor-pointer">
+              <Card key={caso.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => { setSelectedCasoId(caso.id); setDetalhesOpen(true); }}>
                 <CardContent className="p-5 space-y-3">
                   {/* Header do card */}
                   <div className="flex items-start justify-between">
@@ -207,6 +210,12 @@ export default function Ortodontia() {
         open={novoCasoOpen}
         onOpenChange={setNovoCasoOpen}
         onSuccess={refetch}
+      />
+      <DetalhesCasoModal
+        open={detalhesOpen}
+        onOpenChange={setDetalhesOpen}
+        casoId={selectedCasoId}
+        onRefresh={refetch}
       />
     </div>
   );
