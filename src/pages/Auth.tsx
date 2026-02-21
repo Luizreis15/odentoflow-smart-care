@@ -5,9 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Calendar, DollarSign, ClipboardList, Shield, Clock } from "lucide-react";
 import { z } from "zod";
-import TestimonialCarousel from "@/components/auth/TestimonialCarousel";
 import logoFlowdent from '@/assets/logo-flowdent.png';
 
 const signinSchema = z.object({
@@ -23,14 +22,9 @@ const Auth = () => {
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [isResetPassword, setIsResetPassword] = useState(searchParams.get('reset') === 'true');
   
-  // Login fields
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  
-  // Forgot password field
   const [resetEmail, setResetEmail] = useState("");
-  
-  // Reset password fields
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -43,8 +37,6 @@ const Auth = () => {
 
   useEffect(() => {
     const checkUser = async () => {
-      // CRÍTICO: Se está em modo reset, NÃO redirecionar automaticamente
-      // O usuário precisa definir a nova senha primeiro
       if (searchParams.get('reset') === 'true') {
         console.log("[AUTH] Reset mode detected - skipping auto-redirect");
         return;
@@ -52,7 +44,6 @@ const Auth = () => {
 
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        // Verificar se é super admin - redireciona para dashboard com acesso total
         const { data: userRoles } = await supabase
           .from('user_roles')
           .select('role')
@@ -96,27 +87,20 @@ const Auth = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("[AUTH] onAuthStateChange - Event:", event, "Session:", !!session);
       
-      // CRÍTICO: Se é um evento de PASSWORD_RECOVERY, NÃO redirecionar
-      // O usuário precisa definir a nova senha primeiro
       if (event === 'PASSWORD_RECOVERY') {
         console.log("[AUTH] PASSWORD_RECOVERY detected - staying on reset password screen");
         setIsResetPassword(true);
-        return; // NÃO redirecionar
+        return;
       }
       
-      // Se está em modo reset e tem sessão, ainda não redirecionar
-      // Aguardar o usuário definir a senha
       if (isResetPassword && session?.user) {
         console.log("[AUTH] Reset mode active - waiting for password update");
-        return; // NÃO redirecionar
+        return;
       }
 
-      // Para outros eventos (SIGNED_IN normal), prosseguir com redirect
       if (session?.user) {
-        // Use setTimeout to defer Supabase calls and prevent deadlocks
         setTimeout(async () => {
           try {
-            // Verificar se é super admin - redireciona para dashboard com acesso total
             const { data: userRoles } = await supabase
               .from('user_roles')
               .select('role')
@@ -309,204 +293,254 @@ const Auth = () => {
         description: "Sua senha foi alterada com sucesso.",
       });
       
-      // Limpar estado de reset ANTES de redirecionar
-      // O usuário já está autenticado, redireciona direto para dashboard
       setIsResetPassword(false);
       navigate("/dashboard");
     }
   };
 
+  const pillars = [
+    { icon: Calendar, label: "Agenda inteligente" },
+    { icon: DollarSign, label: "Gestão financeira integrada" },
+    { icon: ClipboardList, label: "Controle clínico completo" },
+  ];
+
+  const renderForm = () => {
+    if (isResetPassword) {
+      return (
+        <>
+          <div className="space-y-2">
+            <h1 className="text-[28px] font-bold text-[hsl(var(--flowdent-blue))]">
+              Redefinir senha
+            </h1>
+            <p className="text-base text-[hsl(var(--slate-gray))]">
+              Digite sua nova senha
+            </p>
+          </div>
+
+          <form onSubmit={handleResetPassword} className="space-y-5">
+            <div className="space-y-1.5">
+              <Label htmlFor="new-password" className="text-sm font-medium">Nova senha</Label>
+              <Input
+                id="new-password"
+                type="password"
+                placeholder="••••••••"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                className="h-12 rounded-xl border-gray-200 focus:border-[hsl(var(--flowdent-blue))] focus:ring-[hsl(var(--flowdent-blue))]/20"
+              />
+              <p className="text-xs text-[hsl(var(--slate-gray))]">
+                Mínimo 8 caracteres, com letra maiúscula, minúscula e número
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="confirm-password" className="text-sm font-medium">Confirmar nova senha</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="h-12 rounded-xl border-gray-200 focus:border-[hsl(var(--flowdent-blue))] focus:ring-[hsl(var(--flowdent-blue))]/20"
+              />
+            </div>
+            <Button 
+              type="submit" 
+              className="w-full h-12 rounded-xl bg-[hsl(var(--flowdent-blue))] hover:bg-[hsl(var(--flowdent-blue))]/90 text-[15px] font-medium" 
+              disabled={loading}
+            >
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Redefinir senha
+            </Button>
+          </form>
+        </>
+      );
+    }
+
+    if (isForgotPassword) {
+      return (
+        <>
+          <div className="space-y-2">
+            <h1 className="text-[28px] font-bold text-[hsl(var(--flowdent-blue))]">
+              Recuperar senha
+            </h1>
+            <p className="text-base text-[hsl(var(--slate-gray))]">
+              Digite seu email para receber o link de recuperação
+            </p>
+          </div>
+
+          <form onSubmit={handleForgotPassword} className="space-y-5">
+            <div className="space-y-1.5">
+              <Label htmlFor="reset-email" className="text-sm font-medium">Email</Label>
+              <Input
+                id="reset-email"
+                type="email"
+                placeholder="seu@email.com"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                required
+                className="h-12 rounded-xl border-gray-200 focus:border-[hsl(var(--flowdent-blue))] focus:ring-[hsl(var(--flowdent-blue))]/20"
+              />
+            </div>
+            <Button 
+              type="submit" 
+              className="w-full h-12 rounded-xl bg-[hsl(var(--flowdent-blue))] hover:bg-[hsl(var(--flowdent-blue))]/90 text-[15px] font-medium" 
+              disabled={loading}
+            >
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Enviar link de recuperação
+            </Button>
+          </form>
+
+          <p className="text-sm text-center text-[hsl(var(--slate-gray))]">
+            Lembrou a senha?{" "}
+            <button
+              onClick={() => { setIsForgotPassword(false); setResetEmail(""); }}
+              className="text-[hsl(var(--flowdent-blue))] font-semibold hover:underline"
+            >
+              Voltar ao login
+            </button>
+          </p>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <div className="space-y-2">
+          <h1 className="text-[28px] font-bold text-[hsl(var(--flowdent-blue))]">
+            Acessar sua conta
+          </h1>
+          <p className="text-base text-[hsl(var(--slate-gray))]">
+            Entre para continuar
+          </p>
+        </div>
+
+        <form onSubmit={handleSignIn} className="space-y-5">
+          <div className="space-y-1.5">
+            <Label htmlFor="login-email" className="text-sm font-medium">Email</Label>
+            <Input
+              id="login-email"
+              type="email"
+              placeholder="seu@email.com"
+              value={loginEmail}
+              onChange={(e) => setLoginEmail(e.target.value)}
+              required
+              className="h-12 rounded-xl border-gray-200 focus:border-[hsl(var(--flowdent-blue))] focus:ring-[hsl(var(--flowdent-blue))]/20"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="login-password" className="text-sm font-medium">Senha</Label>
+              <button
+                type="button"
+                onClick={() => setIsForgotPassword(true)}
+                className="text-sm text-[hsl(var(--flowdent-blue))] hover:underline"
+              >
+                Esqueceu a senha?
+              </button>
+            </div>
+            <Input
+              id="login-password"
+              type="password"
+              placeholder="••••••••"
+              value={loginPassword}
+              onChange={(e) => setLoginPassword(e.target.value)}
+              required
+              className="h-12 rounded-xl border-gray-200 focus:border-[hsl(var(--flowdent-blue))] focus:ring-[hsl(var(--flowdent-blue))]/20"
+            />
+          </div>
+          <Button 
+            type="submit" 
+            className="w-full h-12 rounded-xl bg-[hsl(var(--flowdent-blue))] hover:bg-[hsl(var(--flowdent-blue))]/90 text-[15px] font-medium" 
+            disabled={loading}
+          >
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Entrar
+          </Button>
+        </form>
+      </>
+    );
+  };
+
   return (
     <div className="min-h-screen flex">
-      {/* Left Side - Form */}
-      <div className="w-full lg:w-1/2 flex flex-col bg-gradient-to-b from-white via-white to-[hsl(var(--cloud-white))] lg:bg-white lg:bg-none">
-        {/* Header - Com gradiente no mobile */}
-        <div className="bg-gradient-to-r from-[hsl(var(--flowdent-blue))] to-[hsl(var(--flow-turquoise))] lg:bg-none lg:bg-white p-6 lg:border-b">
-          <Link to="/" className="flex items-center gap-2">
-            <img 
-              src={logoFlowdent} 
-              alt="Flowdent" 
-              className="h-14 lg:h-16 w-auto brightness-0 invert lg:brightness-100 lg:invert-0"
-            />
-          </Link>
-        </div>
+      {/* Coluna Institucional — Esquerda */}
+      <div className="hidden md:flex w-[60%] lg:w-[60%] xl:w-[60%] relative bg-gradient-to-br from-[hsl(var(--flowdent-blue))] to-[hsl(var(--flow-turquoise))]">
+        {/* Overlay escuro */}
+        <div className="absolute inset-0 bg-black/[0.15]" />
 
-        {/* Decoração Mobile */}
-        <div className="lg:hidden flex justify-center pt-8 pb-4">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[hsl(var(--flowdent-blue))]/10 to-[hsl(var(--flow-turquoise))]/10 flex items-center justify-center">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[hsl(var(--flowdent-blue))]/20 to-[hsl(var(--flow-turquoise))]/20 flex items-center justify-center">
-              <span className="text-4xl">🦷</span>
+        <div className="relative z-10 flex flex-col justify-between w-full h-full p-12 xl:p-16">
+          {/* Logo + Headline */}
+          <div>
+            <Link to="/">
+              <img 
+                src={logoFlowdent} 
+                alt="Flowdent" 
+                className="h-14 xl:h-16 w-auto brightness-0 invert"
+              />
+            </Link>
+          </div>
+
+          {/* Conteúdo central */}
+          <div className="space-y-10 max-w-lg">
+            <div className="space-y-4">
+              <h2 className="text-[28px] xl:text-[32px] font-bold text-white leading-tight">
+                Gestão Odontológica Inteligente
+              </h2>
+              <p className="text-base xl:text-lg text-white/80 leading-relaxed">
+                Controle clínico, financeiro e operacional em um único sistema.
+              </p>
+            </div>
+
+            <div className="space-y-5">
+              {pillars.map(({ icon: Icon, label }) => (
+                <div key={label} className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-5 h-5 text-white/90" />
+                  </div>
+                  <span className="text-white/90 text-[15px] font-medium">{label}</span>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
 
-        {/* Form Content */}
-        <div className="flex-1 flex items-start lg:items-center justify-center p-6 lg:p-8 pt-4 lg:pt-8">
-          <div className="w-full max-w-md space-y-6 lg:space-y-8">
-            {isResetPassword ? (
-              // RESET PASSWORD FORM
-              <>
-                <div className="text-center">
-                  <h1 className="text-3xl font-bold text-[hsl(var(--flowdent-blue))] mb-2">
-                    Redefinir senha
-                  </h1>
-                  <p className="text-[hsl(var(--slate-gray))]">
-                    Digite sua nova senha
-                  </p>
-                </div>
-
-                <form onSubmit={handleResetPassword} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="new-password">Nova senha</Label>
-                    <Input
-                      id="new-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      required
-                      className="h-12"
-                    />
-                    <p className="text-xs text-[hsl(var(--slate-gray))]">
-                      Mínimo 8 caracteres, com letra maiúscula, minúscula e número
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirmar nova senha</Label>
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                      className="h-12"
-                    />
-                  </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full h-12 bg-[hsl(var(--flowdent-blue))] hover:bg-[hsl(var(--flow-turquoise))]" 
-                    disabled={loading}
-                  >
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Redefinir senha
-                  </Button>
-                </form>
-              </>
-            ) : isForgotPassword ? (
-              // FORGOT PASSWORD FORM
-              <>
-                <div className="text-center">
-                  <h1 className="text-3xl font-bold text-[hsl(var(--flowdent-blue))] mb-2">
-                    Recuperar senha
-                  </h1>
-                  <p className="text-[hsl(var(--slate-gray))]">
-                    Digite seu email para receber o link de recuperação
-                  </p>
-                </div>
-
-                <form onSubmit={handleForgotPassword} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="reset-email">Email</Label>
-                    <Input
-                      id="reset-email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={resetEmail}
-                      onChange={(e) => setResetEmail(e.target.value)}
-                      required
-                      className="h-12"
-                    />
-                  </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full h-12 bg-[hsl(var(--flowdent-blue))] hover:bg-[hsl(var(--flow-turquoise))]" 
-                    disabled={loading}
-                  >
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Enviar link de recuperação
-                  </Button>
-                </form>
-
-                <div className="text-center">
-                  <p className="text-sm text-[hsl(var(--slate-gray))]">
-                    Lembrou a senha?{" "}
-                    <button
-                      onClick={() => {
-                        setIsForgotPassword(false);
-                        setResetEmail("");
-                      }}
-                      className="text-[hsl(var(--flowdent-blue))] font-semibold hover:underline"
-                    >
-                      Voltar ao login
-                    </button>
-                  </p>
-                </div>
-              </>
-            ) : (
-              // LOGIN FORM
-              <>
-                <div className="text-center">
-                  <h1 className="text-3xl font-bold text-[hsl(var(--flowdent-blue))] mb-2">
-                    Bem-vindo de volta
-                  </h1>
-                  <p className="text-[hsl(var(--slate-gray))]">
-                    Acesse sua conta
-                  </p>
-                </div>
-
-                <form onSubmit={handleSignIn} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      required
-                      className="h-12"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="login-password">Senha</Label>
-                      <button
-                        type="button"
-                        onClick={() => setIsForgotPassword(true)}
-                        className="text-sm text-[hsl(var(--flowdent-blue))] hover:underline"
-                      >
-                        Esqueceu a senha?
-                      </button>
-                    </div>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      required
-                      className="h-12"
-                    />
-                  </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full h-12 bg-[hsl(var(--flowdent-blue))] hover:bg-[hsl(var(--flow-turquoise))]" 
-                    disabled={loading}
-                  >
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Entrar
-                  </Button>
-                </form>
-              </>
-            )}
+          {/* Rodapé */}
+          <div className="flex items-center gap-6 text-white/50 text-xs">
+            <span className="flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5" />
+              Ambiente seguro e criptografado
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5" />
+              Disponível 24h
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Right Side - Testimonials */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[hsl(var(--flowdent-blue))] to-[hsl(var(--flow-turquoise))] relative overflow-hidden">
-        <TestimonialCarousel />
+      {/* Coluna Login — Direita */}
+      <div className="w-full md:w-[40%] flex flex-col bg-[#F5F7FA] relative">
+        {/* Versão */}
+        <div className="absolute top-4 right-5 text-xs text-gray-400 font-mono">
+          Flowdent v3.2
+        </div>
+
+        {/* Mobile header */}
+        <div className="md:hidden bg-gradient-to-r from-[hsl(var(--flowdent-blue))] to-[hsl(var(--flow-turquoise))] p-5">
+          <Link to="/">
+            <img src={logoFlowdent} alt="Flowdent" className="h-10 w-auto brightness-0 invert" />
+          </Link>
+          <p className="text-white/70 text-sm mt-2">Gestão Odontológica Inteligente</p>
+        </div>
+
+        {/* Card de login */}
+        <div className="flex-1 flex items-center justify-center p-6 md:p-8">
+          <div className="w-full max-w-[420px] bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06)] p-8 space-y-6">
+            {renderForm()}
+          </div>
+        </div>
       </div>
     </div>
   );
