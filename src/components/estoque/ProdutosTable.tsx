@@ -1,4 +1,3 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Pencil, Trash2 } from "lucide-react";
@@ -16,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { DataTable, DataTableColumn } from "@/components/desktop/DataTable";
 
 interface ProdutosTableProps {
   products: any[];
@@ -34,109 +34,87 @@ export function ProdutosTable({ products, isLoading, onEdit }: ProdutosTableProp
         .from("products")
         .update({ ativo: false })
         .eq("id", id);
-
       if (error) throw error;
-
-      toast({
-        title: "Produto excluído",
-        description: "Produto inativado com sucesso",
-      });
-
+      toast({ title: "Produto excluído", description: "Produto inativado com sucesso" });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       setDeleteId(null);
     } catch (error: any) {
-      toast({
-        title: "Erro ao excluir produto",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao excluir produto", description: error.message, variant: "destructive" });
     }
   };
-  if (isLoading) {
-    return <div className="text-center py-8">Carregando produtos...</div>;
-  }
 
-  if (!products || products.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        Nenhum produto cadastrado
-      </div>
-    );
-  }
+  const columns: DataTableColumn<any>[] = [
+    { key: "codigo_interno", label: "Código", sortable: true, className: "font-mono text-sm" },
+    { key: "nome", label: "Nome", sortable: true, className: "font-medium" },
+    { key: "categoria", label: "Categoria", sortable: true },
+    {
+      key: "estoque",
+      label: "Estoque Atual",
+      sortable: true,
+      render: (product) => {
+        const totalStock = product.stocks?.reduce((sum: number, s: any) => sum + Number(s.quantidade || 0), 0) || 0;
+        const belowMinimum = totalStock < Number(product.estoque_minimo || 0);
+        return (
+          <div className="flex items-center gap-2">
+            {totalStock} {product.unidade}
+            {belowMinimum && <AlertTriangle className="h-4 w-4 text-destructive" />}
+          </div>
+        );
+      },
+    },
+    {
+      key: "estoque_minimo",
+      label: "Estoque Mínimo",
+      sortable: true,
+      render: (product) => <>{product.estoque_minimo || 0} {product.unidade}</>,
+    },
+    {
+      key: "custo",
+      label: "Custo Médio",
+      sortable: true,
+      render: (product) => {
+        const avgCost = product.stocks?.reduce((sum: number, s: any) => sum + Number(s.custo_medio || 0), 0) / (product.stocks?.length || 1) || 0;
+        return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(avgCost);
+      },
+    },
+    {
+      key: "ativo",
+      label: "Status",
+      sortable: true,
+      render: (product) => (
+        <Badge variant={product.ativo ? "default" : "secondary"}>
+          {product.ativo ? "Ativo" : "Inativo"}
+        </Badge>
+      ),
+    },
+    {
+      key: "acoes",
+      label: "Ações",
+      headerClassName: "text-right",
+      className: "text-right",
+      render: (product) => (
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" size="icon" onClick={() => onEdit(product)}>
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => setDeleteId(product.id)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div className="border rounded-lg">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Código</TableHead>
-            <TableHead>Nome</TableHead>
-            <TableHead>Categoria</TableHead>
-            <TableHead>Estoque Atual</TableHead>
-            <TableHead>Estoque Mínimo</TableHead>
-            <TableHead>Custo Médio</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {products.map((product) => {
-            const totalStock = product.stocks?.reduce((sum: number, s: any) => sum + Number(s.quantidade || 0), 0) || 0;
-            const avgCost = product.stocks?.reduce((sum: number, s: any) => sum + Number(s.custo_medio || 0), 0) / (product.stocks?.length || 1) || 0;
-            const belowMinimum = totalStock < Number(product.estoque_minimo || 0);
-
-            return (
-              <TableRow key={product.id}>
-                <TableCell className="font-mono text-sm">
-                  {product.codigo_interno}
-                </TableCell>
-                <TableCell className="font-medium">{product.nome}</TableCell>
-                <TableCell>{product.categoria || "-"}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    {totalStock} {product.unidade}
-                    {belowMinimum && (
-                      <AlertTriangle className="h-4 w-4 text-destructive" />
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>{product.estoque_minimo || 0} {product.unidade}</TableCell>
-                <TableCell>
-                  {new Intl.NumberFormat('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL'
-                  }).format(avgCost)}
-                </TableCell>
-                <TableCell>
-                  {product.ativo ? (
-                    <Badge variant="default">Ativo</Badge>
-                  ) : (
-                    <Badge variant="secondary">Inativo</Badge>
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onEdit(product)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setDeleteId(product.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+    <>
+      <DataTable
+        columns={columns}
+        data={products}
+        isLoading={isLoading}
+        searchPlaceholder="Buscar produto..."
+        emptyMessage="Nenhum produto cadastrado"
+        selectable
+      />
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
@@ -154,6 +132,6 @@ export function ProdutosTable({ products, isLoading, onEdit }: ProdutosTableProp
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }

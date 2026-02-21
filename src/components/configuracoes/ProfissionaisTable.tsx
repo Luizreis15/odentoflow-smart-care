@@ -1,8 +1,7 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Power, PowerOff, Calendar } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DataTable, DataTableColumn } from "@/components/desktop/DataTable";
 
 interface Profissional {
   id: string;
@@ -38,98 +37,67 @@ export const ProfissionaisTable = ({
   onToggleStatus,
   onConfigAgenda
 }: ProfissionaisTableProps) => {
-  if (loading) {
-    return (
-      <div className="space-y-3">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-16 w-full" />
-        ))}
-      </div>
-    );
-  }
-
-  if (profissionais.length === 0) {
-    return (
-      <div className="text-center py-12 text-muted-foreground border rounded-lg">
-        Nenhum profissional encontrado
-      </div>
-    );
-  }
+  const columns: DataTableColumn<Profissional>[] = [
+    { key: "nome", label: "Nome", sortable: true, className: "font-medium" },
+    { key: "cro", label: "CRO", sortable: true },
+    { key: "especialidade", label: "Especialidade", sortable: true },
+    {
+      key: "contato",
+      label: "Contato",
+      render: (prof) => (
+        <div className="text-sm">
+          <div>{prof.email}</div>
+          {prof.telefone && <div className="text-muted-foreground">{prof.telefone}</div>}
+        </div>
+      ),
+    },
+    {
+      key: "perfil",
+      label: "Perfil",
+      sortable: true,
+      render: (prof) => (
+        <Badge variant="outline">{perfilLabels[prof.perfil] || prof.perfil}</Badge>
+      ),
+    },
+    {
+      key: "ativo",
+      label: "Status",
+      sortable: true,
+      render: (prof) => (
+        <Badge variant={prof.ativo ? "default" : "secondary"}>
+          {prof.ativo ? "Ativo" : "Inativo"}
+        </Badge>
+      ),
+    },
+    {
+      key: "acoes",
+      label: "Ações",
+      headerClassName: "text-right",
+      className: "text-right",
+      render: (prof) => (
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={() => onEdit(prof)} title="Editar profissional">
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => onConfigAgenda(prof)} title="Configurar agenda">
+            <Calendar className="h-4 w-4 text-primary" />
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => onToggleStatus(prof)} title={prof.ativo ? "Desativar" : "Ativar"}>
+            {prof.ativo ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div className="border rounded-lg">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>CRO</TableHead>
-            <TableHead>Especialidade</TableHead>
-            <TableHead>Contato</TableHead>
-            <TableHead>Perfil</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {profissionais.map((prof) => (
-            <TableRow key={prof.id}>
-              <TableCell className="font-medium">{prof.nome}</TableCell>
-              <TableCell>{prof.cro || "-"}</TableCell>
-              <TableCell>{prof.especialidade || "-"}</TableCell>
-              <TableCell>
-                <div className="text-sm">
-                  <div>{prof.email}</div>
-                  {prof.telefone && (
-                    <div className="text-muted-foreground">{prof.telefone}</div>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline">
-                  {perfilLabels[prof.perfil] || prof.perfil}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Badge variant={prof.ativo ? "default" : "secondary"}>
-                  {prof.ativo ? "Ativo" : "Inativo"}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEdit(prof)}
-                    title="Editar profissional"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onConfigAgenda(prof)}
-                    title="Configurar agenda"
-                  >
-                    <Calendar className="h-4 w-4 text-primary" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onToggleStatus(prof)}
-                    title={prof.ativo ? "Desativar" : "Ativar"}
-                  >
-                    {prof.ativo ? (
-                      <PowerOff className="h-4 w-4" />
-                    ) : (
-                      <Power className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+    <DataTable
+      columns={columns}
+      data={profissionais}
+      isLoading={loading}
+      searchPlaceholder="Buscar profissional..."
+      emptyMessage="Nenhum profissional encontrado"
+      selectable={false}
+    />
   );
 };
