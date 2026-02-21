@@ -17,6 +17,18 @@ interface ConsultaManutencaoModalProps {
   onSuccess: () => void;
 }
 
+const TIPO_CONSULTA_LABELS: Record<string, string> = {
+  ativacao: "Ativação",
+  colagem: "Colagem",
+  troca_fio: "Troca de Fio",
+  troca_alinhador: "Troca de Alinhador",
+  emergencia: "Emergência",
+  documentacao: "Documentação",
+  moldagem: "Moldagem",
+  contencao: "Contenção",
+  remocao: "Remoção",
+};
+
 export function ConsultaManutencaoModal({ open, onOpenChange, casoId, tipoTratamento, onSuccess }: ConsultaManutencaoModalProps) {
   const [loading, setLoading] = useState(false);
   const [dataConsulta, setDataConsulta] = useState(new Date().toISOString().split("T")[0]);
@@ -42,6 +54,22 @@ export function ConsultaManutencaoModal({ open, onOpenChange, casoId, tipoTratam
     },
   });
 
+  // Fetch patient_id from the ortho case
+  const { data: casoData } = useQuery({
+    queryKey: ["ortho-case-patient", casoId],
+    queryFn: async () => {
+      if (!casoId) return null;
+      const { data, error } = await supabase
+        .from("ortho_cases")
+        .select("patient_id, clinic_id")
+        .eq("id", casoId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!casoId,
+  });
+
   const resetForm = () => {
     setDataConsulta(new Date().toISOString().split("T")[0]);
     setTipoConsulta("ativacao");
@@ -54,14 +82,59 @@ export function ConsultaManutencaoModal({ open, onOpenChange, casoId, tipoTratam
     setProximaConsulta("");
   };
 
+  // Creates an appointment in the general agenda and returns its ID
+  const createGeneralAppointment = async (
+    patientId: string,
+    dentistId: string,
+    dateStr: string,
+    tipo: string,
+    durationMinutes: number = 15
+  ): Promise<string | null> => {
+    const appointmentDate = new Date(`${dateStr}T09:00:00`);
+    const title = `Ortodontia - ${TIPO_CONSULTA_LABELS[tipo] || tipo}`;
+
+    const { data, error } = await supabase
+      .from("appointments")
+      .insert({
+        patient_id: patientId,
+        dentist_id: dentistId,
+        title,
+        appointment_date: appointmentDate.toISOString(),
+        duration_minutes: durationMinutes,
+        status: "scheduled",
+      })
+      .select("id")
+      .single();
+
+    if (error) {
+      console.error("Erro ao criar agendamento na agenda geral:", error);
+      return null;
+    }
+    return data.id;
+  };
+
   const handleSubmit = async () => {
     if (!casoId || !professionalId) {
       toast.error("Selecione o profissional");
       return;
     }
 
+    if (!casoData?.patient_id) {
+      toast.error("Não foi possível identificar o paciente do caso");
+      return;
+    }
+
     setLoading(true);
     try {
+      // 1. Create appointment in general agenda for the consultation date
+      const appointmentId = await createGeneralAppointment(
+        casoData.patient_id,
+        professionalId,
+        dataConsulta,
+        tipoConsulta
+      );
+
+      // 2. Insert ortho_appointment with link to general appointment
       const { error } = await supabase.from("ortho_appointments").insert({
         case_id: casoId,
         data_consulta: dataConsulta,
@@ -73,11 +146,22 @@ export function ConsultaManutencaoModal({ open, onOpenChange, casoId, tipoTratam
         procedimentos_realizados: procedimentos || null,
         observacoes: observacoes || null,
         proxima_consulta_prevista: proximaConsulta || null,
+        appointment_id: appointmentId,
       });
 
       if (error) throw error;
 
-      toast.success("Consulta registrada com sucesso!");
+      // 3. If there's a next appointment date, create that in the general agenda too
+      if (proximaConsulta) {
+        await createGeneralAppointment(
+          casoData.patient_id,
+          professionalId,
+          proximaConsulta,
+          "ativacao" // default type for next visit
+        );
+      }
+
+      toast.success("Consulta registrada e agendamento sincronizado!");
       resetForm();
       onOpenChange(false);
       onSuccess();
