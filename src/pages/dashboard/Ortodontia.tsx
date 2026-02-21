@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,6 +31,7 @@ const TIPO_MAP: Record<string, string> = {
 };
 
 export default function Ortodontia() {
+  const { clinicId } = useAuth();
   const [novoCasoOpen, setNovoCasoOpen] = useState(false);
   const [detalhesOpen, setDetalhesOpen] = useState(false);
   const [selectedCasoId, setSelectedCasoId] = useState<string | null>(null);
@@ -40,7 +42,8 @@ export default function Ortodontia() {
   const [reajusteOpen, setReajusteOpen] = useState(false);
 
   const { data: casos, refetch } = useQuery({
-    queryKey: ["ortho-cases"],
+    queryKey: ["ortho-cases", clinicId],
+    enabled: !!clinicId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ortho_cases")
@@ -49,6 +52,7 @@ export default function Ortodontia() {
           patient:patients!ortho_cases_patient_id_fkey(full_name),
           professional:profissionais!ortho_cases_professional_id_fkey(nome)
         `)
+        .eq("clinic_id", clinicId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;

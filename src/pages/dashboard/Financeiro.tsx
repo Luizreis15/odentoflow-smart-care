@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 import { NovaTransacaoModal } from "@/components/financeiro/NovaTransacaoModal";
 import { ComissoesTab } from "@/components/financeiro/ComissoesTab";
 import { ReceivablesTab } from "@/components/financeiro/ReceivablesTab";
@@ -25,41 +26,19 @@ interface Transaction {
 }
 
 const Financeiro = () => {
+  const { clinicId: authClinicId } = useAuth();
+  const clinicId = authClinicId || "";
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [clinicId, setClinicId] = useState<string>("");
   const [showNovaTransacao, setShowNovaTransacao] = useState(false);
   const [periodFilter, setPeriodFilter] = useState("de hoje");
   const [activeTab, setActiveTab] = useState("fluxo");
-
-  useEffect(() => {
-    loadClinicId();
-  }, []);
 
   useEffect(() => {
     if (clinicId) {
       loadTransactions();
     }
   }, [clinicId, periodFilter]);
-
-  const loadClinicId = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("clinic_id")
-          .eq("id", user.id)
-          .single();
-
-        if (profile) {
-          setClinicId(profile.clinic_id);
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao carregar clinic_id:", error);
-    }
-  };
 
   const loadTransactions = async () => {
     try {

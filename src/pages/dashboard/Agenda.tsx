@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
+import { useAuth } from "@/contexts/AuthContext";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths, isSameDay, isSameMonth, parseISO, isToday, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -128,6 +129,7 @@ const isPastSlot = (date: Date, time: string) => {
 };
 
 const Agenda = () => {
+  const { clinicId: authClinicId } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -200,41 +202,35 @@ const Agenda = () => {
   }, [searchParams, setSearchParams]);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (authClinicId) loadData();
+  }, [authClinicId]);
+
+  useEffect(() => {
+    if (authClinicId) loadAppointments();
+  }, [currentMonth, authClinicId]);
 
   const loadData = async () => {
+    if (!authClinicId) return;
     try {
       setLoading(true);
       
-      // Load patients
+      // Load patients filtered by clinic
       const { data: patientsData, error: patientsError } = await supabase
         .from("patients")
         .select("id, full_name")
+        .eq("clinic_id", authClinicId)
         .order("full_name");
       
       if (patientsError) throw patientsError;
       setPatients(patientsData || []);
 
-      // Load dentists from user's clinic
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("clinic_id")
-        .eq("id", user.id)
-        .single();
-
-      if (!profile?.clinic_id) throw new Error("Clínica não encontrada");
-      
-      setClinicId(profile.clinic_id);
+      setClinicId(authClinicId);
 
       // Load clinic config
       const { data: configData } = await supabase
         .from("configuracoes_clinica")
         .select("horario_funcionamento")
-        .eq("clinica_id", profile.clinic_id)
+        .eq("clinica_id", authClinicId)
         .maybeSingle();
 
       if (configData?.horario_funcionamento) {
@@ -244,16 +240,11 @@ const Agenda = () => {
       const { data: dentistsData, error: dentistsError } = await supabase
         .from("profissionais")
         .select("id, nome, cro, especialidade, cor")
-        .eq("clinica_id", profile.clinic_id)
+        .eq("clinica_id", authClinicId)
         .eq("ativo", true)
         .order("nome");
       
-      if (dentistsError) {
-        console.error("Erro ao carregar dentistas:", dentistsError);
-        throw dentistsError;
-      }
-      
-      console.log("Dentistas carregados:", dentistsData);
+      if (dentistsError) throw dentistsError;
       setDentists(dentistsData || []);
 
       // Show info if no data
@@ -275,7 +266,12 @@ const Agenda = () => {
   };
 
   const loadAppointments = async () => {
+    if (!authClinicId) return;
     try {
+      // Filter by visible month range (with buffer for week view)
+      const rangeStart = format(startOfWeek(startOfMonth(currentMonth), { locale: ptBR }), "yyyy-MM-dd'T'00:00:00");
+      const rangeEnd = format(endOfWeek(endOfMonth(currentMonth), { locale: ptBR }), "yyyy-MM-dd'T'23:59:59");
+
       const { data, error } = await supabase
         .from("appointments")
         .select(`
@@ -289,6 +285,8 @@ const Agenda = () => {
           patient:patients(id, full_name),
           dentist:profissionais(id, nome, cor)
         `)
+        .gte("appointment_date", rangeStart)
+        .lte("appointment_date", rangeEnd)
         .order("appointment_date");
       
       if (error) throw error;
