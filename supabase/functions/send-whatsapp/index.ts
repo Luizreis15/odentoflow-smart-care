@@ -9,7 +9,7 @@ const corsHeaders = {
 interface WhatsAppRequest {
   clinicId: string;
   phone: string;
-  messageType: 'confirmation' | 'reminder' | 'custom';
+  messageType: 'confirmation' | 'reminder' | 'review' | 'campaign' | 'custom';
   appointmentData?: {
     patientName: string;
     date: string;
@@ -18,10 +18,11 @@ interface WhatsAppRequest {
     dentistName?: string;
   };
   customMessage?: string;
+  googleReviewLink?: string;
+  patientName?: string;
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -31,7 +32,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { clinicId, phone, messageType, appointmentData, customMessage }: WhatsAppRequest = await req.json();
+    const { clinicId, phone, messageType, appointmentData, customMessage, googleReviewLink, patientName }: WhatsAppRequest = await req.json();
 
     console.log('[SEND-WHATSAPP] Request received:', { clinicId, phone, messageType });
 
@@ -51,7 +52,7 @@ serve(async (req) => {
       );
     }
 
-    // Formatar número de telefone (remover caracteres especiais e adicionar código do país)
+    // Formatar número de telefone
     let formattedPhone = phone.replace(/\D/g, '');
     if (formattedPhone.length === 11 || formattedPhone.length === 10) {
       formattedPhone = '55' + formattedPhone;
@@ -64,7 +65,6 @@ serve(async (req) => {
       message = config.template_confirmacao || 
         `Olá ${appointmentData.patientName}! 🦷\n\nSua consulta está confirmada:\n📅 Data: ${appointmentData.date}\n⏰ Horário: ${appointmentData.time}\n${appointmentData.procedure ? `📋 Procedimento: ${appointmentData.procedure}\n` : ''}${appointmentData.dentistName ? `👨‍⚕️ Profissional: ${appointmentData.dentistName}\n` : ''}\nPor favor, chegue com 10 minutos de antecedência.\n\nResponda SIM para confirmar ou NÃO para reagendar.`;
       
-      // Substituir variáveis no template
       message = message
         .replace('{paciente}', appointmentData.patientName)
         .replace('{data}', appointmentData.date)
@@ -82,7 +82,25 @@ serve(async (req) => {
         .replace('{hora}', appointmentData.time)
         .replace('{procedimento}', appointmentData.procedure || '')
         .replace('{profissional}', appointmentData.dentistName || '');
-        
+
+    } else if (messageType === 'review') {
+      const name = patientName || appointmentData?.patientName || 'Paciente';
+      const link = googleReviewLink || '';
+      message = `Olá ${name}! 😊\n\nObrigado por confiar em nós! Seu feedback é muito importante.\n\n⭐ Avalie nossa clínica no Google:\n${link}\n\nSua opinião nos ajuda a melhorar cada vez mais! 🙏`;
+      
+      message = message
+        .replace('{paciente}', name)
+        .replace('{link_review}', link);
+
+    } else if (messageType === 'campaign' && customMessage) {
+      message = customMessage;
+      if (patientName) {
+        message = message.replace('{paciente}', patientName);
+      }
+      if (googleReviewLink) {
+        message = message.replace('{link_review}', googleReviewLink);
+      }
+
     } else if (messageType === 'custom' && customMessage) {
       message = customMessage;
     } else {
@@ -95,17 +113,12 @@ serve(async (req) => {
     // Enviar mensagem via Z-API
     const zapiUrl = `https://api.z-api.io/instances/${config.instance_id}/token/${config.instance_token}/send-text`;
     
-    console.log('[SEND-WHATSAPP] Sending to Z-API:', { phone: formattedPhone, zapiUrl });
+    console.log('[SEND-WHATSAPP] Sending to Z-API:', { phone: formattedPhone, messageType });
 
     const zapiResponse = await fetch(zapiUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        phone: formattedPhone,
-        message: message,
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: formattedPhone, message }),
     });
 
     const zapiResult = await zapiResponse.json();
@@ -113,13 +126,31 @@ serve(async (req) => {
 
     if (!zapiResponse.ok) {
       console.error('[SEND-WHATSAPP] Z-API error:', zapiResult);
+
+      // Log failure
+      await supabase.from('whatsapp_message_log').insert({
+        clinic_id: clinicId,
+        phone: formattedPhone,
+        message_type: messageType,
+        status: 'failed',
+        error_message: JSON.stringify(zapiResult),
+      }).then(() => {});
+
       return new Response(
         JSON.stringify({ error: 'Erro ao enviar mensagem', details: zapiResult }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Registrar envio no log (opcional - criar tabela se necessário)
+    // Log success
+    await supabase.from('whatsapp_message_log').insert({
+      clinic_id: clinicId,
+      phone: formattedPhone,
+      message_type: messageType,
+      status: 'sent',
+      zapi_message_id: zapiResult.messageId,
+    }).then(() => {});
+
     console.log('[SEND-WHATSAPP] Message sent successfully');
 
     return new Response(

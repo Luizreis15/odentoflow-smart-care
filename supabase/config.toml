@@ -26,3 +26,9 @@ verify_jwt = false
 
 [functions.send-appointment-reminders]
 verify_jwt = false
+
+[functions.send-campaign-messages]
+verify_jwt = false
+
+[functions.send-post-appointment-review]
+verify_jwt = false
