@@ -1,109 +1,49 @@
 
+# Ortodontia: Lista Compacta com Indicador de Agendamento
 
-# Otimizacao de Performance -- Carregamento de Paginas
+## O que muda
 
-## Problema
-Cada pagina do dashboard executa 3-4 queries sequenciais de autenticacao (session, user_roles, profiles, clinicas) antes de renderizar qualquer conteudo. Isso causa 800ms-1.5s de tela em branco em cada navegacao.
+Trocar o layout atual de **cards grandes em grid** por uma **lista compacta em tabela/linhas**, ordenada alfabeticamente pelo nome do paciente. Cada linha mostra as informacoes essenciais de forma condensada e inclui um indicador visual claro de "agendado" ou "sem agendamento futuro".
 
-## Solucao: AuthProvider Centralizado
-
-### Arquitetura Atual (lenta)
+## Layout proposto (uma linha por caso)
 
 ```text
-Usuario clica em "Ortodontia"
-  → Wrapper: getSession() .............. 200ms
-  → Wrapper: query user_roles .......... 150ms
-  → Wrapper: query profiles ............ 150ms
-  → Wrapper: query clinicas ............ 150ms
-  → Carrega componente Ortodontia
-  → Ortodontia: query ortho_cases ...... 200ms
-  TOTAL: ~850ms de espera
+| Nome Paciente     | Tipo         | Profissional   | Status  | Progresso | Agendamento        |
+|-------------------|-------------|----------------|---------|-----------|---------------------|
+| Ana Silva         | Ap. Fixo    | Dr. Carlos     | Ativo   | 8/24m     | 15/03 - 14:00  (verde) |
+| Bruno Costa       | Alinhadores | Dra. Maria     | Ativo   | 3/18m     | Sem agendamento (vermelho) |
 ```
 
-### Arquitetura Nova (rapida)
+- Indicador verde com data do proximo agendamento quando existe
+- Indicador vermelho "Sem agendamento" quando nao ha consulta futura
+- Ordem alfabetica por nome do paciente
 
-```text
-Login (1 vez):
-  → AuthProvider: getSession + profiles + roles + clinica ... cached
+## Novo filtro: Agendamento
 
-Usuario clica em "Ortodontia"
-  → Wrapper: le do AuthContext (0ms, ja em memoria)
-  → Carrega componente Ortodontia
-  → Ortodontia: query ortho_cases ...... 200ms
-  TOTAL: ~200ms de espera
-```
+Adicionar um Select ao lado dos filtros existentes:
+- **Todos**
+- **Com agendamento** (tem consulta futura)
+- **Sem agendamento** (alerta para recepcionista agendar)
 
-## Implementacao
+## Implementacao tecnica
 
-### 1. Criar `src/contexts/AuthContext.tsx` (novo arquivo)
-- Centraliza toda a logica de autenticacao em um unico Provider
-- Faz as queries de session, profile, user_roles e clinica **uma unica vez** no login
-- Armazena em estado: `user`, `profile`, `clinicId`, `isSuperAdmin`, `isImpersonating`
-- Expoe hook `useAuth()` para qualquer componente consumir
-- Escuta `onAuthStateChange` para reagir a login/logout
-- Inclui funcao `refreshProfile()` para recarregar manualmente quando necessario
+### Arquivo modificado: `src/pages/dashboard/Ortodontia.tsx`
 
-### 2. Atualizar `src/App.tsx`
-- Envolver o app com `<AuthProvider>` (dentro do BrowserRouter, para ter acesso ao navigate)
-- Mover o AuthProvider para dentro do BrowserRouter
+1. **Nova query**: buscar o proximo agendamento futuro de cada paciente de orto
+   - Query na tabela `appointments` onde `patient_id` esta nos pacientes dos casos e `appointment_date > now()` e `status` nao e cancelado
+   - Agrupar por `patient_id` pegando o `MIN(appointment_date)` mais proximo
 
-### 3. Simplificar TODOS os Wrappers (14 arquivos)
-Cada Wrapper sera reduzido de ~70 linhas para ~15 linhas:
+2. **Ordenacao**: trocar `order("created_at")` para ordenar no frontend por `patient.full_name` alfabeticamente
 
-Arquivos afetados:
-- `src/pages/dashboard/OrtodontiaWrapper.tsx`
-- `src/pages/dashboard/RelatoriosWrapper.tsx`
-- `src/pages/dashboard/AgendaWrapper.tsx`
-- `src/pages/dashboard/ProntuarioWrapper.tsx`
-- `src/pages/dashboard/FinanceiroWrapper.tsx`
-- `src/pages/dashboard/CRMWrapper.tsx`
-- `src/pages/dashboard/CRMAtendimentoWrapper.tsx`
-- `src/pages/dashboard/PortalPacienteWrapper.tsx`
-- `src/pages/dashboard/IAAssistenteWrapper.tsx`
-- `src/pages/dashboard/ProtesesWrapper.tsx`
-- `src/pages/dashboard/EstoqueWrapper.tsx`
-- `src/pages/dashboard/ProdutosWrapper.tsx`
-- `src/pages/dashboard/MovimentacoesWrapper.tsx`
-- `src/pages/dashboard/PerfilWrapper.tsx`
-- `src/pages/dashboard/ConfiguracoesWrapper.tsx`
-- `src/pages/dashboard/AssinaturaWrapper.tsx`
+3. **Layout**: substituir o grid de cards por uma lista compacta usando `Card` com linhas horizontais (cada linha = 1 caso, informacoes lado a lado em flex row)
 
-Cada wrapper passara de:
-```
-useEffect com 4 queries sequenciais ao banco
-if (loading) return null
-```
-Para:
-```
-const { profile, isLoading } = useAuth()
-if (isLoading) return skeleton
-```
+4. **Filtro de agendamento**: novo state `filtroAgendamento` com opcoes "todos", "com_agendamento", "sem_agendamento"
 
-### 4. Simplificar `src/pages/Dashboard.tsx`
-- Remover toda a logica de auth duplicada (60+ linhas)
-- Consumir `useAuth()` diretamente
-- Manter toda a renderizacao existente
+5. **Indicador visual**: Badge verde "dd/MM HH:mm" ou Badge vermelha "Sem agendamento" na extremidade direita de cada linha
 
-### 5. Otimizar `src/contexts/SubscriptionContext.tsx`
-- Nao chamar Edge Function no mount inicial
-- Fazer lazy check: so chamar `check-subscription` quando o dashboard efetivamente renderizar
-- Reduzir intervalo de auto-refresh de 60s para 5 minutos
+### Dados
 
-## Resultado Esperado
-- Navegacao entre paginas do dashboard: de ~850ms para ~200ms
-- Primeira carga apos login: mesma velocidade (queries feitas 1 vez)
-- Reducao de ~50 queries por sessao tipica para ~10
-- Tela em branco eliminada (skeletons imediatos em vez de `return null`)
+A query de agendamentos futuros sera feita em paralelo com a query de casos via `useQuery` separado, cruzando `patient_id` no frontend para determinar quem tem ou nao agendamento.
 
-## Arquivos Criados
-1. `src/contexts/AuthContext.tsx`
-
-## Arquivos Modificados
-1. `src/App.tsx` (adicionar AuthProvider)
-2. `src/pages/Dashboard.tsx` (simplificar auth)
-3. `src/contexts/SubscriptionContext.tsx` (lazy check)
-4. 16 Wrapper files (simplificar para useAuth)
-
-## Sem Impacto Visual
-Nenhuma alteracao de layout, cores ou componentes. Apenas logica interna de carregamento.
-
+### Sem alteracao no banco de dados
+Tudo usa tabelas existentes (`ortho_cases`, `appointments`, `patients`, `profissionais`).
