@@ -61,24 +61,66 @@ export default function Ortodontia() {
     return [...new Set(casos.map((c: any) => c.patient_id))];
   }, [casos]);
 
+  // Extrair case_ids para buscar ortho_appointments
+  const caseIds = useMemo(() => {
+    if (!casos) return [];
+    return casos.map((c: any) => c.id);
+  }, [casos]);
+
+  // Map case_id -> patient_id
+  const caseToPatient = useMemo(() => {
+    if (!casos) return {};
+    const map: Record<string, string> = {};
+    casos.forEach((c: any) => { map[c.id] = c.patient_id; });
+    return map;
+  }, [casos]);
+
   const { data: nextAppointments } = useQuery({
-    queryKey: ["ortho-next-appointments", patientIds],
+    queryKey: ["ortho-next-appointments", patientIds, caseIds],
     enabled: patientIds.length > 0,
     queryFn: async () => {
+      const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+
+      // 1) ortho_appointments: proxima_consulta_prevista >= hoje
+      const { data: orthoAppts, error: orthoErr } = await supabase
+        .from("ortho_appointments")
+        .select("case_id, proxima_consulta_prevista")
+        .in("case_id", caseIds)
+        .gte("proxima_consulta_prevista", today)
+        .order("proxima_consulta_prevista", { ascending: true });
+      if (orthoErr) throw orthoErr;
+
+      // 2) appointments (fallback agenda geral)
       const now = new Date().toISOString();
-      const { data, error } = await supabase
+      const { data: generalAppts, error: genErr } = await supabase
         .from("appointments")
         .select("patient_id, appointment_date")
         .in("patient_id", patientIds)
         .gt("appointment_date", now)
         .neq("status", "cancelled")
         .order("appointment_date", { ascending: true });
-      if (error) throw error;
-      // Agrupar: primeiro agendamento por paciente
+      if (genErr) throw genErr;
+
+      // Combinar: pegar a data mais próxima por patient_id
       const map: Record<string, string> = {};
-      data?.forEach((a: any) => {
-        if (!map[a.patient_id]) map[a.patient_id] = a.appointment_date;
+
+      // Ortho appointments (fonte principal)
+      orthoAppts?.forEach((a: any) => {
+        const pid = caseToPatient[a.case_id];
+        if (pid && a.proxima_consulta_prevista) {
+          if (!map[pid] || a.proxima_consulta_prevista < map[pid]) {
+            map[pid] = a.proxima_consulta_prevista;
+          }
+        }
       });
+
+      // General appointments (fallback)
+      generalAppts?.forEach((a: any) => {
+        if (!map[a.patient_id] || a.appointment_date < map[a.patient_id]) {
+          map[a.patient_id] = a.appointment_date;
+        }
+      });
+
       return map;
     },
   });
