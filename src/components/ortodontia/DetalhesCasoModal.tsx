@@ -142,7 +142,7 @@ export function DetalhesCasoModal({ open, onOpenChange, casoId, onRefresh }: Det
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <div className="flex items-start justify-between gap-4 pr-8">
+            <div className="flex items-start justify-between gap-4 pr-10">
               <div>
                 <DialogTitle className="text-xl">{caso.patient?.full_name}</DialogTitle>
                 <p className="text-sm text-muted-foreground mt-1">
