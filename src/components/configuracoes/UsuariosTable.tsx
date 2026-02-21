@@ -1,9 +1,8 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Mail } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { DataTable, DataTableColumn } from "@/components/desktop/DataTable";
 
 interface Usuario {
   id: string;
@@ -43,85 +42,57 @@ const perfilColors: Record<string, string> = {
 };
 
 export const UsuariosTable = ({ usuarios, loading, onEdit, onToggleStatus, onResendInvite }: UsuariosTableProps) => {
-  if (loading) {
-    return (
-      <div className="space-y-3">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-16 w-full" />
-        ))}
-      </div>
-    );
-  }
-
-  if (usuarios.length === 0) {
-    return (
-      <div className="text-center py-12 text-muted-foreground border rounded-lg">
-        Nenhum usuário encontrado
-      </div>
-    );
-  }
+  const columns: DataTableColumn<Usuario>[] = [
+    { key: "nome", label: "Nome", sortable: true, className: "font-medium" },
+    { key: "email", label: "E-mail", sortable: true },
+    { key: "cargo", label: "Cargo", sortable: true },
+    {
+      key: "perfil",
+      label: "Perfil",
+      sortable: true,
+      render: (user) => (
+        <Badge className={perfilColors[user.perfil] || ""}>
+          {perfilLabels[user.perfil] || user.perfil}
+        </Badge>
+      ),
+    },
+    {
+      key: "acoes",
+      label: "Ações",
+      headerClassName: "text-right",
+      className: "text-right",
+      render: (user) => (
+        <TooltipProvider>
+          <div className="flex justify-end gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" onClick={() => onResendInvite(user)}>
+                  <Mail className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent><p>Reenviar convite</p></TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" onClick={() => onEdit(user)}>
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent><p>Editar usuário</p></TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
+      ),
+    },
+  ];
 
   return (
-    <TooltipProvider>
-      <div className="border rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>E-mail</TableHead>
-              <TableHead>Cargo</TableHead>
-              <TableHead>Perfil</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {usuarios.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.nome}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.cargo || "-"}</TableCell>
-                <TableCell>
-                  <Badge className={perfilColors[user.perfil] || ""}>
-                    {perfilLabels[user.perfil] || user.perfil}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onResendInvite(user)}
-                        >
-                          <Mail className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Reenviar convite</p>
-                      </TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onEdit(user)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Editar usuário</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </TooltipProvider>
+    <DataTable
+      columns={columns}
+      data={usuarios}
+      isLoading={loading}
+      searchPlaceholder="Buscar usuário..."
+      emptyMessage="Nenhum usuário encontrado"
+    />
   );
 };
