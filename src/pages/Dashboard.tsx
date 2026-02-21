@@ -4,24 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
 import TrialBanner from "@/components/TrialBanner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { DashboardMetrics } from "@/components/dashboard/DashboardMetrics";
 import { ModuleCards } from "@/components/dashboard/ModuleCards";
 import { UpcomingAppointments } from "@/components/dashboard/UpcomingAppointments";
+import { DashboardAgendaTable } from "@/components/dashboard/DashboardAgendaTable";
+import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileHome from "@/pages/mobile/MobileHome";
-import { User, LogOut, Settings, CreditCard, Search } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import logoFlowdent from '@/assets/logo-flowdent.png';
 
 interface Profile {
   full_name: string;
@@ -276,33 +267,40 @@ const Dashboard = () => {
       <div className="space-y-6">
         {/* Saudação */}
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-foreground">
+          <h1 className="text-xl lg:text-2xl font-semibold text-foreground">
             {isSuperAdmin 
               ? "Painel Super Admin" 
-              : `Olá, ${firstName}! ${getGreeting()}!`
+              : `${getGreeting()}, ${firstName}`
             }
           </h1>
           {!isSuperAdmin && (
-            <p className="text-sm text-muted-foreground mt-1">
-              Escolha um módulo para começar ou confira o resumo do dia.
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Confira o resumo do dia da sua clínica.
             </p>
           )}
         </div>
 
         {activeClinicId && (
           <>
-            {/* Cards de Módulos - Estilo Clinicorp */}
-            <ModuleCards />
-            
-            {/* Resumo do Dia */}
-            <div className="pt-4 border-t border-border">
-              <h2 className="text-lg font-semibold text-foreground mb-4">📊 Resumo do Dia</h2>
-              <DashboardMetrics clinicId={activeClinicId} />
+            {/* Linha 1: KPIs */}
+            <DashboardMetrics clinicId={activeClinicId} />
+
+            {/* Linha 2: Agenda do dia (desktop) / Module Cards (mobile kept via MobileHome) */}
+            <div className="hidden lg:block">
+              <DashboardAgendaTable clinicId={activeClinicId} />
+            </div>
+
+            {/* Mobile: Module Cards (still useful for quick nav on mobile web fallback) */}
+            <div className="lg:hidden">
+              <ModuleCards />
             </div>
             
-            {/* Próximos Agendamentos */}
-            <div className="lg:max-w-2xl">
-              <UpcomingAppointments clinicId={activeClinicId} />
+            {/* Linha 3: Alertas operacionais */}
+            <div>
+              <h2 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">
+                Alertas Operacionais
+              </h2>
+              <DashboardAlerts clinicId={activeClinicId} />
             </div>
           </>
         )}
