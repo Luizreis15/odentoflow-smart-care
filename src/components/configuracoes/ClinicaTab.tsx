@@ -56,6 +56,7 @@ export function ClinicaTab({ clinicaId }: ClinicaTabProps) {
         telefone: clinicaData?.telefone || "",
         imprimir_papel_timbrado: configData?.imprimir_papel_timbrado || false,
         horario_funcionamento: configData?.horario_funcionamento || DEFAULT_HORARIO,
+        google_review_link: (clinicaData as any)?.google_review_link || "",
         // Extrair endereço do JSONB
         cep: address?.cep || "",
         rua: address?.rua || "",
@@ -134,6 +135,7 @@ export function ClinicaTab({ clinicaId }: ClinicaTabProps) {
           nome: config.nome,
           cnpj: config.cnpj,
           telefone: config.telefone,
+          google_review_link: config.google_review_link || null,
           address: {
             cep: config.cep,
             rua: config.rua,
@@ -143,7 +145,7 @@ export function ClinicaTab({ clinicaId }: ClinicaTabProps) {
             cidade: config.cidade,
             uf: config.uf
           }
-        })
+        } as any)
         .eq("id", clinicaId);
 
       if (clinicaError) throw clinicaError;
@@ -311,6 +313,27 @@ export function ClinicaTab({ clinicaId }: ClinicaTabProps) {
             <Label htmlFor="papel-timbrado">
               Imprimir com papel timbrado
             </Label>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Google Review</CardTitle>
+          <CardDescription>Link para avaliação no Google Meu Negócio (enviado automaticamente após consultas)</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="google_review_link">Link do Google Meu Negócio</Label>
+            <Input
+              id="google_review_link"
+              value={config?.google_review_link || ""}
+              onChange={(e) => setConfig({ ...config, google_review_link: e.target.value })}
+              placeholder="https://g.page/r/..."
+            />
+            <p className="text-xs text-muted-foreground">
+              Cole aqui o link de avaliação do Google da sua clínica. Ele será enviado automaticamente via WhatsApp após cada consulta concluída.
+            </p>
           </div>
         </CardContent>
       </Card>
