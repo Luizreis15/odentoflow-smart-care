@@ -100,6 +100,13 @@ export function AdicionarEtapaModal({
     setLoading(true);
 
     try {
+      // Buscar dados da prótese para criar o agendamento
+      const { data: proteseData } = await supabase
+        .from("proteses")
+        .select("paciente_id, profissional_id, procedimento_nome")
+        .eq("id", proteseId)
+        .single();
+
       // Criar a nova etapa
       const { data: novaEtapa, error } = await supabase
         .from("protese_etapas")
@@ -125,6 +132,21 @@ export function AdicionarEtapaModal({
         .from("proteses")
         .update({ etapa_atual_id: novaEtapa.id })
         .eq("id", proteseId);
+
+      // Criar agendamento na agenda geral se há data de retorno prevista
+      if (formData.data_retorno_prevista && proteseData) {
+        await supabase
+          .from("appointments")
+          .insert({
+            patient_id: proteseData.paciente_id,
+            dentist_id: proteseData.profissional_id,
+            title: `Prótese - ${nomeEtapa} - ${proteseData.procedimento_nome}`,
+            appointment_date: `${formData.data_retorno_prevista}T09:00:00`,
+            duration_minutes: 30,
+            status: "scheduled",
+            description: `Etapa protética: ${nomeEtapa}. Prótese ID: ${proteseId}`,
+          });
+      }
 
       toast({
         title: "Etapa adicionada!",

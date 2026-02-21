@@ -193,7 +193,22 @@ export function NovaProteseModal({
         .update({ etapa_atual_id: etapa.id })
         .eq("id", protese.id);
 
-      // 4. Se tem custo, criar despesa
+      // 4. Criar agendamento na agenda geral se há data de retorno prevista
+      if (formData.data_retorno_prevista && formData.paciente_id && formData.profissional_id) {
+        await supabase
+          .from("appointments")
+          .insert({
+            patient_id: formData.paciente_id,
+            dentist_id: formData.profissional_id,
+            title: `Prótese - ${formData.etapa_nome || "Coleta de Moldagem"} - ${formData.procedimento_nome}`,
+            appointment_date: `${formData.data_retorno_prevista}T09:00:00`,
+            duration_minutes: 30,
+            status: "scheduled",
+            description: `Etapa protética: ${formData.etapa_nome || "Coleta de Moldagem"}. Prótese ID: ${protese.id}`,
+          });
+      }
+
+      // 5. Se tem custo, criar despesa
       const custoEtapa = formData.etapa_custo ? parseFloat(formData.etapa_custo) : 0;
       if (custoEtapa > 0) {
         await supabase
