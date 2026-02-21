@@ -20,7 +20,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/contexts/AuthContext";
 import logoFlowdent from "@/assets/logo-flowdent.png";
 
 interface NavItem {
@@ -85,7 +85,7 @@ const bottomNavigation: NavItem[] = [
 
 const DesktopSidebar = () => {
   const location = useLocation();
-  const { isSuperAdmin } = usePermissions();
+  const { isSuperAdmin } = useAuth();
   const [openSubMenu, setOpenSubMenu] = useState<string | null>(null);
 
   const isActive = (href: string) => location.pathname === href;

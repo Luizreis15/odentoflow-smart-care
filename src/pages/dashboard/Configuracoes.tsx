@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { InfoIcon } from "lucide-react";
-import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/contexts/AuthContext";
 import { ProfissionaisTab } from "@/components/configuracoes/ProfissionaisTab";
 import { UsuariosTab } from "@/components/configuracoes/UsuariosTab";
 import { ProcedimentosTab } from "@/components/configuracoes/ProcedimentosTab";
@@ -23,7 +23,7 @@ const Configuracoes = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
   const [clinica, setClinica] = useState<any>(null);
-  const { isAdmin, isSuperAdmin, loading: permissionsLoading } = usePermissions();
+  const { isAdmin, isSuperAdmin, isLoading: permissionsLoading } = useAuth();
 
   useEffect(() => {
     if (!permissionsLoading) {

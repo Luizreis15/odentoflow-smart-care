@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Shield, LayoutDashboard, FileText, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +15,7 @@ export default function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { isSuperAdmin, loading } = usePermissions();
+  const { isSuperAdmin, isLoading: loading } = useAuth();
   const [userName, setUserName] = useState("");
 
   useEffect(() => {
