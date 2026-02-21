@@ -29,7 +29,7 @@ interface Campaign {
 
 const targetOptions = [
   { value: "all_clinics", label: "Todas as Clínicas" },
-  { value: "trial", label: "Clínicas em Trial" },
+  { value: "trial", label: "Clínicas em Teste Grátis" },
   { value: "active", label: "Clínicas Ativas" },
   { value: "inactive", label: "Clínicas Inativas" },
   { value: "leads", label: "Todos os Leads" },

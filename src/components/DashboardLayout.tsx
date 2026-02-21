@@ -44,7 +44,7 @@ interface DashboardLayoutProps {
 
 const navigation = [
   {
-    name: "Dashboard",
+    name: "Painel",
     href: "/dashboard",
     icon: LayoutDashboard,
   },
@@ -91,7 +91,7 @@ const navigation = [
     description: "Controle de produtos",
     subItems: [
       {
-        name: "Dashboard",
+        name: "Painel",
         href: "/dashboard/estoque",
       },
       {

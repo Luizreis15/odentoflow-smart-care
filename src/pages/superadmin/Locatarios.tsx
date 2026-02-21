@@ -163,7 +163,7 @@ export default function Locatarios() {
   const getStatusBadge = (status: string | null) => {
     const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
       active: { variant: "default", label: "Ativo" },
-      trialing: { variant: "secondary", label: "Trial" },
+      trialing: { variant: "secondary", label: "Teste Grátis" },
       past_due: { variant: "destructive", label: "Inadimplente" },
       canceled: { variant: "outline", label: "Cancelado" },
       incomplete: { variant: "outline", label: "Incompleto" },
@@ -236,7 +236,7 @@ export default function Locatarios() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Em Trial
+              Em Teste Grátis
             </CardTitle>
           </CardHeader>
           <CardContent>

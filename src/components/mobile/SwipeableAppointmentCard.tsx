@@ -74,7 +74,8 @@ const SwipeableAppointmentCard = ({
   );
 
   const getStatusConfig = (status: string | null) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
+      case "confirmed":
       case "confirmado":
         return {
           variant: "default" as const,
@@ -83,6 +84,7 @@ const SwipeableAppointmentCard = ({
           bgClass: "bg-[hsl(var(--card-green))]",
           avatarClass: "bg-[hsl(var(--success-green))]/20 text-[hsl(var(--success-green))]",
         };
+      case "cancelled":
       case "cancelado":
         return {
           variant: "destructive" as const,
@@ -91,6 +93,7 @@ const SwipeableAppointmentCard = ({
           bgClass: "bg-red-50",
           avatarClass: "bg-[hsl(var(--error-red))]/20 text-[hsl(var(--error-red))]",
         };
+      case "completed":
       case "concluido":
         return {
           variant: "secondary" as const,
@@ -99,6 +102,7 @@ const SwipeableAppointmentCard = ({
           bgClass: "bg-muted/50",
           avatarClass: "bg-muted text-muted-foreground",
         };
+      case "scheduled":
       case "agendado":
         return {
           variant: "outline" as const,
@@ -106,6 +110,22 @@ const SwipeableAppointmentCard = ({
           borderClass: "border-l-4 border-l-[hsl(var(--flowdent-blue))]",
           bgClass: "bg-[hsl(var(--card-blue))]",
           avatarClass: "bg-[hsl(var(--flowdent-blue))]/20 text-[hsl(var(--flowdent-blue))]",
+        };
+      case "no_show":
+        return {
+          variant: "destructive" as const,
+          label: "Faltou",
+          borderClass: "border-l-4 border-l-[hsl(var(--error-red))]",
+          bgClass: "bg-red-50",
+          avatarClass: "bg-[hsl(var(--error-red))]/20 text-[hsl(var(--error-red))]",
+        };
+      case "waiting":
+        return {
+          variant: "outline" as const,
+          label: "Aguardando",
+          borderClass: "border-l-4 border-l-[hsl(var(--warning-amber))]",
+          bgClass: "bg-[hsl(var(--card-amber))]",
+          avatarClass: "bg-[hsl(var(--warning-amber))]/20 text-[hsl(var(--warning-amber))]",
         };
       default:
         return {

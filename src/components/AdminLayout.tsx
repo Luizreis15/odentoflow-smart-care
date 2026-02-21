@@ -102,7 +102,7 @@ const AdminLayout = () => {
   };
 
   const navItems = [
-    { path: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { path: "/admin/dashboard", label: "Painel", icon: LayoutDashboard },
     { path: "/admin/users", label: "Usuários", icon: Users },
     { path: "/admin/clinics", label: "Clínicas", icon: Building2 },
     { path: "/admin/leads", label: "Leads", icon: UserPlus },
