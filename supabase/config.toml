@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.send-whatsapp]
 verify_jwt = false
+
+[functions.generate-ortho-installments]
+verify_jwt = false
+
+[functions.ortho-price-adjustment]
+verify_jwt = false

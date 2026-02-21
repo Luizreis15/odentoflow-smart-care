@@ -1,10 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DollarSign, CheckCircle, Clock, AlertTriangle, RefreshCw, TrendingUp } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
+import { ReajusteIndividualModal } from "./ReajusteIndividualModal";
 
 interface OrthoFinanceiroTabProps {
   casoId: string;
@@ -25,20 +29,36 @@ export function OrthoFinanceiroTab({
   diaVencimento,
   totalMeses,
 }: OrthoFinanceiroTabProps) {
-  // Fetch receivable titles linked to the budget
-  const { data: titulos } = useQuery({
-    queryKey: ["ortho-receivables", budgetId],
+  const [generating, setGenerating] = useState(false);
+  const [reajusteOpen, setReajusteOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Fetch receivable titles linked to the case (ortho_case_id) or budget
+  const { data: titulos, refetch } = useQuery({
+    queryKey: ["ortho-receivables", casoId, budgetId],
     queryFn: async () => {
-      if (!budgetId) return [];
-      const { data, error } = await supabase
+      // Try ortho_case_id first
+      let { data, error } = await supabase
         .from("receivable_titles")
         .select("*")
-        .eq("budget_id", budgetId)
+        .eq("ortho_case_id", casoId)
         .order("due_date", { ascending: true });
+
       if (error) throw error;
-      return data;
+
+      // Fallback to budget_id if no ortho results
+      if ((!data || data.length === 0) && budgetId) {
+        const res = await supabase
+          .from("receivable_titles")
+          .select("*")
+          .eq("budget_id", budgetId)
+          .order("due_date", { ascending: true });
+        if (res.error) throw res.error;
+        data = res.data;
+      }
+
+      return data || [];
     },
-    enabled: !!budgetId,
   });
 
   const totalPago = titulos?.filter((t: any) => t.status === "paid").reduce((acc: number, t: any) => acc + Number(t.amount), 0) || 0;
@@ -58,8 +78,48 @@ export function OrthoFinanceiroTab({
     return <Badge variant="outline" className="text-[10px]">Pendente</Badge>;
   };
 
+  const handleGenerateInstallments = async () => {
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-ortho-installments", {
+        body: { ortho_case_id: casoId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`${data.count} parcela(s) gerada(s) com sucesso!`);
+      refetch();
+    } catch (err: any) {
+      toast.error("Erro ao gerar parcelas: " + err.message);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleReajusteSuccess = () => {
+    refetch();
+    queryClient.invalidateQueries({ queryKey: ["ortho-case-detail", casoId] });
+  };
+
+  const hasTitulos = titulos && titulos.length > 0;
+
   return (
     <div className="space-y-4">
+      {/* Action buttons */}
+      <div className="flex flex-wrap gap-2 justify-end">
+        {!hasTitulos && valorMensalidade && totalMeses && (
+          <Button size="sm" onClick={handleGenerateInstallments} disabled={generating}>
+            <RefreshCw className={`w-4 h-4 mr-2 ${generating ? "animate-spin" : ""}`} />
+            {generating ? "Gerando..." : "Gerar Parcelas"}
+          </Button>
+        )}
+        {hasTitulos && valorMensalidade && (
+          <Button size="sm" variant="outline" onClick={() => setReajusteOpen(true)}>
+            <TrendingUp className="w-4 h-4 mr-2" />
+            Aplicar Reajuste
+          </Button>
+        )}
+      </div>
+
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card>
@@ -127,15 +187,19 @@ export function OrthoFinanceiroTab({
       )}
 
       {/* Titles list */}
-      {!budgetId ? (
+      {!hasTitulos ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-10">
             <DollarSign className="h-10 w-10 text-muted-foreground/50 mb-3" />
-            <p className="text-muted-foreground text-sm">Nenhum orçamento vinculado a este caso</p>
-            <p className="text-muted-foreground text-xs mt-1">Vincule um orçamento no cadastro do caso para gerar títulos financeiros.</p>
+            <p className="text-muted-foreground text-sm">Nenhuma parcela gerada</p>
+            <p className="text-muted-foreground text-xs mt-1">
+              {valorMensalidade && totalMeses
+                ? 'Clique em "Gerar Parcelas" para criar os títulos financeiros.'
+                : "Preencha os dados financeiros do caso para gerar parcelas."}
+            </p>
           </CardContent>
         </Card>
-      ) : titulos && titulos.length > 0 ? (
+      ) : (
         <div className="space-y-2">
           <h4 className="text-sm font-semibold">Parcelas / Títulos</h4>
           <div className="rounded-md border">
@@ -157,14 +221,16 @@ export function OrthoFinanceiroTab({
             </div>
           </div>
         </div>
-      ) : (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-10">
-            <DollarSign className="h-10 w-10 text-muted-foreground/50 mb-3" />
-            <p className="text-muted-foreground text-sm">Nenhum título financeiro gerado</p>
-            <p className="text-muted-foreground text-xs mt-1">Aprove o orçamento vinculado para gerar os títulos a receber.</p>
-          </CardContent>
-        </Card>
+      )}
+
+      {valorMensalidade && (
+        <ReajusteIndividualModal
+          open={reajusteOpen}
+          onOpenChange={setReajusteOpen}
+          casoId={casoId}
+          valorAtual={Number(valorMensalidade)}
+          onSuccess={handleReajusteSuccess}
+        />
       )}
     </div>
   );

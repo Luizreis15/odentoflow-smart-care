@@ -114,7 +114,7 @@ export function NovoCasoModal({ open, onOpenChange, onSuccess }: NovoCasoModalPr
         return;
       }
 
-      const { error } = await supabase.from("ortho_cases").insert({
+      const { data: newCase, error } = await supabase.from("ortho_cases").insert({
         clinic_id: profile.clinic_id,
         patient_id: patientId,
         professional_id: professionalId,
@@ -133,9 +133,24 @@ export function NovoCasoModal({ open, onOpenChange, onSuccess }: NovoCasoModalPr
         dia_vencimento: diaVencimento ? parseInt(diaVencimento) : null,
         total_meses: totalMeses ? parseInt(totalMeses) : null,
         observacoes_clinicas: observacoes || null,
-      });
+      }).select("id").single();
 
       if (error) throw error;
+
+      // Auto-generate installments if financial data is complete
+      if (newCase && valorMensalidade && totalMeses && diaVencimento) {
+        try {
+          const { data: installmentResult, error: installmentError } = await supabase.functions.invoke("generate-ortho-installments", {
+            body: { ortho_case_id: newCase.id },
+          });
+          if (!installmentError && installmentResult?.count) {
+            toast.success(`${installmentResult.count} parcela(s) gerada(s) automaticamente!`);
+          }
+        } catch {
+          // Non-blocking: case was created successfully
+          toast.warning("Caso criado, mas houve erro ao gerar parcelas. Gere manualmente na aba Financeiro.");
+        }
+      }
 
       toast.success("Caso ortodôntico criado com sucesso!");
       resetForm();
