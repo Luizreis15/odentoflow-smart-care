@@ -56,6 +56,7 @@ const MovimentacoesWrapper = lazy(() => import("@/pages/dashboard/MovimentacoesW
 const PerfilWrapper = lazy(() => import("@/pages/dashboard/PerfilWrapper"));
 const ConfiguracoesWrapper = lazy(() => import("@/pages/dashboard/ConfiguracoesWrapper"));
 const AssinaturaWrapper = lazy(() => import("@/pages/dashboard/AssinaturaWrapper"));
+const RelatoriosWrapper = lazy(() => import("@/pages/dashboard/RelatoriosWrapper"));
 const SuperAdminDashboardWrapper = lazy(() => import("@/pages/superadmin/DashboardWrapper"));
 const GlobalAnamneseWrapper = lazy(() => import("@/pages/superadmin/GlobalAnamneseWrapper"));
 const PlanosWrapper = lazy(() => import("@/pages/superadmin/PlanosWrapper"));
@@ -127,6 +128,7 @@ function AppRoutes() {
         <Route path="/dashboard/profile" element={<PerfilWrapper />} />
         <Route path="/dashboard/assinatura" element={<AssinaturaWrapper />} />
         <Route path="/dashboard/configuracoes" element={<ConfiguracoesWrapper />} />
+        <Route path="/dashboard/relatorios" element={<RelatoriosWrapper />} />
         
         {/* Super Admin Routes */}
         <Route path="/super-admin" element={<SuperAdminDashboardWrapper />} />
