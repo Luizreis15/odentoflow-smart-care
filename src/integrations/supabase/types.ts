@@ -5545,6 +5545,64 @@ export type Database = {
           },
         ]
       }
+      whatsapp_message_log: {
+        Row: {
+          appointment_id: string | null
+          clinic_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          message_type: string
+          patient_id: string | null
+          phone: string
+          status: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          clinic_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_type?: string
+          patient_id?: string | null
+          phone: string
+          status?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          clinic_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_type?: string
+          patient_id?: string | null
+          phone?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_message_log_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_message_log_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_message_log_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
