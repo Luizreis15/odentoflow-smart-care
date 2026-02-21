@@ -14,6 +14,7 @@ import {
   Shield,
   LogOut,
   ChevronRight,
+  SmilePlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,29 +27,40 @@ import { Separator } from "@/components/ui/separator";
 // Organized menu categories
 const menuCategories = [
   {
-    title: "PRINCIPAIS",
+    title: "OPERACIONAL",
     items: [
       { name: "Painel", href: "/dashboard", icon: LayoutDashboard },
       { name: "Agenda", href: "/dashboard/agenda", icon: Calendar },
-      { name: "Prontuário", href: "/dashboard/prontuario", icon: FileText },
+      { name: "Pacientes", href: "/dashboard/prontuario", icon: FileText },
     ],
   },
   {
-    title: "GESTÃO",
+    title: "CONTROLE CLÍNICO",
     items: [
-      { name: "Financeiro", href: "/dashboard/financeiro", icon: DollarSign },
-      { name: "CRM", href: "/dashboard/crm", icon: MessageSquare },
+      { name: "Ortodontia", href: "/dashboard/ortodontia", icon: SmilePlus },
+      { name: "Próteses", href: "/dashboard/proteses", icon: FlaskConical },
       { name: "Estoque", href: "/dashboard/estoque", icon: Package },
     ],
   },
   {
-    title: "OUTROS",
+    title: "GESTÃO E RELATÓRIOS",
     items: [
-      { name: "Próteses", href: "/dashboard/proteses", icon: FlaskConical },
+      { name: "Financeiro", href: "/dashboard/financeiro", icon: DollarSign },
+      { name: "CRM", href: "/dashboard/crm", icon: MessageSquare },
+    ],
+  },
+  {
+    title: "FERRAMENTAS",
+    items: [
       { name: "Portal Paciente", href: "/dashboard/portal-paciente", icon: Users },
       { name: "IA Assistente", href: "/dashboard/ia-assistente", icon: Sparkles },
+    ],
+  },
+  {
+    title: "SISTEMA",
+    items: [
       { name: "Configurações", href: "/dashboard/configuracoes", icon: Settings },
-      { name: "Perfil", href: "/dashboard/profile", icon: User },
+      { name: "Perfil", href: "/dashboard/perfil", icon: User },
     ],
   },
 ];

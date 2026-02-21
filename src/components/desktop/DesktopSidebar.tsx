@@ -30,27 +30,52 @@ interface NavItem {
   subItems?: { name: string; href: string }[];
 }
 
-const mainNavigation: NavItem[] = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Agenda", href: "/dashboard/agenda", icon: Calendar },
-  { name: "Pacientes", href: "/dashboard/prontuario", icon: FileText },
-  { name: "Financeiro", href: "/dashboard/financeiro", icon: DollarSign },
-  { name: "Próteses", href: "/dashboard/proteses", icon: FlaskConical },
-  { name: "Ortodontia", href: "/dashboard/ortodontia", icon: SmilePlus },
+interface NavGroup {
+  title: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
   {
-    name: "Estoque",
-    href: "/dashboard/estoque",
-    icon: Package,
-    subItems: [
-      { name: "Painel", href: "/dashboard/estoque" },
-      { name: "Produtos", href: "/dashboard/produtos" },
-      { name: "Movimentações", href: "/dashboard/movimentacoes" },
+    title: "OPERACIONAL",
+    items: [
+      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { name: "Agenda", href: "/dashboard/agenda", icon: Calendar },
+      { name: "Pacientes", href: "/dashboard/prontuario", icon: FileText },
     ],
   },
-  { name: "CRM", href: "/dashboard/crm", icon: MessageSquare },
-  { name: "Portal Paciente", href: "/dashboard/portal-paciente", icon: Users },
-  { name: "IA Assistente", href: "/dashboard/ia-assistente", icon: Sparkles },
-  { name: "Relatórios", href: "/dashboard/relatorios", icon: BarChart3 },
+  {
+    title: "CONTROLE CLÍNICO",
+    items: [
+      { name: "Ortodontia", href: "/dashboard/ortodontia", icon: SmilePlus },
+      { name: "Próteses", href: "/dashboard/proteses", icon: FlaskConical },
+      {
+        name: "Estoque",
+        href: "/dashboard/estoque",
+        icon: Package,
+        subItems: [
+          { name: "Painel", href: "/dashboard/estoque" },
+          { name: "Produtos", href: "/dashboard/produtos" },
+          { name: "Movimentações", href: "/dashboard/movimentacoes" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "GESTÃO E RELATÓRIOS",
+    items: [
+      { name: "Financeiro", href: "/dashboard/financeiro", icon: DollarSign },
+      { name: "CRM", href: "/dashboard/crm", icon: MessageSquare },
+      { name: "Relatórios", href: "/dashboard/relatorios", icon: BarChart3 },
+    ],
+  },
+  {
+    title: "FERRAMENTAS",
+    items: [
+      { name: "Portal Paciente", href: "/dashboard/portal-paciente", icon: Users },
+      { name: "IA Assistente", href: "/dashboard/ia-assistente", icon: Sparkles },
+    ],
+  },
 ];
 
 const bottomNavigation: NavItem[] = [
@@ -164,7 +189,19 @@ const DesktopSidebar = () => {
             </Link>
           )}
 
-          {mainNavigation.map(renderNavItem)}
+          {navGroups.map((group, groupIndex) => (
+            <div key={group.title} className="mb-3">
+              <div className="px-3 pt-2 pb-1">
+                <span className="text-[11px] font-semibold text-sidebar-foreground/40 tracking-wider uppercase">
+                  {group.title}
+                </span>
+              </div>
+              {group.items.map(renderNavItem)}
+              {groupIndex < navGroups.length - 1 && (
+                <div className="mx-4 mt-3 border-t border-sidebar-border" />
+              )}
+            </div>
+          ))}
         </nav>
 
         {/* Separator */}
