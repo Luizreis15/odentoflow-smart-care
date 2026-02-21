@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import { useState } from "react";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import DomainRouter from "./components/DomainRouter";
 
 function App() {
@@ -19,15 +20,17 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SubscriptionProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <DomainRouter />
-          </BrowserRouter>
-        </TooltipProvider>
-      </SubscriptionProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <SubscriptionProvider>
+              <DomainRouter />
+            </SubscriptionProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }

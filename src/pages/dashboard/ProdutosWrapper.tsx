@@ -1,77 +1,21 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
 import Produtos from "./Produtos";
+import { useAuth } from "@/contexts/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProdutosWrapper() {
-  const navigate = useNavigate();
-  const [profile, setProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { profile, isLoading } = useAuth();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
-
-      // Check if user is super admin
-      const { data: userRole } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", session.user.id)
-        .eq("role", "super_admin")
-        .maybeSingle();
-
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", session.user.id)
-        .single();
-
-      // Super admins can access without clinic
-      if (userRole) {
-        setProfile(profileData);
-        setLoading(false);
-        return;
-      }
-
-      if (!profileData?.clinic_id) {
-        navigate("/onboarding/welcome");
-        return;
-      }
-
-      // Check if onboarding is completed
-      const { data: clinicData } = await supabase
-        .from("clinicas")
-        .select("onboarding_status")
-        .eq("id", profileData.clinic_id)
-        .single();
-
-      if (clinicData?.onboarding_status !== "completed") {
-        navigate("/onboarding/welcome");
-        return;
-      }
-
-      setProfile(profileData);
-      setLoading(false);
-    };
-
-    checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!session) {
-        navigate("/auth");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  if (loading) return null;
+  if (isLoading) {
+    return (
+      <DashboardLayout user={profile}>
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-[400px]" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout user={profile}>

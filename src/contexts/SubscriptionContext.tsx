@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SubscriptionContextType {
@@ -20,10 +20,11 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [trialEnd, setTrialEnd] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const checkedRef = useRef(false);
 
-  const checkSubscription = async () => {
+  const checkSubscription = useCallback(async () => {
     try {
-      // Check if super admin is impersonating a clinic - skip subscription check
+      // Check if super admin is impersonating a clinic
       const impersonation = localStorage.getItem("admin_impersonation");
       if (impersonation) {
         setSubscribed(true);
@@ -60,12 +61,20 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    checkSubscription();
+    // Lazy check: only run once when mounted (deferred)
+    if (!checkedRef.current) {
+      checkedRef.current = true;
+      // Defer to not block initial render
+      const timeout = setTimeout(checkSubscription, 100);
+      return () => clearTimeout(timeout);
+    }
+  }, [checkSubscription]);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
         checkSubscription();
       } else if (event === "SIGNED_OUT") {
@@ -74,17 +83,18 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
         setPlan("starter");
         setSubscriptionEnd(null);
         setTrialEnd(null);
+        checkedRef.current = false;
       }
     });
 
-    // Auto-refresh every 60 seconds
-    const interval = setInterval(checkSubscription, 60000);
+    // Auto-refresh every 5 minutes instead of 60s
+    const interval = setInterval(checkSubscription, 300000);
 
     return () => {
       subscription.unsubscribe();
       clearInterval(interval);
     };
-  }, []);
+  }, [checkSubscription]);
 
   return (
     <SubscriptionContext.Provider

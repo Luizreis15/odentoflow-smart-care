@@ -1,70 +1,20 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import Perfil from "./Perfil";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const PerfilWrapper = () => {
-  const navigate = useNavigate();
-  const [profile, setProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { profile, isLoading } = useAuth();
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        navigate("/auth");
-        return;
-      }
-
-      // Check if user is super admin
-      const { data: userRole } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "super_admin")
-        .maybeSingle();
-
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      // Super admins can access without clinic
-      if (userRole) {
-        setProfile(profileData);
-        setLoading(false);
-        return;
-      }
-
-      if (!profileData?.clinic_id) {
-        navigate("/onboarding");
-        return;
-      }
-
-      const { data: clinicaData } = await supabase
-        .from("clinicas")
-        .select("*")
-        .eq("id", profileData.clinic_id)
-        .single();
-
-      setProfile(profileData);
-    } catch (error) {
-      console.error("Erro na autenticação:", error);
-      navigate("/auth");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return null;
+  if (isLoading) {
+    return (
+      <DashboardLayout user={profile}>
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-[400px]" />
+        </div>
+      </DashboardLayout>
+    );
   }
 
   return (
