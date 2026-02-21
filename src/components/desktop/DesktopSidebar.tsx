@@ -1,0 +1,182 @@
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Calendar,
+  FileText,
+  DollarSign,
+  MessageSquare,
+  Users,
+  Sparkles,
+  LayoutDashboard,
+  Settings,
+  FlaskConical,
+  Package,
+  User,
+  Shield,
+  SmilePlus,
+  ChevronDown,
+  BarChart3,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { usePermissions } from "@/hooks/usePermissions";
+import logoFlowdent from "@/assets/logo-flowdent.png";
+
+interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ElementType;
+  subItems?: { name: string; href: string }[];
+}
+
+const mainNavigation: NavItem[] = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Agenda", href: "/dashboard/agenda", icon: Calendar },
+  { name: "Pacientes", href: "/dashboard/prontuario", icon: FileText },
+  { name: "Financeiro", href: "/dashboard/financeiro", icon: DollarSign },
+  { name: "Próteses", href: "/dashboard/proteses", icon: FlaskConical },
+  { name: "Ortodontia", href: "/dashboard/ortodontia", icon: SmilePlus },
+  {
+    name: "Estoque",
+    href: "/dashboard/estoque",
+    icon: Package,
+    subItems: [
+      { name: "Painel", href: "/dashboard/estoque" },
+      { name: "Produtos", href: "/dashboard/produtos" },
+      { name: "Movimentações", href: "/dashboard/movimentacoes" },
+    ],
+  },
+  { name: "CRM", href: "/dashboard/crm", icon: MessageSquare },
+  { name: "Portal Paciente", href: "/dashboard/portal-paciente", icon: Users },
+  { name: "IA Assistente", href: "/dashboard/ia-assistente", icon: Sparkles },
+  { name: "Relatórios", href: "/dashboard/relatorios", icon: BarChart3 },
+];
+
+const bottomNavigation: NavItem[] = [
+  { name: "Configurações", href: "/dashboard/configuracoes", icon: Settings },
+  { name: "Meu Perfil", href: "/dashboard/perfil", icon: User },
+];
+
+const DesktopSidebar = () => {
+  const location = useLocation();
+  const { isSuperAdmin } = usePermissions();
+  const [openSubMenu, setOpenSubMenu] = useState<string | null>(null);
+
+  const isActive = (href: string) => location.pathname === href;
+  const isParentActive = (item: NavItem) =>
+    item.subItems?.some((sub) => location.pathname === sub.href) || location.pathname === item.href;
+
+  const renderNavItem = (item: NavItem) => {
+    const active = item.subItems ? isParentActive(item) : isActive(item.href);
+
+    if (item.subItems) {
+      const isOpen = openSubMenu === item.name || isParentActive(item);
+      return (
+        <Collapsible
+          key={item.name}
+          open={isOpen}
+          onOpenChange={(open) => setOpenSubMenu(open ? item.name : null)}
+        >
+          <CollapsibleTrigger asChild>
+            <button
+              className={cn(
+                "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all",
+                "hover:bg-sidebar-accent",
+                active
+                  ? "border-l-[3px] border-l-primary bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                  : "border-l-[3px] border-l-transparent text-sidebar-foreground/70"
+              )}
+            >
+              <item.icon className="h-[18px] w-[18px] flex-shrink-0" />
+              <span className="flex-1 text-left">{item.name}</span>
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 transition-transform",
+                  isOpen && "rotate-180"
+                )}
+              />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="ml-9 mt-1 space-y-0.5">
+              {item.subItems.map((sub) => (
+                <Link
+                  key={sub.href}
+                  to={sub.href}
+                  className={cn(
+                    "block rounded-md px-3 py-2 text-[13px] transition-colors",
+                    isActive(sub.href)
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                      : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                  )}
+                >
+                  {sub.name}
+                </Link>
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      );
+    }
+
+    return (
+      <Link
+        key={item.name}
+        to={item.href}
+        className={cn(
+          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all",
+          "hover:bg-sidebar-accent",
+          active
+            ? "border-l-[3px] border-l-primary bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+            : "border-l-[3px] border-l-transparent text-sidebar-foreground/70"
+        )}
+      >
+        <item.icon className="h-[18px] w-[18px] flex-shrink-0" />
+        <span>{item.name}</span>
+      </Link>
+    );
+  };
+
+  return (
+    <aside className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 z-40 w-[260px] border-r border-sidebar-border bg-sidebar">
+      {/* Logo */}
+      <div className="flex items-center h-16 px-5 border-b border-sidebar-border flex-shrink-0">
+        <Link to="/dashboard">
+          <img src={logoFlowdent} alt="Flowdent" className="h-9 w-auto" />
+        </Link>
+      </div>
+
+      {/* Navigation */}
+      <ScrollArea className="flex-1 py-3">
+        <nav className="space-y-0.5 px-3">
+          {isSuperAdmin && (
+            <Link
+              to="/super-admin"
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm mb-2 transition-all",
+                "bg-primary/5 border border-primary/15 hover:bg-primary/10",
+                "border-l-[3px] border-l-primary text-primary font-medium"
+              )}
+            >
+              <Shield className="h-[18px] w-[18px] flex-shrink-0" />
+              <span>Super Admin</span>
+            </Link>
+          )}
+
+          {mainNavigation.map(renderNavItem)}
+        </nav>
+
+        {/* Separator */}
+        <div className="mx-5 my-3 border-t border-sidebar-border" />
+
+        {/* Bottom items */}
+        <nav className="space-y-0.5 px-3">
+          {bottomNavigation.map(renderNavItem)}
+        </nav>
+      </ScrollArea>
+    </aside>
+  );
+};
+
+export default DesktopSidebar;

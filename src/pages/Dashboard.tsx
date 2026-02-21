@@ -272,70 +272,8 @@ const Dashboard = () => {
         />
       )}
       
-      {/* Header Desktop - Estilo Clinicorp */}
-      <div className="hidden lg:block bg-card border-b border-border">
-        <div className="px-8 py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo Flowdent */}
-            <div className="flex items-center gap-3">
-              <img src={logoFlowdent} alt="Flowdent" className="h-10 md:h-12 w-auto" />
-            </div>
-            
-            {/* Barra de Busca Central */}
-            <div className="flex-1 max-w-xl mx-8">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Buscar pacientes, consultas ou funções..."
-                  className="pl-10 bg-muted/50 border-border focus:bg-background"
-                />
-              </div>
-            </div>
-            
-            {/* Data + Perfil */}
-            <div className="flex items-center gap-4">
-              <span className="text-muted-foreground text-sm">
-                {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
-              </span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <div className="w-8 h-8 rounded-full bg-[hsl(var(--flowdent-blue))] flex items-center justify-center">
-                      <User className="h-4 w-4 text-white" />
-                    </div>
-                    <span className="font-medium">{profile?.full_name || "Usuário"}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => navigate("/dashboard/perfil")} className="cursor-pointer">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Meu Perfil
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/dashboard/assinatura")} className="cursor-pointer">
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Assinatura
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={async () => {
-                      await supabase.auth.signOut();
-                      toast.success("Logout realizado com sucesso!");
-                      navigate("/auth");
-                    }} 
-                    className="cursor-pointer text-destructive focus:text-destructive"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sair
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Conteúdo Principal */}
-      <div className="px-4 lg:px-8 py-6 space-y-6">
+      <div className="space-y-6">
         {/* Saudação */}
         <div>
           <h1 className="text-xl lg:text-2xl font-bold text-foreground">
