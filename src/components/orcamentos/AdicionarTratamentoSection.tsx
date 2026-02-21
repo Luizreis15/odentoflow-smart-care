@@ -3,7 +3,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
 import { supabase } from "@/integrations/supabase/client";
 import { X, Plus, Check, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -42,9 +41,7 @@ export const AdicionarTratamentoSection = ({
   });
 
   useEffect(() => {
-    if (planoSelecionado) {
-      loadProcedimentosDoPlano();
-    }
+    if (planoSelecionado) loadProcedimentosDoPlano();
   }, [planoSelecionado]);
 
   useEffect(() => {
@@ -55,14 +52,9 @@ export const AdicionarTratamentoSection = ({
     try {
       const { data, error } = await supabase
         .from("planos_procedimentos_itens")
-        .select(`
-          *,
-          procedimentos!planos_procedimentos_itens_procedimento_id_fkey (*)
-        `)
+        .select(`*, procedimentos!planos_procedimentos_itens_procedimento_id_fkey (*)`)
         .eq("plano_id", planoSelecionado);
-
       if (error) throw error;
-
       setProcedimentos(data || []);
     } catch (error) {
       console.error("Erro ao carregar procedimentos:", error);
@@ -77,9 +69,7 @@ export const AdicionarTratamentoSection = ({
         .select("*")
         .eq("clinica_id", clinicaId)
         .eq("ativo", true);
-
       if (error) throw error;
-
       setDentistas(data || []);
     } catch (error) {
       console.error("Erro ao carregar dentistas:", error);
@@ -92,25 +82,21 @@ export const AdicionarTratamentoSection = ({
     setTratamentoAberto(false);
   };
 
-
   const handleAdicionar = () => {
     if (!procedimentoSelecionado || !valor) {
       toast.error("Selecione um procedimento e informe o valor");
       return;
     }
-
     if (!dentistaSelecionado) {
       toast.error("Selecione um dentista");
       return;
     }
-
     if (dentesSelecionados.length === 0) {
       toast.error("Selecione pelo menos um dente ou região");
       return;
     }
 
     const dentista = dentistas.find(d => d.id === dentistaSelecionado);
-
     onAdicionarTratamento({
       procedimento_id: procedimentoSelecionado.procedimentos.id,
       procedure_code: procedimentoSelecionado.procedimentos.codigo_sistema,
@@ -121,7 +107,6 @@ export const AdicionarTratamentoSection = ({
       dente_regiao: dentesSelecionados.sort((a, b) => parseInt(a) - parseInt(b)).join(", "),
     });
 
-    // Limpar campos
     setProcedimentoSelecionado(null);
     setValor("");
     setDentistaSelecionado("");
@@ -131,54 +116,55 @@ export const AdicionarTratamentoSection = ({
 
   return (
     <div className="space-y-4 border-t pt-4">
-      <h3 className="text-lg font-semibold">Adicionar tratamento</h3>
+      <h3 className="text-base sm:text-lg font-semibold">Adicionar tratamento</h3>
 
-      <div className="grid grid-cols-4 gap-4">
+      {/* Mobile: stacked, Desktop: grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 sm:gap-4">
         <div className="space-y-2">
           <Label htmlFor="plano">Plano*</Label>
           <Select value={planoSelecionado} onValueChange={onPlanoChange}>
-            <SelectTrigger>
+            <SelectTrigger className="h-12 sm:h-10">
               <SelectValue placeholder="Selecione um plano" />
             </SelectTrigger>
             <SelectContent>
               {planos.map((plano) => (
-                <SelectItem key={plano.id} value={plano.id}>
-                  {plano.nome}
-                </SelectItem>
+                <SelectItem key={plano.id} value={plano.id}>{plano.nome}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        <div className="col-span-2 space-y-2">
+        <div className="sm:col-span-2 space-y-2">
           <Label>Tratamento*</Label>
           <div className="relative">
             <Button
               type="button"
               variant="outline"
               role="combobox"
-              className="w-full justify-between"
+              className="w-full justify-between h-12 sm:h-10 text-sm"
               onClick={() => setTratamentoAberto(!tratamentoAberto)}
             >
-              {procedimentoSelecionado
-                ? procedimentoSelecionado.procedimentos.descricao
-                : "Buscar procedimento..."}
+              <span className="truncate">
+                {procedimentoSelecionado
+                  ? procedimentoSelecionado.procedimentos.descricao
+                  : "Buscar procedimento..."}
+              </span>
             </Button>
-            
+
             {tratamentoAberto && (
-              <div className="absolute top-full left-0 mt-1 w-full min-w-[500px] border rounded-lg bg-popover shadow-lg z-[9999] max-h-[300px] overflow-hidden">
+              <div className="absolute top-full left-0 mt-1 w-full sm:min-w-[500px] border rounded-lg bg-popover shadow-lg z-[9999] max-h-[250px] overflow-hidden">
                 <div className="flex items-center border-b px-3 bg-popover">
                   <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                   <input
                     placeholder="Buscar procedimento..."
                     value={buscaProcedimento}
                     onChange={(e) => setBuscaProcedimento(e.target.value)}
-                    className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
+                    className="flex h-12 sm:h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
                     autoFocus
                     onClick={(e) => e.stopPropagation()}
                   />
                 </div>
-                <div className="max-h-[250px] overflow-auto p-1">
+                <div className="max-h-[200px] overflow-auto p-1">
                   {procedimentosFiltrados.length === 0 ? (
                     <div className="py-6 text-center text-sm text-muted-foreground">
                       Nenhum procedimento encontrado.
@@ -188,16 +174,16 @@ export const AdicionarTratamentoSection = ({
                       <div
                         key={proc.id}
                         onClick={() => handleSelecionarProcedimento(proc)}
-                        className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                        className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm hover:bg-accent hover:text-accent-foreground min-h-[44px]"
                       >
                         <Check
                           className={cn(
-                            "mr-2 h-4 w-4",
+                            "mr-2 h-4 w-4 flex-shrink-0",
                             procedimentoSelecionado?.id === proc.id ? "opacity-100" : "opacity-0"
                           )}
                         />
-                        <div className="flex flex-col">
-                          <span>{proc.procedimentos?.descricao}</span>
+                        <div className="flex flex-col min-w-0">
+                          <span className="truncate">{proc.procedimentos?.descricao}</span>
                           <span className="text-xs text-muted-foreground">
                             {proc.procedimentos?.especialidade} • R$ {(proc.valor_customizado ?? 0).toFixed(2)}
                           </span>
@@ -220,14 +206,15 @@ export const AdicionarTratamentoSection = ({
             placeholder="0,00"
             value={valor}
             onChange={(e) => setValor(e.target.value)}
+            className="h-12 sm:h-10"
           />
         </div>
 
-        <div className="col-span-3 space-y-2">
+        <div className="sm:col-span-3 space-y-2">
           <Label htmlFor="dentista">Dentista*</Label>
           <div className="relative">
             <Select value={dentistaSelecionado} onValueChange={setDentistaSelecionado}>
-              <SelectTrigger>
+              <SelectTrigger className="h-12 sm:h-10">
                 <SelectValue placeholder="Selecione um dentista" />
               </SelectTrigger>
               <SelectContent>
@@ -241,7 +228,7 @@ export const AdicionarTratamentoSection = ({
             {dentistaSelecionado && (
               <button
                 onClick={() => setDentistaSelecionado("")}
-                className="absolute right-10 top-1/2 -translate-y-1/2"
+                className="absolute right-10 top-1/2 -translate-y-1/2 p-1"
               >
                 <X className="h-4 w-4 text-muted-foreground" />
               </button>
@@ -254,7 +241,7 @@ export const AdicionarTratamentoSection = ({
             type="button"
             onClick={handleAdicionar}
             disabled={!procedimentoSelecionado || !valor || !dentistaSelecionado || dentesSelecionados.length === 0}
-            className="w-full"
+            className="w-full h-12 sm:h-10"
           >
             <Plus className="h-4 w-4 mr-2" />
             Adicionar

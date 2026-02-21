@@ -37,14 +37,10 @@ export const CadastroRapidoPacienteModal = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     try {
-      // Validar dados
       const validatedData = quickPatientSchema.parse(formData);
-
       setSaving(true);
 
-      // Buscar clinic_id do usuário
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
@@ -56,7 +52,6 @@ export const CadastroRapidoPacienteModal = ({
 
       if (!profile?.clinic_id) throw new Error("Clínica não encontrada");
 
-      // Criar paciente
       const { data: newPatient, error } = await supabase
         .from("patients")
         .insert({
@@ -73,17 +68,7 @@ export const CadastroRapidoPacienteModal = ({
       if (error) throw error;
 
       toast.success("Paciente cadastrado com sucesso!");
-      
-      // Resetar form
-      setFormData({
-        full_name: "",
-        phone: "",
-        email: "",
-        cpf: "",
-        birth_date: "",
-      });
-
-      // Fechar modal e informar ID do paciente criado
+      setFormData({ full_name: "", phone: "", email: "", cpf: "", birth_date: "" });
       onOpenChange(false);
       onPatientCreated(newPatient.id);
     } catch (error: any) {
@@ -100,16 +85,16 @@ export const CadastroRapidoPacienteModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[450px]">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-[450px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Cadastro Rápido de Paciente</DialogTitle>
-          <DialogDescription>
-            Preencha as informações básicas para agendar rapidamente
+          <DialogTitle className="text-lg">Cadastro Rápido de Paciente</DialogTitle>
+          <DialogDescription className="text-sm">
+            Preencha as informações básicas para agendar
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          <div className="space-y-2">
-            <Label htmlFor="full_name">Nome Completo *</Label>
+        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="full_name" className="text-sm">Nome Completo *</Label>
             <Input
               id="full_name"
               placeholder="João da Silva"
@@ -117,11 +102,12 @@ export const CadastroRapidoPacienteModal = ({
               onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
               disabled={saving}
               required
+              className="h-12 sm:h-10"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="phone">Telefone *</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="phone" className="text-sm">Telefone *</Label>
             <Input
               id="phone"
               placeholder="(11) 99999-9999"
@@ -129,11 +115,13 @@ export const CadastroRapidoPacienteModal = ({
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               disabled={saving}
               required
+              inputMode="tel"
+              className="h-12 sm:h-10"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-sm">Email</Label>
             <Input
               id="email"
               type="email"
@@ -141,42 +129,47 @@ export const CadastroRapidoPacienteModal = ({
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               disabled={saving}
+              inputMode="email"
+              className="h-12 sm:h-10"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="birth_date">Data de Nascimento</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="birth_date" className="text-sm">Data de Nascimento</Label>
             <Input
               id="birth_date"
               type="date"
               value={formData.birth_date}
               onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
               disabled={saving}
+              className="h-12 sm:h-10"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="cpf">CPF</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="cpf" className="text-sm">CPF</Label>
             <Input
               id="cpf"
               placeholder="000.000.000-00"
               value={formData.cpf}
               onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
               disabled={saving}
+              inputMode="numeric"
+              className="h-12 sm:h-10"
             />
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-3">
             <Button
               type="button"
               variant="outline"
-              className="flex-1"
+              className="flex-1 h-12 sm:h-10"
               onClick={() => onOpenChange(false)}
               disabled={saving}
             >
               Cancelar
             </Button>
-            <Button type="submit" className="flex-1" disabled={saving}>
+            <Button type="submit" className="flex-1 h-12 sm:h-10" disabled={saving}>
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {saving ? "Cadastrando..." : "Cadastrar"}
             </Button>

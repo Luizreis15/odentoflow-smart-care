@@ -88,7 +88,6 @@ export const NovoOrcamentoModal = ({
   const [planos, setPlanos] = useState<any[]>([]);
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   
-  // Payment Plan State
   const [paymentPlan, setPaymentPlan] = useState<PaymentPlan>({
     entrada: 0,
     parcelas: 1,
@@ -108,7 +107,6 @@ export const NovoOrcamentoModal = ({
   }, [open, clinicaId]);
 
   useEffect(() => {
-    // Generate vencimentos based on parcelas and primeiro vencimento
     const vencimentos: string[] = [];
     const baseDate = new Date(primeiroVencimento);
     for (let i = 0; i < paymentPlan.parcelas; i++) {
@@ -126,15 +124,10 @@ export const NovoOrcamentoModal = ({
         .eq("clinica_id", clinicaId)
         .eq("ativo", true)
         .order("is_padrao", { ascending: false });
-
       if (error) throw error;
-
       setPlanos(data || []);
-      
       const planoPadrao = data?.find(p => p.is_padrao);
-      if (planoPadrao) {
-        setPlanoSelecionado(planoPadrao.id);
-      }
+      if (planoPadrao) setPlanoSelecionado(planoPadrao.id);
     } catch (error) {
       console.error("Erro ao carregar planos:", error);
     }
@@ -148,7 +141,6 @@ export const NovoOrcamentoModal = ({
         .eq("clinica_id", clinicaId)
         .eq("ativo", true)
         .order("nome");
-
       if (error) throw error;
       setProfessionals(data || []);
     } catch (error) {
@@ -165,10 +157,7 @@ export const NovoOrcamentoModal = ({
           .select("full_name")
           .eq("id", user.id)
           .single();
-
-        if (profile) {
-          setResponsavel(profile.full_name);
-        }
+        if (profile) setResponsavel(profile.full_name);
       }
     } catch (error) {
       console.error("Erro ao carregar usuário:", error);
@@ -184,51 +173,29 @@ export const NovoOrcamentoModal = ({
   };
 
   const handleToggleTratamento = (id: string) => {
-    setTratamentos(tratamentos.map(t => 
-      t.id === id ? { ...t, checked: !t.checked } : t
-    ));
+    setTratamentos(tratamentos.map(t => t.id === id ? { ...t, checked: !t.checked } : t));
   };
 
   const handleUpdateProfessional = (tratamentoId: string, professionalId: string) => {
     const professional = professionals.find(p => p.id === professionalId);
-    setTratamentos(tratamentos.map(t => 
-      t.id === tratamentoId 
-        ? { ...t, dentista_id: professionalId, dentista_nome: professional?.nome } 
+    setTratamentos(tratamentos.map(t =>
+      t.id === tratamentoId
+        ? { ...t, dentista_id: professionalId, dentista_nome: professional?.nome }
         : t
     ));
   };
 
-  const calcularValorTotal = () => {
-    return tratamentos.reduce((sum, t) => sum + t.valor, 0);
-  };
-
-  const calcularValorSelecionado = () => {
-    return tratamentos.filter(t => t.checked).reduce((sum, t) => sum + t.valor, 0);
-  };
-
-  const calcularTotal = () => {
-    return calcularValorTotal() - desconto;
-  };
-
+  const calcularValorTotal = () => tratamentos.reduce((sum, t) => sum + t.valor, 0);
+  const calcularValorSelecionado = () => tratamentos.filter(t => t.checked).reduce((sum, t) => sum + t.valor, 0);
+  const calcularTotal = () => calcularValorTotal() - desconto;
   const calcularValorParcela = () => {
-    const total = calcularTotal();
-    const valorRestante = total - paymentPlan.entrada;
+    const valorRestante = calcularTotal() - paymentPlan.entrada;
     return paymentPlan.parcelas > 0 ? valorRestante / paymentPlan.parcelas : 0;
   };
 
-
   const handleSalvar = async (aprovar: boolean = false) => {
-    if (!descricao.trim()) {
-      toast.error("Digite a descrição do orçamento");
-      return;
-    }
-
-    if (tratamentos.length === 0) {
-      toast.error("Adicione pelo menos um tratamento");
-      return;
-    }
-
-    // Validate professionals for approval
+    if (!descricao.trim()) { toast.error("Digite a descrição do orçamento"); return; }
+    if (tratamentos.length === 0) { toast.error("Adicione pelo menos um tratamento"); return; }
     if (aprovar) {
       const semProfissional = tratamentos.filter(t => !t.dentista_id);
       if (semProfissional.length > 0) {
@@ -238,12 +205,10 @@ export const NovoOrcamentoModal = ({
     }
 
     setLoading(true);
-
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
-      // Create payment plan JSON
       const paymentPlanJson = {
         entrada: paymentPlan.entrada,
         parcelas: paymentPlan.parcelas,
@@ -251,7 +216,6 @@ export const NovoOrcamentoModal = ({
         vencimentos: paymentPlan.vencimentos,
       };
 
-      // Create budget
       const { data: orcamento, error: orcamentoError } = await supabase
         .from("budgets")
         .insert({
@@ -272,7 +236,6 @@ export const NovoOrcamentoModal = ({
 
       if (orcamentoError) throw orcamentoError;
 
-      // Create budget items with professional_id and procedure reference
       const itens = tratamentos.map(t => ({
         budget_id: orcamento.id,
         procedure_id: t.procedimento_id,
@@ -288,26 +251,15 @@ export const NovoOrcamentoModal = ({
         status: "pending",
       }));
 
-      const { error: itensError } = await supabase
-        .from("budget_items")
-        .insert(itens);
-
+      const { error: itensError } = await supabase.from("budget_items").insert(itens);
       if (itensError) throw itensError;
 
-      // If approving, call edge function
       if (aprovar) {
         const { data: approveResult, error: approveError } = await supabase.functions.invoke(
           "approve-budget",
-          {
-            body: {
-              budget_id: orcamento.id,
-              approved_by: user.id,
-            },
-          }
+          { body: { budget_id: orcamento.id, approved_by: user.id } }
         );
-
         if (approveError) {
-          console.error("Erro ao aprovar:", approveError);
           toast.error("Orçamento criado, mas erro ao aprovar. Tente aprovar manualmente.");
         } else if (approveResult.error) {
           toast.error(approveResult.error);
@@ -342,48 +294,52 @@ export const NovoOrcamentoModal = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto w-[calc(100vw-2rem)] sm:w-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl">NOVO ORÇAMENTO</DialogTitle>
+          <DialogTitle className="text-xl sm:text-2xl">NOVO ORÇAMENTO</DialogTitle>
         </DialogHeader>
 
         {step === "adicionar" && (
           <>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-2 space-y-2">
+            {/* Mobile: single column, Desktop: 3 columns */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              <div className="sm:col-span-2 space-y-2">
                 <Label htmlFor="descricao">Descrição*</Label>
                 <Input
                   id="descricao"
                   placeholder="Ex: Plano tratamento de Maria Luiza"
                   value={descricao}
                   onChange={(e) => setDescricao(e.target.value)}
+                  className="h-12 sm:h-10"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="responsavel">Responsável pelo orçamento</Label>
+                <Label htmlFor="responsavel">Responsável</Label>
                 <div className="relative">
                   <Input
                     id="responsavel"
                     value={responsavel}
                     onChange={(e) => setResponsavel(e.target.value)}
+                    className="h-12 sm:h-10"
                   />
                   {responsavel && (
                     <button
                       onClick={() => setResponsavel("")}
-                      className="absolute right-2 top-1/2 -translate-y-1/2"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1"
                     >
                       <X className="h-4 w-4 text-muted-foreground" />
                     </button>
                   )}
                 </div>
               </div>
-              <div className="col-span-3 space-y-2">
+              <div className="sm:col-span-3 space-y-2">
                 <Label htmlFor="data">Data*</Label>
                 <Input
                   id="data"
                   type="date"
                   value={data}
                   onChange={(e) => setData(e.target.value)}
+                  className="h-12 sm:h-10"
                 />
               </div>
             </div>
@@ -396,13 +352,14 @@ export const NovoOrcamentoModal = ({
               onAdicionarTratamento={handleAdicionarTratamento}
             />
 
-            <div className="flex justify-between pt-4">
-              <Button variant="outline" onClick={handleClose}>
+            <div className="flex justify-between pt-4 gap-3">
+              <Button variant="outline" onClick={handleClose} className="h-12 sm:h-10 flex-1 sm:flex-none">
                 FECHAR
               </Button>
-              <Button 
+              <Button
                 onClick={() => setStep("listar")}
                 disabled={tratamentos.length === 0}
+                className="h-12 sm:h-10 flex-1 sm:flex-none"
               >
                 CONTINUAR
               </Button>
@@ -412,47 +369,38 @@ export const NovoOrcamentoModal = ({
 
         {step === "listar" && (
           <>
-            {/* Treatments with Professional Selection */}
             <div className="space-y-4">
-              <h3 className="font-semibold flex items-center gap-2">
+              <h3 className="font-semibold flex items-center gap-2 text-base">
                 <User className="h-4 w-4" />
-                Tratamentos e Profissionais Responsáveis
+                Tratamentos e Profissionais
               </h3>
               <div className="border rounded-lg divide-y">
                 {tratamentos.map((t) => (
-                  <div key={t.id} className="p-3 flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="font-medium">{t.nome}</div>
+                  <div key={t.id} className="p-3 space-y-2 sm:space-y-0 sm:flex sm:items-center sm:justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm truncate">{t.nome}</div>
                       {t.dente_regiao && (
-                        <div className="text-sm text-muted-foreground">
-                          Região: {t.dente_regiao}
-                        </div>
+                        <div className="text-xs text-muted-foreground">Região: {t.dente_regiao}</div>
                       )}
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4">
                       <Select
                         value={t.dentista_id || ""}
                         onValueChange={(value) => handleUpdateProfessional(t.id, value)}
                       >
-                        <SelectTrigger className="w-[200px]">
-                          <SelectValue placeholder="Selecione profissional" />
+                        <SelectTrigger className="w-full sm:w-[200px] h-10">
+                          <SelectValue placeholder="Profissional" />
                         </SelectTrigger>
                         <SelectContent>
                           {professionals.map((prof) => (
-                            <SelectItem key={prof.id} value={prof.id}>
-                              {prof.nome}
-                            </SelectItem>
+                            <SelectItem key={prof.id} value={prof.id}>{prof.nome}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      <div className="text-right font-medium w-24">
+                      <div className="text-right font-medium text-sm whitespace-nowrap">
                         {formatCurrency(t.valor)}
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoverTratamento(t.id)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => handleRemoverTratamento(t.id)} className="h-8 w-8 p-0 flex-shrink-0">
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
@@ -460,19 +408,18 @@ export const NovoOrcamentoModal = ({
                 ))}
               </div>
 
-              {/* Summary */}
-              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-                <div className="flex justify-between">
+              <div className="bg-muted/50 rounded-lg p-3 sm:p-4 space-y-2">
+                <div className="flex justify-between text-sm">
                   <span>Subtotal:</span>
                   <span>{formatCurrency(calcularValorTotal())}</span>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center text-sm">
                   <span>Desconto:</span>
                   <Input
                     type="number"
                     value={desconto}
                     onChange={(e) => setDesconto(parseFloat(e.target.value) || 0)}
-                    className="w-32 text-right"
+                    className="w-28 text-right h-10"
                   />
                 </div>
                 <Separator />
@@ -495,11 +442,11 @@ export const NovoOrcamentoModal = ({
               </div>
             </div>
 
-            <div className="flex justify-between pt-4">
-              <Button variant="outline" onClick={() => setStep("adicionar")}>
+            <div className="flex justify-between pt-4 gap-3">
+              <Button variant="outline" onClick={() => setStep("adicionar")} className="h-12 sm:h-10 flex-1 sm:flex-none">
                 VOLTAR
               </Button>
-              <Button onClick={() => setStep("pagamento")}>
+              <Button onClick={() => setStep("pagamento")} className="h-12 sm:h-10 flex-1 sm:flex-none">
                 CONFIGURAR PAGAMENTO
               </Button>
             </div>
@@ -509,23 +456,23 @@ export const NovoOrcamentoModal = ({
         {step === "pagamento" && (
           <>
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                   <CreditCard className="h-5 w-5" />
                   Plano de Pagamento
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-2">
                     <Label>Entrada (opcional)</Label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R$</span>
                       <Input
                         type="number"
                         value={paymentPlan.entrada}
                         onChange={(e) => setPaymentPlan({ ...paymentPlan, entrada: parseFloat(e.target.value) || 0 })}
-                        className="pl-10"
+                        className="pl-10 h-12 sm:h-10"
                         max={calcularTotal()}
                       />
                     </div>
@@ -536,7 +483,7 @@ export const NovoOrcamentoModal = ({
                       value={paymentPlan.parcelas.toString()}
                       onValueChange={(value) => setPaymentPlan({ ...paymentPlan, parcelas: parseInt(value) })}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="h-12 sm:h-10">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -554,6 +501,7 @@ export const NovoOrcamentoModal = ({
                       type="date"
                       value={primeiroVencimento}
                       onChange={(e) => setPrimeiroVencimento(e.target.value)}
+                      className="h-12 sm:h-10"
                     />
                   </div>
                   <div className="space-y-2">
@@ -562,7 +510,7 @@ export const NovoOrcamentoModal = ({
                       value={paymentPlan.metodo}
                       onValueChange={(value) => setPaymentPlan({ ...paymentPlan, metodo: value })}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="h-12 sm:h-10">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -576,9 +524,8 @@ export const NovoOrcamentoModal = ({
                   </div>
                 </div>
 
-                {/* Payment Summary */}
-                <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-                  <div className="font-medium mb-2">Resumo do Pagamento</div>
+                <div className="bg-muted/50 rounded-lg p-3 sm:p-4 space-y-2">
+                  <div className="font-medium mb-2 text-sm">Resumo do Pagamento</div>
                   {paymentPlan.entrada > 0 && (
                     <div className="flex justify-between text-sm">
                       <span>Entrada:</span>
@@ -596,15 +543,14 @@ export const NovoOrcamentoModal = ({
                   </div>
                 </div>
 
-                {/* Vencimentos Preview */}
                 {paymentPlan.vencimentos.length > 0 && (
                   <div className="space-y-2">
                     <Label>Vencimentos</Label>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {paymentPlan.vencimentos.map((v, i) => (
                         <div key={i} className="text-sm bg-muted rounded p-2 text-center">
-                          <div className="text-muted-foreground">Parcela {i + 1}</div>
-                          <div className="font-medium">
+                          <div className="text-muted-foreground text-xs">Parcela {i + 1}</div>
+                          <div className="font-medium text-xs sm:text-sm">
                             {new Date(v).toLocaleDateString("pt-BR")}
                           </div>
                         </div>
@@ -617,39 +563,34 @@ export const NovoOrcamentoModal = ({
 
             <div className="flex items-center justify-between p-3 border rounded-lg">
               <div className="flex items-center gap-2">
-                <Switch
-                  id="contrato"
-                  checked={emitirContrato}
-                  onCheckedChange={setEmitirContrato}
-                />
-                <Label htmlFor="contrato" className="cursor-pointer">
-                  Emitir <strong>contrato</strong> ao aprovar orçamento
+                <Switch id="contrato" checked={emitirContrato} onCheckedChange={setEmitirContrato} />
+                <Label htmlFor="contrato" className="cursor-pointer text-sm">
+                  Emitir <strong>contrato</strong> ao aprovar
                 </Label>
-                <Info className="h-4 w-4 text-muted-foreground" />
               </div>
             </div>
 
-            <Alert className="bg-blue-50 border-blue-200">
-              <Info className="h-4 w-4 text-blue-600" />
-              <AlertDescription>
-                Ao <strong>aprovar</strong> o orçamento, serão criados automaticamente: tratamento, títulos a receber e provisões de comissão.
+            <Alert className="bg-[hsl(var(--card-blue))] border-[hsl(var(--flowdent-blue)/0.3)]">
+              <Info className="h-4 w-4 text-[hsl(var(--flowdent-blue))]" />
+              <AlertDescription className="text-sm">
+                Ao <strong>aprovar</strong>, serão criados automaticamente: tratamento, títulos a receber e provisões de comissão.
               </AlertDescription>
             </Alert>
 
-            <div className="flex justify-between pt-4">
-              <Button variant="outline" onClick={() => setStep("listar")}>
+            <div className="flex flex-col sm:flex-row justify-between pt-4 gap-3">
+              <Button variant="outline" onClick={() => setStep("listar")} className="h-12 sm:h-10">
                 VOLTAR
               </Button>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => handleSalvar(false)} disabled={loading}>
-                  SALVAR RASCUNHO
+                <Button variant="outline" onClick={() => handleSalvar(false)} disabled={loading} className="h-12 sm:h-10 flex-1 sm:flex-none">
+                  RASCUNHO
                 </Button>
-                <Button 
-                  onClick={() => handleSalvar(true)} 
+                <Button
+                  onClick={() => handleSalvar(true)}
                   disabled={loading}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="h-12 sm:h-10 flex-1 sm:flex-none bg-[hsl(var(--success-green))] hover:bg-[hsl(var(--success-green)/0.9)]"
                 >
-                  {loading ? "PROCESSANDO..." : "APROVAR ORÇAMENTO"}
+                  {loading ? "PROCESSANDO..." : "APROVAR"}
                 </Button>
               </div>
             </div>
