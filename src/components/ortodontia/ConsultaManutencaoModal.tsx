@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,7 @@ const TIPO_CONSULTA_LABELS: Record<string, string> = {
 };
 
 export function ConsultaManutencaoModal({ open, onOpenChange, casoId, tipoTratamento, onSuccess }: ConsultaManutencaoModalProps) {
+  const { clinicId } = useAuth();
   const [loading, setLoading] = useState(false);
   const [dataConsulta, setDataConsulta] = useState(new Date().toISOString().split("T")[0]);
   const [tipoConsulta, setTipoConsulta] = useState("ativacao");
@@ -42,11 +44,13 @@ export function ConsultaManutencaoModal({ open, onOpenChange, casoId, tipoTratam
   const [proximaConsulta, setProximaConsulta] = useState("");
 
   const { data: professionals } = useQuery({
-    queryKey: ["professionals-list"],
+    queryKey: ["professionals-list", clinicId],
+    enabled: !!clinicId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profissionais")
         .select("id, nome")
+        .eq("clinica_id", clinicId!)
         .eq("ativo", true)
         .order("nome");
       if (error) throw error;
