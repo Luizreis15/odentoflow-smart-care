@@ -63,12 +63,15 @@ Deno.serve(async (req) => {
       data_inicio,
     } = caso;
 
-    if (!valor_mensalidade || !total_meses || !dia_vencimento) {
-      return new Response(JSON.stringify({ error: "Dados financeiros incompletos no caso (mensalidade, meses ou dia de vencimento)" }), {
+    if (!valor_mensalidade || !total_meses) {
+      return new Response(JSON.stringify({ error: "Dados financeiros incompletos no caso (mensalidade e meses são obrigatórios)" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Default dia_vencimento to 10 if not set
+    const diaVenc = dia_vencimento || 10;
 
     const titulos: any[] = [];
     const today = new Date();
@@ -99,7 +102,7 @@ Deno.serve(async (req) => {
       
       // Handle day overflow (e.g., day 31 in February)
       const lastDayOfMonth = new Date(year, adjustedMonth, 0).getDate();
-      const day = Math.min(dia_vencimento, lastDayOfMonth);
+      const day = Math.min(diaVenc, lastDayOfMonth);
       
       const dueDate = `${year}-${String(adjustedMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 

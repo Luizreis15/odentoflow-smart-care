@@ -138,7 +138,7 @@ export function NovoCasoModal({ open, onOpenChange, onSuccess }: NovoCasoModalPr
       if (error) throw error;
 
       // Auto-generate installments if financial data is complete
-      if (newCase && valorMensalidade && totalMeses && diaVencimento) {
+      if (newCase && valorMensalidade && totalMeses) {
         try {
           const { data: installmentResult, error: installmentError } = await supabase.functions.invoke("generate-ortho-installments", {
             body: { ortho_case_id: newCase.id },
