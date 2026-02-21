@@ -4,11 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DollarSign, CheckCircle, Clock, AlertTriangle, RefreshCw, TrendingUp } from "lucide-react";
+import { DollarSign, CheckCircle, Clock, AlertTriangle, RefreshCw, TrendingUp, CreditCard } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { ReajusteIndividualModal } from "./ReajusteIndividualModal";
+import { PaymentDrawer } from "@/components/financeiro/PaymentDrawer";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface OrthoFinanceiroTabProps {
   casoId: string;
@@ -31,26 +33,26 @@ export function OrthoFinanceiroTab({
 }: OrthoFinanceiroTabProps) {
   const [generating, setGenerating] = useState(false);
   const [reajusteOpen, setReajusteOpen] = useState(false);
+  const [paymentDrawerOpen, setPaymentDrawerOpen] = useState(false);
+  const [selectedTitulo, setSelectedTitulo] = useState<any>(null);
   const queryClient = useQueryClient();
+  const { clinicId } = useAuth();
 
-  // Fetch receivable titles linked to the case (ortho_case_id) or budget
   const { data: titulos, refetch } = useQuery({
     queryKey: ["ortho-receivables", casoId, budgetId],
     queryFn: async () => {
-      // Try ortho_case_id first
       let { data, error } = await supabase
         .from("receivable_titles")
-        .select("*")
+        .select("*, patient:patients(full_name, phone)")
         .eq("ortho_case_id", casoId)
         .order("due_date", { ascending: true });
 
       if (error) throw error;
 
-      // Fallback to budget_id if no ortho results
       if ((!data || data.length === 0) && budgetId) {
         const res = await supabase
           .from("receivable_titles")
-          .select("*")
+          .select("*, patient:patients(full_name, phone)")
           .eq("budget_id", budgetId)
           .order("due_date", { ascending: true });
         if (res.error) throw res.error;
@@ -62,7 +64,7 @@ export function OrthoFinanceiroTab({
   });
 
   const totalPago = titulos?.filter((t: any) => t.status === "paid").reduce((acc: number, t: any) => acc + Number(t.amount), 0) || 0;
-  const totalPendente = titulos?.filter((t: any) => t.status === "pending" || t.status === "partial").reduce((acc: number, t: any) => acc + Number(t.balance ?? t.amount), 0) || 0;
+  const totalPendente = titulos?.filter((t: any) => t.status === "open" || t.status === "partial").reduce((acc: number, t: any) => acc + Number(t.balance ?? t.amount), 0) || 0;
   const totalVencido = titulos?.filter((t: any) => {
     if (t.status === "paid") return false;
     return new Date(t.due_date) < new Date();
@@ -98,6 +100,21 @@ export function OrthoFinanceiroTab({
   const handleReajusteSuccess = () => {
     refetch();
     queryClient.invalidateQueries({ queryKey: ["ortho-case-detail", casoId] });
+  };
+
+  const handlePayClick = (titulo: any) => {
+    setSelectedTitulo(titulo);
+    setPaymentDrawerOpen(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    setPaymentDrawerOpen(false);
+    setSelectedTitulo(null);
+    refetch();
+    // Invalidate patient financial queries so both modules stay in sync
+    queryClient.invalidateQueries({ queryKey: ["patient-receivables"] });
+    queryClient.invalidateQueries({ queryKey: ["patient-financial"] });
+    queryClient.invalidateQueries({ queryKey: ["ortho-receivables"] });
   };
 
   const hasTitulos = titulos && titulos.length > 0;
@@ -208,13 +225,24 @@ export function OrthoFinanceiroTab({
                 <div key={titulo.id} className="flex items-center justify-between px-4 py-3 text-sm">
                   <div className="flex items-center gap-3 min-w-0">
                     {getStatusBadge(titulo.status, titulo.due_date)}
-                    <span className="truncate">{titulo.description || "Parcela"}</span>
+                    <span className="truncate">{titulo.notes || "Parcela"}</span>
                   </div>
-                  <div className="flex items-center gap-4 shrink-0">
+                  <div className="flex items-center gap-3 shrink-0">
                     <span className="text-muted-foreground text-xs">
                       {format(parseISO(titulo.due_date), "dd/MM/yyyy", { locale: ptBR })}
                     </span>
                     <span className="font-medium">R$ {Number(titulo.amount).toFixed(2)}</span>
+                    {titulo.status !== "paid" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs gap-1 text-green-700 border-green-300 hover:bg-green-50"
+                        onClick={() => handlePayClick(titulo)}
+                      >
+                        <CreditCard className="h-3 w-3" />
+                        Pagar
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -230,6 +258,17 @@ export function OrthoFinanceiroTab({
           casoId={casoId}
           valorAtual={Number(valorMensalidade)}
           onSuccess={handleReajusteSuccess}
+        />
+      )}
+
+      {/* Payment Drawer */}
+      {selectedTitulo && clinicId && (
+        <PaymentDrawer
+          open={paymentDrawerOpen}
+          onOpenChange={setPaymentDrawerOpen}
+          title={selectedTitulo}
+          clinicId={clinicId}
+          onSuccess={handlePaymentSuccess}
         />
       )}
     </div>

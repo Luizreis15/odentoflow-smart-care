@@ -148,6 +148,7 @@ const Agenda = () => {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [patientNoShowStats, setPatientNoShowStats] = useState<Record<string, number>>({});
   const [clinicConfig, setClinicConfig] = useState<HorarioFuncionamento>(DEFAULT_HORARIO);
+  const [dentistConfigs, setDentistConfigs] = useState<Record<string, HorarioFuncionamento>>({});
   const [clinicId, setClinicId] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     status: "all",
@@ -167,9 +168,17 @@ const Agenda = () => {
     duration: "30",
   });
 
-  // Compute TIME_SLOTS based on selected date and clinic config
+  // Determine active config: per-dentist when filtered, otherwise clinic-wide
+  const activeConfig = (() => {
+    if (filters.dentistId !== "all" && dentistConfigs[filters.dentistId]) {
+      return dentistConfigs[filters.dentistId];
+    }
+    return clinicConfig;
+  })();
+
+  // Compute TIME_SLOTS based on selected date and active config
   const selectedDayKey = DAY_KEYS[selectedDate.getDay()];
-  const TIME_SLOTS = generateDynamicTimeSlots(selectedDayKey, clinicConfig);
+  const TIME_SLOTS = generateDynamicTimeSlots(selectedDayKey, activeConfig);
 
   // Handle URL params for pre-selecting date/time
   useEffect(() => {
@@ -246,6 +255,52 @@ const Agenda = () => {
       
       if (dentistsError) throw dentistsError;
       setDentists(dentistsData || []);
+
+      // Load per-dentist agenda configs
+      if (dentistsData?.length) {
+        const { data: agendaConfigs } = await supabase
+          .from("profissional_agenda_config")
+          .select("*")
+          .in("profissional_id", dentistsData.map(d => d.id));
+
+        if (agendaConfigs?.length) {
+          const configMap: Record<string, HorarioFuncionamento> = {};
+          // Group by profissional_id
+          const grouped: Record<string, typeof agendaConfigs> = {};
+          agendaConfigs.forEach(c => {
+            if (!grouped[c.profissional_id]) grouped[c.profissional_id] = [];
+            grouped[c.profissional_id].push(c);
+          });
+
+          // Convert each dentist's config to HorarioFuncionamento format
+          const dayKeyMap: Record<number, keyof HorarioFuncionamento["dias"]> = {
+            0: "domingo", 1: "segunda", 2: "terca", 3: "quarta", 4: "quinta", 5: "sexta", 6: "sabado"
+          };
+
+          Object.entries(grouped).forEach(([profId, profConfigs]) => {
+            const dias = { ...DEFAULT_HORARIO.dias };
+            let intervalo = 30;
+
+            profConfigs.forEach(pc => {
+              const dayKey = dayKeyMap[pc.dia_semana];
+              if (dayKey) {
+                dias[dayKey] = {
+                  ativo: pc.ativo,
+                  inicio: pc.hora_inicio,
+                  fim: pc.hora_fim,
+                  almoco_inicio: pc.almoco_inicio || undefined,
+                  almoco_fim: pc.almoco_fim || undefined,
+                };
+                if (pc.ativo) intervalo = pc.duracao_consulta_minutos;
+              }
+            });
+
+            configMap[profId] = { dias, intervalo_padrao: intervalo };
+          });
+
+          setDentistConfigs(configMap);
+        }
+      }
 
       // Show info if no data
       if (!patientsData?.length) {
@@ -753,8 +808,8 @@ const Agenda = () => {
     const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
     const selectedDentistId = filters.dentistId !== "all" ? filters.dentistId : undefined;
     
-    // Get active days from clinic config
-    const activeDayKeys = (Object.entries(clinicConfig.dias) as [keyof HorarioFuncionamento["dias"], DiaConfig][])
+    // Get active days from active config (per-dentist or clinic-wide)
+    const activeDayKeys = (Object.entries(activeConfig.dias) as [keyof HorarioFuncionamento["dias"], DiaConfig][])
       .filter(([_, cfg]) => cfg.ativo)
       .map(([key]) => key);
     
@@ -764,7 +819,7 @@ const Agenda = () => {
     };
     
     // Get all unique time slots for active days
-    const weekTimeSlots = getAllTimeSlotsForDays(activeDayKeys, clinicConfig);
+    const weekTimeSlots = getAllTimeSlotsForDays(activeDayKeys, activeConfig);
     
     // Helper para obter agendamento para data e horário específicos
     const getAppointmentForDateTime = (date: Date, time: string) => {
@@ -781,7 +836,7 @@ const Agenda = () => {
     
     // Check if time slot is valid for a specific day
     const isSlotValidForDay = (dayKey: keyof HorarioFuncionamento["dias"], time: string): boolean => {
-      const daySlots = generateDynamicTimeSlots(dayKey, clinicConfig);
+      const daySlots = generateDynamicTimeSlots(dayKey, activeConfig);
       return daySlots.includes(time);
     };
     
@@ -842,7 +897,7 @@ const Agenda = () => {
                       const dentistColor = apt?.dentist?.cor || '#3b82f6';
                       const patientNoShows = apt?.patient_id ? (patientNoShowStats[apt.patient_id] || 0) : 0;
                       const isValidSlot = isSlotValidForDay(dayKey, time);
-                      const isLunch = isLunchBreak(time, clinicConfig.dias[dayKey]);
+                      const isLunch = isLunchBreak(time, activeConfig.dias[dayKey]);
                       
                       // Slot não disponível para este dia (horário de almoço ou fora do expediente)
                       if (!isValidSlot || isLunch) {

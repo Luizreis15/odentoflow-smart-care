@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { RemuneracaoTab } from "./RemuneracaoTab";
+import { AgendaProfissionalInline } from "./AgendaProfissionalInline";
 
 interface ProfissionalModalProps {
   open: boolean;
@@ -134,9 +135,10 @@ export const ProfissionalModal = ({ open, onClose, profissional, clinicaId }: Pr
         </DialogHeader>
 
         <Tabs defaultValue="dados" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="dados">Dados Cadastrais</TabsTrigger>
             <TabsTrigger value="remuneracao" disabled={!profissional}>Remuneração</TabsTrigger>
+            <TabsTrigger value="agenda" disabled={!profissional}>Agenda</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dados" className="space-y-4 mt-4">
@@ -270,6 +272,12 @@ export const ProfissionalModal = ({ open, onClose, profissional, clinicaId }: Pr
 
           <TabsContent value="remuneracao">
             {profissional && <RemuneracaoTab profissionalId={profissional.id} />}
+          </TabsContent>
+
+          <TabsContent value="agenda">
+            {profissional && (
+              <AgendaProfissionalInline profissional={{ id: profissional.id, nome: profissional.nome }} />
+            )}
           </TabsContent>
         </Tabs>
       </DialogContent>
