@@ -6,29 +6,26 @@ import { cn } from "@/lib/utils";
 interface OdontogramaProps {
   dentesSelecionados: string[];
   onDentesChange: (dentes: string[]) => void;
-  statusDentes?: Record<string, string>; // Para mostrar status visual dos dentes
+  statusDentes?: Record<string, string>;
 }
 
-// Dentes permanentes FDI
 const DENTES_PERMANENTES = {
   superior: [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28],
   inferior: [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38],
 };
 
-// Dentes decíduos
 const DENTES_DECIDUOS = {
   superior: [55, 54, 53, 52, 51, 61, 62, 63, 64, 65],
   inferior: [85, 84, 83, 82, 81, 71, 72, 73, 74, 75],
 };
 
-// Ícone SVG de dente simplificado
 const ToothIcon = ({ selected, onClick, status }: { selected: boolean; onClick: () => void; status?: string }) => {
   const getStatusColor = () => {
     if (selected) return "fill-primary stroke-primary";
     switch (status) {
-      case "completed": return "fill-green-500 stroke-green-600";
-      case "in_progress": return "fill-yellow-500 stroke-yellow-600";
-      case "pending": return "fill-gray-400 stroke-gray-500";
+      case "completed": return "fill-[hsl(var(--success-green))] stroke-[hsl(var(--success-green))]";
+      case "in_progress": return "fill-[hsl(var(--warning-amber))] stroke-[hsl(var(--warning-amber))]";
+      case "pending": return "fill-muted-foreground/40 stroke-muted-foreground/50";
       default: return "fill-background stroke-muted-foreground";
     }
   };
@@ -38,7 +35,7 @@ const ToothIcon = ({ selected, onClick, status }: { selected: boolean; onClick: 
       type="button"
       onClick={onClick}
       className={cn(
-        "relative w-8 h-10 transition-all hover:scale-110",
+        "relative w-7 h-9 sm:w-8 sm:h-10 transition-all press-scale flex-shrink-0",
         selected && "scale-110"
       )}
     >
@@ -84,292 +81,165 @@ export const Odontograma = ({ dentesSelecionados, onDentesChange, statusDentes }
 
   const selecionarRegiao = (regiao: string) => {
     let novosDentes: string[] = [];
-    
     switch (regiao) {
       case "maxila":
-        novosDentes = DENTES_PERMANENTES.superior.map(d => d.toString());
-        break;
+        novosDentes = DENTES_PERMANENTES.superior.map(d => d.toString()); break;
       case "mandibula":
-        novosDentes = DENTES_PERMANENTES.inferior.map(d => d.toString());
-        break;
+        novosDentes = DENTES_PERMANENTES.inferior.map(d => d.toString()); break;
       case "face":
-        // Dentes anteriores (incisivos e caninos)
         novosDentes = [
           ...DENTES_PERMANENTES.superior.filter(d => d >= 11 && d <= 13 || d >= 21 && d <= 23),
           ...DENTES_PERMANENTES.inferior.filter(d => d >= 31 && d <= 33 || d >= 41 && d <= 43),
-        ].map(d => d.toString());
-        break;
+        ].map(d => d.toString()); break;
       case "arcada_superior":
-        novosDentes = DENTES_PERMANENTES.superior.map(d => d.toString());
-        break;
+        novosDentes = DENTES_PERMANENTES.superior.map(d => d.toString()); break;
       case "arcada_inferior":
-        novosDentes = DENTES_PERMANENTES.inferior.map(d => d.toString());
-        break;
+        novosDentes = DENTES_PERMANENTES.inferior.map(d => d.toString()); break;
       case "arcadas":
-        novosDentes = [
-          ...DENTES_PERMANENTES.superior,
-          ...DENTES_PERMANENTES.inferior,
-        ].map(d => d.toString());
-        break;
+        novosDentes = [...DENTES_PERMANENTES.superior, ...DENTES_PERMANENTES.inferior].map(d => d.toString()); break;
     }
 
-    // Toggle: se todos já estão selecionados, desseleciona; senão, seleciona todos
     const todosJaSelecionados = novosDentes.every(d => dentesSelecionados.includes(d));
-    
     if (todosJaSelecionados) {
       onDentesChange(dentesSelecionados.filter(d => !novosDentes.includes(d)));
     } else {
-      const dentesUnicos = Array.from(new Set([...dentesSelecionados, ...novosDentes]));
-      onDentesChange(dentesUnicos);
+      onDentesChange(Array.from(new Set([...dentesSelecionados, ...novosDentes])));
     }
   };
 
-  const limparSelecao = () => {
-    onDentesChange([]);
-  };
+  const limparSelecao = () => onDentesChange([]);
 
-  const renderDentePermanente = (dentes: number[], label: string) => (
+  const renderDentes = (dentes: number[]) => (
     <div className="space-y-2">
-      <div className="flex justify-center gap-1">
-        {dentes.map(dente => (
-          <div key={dente} className="flex flex-col items-center">
-            <span className="text-xs text-muted-foreground mb-1">{dente}</span>
-                        <ToothIcon
-                          selected={dentesSelecionados.includes(dente.toString())}
-                          onClick={() => toggleDente(dente)}
-                          status={statusDentes?.[dente.toString()]}
-                        />
-          </div>
-        ))}
+      {/* Horizontal scrollable container for teeth */}
+      <div className="overflow-x-auto scrollbar-hide -mx-2 px-2">
+        <div className="flex gap-0.5 sm:gap-1 justify-center min-w-fit">
+          {dentes.map(dente => (
+            <div key={dente} className="flex flex-col items-center flex-shrink-0">
+              <span className="text-[10px] sm:text-xs text-muted-foreground mb-0.5">{dente}</span>
+              <ToothIcon
+                selected={dentesSelecionados.includes(dente.toString())}
+                onClick={() => toggleDente(dente)}
+                status={statusDentes?.[dente.toString()]}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 
   return (
-    <div className="space-y-4 border rounded-lg p-4 bg-muted/20">
+    <div className="space-y-3 border rounded-lg p-3 sm:p-4 bg-muted/20 overflow-hidden">
       <div className="flex items-center justify-between">
-        <h4 className="font-semibold">Selecionar Dente/Região</h4>
+        <h4 className="font-semibold text-sm sm:text-base">Selecionar Dente/Região</h4>
         {dentesSelecionados.length > 0 && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={limparSelecao}
-            className="text-xs"
-          >
+          <Button type="button" variant="ghost" size="sm" onClick={limparSelecao} className="text-xs h-8">
             Limpar ({dentesSelecionados.length})
           </Button>
         )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="permanentes">PERMANENTES</TabsTrigger>
-          <TabsTrigger value="deciduos">DECÍDUOS</TabsTrigger>
-          <TabsTrigger value="hof">HOF</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 h-10">
+          <TabsTrigger value="permanentes" className="text-xs sm:text-sm">PERMANENTES</TabsTrigger>
+          <TabsTrigger value="deciduos" className="text-xs sm:text-sm">DECÍDUOS</TabsTrigger>
+          <TabsTrigger value="hof" className="text-xs sm:text-sm">HOF</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="permanentes" className="space-y-6 mt-4">
-          <div className="space-y-4">
-            {renderDentePermanente(DENTES_PERMANENTES.superior, "Superior")}
-            <div className="border-t my-4" />
-            {renderDentePermanente(DENTES_PERMANENTES.inferior, "Inferior")}
+        <TabsContent value="permanentes" className="space-y-4 mt-3">
+          <div className="space-y-3">
+            {renderDentes(DENTES_PERMANENTES.superior)}
+            <div className="border-t" />
+            {renderDentes(DENTES_PERMANENTES.inferior)}
           </div>
-
-          <div className="flex flex-wrap gap-2 pt-4 border-t">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => selecionarRegiao("maxila")}
-            >
-              Maxila
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => selecionarRegiao("mandibula")}
-            >
-              Mandíbula
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => selecionarRegiao("face")}
-            >
-              Face
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => selecionarRegiao("arcada_superior")}
-            >
-              Arcada superior
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => selecionarRegiao("arcada_inferior")}
-            >
-              Arcada inferior
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => selecionarRegiao("arcadas")}
-            >
-              Arcadas
-            </Button>
+          <div className="flex flex-wrap gap-2 pt-3 border-t">
+            {["Maxila", "Mandíbula", "Face", "Arcada superior", "Arcada inferior", "Arcadas"].map((label) => (
+              <Button
+                key={label}
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => selecionarRegiao(label.toLowerCase().replace("í", "i").replace(" ", "_"))}
+                className="text-xs h-8"
+              >
+                {label}
+              </Button>
+            ))}
           </div>
         </TabsContent>
 
-        <TabsContent value="deciduos" className="space-y-6 mt-4">
-          <div className="space-y-4">
-            {renderDentePermanente(DENTES_DECIDUOS.superior, "Superior")}
-            <div className="border-t my-4" />
-            {renderDentePermanente(DENTES_DECIDUOS.inferior, "Inferior")}
+        <TabsContent value="deciduos" className="space-y-4 mt-3">
+          <div className="space-y-3">
+            {renderDentes(DENTES_DECIDUOS.superior)}
+            <div className="border-t" />
+            {renderDentes(DENTES_DECIDUOS.inferior)}
           </div>
-
-          <div className="flex flex-wrap gap-2 pt-4 border-t">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
+          <div className="flex flex-wrap gap-2 pt-3 border-t">
+            <Button type="button" variant="outline" size="sm" className="text-xs h-8"
               onClick={() => {
-                const dentesDecSup = DENTES_DECIDUOS.superior.map(d => d.toString());
-                const todosJaSelecionados = dentesDecSup.every(d => dentesSelecionados.includes(d));
-                if (todosJaSelecionados) {
-                  onDentesChange(dentesSelecionados.filter(d => !dentesDecSup.includes(d)));
-                } else {
-                  onDentesChange(Array.from(new Set([...dentesSelecionados, ...dentesDecSup])));
-                }
-              }}
-            >
-              Arcada superior
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
+                const d = DENTES_DECIDUOS.superior.map(d => d.toString());
+                const all = d.every(x => dentesSelecionados.includes(x));
+                onDentesChange(all ? dentesSelecionados.filter(x => !d.includes(x)) : Array.from(new Set([...dentesSelecionados, ...d])));
+              }}>Arcada superior</Button>
+            <Button type="button" variant="outline" size="sm" className="text-xs h-8"
               onClick={() => {
-                const dentesDecInf = DENTES_DECIDUOS.inferior.map(d => d.toString());
-                const todosJaSelecionados = dentesDecInf.every(d => dentesSelecionados.includes(d));
-                if (todosJaSelecionados) {
-                  onDentesChange(dentesSelecionados.filter(d => !dentesDecInf.includes(d)));
-                } else {
-                  onDentesChange(Array.from(new Set([...dentesSelecionados, ...dentesDecInf])));
-                }
-              }}
-            >
-              Arcada inferior
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
+                const d = DENTES_DECIDUOS.inferior.map(d => d.toString());
+                const all = d.every(x => dentesSelecionados.includes(x));
+                onDentesChange(all ? dentesSelecionados.filter(x => !d.includes(x)) : Array.from(new Set([...dentesSelecionados, ...d])));
+              }}>Arcada inferior</Button>
+            <Button type="button" variant="outline" size="sm" className="text-xs h-8"
               onClick={() => {
-                const todosDentes = [
-                  ...DENTES_DECIDUOS.superior,
-                  ...DENTES_DECIDUOS.inferior,
-                ].map(d => d.toString());
-                const todosJaSelecionados = todosDentes.every(d => dentesSelecionados.includes(d));
-                if (todosJaSelecionados) {
-                  onDentesChange(dentesSelecionados.filter(d => !todosDentes.includes(d)));
-                } else {
-                  onDentesChange(Array.from(new Set([...dentesSelecionados, ...todosDentes])));
-                }
-              }}
-            >
-              Arcadas
-            </Button>
+                const d = [...DENTES_DECIDUOS.superior, ...DENTES_DECIDUOS.inferior].map(d => d.toString());
+                const all = d.every(x => dentesSelecionados.includes(x));
+                onDentesChange(all ? dentesSelecionados.filter(x => !d.includes(x)) : Array.from(new Set([...dentesSelecionados, ...d])));
+              }}>Arcadas</Button>
           </div>
         </TabsContent>
 
-        <TabsContent value="hof" className="space-y-4 mt-4">
-          <p className="text-sm text-muted-foreground mb-4">
-            Hemisfério Orofacial - Seleção rápida de regiões
+        <TabsContent value="hof" className="space-y-3 mt-3">
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            Hemisfério Orofacial - Seleção rápida
           </p>
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => selecionarRegiao("maxila")}
-              className="h-20"
-            >
-              <div className="text-center">
-                <div className="font-semibold">Maxila</div>
-                <div className="text-xs text-muted-foreground">Arcada superior completa</div>
-              </div>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => selecionarRegiao("mandibula")}
-              className="h-20"
-            >
-              <div className="text-center">
-                <div className="font-semibold">Mandíbula</div>
-                <div className="text-xs text-muted-foreground">Arcada inferior completa</div>
-              </div>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => selecionarRegiao("face")}
-              className="h-20"
-            >
-              <div className="text-center">
-                <div className="font-semibold">Face</div>
-                <div className="text-xs text-muted-foreground">Dentes anteriores</div>
-              </div>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => selecionarRegiao("arcadas")}
-              className="h-20"
-            >
-              <div className="text-center">
-                <div className="font-semibold">Arcadas</div>
-                <div className="text-xs text-muted-foreground">Todos os dentes</div>
-              </div>
-            </Button>
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
+            {[
+              { label: "Maxila", sub: "Arcada superior completa", region: "maxila" },
+              { label: "Mandíbula", sub: "Arcada inferior completa", region: "mandibula" },
+              { label: "Face", sub: "Dentes anteriores", region: "face" },
+              { label: "Arcadas", sub: "Todos os dentes", region: "arcadas" },
+            ].map((item) => (
+              <Button
+                key={item.region}
+                type="button"
+                variant="outline"
+                onClick={() => selecionarRegiao(item.region)}
+                className="h-16 sm:h-20 flex flex-col items-center justify-center"
+              >
+                <div className="font-semibold text-sm">{item.label}</div>
+                <div className="text-[10px] sm:text-xs text-muted-foreground">{item.sub}</div>
+              </Button>
+            ))}
           </div>
         </TabsContent>
       </Tabs>
 
       {dentesSelecionados.length > 0 && (
         <div className="pt-3 border-t">
-          <p className="text-sm text-muted-foreground mb-2">Selecionados:</p>
-          <div className="flex flex-wrap gap-2">
+          <p className="text-xs text-muted-foreground mb-2">Selecionados:</p>
+          <div className="flex flex-wrap gap-1.5">
             {dentesSelecionados.sort((a, b) => parseInt(a) - parseInt(b)).map(dente => (
               <span
                 key={dente}
-                className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded text-sm font-medium"
+                className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded text-xs font-medium"
               >
                 {dente}
                 <button
                   type="button"
                   onClick={() => toggleDente(parseInt(dente))}
-                  className="hover:bg-primary/20 rounded-full p-0.5"
+                  className="hover:bg-primary/20 rounded-full p-0.5 min-h-0 min-w-0"
                 >
-                  <svg
-                    className="w-3 h-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </span>
