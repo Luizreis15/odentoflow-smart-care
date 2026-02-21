@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useAvailableSlots } from "@/hooks/useAvailableSlots";
 
 interface ConsultaManutencaoModalProps {
   open: boolean;
@@ -34,6 +35,7 @@ export function ConsultaManutencaoModal({ open, onOpenChange, casoId, tipoTratam
   const { clinicId } = useAuth();
   const [loading, setLoading] = useState(false);
   const [dataConsulta, setDataConsulta] = useState(new Date().toISOString().split("T")[0]);
+  const [horarioConsulta, setHorarioConsulta] = useState("");
   const [tipoConsulta, setTipoConsulta] = useState("ativacao");
   const [professionalId, setProfessionalId] = useState("");
   const [fioUtilizado, setFioUtilizado] = useState("");
@@ -42,6 +44,19 @@ export function ConsultaManutencaoModal({ open, onOpenChange, casoId, tipoTratam
   const [procedimentos, setProcedimentos] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [proximaConsulta, setProximaConsulta] = useState("");
+  const [horarioProximaConsulta, setHorarioProximaConsulta] = useState("");
+
+  const { availableSlots: slotsConsulta } = useAvailableSlots(
+    professionalId || undefined,
+    dataConsulta || undefined,
+    clinicId || undefined
+  );
+
+  const { availableSlots: slotsProxima } = useAvailableSlots(
+    professionalId || undefined,
+    proximaConsulta || undefined,
+    clinicId || undefined
+  );
 
   const { data: professionals } = useQuery({
     queryKey: ["professionals-list", clinicId],
@@ -58,7 +73,6 @@ export function ConsultaManutencaoModal({ open, onOpenChange, casoId, tipoTratam
     },
   });
 
-  // Fetch patient_id from the ortho case
   const { data: casoData } = useQuery({
     queryKey: ["ortho-case-patient", casoId],
     queryFn: async () => {
@@ -76,6 +90,7 @@ export function ConsultaManutencaoModal({ open, onOpenChange, casoId, tipoTratam
 
   const resetForm = () => {
     setDataConsulta(new Date().toISOString().split("T")[0]);
+    setHorarioConsulta("");
     setTipoConsulta("ativacao");
     setProfessionalId("");
     setFioUtilizado("");
@@ -84,17 +99,18 @@ export function ConsultaManutencaoModal({ open, onOpenChange, casoId, tipoTratam
     setProcedimentos("");
     setObservacoes("");
     setProximaConsulta("");
+    setHorarioProximaConsulta("");
   };
 
-  // Creates an appointment in the general agenda and returns its ID
   const createGeneralAppointment = async (
     patientId: string,
     dentistId: string,
     dateStr: string,
+    timeStr: string,
     tipo: string,
-    durationMinutes: number = 15
+    durationMinutes: number = 30
   ): Promise<string | null> => {
-    const appointmentDate = new Date(`${dateStr}T09:00:00`);
+    const appointmentDate = new Date(`${dateStr}T${timeStr}:00`);
     const title = `Ortodontia - ${TIPO_CONSULTA_LABELS[tipo] || tipo}`;
 
     const { data, error } = await supabase
@@ -123,7 +139,10 @@ export function ConsultaManutencaoModal({ open, onOpenChange, casoId, tipoTratam
       toast.error("Selecione o profissional");
       return;
     }
-
+    if (!horarioConsulta) {
+      toast.error("Selecione o horário da consulta");
+      return;
+    }
     if (!casoData?.patient_id) {
       toast.error("Não foi possível identificar o paciente do caso");
       return;
@@ -131,15 +150,14 @@ export function ConsultaManutencaoModal({ open, onOpenChange, casoId, tipoTratam
 
     setLoading(true);
     try {
-      // 1. Create appointment in general agenda for the consultation date
       const appointmentId = await createGeneralAppointment(
         casoData.patient_id,
         professionalId,
         dataConsulta,
+        horarioConsulta,
         tipoConsulta
       );
 
-      // 2. Insert ortho_appointment with link to general appointment
       const { error } = await supabase.from("ortho_appointments").insert({
         case_id: casoId,
         data_consulta: dataConsulta,
@@ -156,13 +174,13 @@ export function ConsultaManutencaoModal({ open, onOpenChange, casoId, tipoTratam
 
       if (error) throw error;
 
-      // 3. If there's a next appointment date, create that in the general agenda too
-      if (proximaConsulta) {
+      if (proximaConsulta && horarioProximaConsulta) {
         await createGeneralAppointment(
           casoData.patient_id,
           professionalId,
           proximaConsulta,
-          "ativacao" // default type for next visit
+          horarioProximaConsulta,
+          "ativacao"
         );
       }
 
@@ -178,6 +196,8 @@ export function ConsultaManutencaoModal({ open, onOpenChange, casoId, tipoTratam
   };
 
   const isAlinhadores = tipoTratamento === "alinhadores";
+  const canSelectTime = !!professionalId && !!dataConsulta;
+  const canSelectProximaTime = !!professionalId && !!proximaConsulta;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -187,36 +207,14 @@ export function ConsultaManutencaoModal({ open, onOpenChange, casoId, tipoTratam
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Data da Consulta *</Label>
-              <Input type="date" value={dataConsulta} onChange={(e) => setDataConsulta(e.target.value)} />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Tipo de Consulta *</Label>
-              <Select value={tipoConsulta} onValueChange={setTipoConsulta}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ativacao">Ativação</SelectItem>
-                  <SelectItem value="colagem">Colagem</SelectItem>
-                  <SelectItem value="troca_fio">Troca de Fio</SelectItem>
-                  {isAlinhadores && <SelectItem value="troca_alinhador">Troca de Alinhador</SelectItem>}
-                  <SelectItem value="emergencia">Emergência</SelectItem>
-                  <SelectItem value="documentacao">Documentação</SelectItem>
-                  <SelectItem value="moldagem">Moldagem</SelectItem>
-                  <SelectItem value="contencao">Contenção</SelectItem>
-                  <SelectItem value="remocao">Remoção</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
+          {/* Profissional first - needed to load slots */}
           <div className="space-y-2">
             <Label>Profissional *</Label>
-            <Select value={professionalId} onValueChange={setProfessionalId}>
+            <Select value={professionalId} onValueChange={(v) => {
+              setProfessionalId(v);
+              setHorarioConsulta("");
+              setHorarioProximaConsulta("");
+            }}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o profissional" />
               </SelectTrigger>
@@ -224,6 +222,67 @@ export function ConsultaManutencaoModal({ open, onOpenChange, casoId, tipoTratam
                 {professionals?.map((p) => (
                   <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Data da Consulta *</Label>
+              <Input
+                type="date"
+                value={dataConsulta}
+                onChange={(e) => {
+                  setDataConsulta(e.target.value);
+                  setHorarioConsulta("");
+                }}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Horário *</Label>
+              <Select
+                value={horarioConsulta}
+                onValueChange={setHorarioConsulta}
+                disabled={!canSelectTime}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={
+                    !canSelectTime
+                      ? "Selecione profissional e data"
+                      : slotsConsulta.length === 0
+                        ? "Nenhum horário disponível"
+                        : "Selecione o horário"
+                  } />
+                </SelectTrigger>
+                <SelectContent>
+                  {slotsConsulta.map((slot) => (
+                    <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {canSelectTime && slotsConsulta.length === 0 && (
+                <p className="text-xs text-destructive">Nenhum horário disponível neste dia</p>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Tipo de Consulta *</Label>
+            <Select value={tipoConsulta} onValueChange={setTipoConsulta}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ativacao">Ativação</SelectItem>
+                <SelectItem value="colagem">Colagem</SelectItem>
+                <SelectItem value="troca_fio">Troca de Fio</SelectItem>
+                {isAlinhadores && <SelectItem value="troca_alinhador">Troca de Alinhador</SelectItem>}
+                <SelectItem value="emergencia">Emergência</SelectItem>
+                <SelectItem value="documentacao">Documentação</SelectItem>
+                <SelectItem value="moldagem">Moldagem</SelectItem>
+                <SelectItem value="contencao">Contenção</SelectItem>
+                <SelectItem value="remocao">Remoção</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -281,15 +340,47 @@ export function ConsultaManutencaoModal({ open, onOpenChange, casoId, tipoTratam
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>Próxima Consulta Prevista</Label>
-            <Input type="date" value={proximaConsulta} onChange={(e) => setProximaConsulta(e.target.value)} />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Próxima Consulta Prevista</Label>
+              <Input
+                type="date"
+                value={proximaConsulta}
+                onChange={(e) => {
+                  setProximaConsulta(e.target.value);
+                  setHorarioProximaConsulta("");
+                }}
+              />
+            </div>
+            {proximaConsulta && (
+              <div className="space-y-2">
+                <Label>Horário Próxima</Label>
+                <Select
+                  value={horarioProximaConsulta}
+                  onValueChange={setHorarioProximaConsulta}
+                  disabled={!canSelectProximaTime}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={
+                      slotsProxima.length === 0
+                        ? "Sem horários"
+                        : "Selecione"
+                    } />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {slotsProxima.map((slot) => (
+                      <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
         </div>
 
         <div className="flex justify-end gap-3 pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSubmit} disabled={loading}>
+          <Button onClick={handleSubmit} disabled={loading || !horarioConsulta}>
             {loading ? "Salvando..." : "Registrar Consulta"}
           </Button>
         </div>
