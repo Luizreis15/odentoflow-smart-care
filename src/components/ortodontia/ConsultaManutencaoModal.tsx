@@ -112,6 +112,7 @@ export function ConsultaManutencaoModal({ open, onOpenChange, casoId, tipoTratam
 
     if (error) {
       console.error("Erro ao criar agendamento na agenda geral:", error);
+      toast.error("Erro ao sincronizar com a agenda: " + error.message);
       return null;
     }
     return data.id;
