@@ -120,12 +120,21 @@ All colors MUST be HSL.
 @layer base {
   * {
     @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
   }
 
   body {
     @apply bg-background text-foreground;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   /* Safe area for mobile devices with notch/home indicator */
@@ -152,6 +161,15 @@ All colors MUST be HSL.
   /* Smooth scrolling on iOS */
   .scroll-smooth {
     -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Mobile App Shell */
+@media (max-width: 1023px) {
+  #root {
+    max-width: 100vw;
+    overflow-x: hidden;
+    min-height: 100dvh;
   }
 }
 

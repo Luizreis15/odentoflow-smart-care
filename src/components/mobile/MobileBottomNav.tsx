@@ -1,12 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { Calendar, Home, Users, Menu } from "lucide-react";
+import { Calendar, Home, Users, DollarSign, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import MobileDrawerMenu from "./MobileDrawerMenu";
 import CentralFAB from "./CentralFAB";
 import { useState } from "react";
 
-const navItems = [
+const navItemsLeft = [
   { name: "Início", href: "/dashboard", icon: Home },
   { name: "Agenda", href: "/dashboard/agenda", icon: Calendar },
 ];
@@ -33,14 +33,14 @@ const MobileBottomNav = ({ user }: MobileBottomNavProps) => {
         key={item.name}
         to={item.href}
         className={cn(
-          "flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-lg transition-colors min-w-[60px]",
+          "flex flex-col items-center justify-center gap-0.5 py-1 rounded-lg transition-colors flex-1",
           isActive
             ? "text-primary"
-            : "text-muted-foreground hover:text-foreground"
+            : "text-muted-foreground"
         )}
       >
         <item.icon className={cn("h-5 w-5", isActive && "text-primary")} />
-        <span className={cn("text-[10px] font-medium", isActive && "text-primary")}>
+        <span className={cn("text-[10px] font-medium leading-tight", isActive && "text-primary")}>
           {item.name}
         </span>
       </Link>
@@ -48,13 +48,13 @@ const MobileBottomNav = ({ user }: MobileBottomNavProps) => {
   };
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t safe-area-bottom">
-      <div className="flex items-center justify-around h-16 px-2">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <div className="flex items-end justify-around h-[72px] px-1">
         {/* Left side items */}
-        {navItems.map(renderNavItem)}
+        {navItemsLeft.map(renderNavItem)}
 
         {/* Central FAB */}
-        <div className="flex items-center justify-center min-w-[60px]">
+        <div className="flex items-center justify-center flex-1">
           <CentralFAB />
         </div>
 
@@ -64,9 +64,9 @@ const MobileBottomNav = ({ user }: MobileBottomNavProps) => {
         {/* More menu */}
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
-            <button className="flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-lg text-muted-foreground hover:text-foreground transition-colors min-w-[60px]">
+            <button className="flex flex-col items-center justify-center gap-0.5 py-1 rounded-lg text-muted-foreground transition-colors flex-1">
               <Menu className="h-5 w-5" />
-              <span className="text-[10px] font-medium">Mais</span>
+              <span className="text-[10px] font-medium leading-tight">Mais</span>
             </button>
           </SheetTrigger>
           <SheetContent side="right" className="w-[280px] p-0">
