@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ interface NovoCasoModalProps {
 }
 
 export function NovoCasoModal({ open, onOpenChange, onSuccess }: NovoCasoModalProps) {
+  const { clinicId } = useAuth();
   const [loading, setLoading] = useState(false);
   const [patientId, setPatientId] = useState("");
   const [professionalId, setProfessionalId] = useState("");
@@ -36,11 +38,13 @@ export function NovoCasoModal({ open, onOpenChange, onSuccess }: NovoCasoModalPr
   const [observacoes, setObservacoes] = useState("");
 
   const { data: patients } = useQuery({
-    queryKey: ["patients-list"],
+    queryKey: ["patients-list", clinicId],
+    enabled: !!clinicId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("patients")
         .select("id, full_name")
+        .eq("clinic_id", clinicId!)
         .order("full_name");
       if (error) throw error;
       return data;
@@ -48,11 +52,13 @@ export function NovoCasoModal({ open, onOpenChange, onSuccess }: NovoCasoModalPr
   });
 
   const { data: professionals } = useQuery({
-    queryKey: ["professionals-list"],
+    queryKey: ["professionals-list", clinicId],
+    enabled: !!clinicId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profissionais")
         .select("id, nome")
+        .eq("clinica_id", clinicId!)
         .eq("ativo", true)
         .order("nome");
       if (error) throw error;
@@ -103,19 +109,13 @@ export function NovoCasoModal({ open, onOpenChange, onSuccess }: NovoCasoModalPr
 
     setLoading(true);
     try {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("clinic_id")
-        .eq("id", (await supabase.auth.getUser()).data.user?.id)
-        .single();
-
-      if (!profile?.clinic_id) {
+      if (!clinicId) {
         toast.error("Clínica não encontrada");
         return;
       }
 
       const { data: newCase, error } = await supabase.from("ortho_cases").insert({
-        clinic_id: profile.clinic_id,
+        clinic_id: clinicId,
         patient_id: patientId,
         professional_id: professionalId,
         responsible_contact_id: responsibleContactId || null,

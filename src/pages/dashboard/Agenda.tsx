@@ -337,9 +337,10 @@ const Agenda = () => {
           duration_minutes,
           status,
           patient_id,
-          patient:patients(id, full_name),
+          patient:patients!inner(id, full_name, clinic_id),
           dentist:profissionais(id, nome, cor)
         `)
+        .eq("patient.clinic_id", authClinicId)
         .gte("appointment_date", rangeStart)
         .lte("appointment_date", rangeEnd)
         .order("appointment_date");
