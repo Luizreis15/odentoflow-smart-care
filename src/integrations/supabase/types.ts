@@ -2043,6 +2043,294 @@ export type Database = {
           },
         ]
       }
+      ortho_aligner_tracking: {
+        Row: {
+          case_id: string
+          created_at: string
+          data_entrega: string | null
+          data_troca_prevista: string | null
+          data_troca_real: string | null
+          dias_uso: number
+          id: string
+          numero_alinhador: number
+          observacoes: string | null
+          refinamento: boolean
+          total_alinhadores: number
+        }
+        Insert: {
+          case_id: string
+          created_at?: string
+          data_entrega?: string | null
+          data_troca_prevista?: string | null
+          data_troca_real?: string | null
+          dias_uso?: number
+          id?: string
+          numero_alinhador: number
+          observacoes?: string | null
+          refinamento?: boolean
+          total_alinhadores: number
+        }
+        Update: {
+          case_id?: string
+          created_at?: string
+          data_entrega?: string | null
+          data_troca_prevista?: string | null
+          data_troca_real?: string | null
+          dias_uso?: number
+          id?: string
+          numero_alinhador?: number
+          observacoes?: string | null
+          refinamento?: boolean
+          total_alinhadores?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ortho_aligner_tracking_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "ortho_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ortho_appointments: {
+        Row: {
+          appointment_id: string | null
+          case_id: string
+          created_at: string
+          data_consulta: string
+          elasticos: string | null
+          fio_utilizado: string | null
+          id: string
+          numero_alinhador: number | null
+          observacoes: string | null
+          procedimentos_realizados: string | null
+          professional_id: string
+          proxima_consulta_prevista: string | null
+          tipo_consulta: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          case_id: string
+          created_at?: string
+          data_consulta?: string
+          elasticos?: string | null
+          fio_utilizado?: string | null
+          id?: string
+          numero_alinhador?: number | null
+          observacoes?: string | null
+          procedimentos_realizados?: string | null
+          professional_id: string
+          proxima_consulta_prevista?: string | null
+          tipo_consulta?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          case_id?: string
+          created_at?: string
+          data_consulta?: string
+          elasticos?: string | null
+          fio_utilizado?: string | null
+          id?: string
+          numero_alinhador?: number | null
+          observacoes?: string | null
+          procedimentos_realizados?: string | null
+          professional_id?: string
+          proxima_consulta_prevista?: string | null
+          tipo_consulta?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ortho_appointments_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ortho_appointments_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "ortho_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ortho_appointments_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ortho_cases: {
+        Row: {
+          apinhamento: string | null
+          arcada: string
+          budget_id: string | null
+          classificacao_angle: string | null
+          clinic_id: string
+          created_at: string
+          data_inicio: string
+          data_termino: string | null
+          dia_vencimento: number | null
+          id: string
+          marca_aparelho: string | null
+          observacoes_clinicas: string | null
+          patient_id: string
+          previsao_termino: string | null
+          professional_id: string
+          responsible_contact_id: string | null
+          status: string
+          tipo_mordida: string | null
+          tipo_tratamento: string
+          total_meses: number | null
+          updated_at: string
+          valor_entrada: number | null
+          valor_mensalidade: number | null
+          valor_total: number
+        }
+        Insert: {
+          apinhamento?: string | null
+          arcada?: string
+          budget_id?: string | null
+          classificacao_angle?: string | null
+          clinic_id: string
+          created_at?: string
+          data_inicio?: string
+          data_termino?: string | null
+          dia_vencimento?: number | null
+          id?: string
+          marca_aparelho?: string | null
+          observacoes_clinicas?: string | null
+          patient_id: string
+          previsao_termino?: string | null
+          professional_id: string
+          responsible_contact_id?: string | null
+          status?: string
+          tipo_mordida?: string | null
+          tipo_tratamento?: string
+          total_meses?: number | null
+          updated_at?: string
+          valor_entrada?: number | null
+          valor_mensalidade?: number | null
+          valor_total?: number
+        }
+        Update: {
+          apinhamento?: string | null
+          arcada?: string
+          budget_id?: string | null
+          classificacao_angle?: string | null
+          clinic_id?: string
+          created_at?: string
+          data_inicio?: string
+          data_termino?: string | null
+          dia_vencimento?: number | null
+          id?: string
+          marca_aparelho?: string | null
+          observacoes_clinicas?: string | null
+          patient_id?: string
+          previsao_termino?: string | null
+          professional_id?: string
+          responsible_contact_id?: string | null
+          status?: string
+          tipo_mordida?: string | null
+          tipo_tratamento?: string
+          total_meses?: number | null
+          updated_at?: string
+          valor_entrada?: number | null
+          valor_mensalidade?: number | null
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ortho_cases_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ortho_cases_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ortho_cases_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ortho_cases_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "profissionais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ortho_cases_responsible_contact_id_fkey"
+            columns: ["responsible_contact_id"]
+            isOneToOne: false
+            referencedRelation: "patient_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ortho_images: {
+        Row: {
+          case_id: string
+          created_at: string
+          data_registro: string
+          descricao: string | null
+          fase: string
+          file_path: string
+          id: string
+          tipo_imagem: string
+          uploaded_by: string
+        }
+        Insert: {
+          case_id: string
+          created_at?: string
+          data_registro?: string
+          descricao?: string | null
+          fase?: string
+          file_path: string
+          id?: string
+          tipo_imagem?: string
+          uploaded_by: string
+        }
+        Update: {
+          case_id?: string
+          created_at?: string
+          data_registro?: string
+          descricao?: string | null
+          fase?: string
+          file_path?: string
+          id?: string
+          tipo_imagem?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ortho_images_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "ortho_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ortho_images_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_contacts: {
         Row: {
           contact_type: string

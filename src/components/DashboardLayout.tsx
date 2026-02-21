@@ -19,6 +19,7 @@ import {
   Eye,
   X,
   ArrowLeft,
+  SmilePlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Navbar from "./Navbar";
@@ -76,6 +77,12 @@ const navigation = [
     href: "/dashboard/proteses",
     icon: FlaskConical,
     description: "Gestão do fluxo protético",
+  },
+  {
+    name: "Ortodontia",
+    href: "/dashboard/ortodontia",
+    icon: SmilePlus,
+    description: "Casos ortodônticos",
   },
   {
     name: "Estoque",

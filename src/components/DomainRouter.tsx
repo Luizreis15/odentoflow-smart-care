@@ -40,6 +40,7 @@ import PortalAuth from "@/pages/portal/PortalAuth";
 import PortalDashboard from "@/pages/portal/PortalDashboard";
 import IAAssistenteWrapper from "@/pages/dashboard/IAAssistenteWrapper";
 import ProtesesWrapper from "@/pages/dashboard/ProtesesWrapper";
+import OrtodontiaWrapper from "@/pages/dashboard/OrtodontiaWrapper";
 import EstoqueWrapper from "@/pages/dashboard/EstoqueWrapper";
 import ProdutosWrapper from "@/pages/dashboard/ProdutosWrapper";
 import MovimentacoesWrapper from "@/pages/dashboard/MovimentacoesWrapper";
@@ -108,6 +109,7 @@ function AppRoutes() {
       <Route path="/dashboard/portal-paciente" element={<PortalPacienteWrapper />} />
       <Route path="/dashboard/ia-assistente" element={<IAAssistenteWrapper />} />
       <Route path="/dashboard/proteses" element={<ProtesesWrapper />} />
+      <Route path="/dashboard/ortodontia" element={<OrtodontiaWrapper />} />
       <Route path="/dashboard/estoque" element={<EstoqueWrapper />} />
       <Route path="/dashboard/produtos" element={<ProdutosWrapper />} />
       <Route path="/dashboard/movimentacoes" element={<MovimentacoesWrapper />} />
