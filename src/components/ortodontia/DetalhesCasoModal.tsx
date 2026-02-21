@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, User, Calendar, Clock, Stethoscope, DollarSign, AlertTriangle } from "lucide-react";
+import { Plus, User, Calendar, Clock, Stethoscope, DollarSign, AlertTriangle, SmilePlus } from "lucide-react";
+import { AlignerTrackingTab } from "./AlignerTrackingTab";
 import { format, parseISO, differenceInMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ConsultaManutencaoModal } from "./ConsultaManutencaoModal";
@@ -179,6 +180,12 @@ export function DetalhesCasoModal({ open, onOpenChange, casoId, onRefresh }: Det
               <TabsTrigger value="consultas" className="flex-1">
                 Consultas ({consultas?.length || 0})
               </TabsTrigger>
+              {caso.tipo_tratamento === "alinhadores" && (
+                <TabsTrigger value="alinhadores" className="flex-1">
+                  <SmilePlus className="w-3.5 h-3.5 mr-1" />
+                  Alinhadores
+                </TabsTrigger>
+              )}
             </TabsList>
 
             {/* ===== RESUMO TAB ===== */}
@@ -404,6 +411,13 @@ export function DetalhesCasoModal({ open, onOpenChange, casoId, onRefresh }: Det
                 </div>
               )}
             </TabsContent>
+
+            {/* ===== ALINHADORES TAB ===== */}
+            {caso.tipo_tratamento === "alinhadores" && (
+              <TabsContent value="alinhadores">
+                <AlignerTrackingTab casoId={casoId!} />
+              </TabsContent>
+            )}
           </Tabs>
         </DialogContent>
       </Dialog>
