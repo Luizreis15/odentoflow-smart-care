@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Bell, RefreshCw, Calendar } from "lucide-react";
+import { Bell, RefreshCw, Calendar, Clock, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useCallback } from "react";
 import MobileQuickActions from "@/components/mobile/MobileQuickActions";
 import MobileAgendaList from "@/components/mobile/MobileAgendaList";
+import MobileAlerts from "@/components/mobile/MobileAlerts";
 
 interface MobileHomeProps {
   user?: {
@@ -26,31 +27,42 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
 
   const firstName = user?.full_name?.split(" ")[0] || "usuário";
 
-  const { data: appointmentsData, refetch: refetchAppointments } = useQuery({
-    queryKey: ["mobile-appointments-today", clinicId],
+  const { data: summaryData, refetch: refetchSummary } = useQuery({
+    queryKey: ["mobile-home-summary", clinicId],
     queryFn: async () => {
       const today = new Date();
-      const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
-      const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0).toISOString();
+      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
 
-      const { data, error } = await supabase
+      const { data: appointments, error } = await supabase
         .from("appointments")
-        .select("id, status")
+        .select("id, status, appointment_date")
         .gte("appointment_date", startOfDay)
         .lte("appointment_date", endOfDay);
 
       if (error) throw error;
-      return {
-        total: data?.length || 0,
-        confirmed: data?.filter((a) => a.status === "confirmed").length || 0,
-        pending: data?.filter((a) => a.status === "scheduled").length || 0,
-      };
+
+      const total = appointments?.length || 0;
+      const confirmed = appointments?.filter((a) => a.status === "confirmed").length || 0;
+      const pending = appointments?.filter((a) => a.status === "scheduled").length || 0;
+
+      // Next appointment
+      const now = new Date();
+      const upcoming = appointments
+        ?.filter((a) => new Date(a.appointment_date) > now && a.status !== "cancelled")
+        .sort((a, b) => new Date(a.appointment_date).getTime() - new Date(b.appointment_date).getTime());
+      
+      const nextTime = upcoming && upcoming.length > 0
+        ? new Date(upcoming[0].appointment_date).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+        : null;
+
+      return { total, confirmed, pending, nextTime };
     },
   });
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await refetchAppointments();
+    await refetchSummary();
     setTimeout(() => setIsRefreshing(false), 500);
   };
 
@@ -73,6 +85,30 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
     month: "long",
   });
 
+  const summaryCards = [
+    {
+      icon: Calendar,
+      value: summaryData?.total ?? "–",
+      label: "Consultas",
+      colorClass: "text-[hsl(var(--flowdent-blue))]",
+      bgClass: "bg-[hsl(var(--card-blue))]",
+    },
+    {
+      icon: CheckCircle2,
+      value: summaryData?.confirmed ?? "–",
+      label: "Confirmados",
+      colorClass: "text-[hsl(var(--success-green))]",
+      bgClass: "bg-[hsl(var(--card-green))]",
+    },
+    {
+      icon: Clock,
+      value: summaryData?.pending ?? "–",
+      label: "Pendentes",
+      colorClass: "text-[hsl(var(--warning-amber))]",
+      bgClass: "bg-[hsl(var(--card-amber))]",
+    },
+  ];
+
   return (
     <div
       className="min-h-[100dvh] overflow-y-auto overflow-x-hidden touch-pan-y"
@@ -80,7 +116,7 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Pull-to-refresh */}
+      {/* Pull-to-refresh indicator */}
       {isRefreshing && (
         <div className="flex justify-center py-2 bg-[hsl(var(--flowdent-blue))]">
           <RefreshCw className="h-5 w-5 animate-spin text-white" />
@@ -89,52 +125,75 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
 
       {/* Hero Header */}
       <div className="bg-gradient-to-br from-[hsl(var(--flowdent-blue))] via-[hsl(var(--flow-turquoise))] to-[hsl(var(--health-mint))] text-white">
-        <div className="px-4 pt-12 pb-8">
-          <div className="flex items-center justify-between mb-4">
+        <div className="px-4 pt-12 pb-10">
+          <div className="flex items-center justify-between mb-1">
             <div>
-              <p className="text-white/70 text-caption capitalize">{todayFormatted}</p>
-              <h1 className="text-title mt-1">
+              <p className="text-white/60 text-caption capitalize">{todayFormatted}</p>
+              <h1 className="text-title mt-0.5">
                 {getGreeting()}, {firstName}!
               </h1>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className="text-white hover:bg-white/15 rounded-full"
+                className="text-white hover:bg-white/15 rounded-full h-9 w-9"
               >
-                <RefreshCw className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`} />
+                <RefreshCw className={`h-4.5 w-4.5 ${isRefreshing ? "animate-spin" : ""}`} />
               </Button>
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/15 rounded-full">
-                <Bell className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/15 rounded-full h-9 w-9 relative">
+                <Bell className="h-4.5 w-4.5" />
+                {summaryData && summaryData.pending > 0 && (
+                  <span className="absolute top-1 right-1.5 h-2 w-2 rounded-full bg-[hsl(var(--error-red))]" />
+                )}
               </Button>
             </div>
           </div>
 
-          {/* Quick Stats */}
-          <div className="flex items-center gap-3 mt-3">
-            <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-chip px-4 py-2">
-              <Calendar className="h-4 w-4" />
-              <span className="text-caption">
-                {appointmentsData?.total || 0} consultas hoje
-              </span>
-            </div>
-            {appointmentsData && appointmentsData.pending > 0 && (
-              <div className="bg-white/15 backdrop-blur-sm rounded-chip px-4 py-2">
-                <span className="text-caption">
-                  {appointmentsData.pending} pendentes
-                </span>
+          {/* Next appointment chip */}
+          {summaryData?.nextTime && (
+            <div className="flex items-center gap-2 mt-3">
+              <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-chip px-3 py-1.5">
+                <Clock className="h-3.5 w-3.5" />
+                <span className="text-xs font-medium">Próximo às {summaryData.nextTime}</span>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Content */}
-      <div className="w-full space-y-6 bg-background rounded-t-3xl -mt-4 pt-6 relative z-10 pb-[calc(72px+env(safe-area-inset-bottom,0px)+24px)]">
+      {/* Content area with overlap */}
+      <div className="w-full bg-background rounded-t-3xl -mt-5 pt-5 relative z-10 pb-[calc(72px+env(safe-area-inset-bottom,0px)+24px)]">
+        
+        {/* Summary Cards Row */}
+        <div className="px-4 mb-5">
+          <div className="grid grid-cols-3 gap-2.5">
+            {summaryCards.map((card, i) => (
+              <div
+                key={i}
+                className={`${card.bgClass} rounded-card p-3 flex flex-col items-center justify-center min-h-[76px] shadow-sm`}
+              >
+                <card.icon className={`h-5 w-5 ${card.colorClass} mb-1`} />
+                <span className={`text-xl font-bold ${card.colorClass}`}>
+                  {card.value}
+                </span>
+                <span className="text-[11px] text-muted-foreground font-medium mt-0.5">
+                  {card.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Actions */}
         <MobileQuickActions clinicId={clinicId} />
+
+        {/* Alerts */}
+        <MobileAlerts clinicId={clinicId} pendingCount={summaryData?.pending || 0} />
+
+        {/* Agenda List */}
         <MobileAgendaList clinicId={clinicId} />
       </div>
     </div>
