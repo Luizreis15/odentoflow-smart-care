@@ -1,50 +1,63 @@
 
 
-# Corrigir 404 em "Meu Perfil"
+# Corrigir Agendamento via Ortodontia: Selecao de Horario Real
 
-## Causa Raiz
+## Problema Identificado
 
-O erro 404 acontece por um **conflito de rota**:
+O modal de consulta ortodontica (`ConsultaManutencaoModal.tsx`) cria agendamentos com horario fixo `09:00` (linha 97), sem considerar:
 
-- A sidebar, o header e o menu mobile navegam para `/dashboard/perfil`
-- Mas a rota registrada no `DomainRouter.tsx` (linha 128) aponta para `/dashboard/profile` (em ingles)
+1. A agenda real do dentista selecionado (horarios de inicio/fim, almoco)
+2. Os horarios ja ocupados naquele dia
+3. A duracao do intervalo configurado (15, 30, 45 ou 60 min)
 
-Ou seja, a pagina ja existe e esta completa -- ela so nao esta acessivel porque a URL esta diferente.
+Isso faz com que todos os agendamentos caiam no mesmo horario e potencialmente conflitem entre si ou nao aparecam na visualizacao correta da agenda.
 
-## O que ja existe
+## Solucao
 
-A pagina "Meu Perfil" (`Perfil.tsx` + `PerfilWrapper.tsx`) ja esta **100% implementada** com 10 abas:
+Adicionar um **seletor de horario disponivel** no modal, que carrega dinamicamente os slots livres com base no dentista e na data selecionados.
 
-1. **Dados da Conta** -- nome, CPF, telefone, endereco com busca CEP, avatar
-2. **E-mail e Notificacoes** -- preferencias de notificacao
-3. **Seguranca** -- troca de senha, 2FA (placeholder), sessoes ativas
-4. **Plano e Cobranca** -- informacoes do plano
-5. **Contratos** -- contratos e assinaturas
-6. **Preferencias** -- preferencias gerais
-7. **Privacidade (LGPD)** -- configuracoes de privacidade
-8. **Integracoes** -- conexoes com servicos externos
-9. **Logs** -- logs de auditoria
-10. **Encerramento** -- portabilidade e encerramento de conta
+## Alteracoes Tecnicas
 
-## Correcao Necessaria
+### Arquivo: `src/components/ortodontia/ConsultaManutencaoModal.tsx`
 
-Uma unica alteracao em **1 arquivo**:
+**1. Novo estado para horario selecionado**
+- Adicionar `horarioConsulta` (string) e `horarioProximaConsulta` (string)
 
-### `src/components/DomainRouter.tsx`
+**2. Buscar config de agenda do profissional**
+- Query reativa em `profissional_agenda_config` filtrada por `profissional_id` e dia da semana correspondente a `dataConsulta`
+- Fallback para config da clinica (`configuracoes_clinica`) caso o profissional nao tenha config propria
 
-Alterar a linha 128:
+**3. Buscar agendamentos existentes do profissional no dia**
+- Query em `appointments` filtrando por `dentist_id` e data selecionada
+- Calcular quais slots estao ocupados considerando `duration_minutes` de cada agendamento
 
+**4. Gerar slots disponiveis**
+- Reutilizar a mesma logica de `generateDynamicTimeSlots` da Agenda (extrair para utils ou duplicar localmente)
+- Filtrar removendo slots ocupados e slots no passado
+
+**5. Substituir campo de data por data + horario**
+- O campo "Data da Consulta" continua como `<Input type="date">`
+- Adicionar um `<Select>` ao lado com os horarios disponiveis (desabilitado ate selecionar profissional + data)
+- Mesmo tratamento para o campo "Proxima Consulta Prevista"
+
+**6. Corrigir `createGeneralAppointment`**
+- Substituir `T09:00:00` pelo horario selecionado: `new Date(\`${dateStr}T${selectedTime}:00\`)`
+
+### Fluxo do Usuario
+
+```text
+1. Seleciona Profissional
+2. Seleciona Data da Consulta
+3. Sistema carrega slots disponiveis do profissional naquele dia
+4. Seleciona Horario disponivel
+5. (Opcional) Seleciona data e horario da proxima consulta
+6. Salva -> agendamento criado no horario correto
 ```
-// DE:
-<Route path="/dashboard/profile" element={<PerfilWrapper />} />
 
-// PARA:
-<Route path="/dashboard/perfil" element={<PerfilWrapper />} />
-```
+### Validacoes
 
-Isso alinha a rota com todas as navegacoes ja existentes no sistema (`DesktopSidebar`, `DesktopHeader`, `MobileDrawerMenu`).
-
-## Validacao
-
-Apos a correcao, clicar em "Meu Perfil" na sidebar, no header dropdown ou no menu mobile levara corretamente a pagina de perfil com todas as 10 abas funcionais.
+- Bloquear submit se horario nao foi selecionado
+- Exibir mensagem "Nenhum horario disponivel" se todos os slots estiverem ocupados
+- Bloquear slots passados (mesmo dia)
+- Se o profissional nao tiver config de agenda, usar config da clinica
 
