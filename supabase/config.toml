@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.send-post-appointment-review]
 verify_jwt = false
+
+[functions.run-crm-automations]
+verify_jwt = false
