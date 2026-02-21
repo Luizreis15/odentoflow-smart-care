@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfDay, endOfDay } from "date-fns";
@@ -29,7 +30,7 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
   no_show: { label: "Faltou", variant: "destructive" },
 };
 
-export const DashboardAgendaTable = ({ clinicId }: DashboardAgendaTableProps) => {
+export const DashboardAgendaTable = React.memo(({ clinicId }: DashboardAgendaTableProps) => {
   const today = new Date();
 
   const { data: appointments, isLoading } = useQuery({
@@ -143,4 +144,6 @@ export const DashboardAgendaTable = ({ clinicId }: DashboardAgendaTableProps) =>
       </CardContent>
     </Card>
   );
-};
+});
+
+DashboardAgendaTable.displayName = "DashboardAgendaTable";

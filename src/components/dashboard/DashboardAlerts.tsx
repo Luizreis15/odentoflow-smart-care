@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,7 +10,7 @@ interface DashboardAlertsProps {
   clinicId: string;
 }
 
-export const DashboardAlerts = ({ clinicId }: DashboardAlertsProps) => {
+export const DashboardAlerts = React.memo(({ clinicId }: DashboardAlertsProps) => {
   // Pagamentos atrasados
   const { data: overduePayments, isLoading: loadingPayments } = useQuery({
     queryKey: ["dashboard-overdue-payments", clinicId],
@@ -121,4 +122,6 @@ export const DashboardAlerts = ({ clinicId }: DashboardAlertsProps) => {
       ))}
     </div>
   );
-};
+});
+
+DashboardAlerts.displayName = "DashboardAlerts";
