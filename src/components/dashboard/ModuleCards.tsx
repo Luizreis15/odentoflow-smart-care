@@ -8,7 +8,8 @@ import {
   BarChart3, 
   MessageSquare,
   FileText,
-  Settings
+  Settings,
+  SmilePlus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -71,6 +72,13 @@ const modules: Module[] = [
     route: "/dashboard/proteses"
   },
   {
+    title: "Ortodontia",
+    description: "Acompanhe casos ortodônticos, alinhadores e manutenções.",
+    icon: SmilePlus,
+    iconBg: "bg-[hsl(var(--flowdent-blue))]",
+    route: "/dashboard/ortodontia"
+  },
+  {
     title: "Configurações",
     description: "Ajuste preferências e configurações do sistema.",
     icon: Settings,
@@ -124,8 +132,8 @@ export const ModuleCards = () => {
         ))}
       </div>
       
-      {/* Segunda linha: 4 módulos secundários */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
+      {/* Segunda linha: 5 módulos secundários */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-5">
         {modules.slice(4).map(module => (
           <ModuleCard key={module.title} module={module} />
         ))}
