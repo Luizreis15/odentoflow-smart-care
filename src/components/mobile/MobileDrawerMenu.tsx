@@ -19,7 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/contexts/AuthContext";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -77,7 +77,7 @@ const MobileDrawerMenu = ({ user, onClose }: MobileDrawerMenuProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { isSuperAdmin } = usePermissions();
+  const { isSuperAdmin } = useAuth();
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();

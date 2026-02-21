@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
+type PerfilUsuario = "super_admin" | "admin" | "dentista" | "assistente" | "recepcao";
+
 interface AuthProfile {
   id: string;
   full_name: string;
@@ -22,10 +24,13 @@ interface AuthContextType {
   user: User | null;
   profile: AuthProfile | null;
   clinicId: string | null;
+  perfil: PerfilUsuario | null;
   isSuperAdmin: boolean;
+  isAdmin: boolean;
   isImpersonating: boolean;
   isLoading: boolean;
   isAuthenticated: boolean;
+  hasPermission: (recurso: string, acao: string) => boolean;
   refreshProfile: () => Promise<void>;
 }
 
@@ -36,29 +41,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<AuthProfile | null>(null);
   const [clinicId, setClinicId] = useState<string | null>(null);
+  const [perfil, setPerfil] = useState<PerfilUsuario | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
 
   const loadUserData = useCallback(async (sessionUser: User) => {
     try {
-      // Run profile and role queries in parallel
-      const [profileResult, roleResult] = await Promise.all([
+      // Run profile, role, and perfil queries in parallel
+      const [profileResult, roleResult, usuarioResult] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", sessionUser.id).single(),
         supabase.from("user_roles").select("role").eq("user_id", sessionUser.id).eq("role", "super_admin").maybeSingle(),
+        supabase.from("usuarios").select("perfil").eq("id", sessionUser.id).maybeSingle(),
       ]);
 
       const profileData = profileResult.data as AuthProfile | null;
-      const isAdmin = !!roleResult.data;
+      const isSuperAdminRole = !!roleResult.data;
+      const userPerfil = (usuarioResult.data?.perfil as PerfilUsuario) || null;
 
       setUser(sessionUser);
       setProfile(profileData);
-      setIsSuperAdmin(isAdmin);
+      setIsSuperAdmin(isSuperAdminRole);
+      setPerfil(isSuperAdminRole ? "super_admin" : userPerfil);
+      setIsAdmin(isSuperAdminRole || userPerfil === "admin");
 
       // Check impersonation
       const storedImpersonation = localStorage.getItem("admin_impersonation");
-      if (storedImpersonation && isAdmin) {
+      if (storedImpersonation && isSuperAdminRole) {
         const impersonation: ImpersonationState = JSON.parse(storedImpersonation);
         setClinicId(impersonation.clinicId);
         setIsImpersonating(true);
@@ -68,7 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // Validate onboarding for non-admins
-      if (!isAdmin && profileData) {
+      if (!isSuperAdminRole && profileData) {
         if (!profileData.clinic_id) {
           navigate("/onboarding/welcome");
           return;
@@ -92,6 +103,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [navigate]);
 
+  const hasPermission = useCallback((recurso: string, acao: string): boolean => {
+    if (isSuperAdmin || isAdmin) return true;
+    // Future: load custom permissions from DB
+    return false;
+  }, [isSuperAdmin, isAdmin]);
+
   const refreshProfile = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
@@ -102,25 +119,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT" || !session) {
         setUser(null);
         setProfile(null);
         setClinicId(null);
+        setPerfil(null);
         setIsSuperAdmin(false);
+        setIsAdmin(false);
         setIsImpersonating(false);
         setIsLoading(false);
         return;
       }
 
       if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-        // Defer to avoid Supabase auth deadlock
         setTimeout(() => loadUserData(session.user), 0);
       }
     });
 
-    // Then check existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         loadUserData(session.user);
@@ -133,7 +149,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, [loadUserData]);
 
-  // Handle impersonation from URL params (cross-domain transfer)
+  // Handle impersonation from URL params
   useEffect(() => {
     if (!user || !initialized) return;
     
@@ -160,10 +176,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user,
         profile,
         clinicId,
+        perfil,
         isSuperAdmin,
+        isAdmin,
         isImpersonating,
         isLoading,
         isAuthenticated: !!user,
+        hasPermission,
         refreshProfile,
       }}
     >

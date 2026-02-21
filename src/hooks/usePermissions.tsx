@@ -1,74 +1,18 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
-type PerfilUsuario = "super_admin" | "admin" | "dentista" | "assistente" | "recepcao";
-
-interface Permission {
-  recurso: string;
-  acao: string;
-  permitido: boolean;
-}
-
+/**
+ * @deprecated Use useAuth() from AuthContext directly.
+ * This hook is kept for backward compatibility only.
+ */
 export const usePermissions = () => {
-  const [perfil, setPerfil] = useState<PerfilUsuario | null>(null);
-  const [permissions, setPermissions] = useState<Permission[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { perfil, isSuperAdmin, isAdmin, isLoading, hasPermission } = useAuth();
 
-  useEffect(() => {
-    loadUserPermissions();
-  }, []);
-
-  const loadUserPermissions = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Check if user is super admin first
-      const { data: userRole } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "super_admin")
-        .maybeSingle();
-
-      if (userRole) {
-        setPerfil("super_admin");
-        setPermissions([]);
-        setLoading(false);
-        return;
-      }
-
-      const { data: usuario } = await supabase
-        .from("usuarios")
-        .select("perfil")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (usuario) {
-        setPerfil(usuario.perfil as PerfilUsuario);
-
-        // Carregar permissões do perfil (tabela customizada)
-        setPermissions([]);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar permissões:", error);
-    } finally {
-      setLoading(false);
-    }
+  return {
+    perfil,
+    permissions: [],
+    hasPermission,
+    isAdmin,
+    isSuperAdmin,
+    loading: isLoading,
   };
-
-  const hasPermission = (recurso: string, acao: string): boolean => {
-    if (perfil === "super_admin" || perfil === "admin") return true;
-    
-    const perm = permissions.find(
-      p => p.recurso === recurso && p.acao === acao
-    );
-    
-    return perm?.permitido ?? false;
-  };
-
-  const isAdmin = perfil === "admin";
-  const isSuperAdmin = perfil === "super_admin";
-
-  return { perfil, permissions, hasPermission, isAdmin, isSuperAdmin, loading };
 };
