@@ -1,63 +1,51 @@
 
+# Corrigir Filtros da Agenda e Visibilidade de Agendamentos Orto
 
-# Corrigir Agendamento via Ortodontia: Selecao de Horario Real
+## Diagnostico
 
-## Problema Identificado
+### Problema 1: Filtro "Somente Agendados" nao funciona
 
-O modal de consulta ortodontica (`ConsultaManutencaoModal.tsx`) cria agendamentos com horario fixo `09:00` (linha 97), sem considerar:
+Quando o usuario seleciona um filtro de status (ex: "scheduled"), a funcao `getFilteredAppointments()` filtra corretamente os agendamentos. Porem, a view `DayTimeSlotsView` continua iterando sobre **todos os TIME_SLOTS** e exibe "Horario Disponivel" para slots sem agendamento correspondente. O usuario espera ver apenas os horarios que tem agendamentos com aquele status.
 
-1. A agenda real do dentista selecionado (horarios de inicio/fim, almoco)
-2. Os horarios ja ocupados naquele dia
-3. A duracao do intervalo configurado (15, 30, 45 ou 60 min)
+**Causa**: Na linha 693 do `Agenda.tsx`, o loop `TIME_SLOTS.map(...)` sempre renderiza todos os slots. Quando um slot nao tem agendamento (porque foi filtrado), ele cai no bloco "Available slot" (linha 774) mostrando o botao verde "Horario Disponivel".
 
-Isso faz com que todos os agendamentos caiam no mesmo horario e potencialmente conflitem entre si ou nao aparecam na visualizacao correta da agenda.
+### Problema 2: Agendamentos via Orto existem mas parecem nao aparecer
+
+Os agendamentos criados via Ortodontia **estao no banco de dados** (confirmado com 10+ registros de hoje). A sincronizacao funciona. O problema provavel e que:
+
+- O usuario esta com um filtro de dentista ativo que nao inclui o profissional selecionado na Orto
+- A pagina da agenda nao recarregou automaticamente apos voltar do modulo de Ortodontia (os dados ficam em cache)
 
 ## Solucao
 
-Adicionar um **seletor de horario disponivel** no modal, que carrega dinamicamente os slots livres com base no dentista e na data selecionados.
+### Arquivo: `src/pages/dashboard/Agenda.tsx`
 
-## Alteracoes Tecnicas
+**1. Corrigir o DayTimeSlotsView quando filtro de status esta ativo**
 
-### Arquivo: `src/components/ortodontia/ConsultaManutencaoModal.tsx`
+Quando `filters.status !== "all"`, o loop de TIME_SLOTS deve:
+- Mostrar apenas os slots que tem um agendamento correspondente ao filtro
+- Esconder slots vazios, passados e "Em consulta" que nao possuem agendamento com o status selecionado
+- Manter o comportamento atual (mostrar todos os slots) quando o filtro e "all"
 
-**1. Novo estado para horario selecionado**
-- Adicionar `horarioConsulta` (string) e `horarioProximaConsulta` (string)
+Logica: adicionar uma condicao no inicio do map que, se houver filtro de status ativo e o slot nao tiver um agendamento filtrado, retorna `null` (nao renderiza).
 
-**2. Buscar config de agenda do profissional**
-- Query reativa em `profissional_agenda_config` filtrada por `profissional_id` e dia da semana correspondente a `dataConsulta`
-- Fallback para config da clinica (`configuracoes_clinica`) caso o profissional nao tenha config propria
+**2. Corrigir o WeekViewSlots da mesma forma**
 
-**3. Buscar agendamentos existentes do profissional no dia**
-- Query em `appointments` filtrando por `dentist_id` e data selecionada
-- Calcular quais slots estao ocupados considerando `duration_minutes` de cada agendamento
+Aplicar a mesma logica de filtragem na view semanal para manter consistencia.
 
-**4. Gerar slots disponiveis**
-- Reutilizar a mesma logica de `generateDynamicTimeSlots` da Agenda (extrair para utils ou duplicar localmente)
-- Filtrar removendo slots ocupados e slots no passado
+**3. Invalidar cache ao retornar da Ortodontia**
 
-**5. Substituir campo de data por data + horario**
-- O campo "Data da Consulta" continua como `<Input type="date">`
-- Adicionar um `<Select>` ao lado com os horarios disponiveis (desabilitado ate selecionar profissional + data)
-- Mesmo tratamento para o campo "Proxima Consulta Prevista"
+No componente da Agenda, adicionar um listener de foco (window focus ou route change) para re-buscar os agendamentos quando o usuario volta de outra pagina, garantindo que agendamentos criados em outros modulos aparecam imediatamente.
 
-**6. Corrigir `createGeneralAppointment`**
-- Substituir `T09:00:00` pelo horario selecionado: `new Date(\`${dateStr}T${selectedTime}:00\`)`
+**4. Atualizar contadores de ocupacao**
 
-### Fluxo do Usuario
+Quando o filtro de status esta ativo, os contadores "disponivel/ocupado" e a taxa de ocupacao devem refletir apenas os dados filtrados, ou exibir uma mensagem indicando que ha um filtro ativo.
 
-```text
-1. Seleciona Profissional
-2. Seleciona Data da Consulta
-3. Sistema carrega slots disponiveis do profissional naquele dia
-4. Seleciona Horario disponivel
-5. (Opcional) Seleciona data e horario da proxima consulta
-6. Salva -> agendamento criado no horario correto
-```
+### Resumo das alteracoes
 
-### Validacoes
-
-- Bloquear submit se horario nao foi selecionado
-- Exibir mensagem "Nenhum horario disponivel" se todos os slots estiverem ocupados
-- Bloquear slots passados (mesmo dia)
-- Se o profissional nao tiver config de agenda, usar config da clinica
-
+| O que muda | Onde |
+|---|---|
+| Ocultar slots vazios quando filtro de status esta ativo | `DayTimeSlotsView` (linhas ~693-800) |
+| Mesma logica para view semanal | `WeekViewSlots` (linhas ~880+) |
+| Re-fetch ao voltar para a pagina | `useEffect` com `visibilitychange` |
+| Indicador de filtro ativo nos contadores | `DayTimeSlotsView` header |
