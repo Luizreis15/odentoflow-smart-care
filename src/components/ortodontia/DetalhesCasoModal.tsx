@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -7,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, User, Calendar, Clock, Stethoscope, DollarSign, AlertTriangle, SmilePlus, ImageIcon } from "lucide-react";
+import { Plus, User, Calendar, Clock, Stethoscope, DollarSign, AlertTriangle, SmilePlus, ImageIcon, ExternalLink } from "lucide-react";
 import { AlignerTrackingTab } from "./AlignerTrackingTab";
 import { OrthoImagesTab } from "./OrthoImagesTab";
 import { OrthoFinanceiroTab } from "./OrthoFinanceiroTab";
@@ -67,6 +68,7 @@ const TIPO_CONSULTA_MAP: Record<string, string> = {
 };
 
 export function DetalhesCasoModal({ open, onOpenChange, casoId, onRefresh }: DetalhesCasoModalProps) {
+  const navigate = useNavigate();
   const [consultaModalOpen, setConsultaModalOpen] = useState(false);
   const [editingStatus, setEditingStatus] = useState(false);
 
@@ -413,6 +415,22 @@ export function DetalhesCasoModal({ open, onOpenChange, casoId, onRefresh }: Det
                             <p className="text-xs text-muted-foreground">
                               Próx. consulta: {format(parseISO(consulta.proxima_consulta_prevista), "dd/MM/yyyy", { locale: ptBR })}
                             </p>
+                          )}
+
+                          {consulta.appointment_id && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mt-1 h-7 text-xs gap-1.5"
+                              onClick={() => {
+                                const dateStr = format(parseISO(consulta.data_consulta), "yyyy-MM-dd");
+                                onOpenChange(false);
+                                navigate(`/dashboard/agenda?date=${dateStr}`);
+                              }}
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              Ver na Agenda
+                            </Button>
                           )}
                         </CardContent>
                       </Card>
