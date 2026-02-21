@@ -131,6 +131,7 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
     -webkit-font-smoothing: antialiased;
@@ -162,6 +163,60 @@ All colors MUST be HSL.
   .scroll-smooth {
     -webkit-overflow-scrolling: touch;
   }
+}
+
+/* ===== Mobile Design System Utilities ===== */
+
+/* Typography scale */
+.text-title { font-size: 1.375rem; line-height: 1.75rem; font-weight: 600; }
+.text-section { font-size: 1.125rem; line-height: 1.5rem; font-weight: 600; }
+.text-body { font-size: 0.9375rem; line-height: 1.375rem; font-weight: 400; }
+.text-caption { font-size: 0.8125rem; line-height: 1.125rem; font-weight: 500; }
+.text-label { font-size: 0.75rem; line-height: 1rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+
+/* Pressed state for touch */
+.press-scale {
+  transition: transform 120ms ease;
+}
+.press-scale:active {
+  transform: scale(0.97);
+}
+
+/* Card premium */
+.card-mobile {
+  border-radius: 1rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  min-height: 72px;
+}
+
+/* Input premium */
+.input-mobile {
+  height: 48px;
+  border-radius: 0.75rem;
+  font-size: 0.9375rem;
+  padding: 0 1rem;
+}
+
+/* Button premium */
+.btn-mobile {
+  height: 48px;
+  border-radius: 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  transition: transform 120ms ease, opacity 150ms ease;
+}
+.btn-mobile:active {
+  transform: scale(0.97);
+}
+
+/* Chip / pill */
+.chip {
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.25rem 0.75rem;
 }
 
 /* Mobile App Shell */

@@ -26,7 +26,6 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
 
   const firstName = user?.full_name?.split(" ")[0] || "usuário";
 
-  // Fetch today's appointments count
   const { data: appointmentsData, refetch: refetchAppointments } = useQuery({
     queryKey: ["mobile-appointments-today", clinicId],
     queryFn: async () => {
@@ -43,12 +42,11 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
       if (error) throw error;
       return {
         total: data?.length || 0,
-        confirmed: data?.filter((a) => a.status === "confirmado").length || 0,
-        pending: data?.filter((a) => a.status === "agendado").length || 0,
+        confirmed: data?.filter((a) => a.status === "confirmed").length || 0,
+        pending: data?.filter((a) => a.status === "scheduled").length || 0,
       };
     },
   });
-
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -56,27 +54,18 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
     setTimeout(() => setIsRefreshing(false), 500);
   };
 
-  // Pull-to-refresh on the main container
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    (e.currentTarget as HTMLElement).dataset.touchStartY = String(touch.clientY);
+    (e.currentTarget as HTMLElement).dataset.touchStartY = String(e.touches[0].clientY);
   }, []);
 
-  const handleTouchEnd = useCallback(
-    async (e: React.TouchEvent) => {
-      const touchStartY = Number(
-        (e.currentTarget as HTMLElement).dataset.touchStartY || 0
-      );
-      const touchEndY = e.changedTouches[0].clientY;
-      const scrollTop = (e.currentTarget as HTMLElement).scrollTop;
-
-      // If at top and pulled down more than 100px
-      if (scrollTop <= 0 && touchEndY - touchStartY > 100) {
-        await handleRefresh();
-      }
-    },
-    [handleRefresh]
-  );
+  const handleTouchEnd = useCallback(async (e: React.TouchEvent) => {
+    const touchStartY = Number((e.currentTarget as HTMLElement).dataset.touchStartY || 0);
+    const touchEndY = e.changedTouches[0].clientY;
+    const scrollTop = (e.currentTarget as HTMLElement).scrollTop;
+    if (scrollTop <= 0 && touchEndY - touchStartY > 100) {
+      await handleRefresh();
+    }
+  }, [handleRefresh]);
 
   const todayFormatted = new Date().toLocaleDateString("pt-BR", {
     weekday: "long",
@@ -91,53 +80,50 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Pull-to-refresh indicator */}
+      {/* Pull-to-refresh */}
       {isRefreshing && (
         <div className="flex justify-center py-2 bg-[hsl(var(--flowdent-blue))]">
           <RefreshCw className="h-5 w-5 animate-spin text-white" />
         </div>
       )}
 
-      {/* Hero Header with Gradient - now occupies top of screen */}
+      {/* Hero Header */}
       <div className="bg-gradient-to-br from-[hsl(var(--flowdent-blue))] via-[hsl(var(--flow-turquoise))] to-[hsl(var(--health-mint))] text-white">
-        {/* Safe area top for iPhone notches */}
-        <div className="px-4 pt-12 pb-6">
+        <div className="px-4 pt-12 pb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-white/80 text-sm capitalize">{todayFormatted}</p>
-              <h1 className="text-2xl font-bold mt-1">
+              <p className="text-white/70 text-caption capitalize">{todayFormatted}</p>
+              <h1 className="text-title mt-1">
                 {getGreeting()}, {firstName}!
               </h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className="text-white hover:bg-white/20"
+                className="text-white hover:bg-white/15 rounded-full"
               >
-                <RefreshCw
-                  className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`}
-                />
+                <RefreshCw className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`} />
               </Button>
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/15 rounded-full">
                 <Bell className="h-5 w-5" />
               </Button>
             </div>
           </div>
 
-          {/* Quick Stats in Header */}
-          <div className="flex items-center gap-4 mt-2">
-            <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
+          {/* Quick Stats */}
+          <div className="flex items-center gap-3 mt-3">
+            <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-chip px-4 py-2">
               <Calendar className="h-4 w-4" />
-              <span className="text-sm font-medium">
+              <span className="text-caption">
                 {appointmentsData?.total || 0} consultas hoje
               </span>
             </div>
             {appointmentsData && appointmentsData.pending > 0 && (
-              <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
-                <span className="text-sm">
+              <div className="bg-white/15 backdrop-blur-sm rounded-chip px-4 py-2">
+                <span className="text-caption">
                   {appointmentsData.pending} pendentes
                 </span>
               </div>
@@ -146,12 +132,9 @@ const MobileHome = ({ user, clinicId }: MobileHomeProps) => {
         </div>
       </div>
 
-      {/* Content with rounded corners overlapping hero */}
+      {/* Content */}
       <div className="w-full space-y-6 bg-background rounded-t-3xl -mt-4 pt-6 relative z-10 pb-[calc(72px+env(safe-area-inset-bottom,0px)+24px)]">
-        {/* Quick Actions */}
         <MobileQuickActions clinicId={clinicId} />
-
-        {/* Upcoming Appointments with Swipe Actions */}
         <MobileAgendaList clinicId={clinicId} />
       </div>
     </div>

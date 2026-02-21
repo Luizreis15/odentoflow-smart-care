@@ -20,22 +20,26 @@ const MobilePageHeader = ({
   const navigate = useNavigate();
 
   return (
-    <div className={cn("flex items-center gap-3 mb-4", className)}>
+    <div className={cn(
+      "sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border",
+      "flex items-center gap-3 px-4 min-h-[56px] py-2",
+      className
+    )}>
       {showBack && (
         <button
           onClick={() => navigate(-1)}
-          className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-accent transition-colors"
+          className="lg:hidden p-2 -ml-2 rounded-btn press-scale hover:bg-muted transition-colors"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
       )}
       
       <div className="flex-1 min-w-0">
-        <h1 className="text-lg md:text-xl lg:text-2xl font-bold text-foreground truncate">
+        <h1 className="text-section text-foreground truncate">
           {title}
         </h1>
         {subtitle && (
-          <p className="text-sm text-muted-foreground truncate">{subtitle}</p>
+          <p className="text-caption text-muted-foreground truncate">{subtitle}</p>
         )}
       </div>
 

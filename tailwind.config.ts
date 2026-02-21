@@ -74,6 +74,14 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        "card": "1rem",
+        "input": "0.75rem",
+        "btn": "0.75rem",
+        "chip": "999px",
+      },
+      spacing: {
+        '4.5': '1.125rem',
+        '18': '4.5rem',
       },
       keyframes: {
         "accordion-down": {
