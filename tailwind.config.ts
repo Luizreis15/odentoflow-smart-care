@@ -82,6 +82,18 @@ export default {
       spacing: {
         '4.5': '1.125rem',
         '18': '4.5rem',
+        '6': '1.5rem',    /* 24px */
+        '8': '2rem',      /* 32px */
+        '12': '3rem',     /* 48px */
+      },
+      fontSize: {
+        'h1': ['1.625rem', { lineHeight: '2rem', fontWeight: '700', letterSpacing: '-0.01em' }],
+        'h2': ['1.25rem', { lineHeight: '1.75rem', fontWeight: '600' }],
+        'section': ['1.125rem', { lineHeight: '1.5rem', fontWeight: '600' }],
+        'body': ['0.9375rem', { lineHeight: '1.5rem', fontWeight: '400' }],
+        'body-sm': ['0.875rem', { lineHeight: '1.25rem', fontWeight: '400' }],
+        'table': ['0.8125rem', { lineHeight: '1.25rem', fontWeight: '400' }],
+        'table-header': ['0.8125rem', { lineHeight: '1.125rem', fontWeight: '600', letterSpacing: '0.02em' }],
       },
       keyframes: {
         "accordion-down": {
