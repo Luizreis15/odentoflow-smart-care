@@ -14,6 +14,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button as PaginationButton } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const patientSchema = z.object({
   full_name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
@@ -32,8 +35,11 @@ const patientSchema = z.object({
   notes: z.string().optional(),
 });
 
+const PAGE_SIZE = 25;
+
 const Prontuario = () => {
   const navigate = useNavigate();
+  const { clinicId } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -41,7 +47,8 @@ const Prontuario = () => {
   const [saving, setSaving] = useState(false);
   const [patients, setPatients] = useState<any[]>([]);
   const [filteredPatients, setFilteredPatients] = useState<any[]>([]);
-  const [clinicId, setClinicId] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
   const [formData, setFormData] = useState({
     full_name: "",
     gender: "" as "masculino" | "feminino" | "",
@@ -60,49 +67,34 @@ const Prontuario = () => {
   });
 
   useEffect(() => {
-    const fetchClinicId = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("clinic_id")
-        .eq("id", user.id)
-        .single();
-
-      if (profile?.clinic_id) {
-        setClinicId(profile.clinic_id);
-      }
-    };
-    
-    fetchClinicId();
-    loadPatients();
-  }, []);
-
-  useEffect(() => {
-    if (searchTerm) {
-      const filtered = patients.filter((patient) =>
-        patient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        patient.phone?.includes(searchTerm) ||
-        patient.cpf?.includes(searchTerm)
-      );
-      setFilteredPatients(filtered);
-    } else {
-      setFilteredPatients(patients);
+    if (clinicId) {
+      loadPatients();
     }
-  }, [searchTerm, patients]);
+  }, [clinicId, page, searchTerm]);
 
   const loadPatients = async () => {
+    if (!clinicId) return;
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const from = page * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
+      let query = supabase
         .from("patients")
-        .select("*")
+        .select("*", { count: "exact" })
+        .eq("clinic_id", clinicId)
         .order("full_name");
+
+      if (searchTerm) {
+        query = query.or(`full_name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,cpf.ilike.%${searchTerm}%`);
+      }
+
+      const { data, error, count } = await query.range(from, to);
       
       if (error) throw error;
       setPatients(data || []);
       setFilteredPatients(data || []);
+      setTotalCount(count || 0);
     } catch (error: any) {
       console.error("Erro ao carregar pacientes:", error);
       toast.error("Erro ao carregar pacientes: " + error.message);
@@ -135,17 +127,7 @@ const Prontuario = () => {
 
       setSaving(true);
 
-      // Get user's clinic_id
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("clinic_id")
-        .eq("id", user.id)
-        .single();
-
-      if (!profile?.clinic_id) throw new Error("Clínica não encontrada");
+      if (!clinicId) throw new Error("Clínica não encontrada");
 
       // Parse tags if provided
       const tagsArray = validatedData.tags 
@@ -156,7 +138,7 @@ const Prontuario = () => {
       const { error } = await supabase
         .from("patients")
         .insert({
-          clinic_id: profile.clinic_id,
+          clinic_id: clinicId,
           full_name: validatedData.full_name,
           gender: validatedData.gender || null,
           is_foreign: validatedData.is_foreign || false,
@@ -275,7 +257,7 @@ const Prontuario = () => {
           <Input
             placeholder="Buscar paciente por nome, CPF ou telefone..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }}
             className="pl-10"
           />
         </div>
@@ -549,6 +531,23 @@ const Prontuario = () => {
           {renderPatientList(getPatientsByStatus("inativo"))}
         </TabsContent>
       </Tabs>
+
+      {/* Paginação */}
+      {totalCount > PAGE_SIZE && (
+        <div className="flex items-center justify-between pt-2">
+          <span className="text-sm text-muted-foreground">
+            {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} de {totalCount}
+          </span>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+              <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
+            </Button>
+            <Button variant="outline" size="sm" disabled={(page + 1) * PAGE_SIZE >= totalCount} onClick={() => setPage(p => p + 1)}>
+              Próximo <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
