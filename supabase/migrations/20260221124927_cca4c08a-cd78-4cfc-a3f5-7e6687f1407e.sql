@@ -1,0 +1,2 @@
+ALTER TABLE public.receivable_titles DROP CONSTRAINT receivable_titles_origin_check;
+ALTER TABLE public.receivable_titles ADD CONSTRAINT receivable_titles_origin_check CHECK (origin = ANY (ARRAY['budget'::text, 'manual'::text, 'insurance'::text, 'addendum'::text, 'ortodontia'::text]));

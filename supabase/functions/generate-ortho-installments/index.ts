@@ -79,12 +79,14 @@ Deno.serve(async (req) => {
         clinic_id,
         patient_id,
         ortho_case_id,
-        description: "Entrada - Tratamento Ortodôntico",
+        notes: "Entrada - Tratamento Ortodôntico",
         amount: Number(valor_entrada),
         balance: Number(valor_entrada),
         due_date: today.toISOString().split("T")[0],
-        status: "pending",
-        payment_method: null,
+        status: "open",
+        origin: "ortodontia",
+        installment_number: 0,
+        total_installments: total_meses,
       });
     }
 
@@ -105,12 +107,14 @@ Deno.serve(async (req) => {
         clinic_id,
         patient_id,
         ortho_case_id,
-        description: `Mensalidade Ortodontia ${i + 1}/${total_meses}`,
+        notes: `Mensalidade Ortodontia ${i + 1}/${total_meses}`,
         amount: Number(valor_mensalidade),
         balance: Number(valor_mensalidade),
         due_date: dueDate,
-        status: "pending",
-        payment_method: null,
+        status: "open",
+        origin: "ortodontia",
+        installment_number: i + 1,
+        total_installments: total_meses,
       });
     }
 
