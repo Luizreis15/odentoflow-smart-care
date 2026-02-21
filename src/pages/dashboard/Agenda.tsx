@@ -218,6 +218,24 @@ const Agenda = () => {
     if (authClinicId) loadAppointments();
   }, [currentMonth, authClinicId]);
 
+  // Re-fetch appointments when user returns to the page (e.g. from Ortodontia)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible" && authClinicId) {
+        loadAppointments();
+      }
+    };
+    const handleFocus = () => {
+      if (authClinicId) loadAppointments();
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [authClinicId]);
+
   const loadData = async () => {
     if (!authClinicId) return;
     try {
@@ -626,6 +644,12 @@ const Agenda = () => {
       <Card>
         <CardHeader className="pb-3 space-y-3">
           {/* Taxa de Ocupação */}
+          {filters.status !== "all" && (
+            <div className="flex items-center gap-2 text-sm bg-primary/10 text-primary px-3 py-2 rounded-lg">
+              <Filter className="h-4 w-4" />
+              <span>Filtro ativo: <strong>{statusLabels[filters.status as keyof typeof statusLabels] || filters.status}</strong> — mostrando apenas agendamentos com este status</span>
+            </div>
+          )}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Taxa de ocupação do dia</span>
@@ -694,6 +718,11 @@ const Agenda = () => {
               const appointment = getAppointmentForSlot(time, selectedDentistId);
               const occupied = isSlotOccupied(time, selectedDentistId);
               const slotPassed = isPastSlot(selectedDate, time);
+              
+              // When a status filter is active, hide slots without a matching appointment
+              if (filters.status !== "all" && !appointment) {
+                return null;
+              }
               
               if (appointment) {
                 // Slot with appointment - usar cor do profissional
@@ -895,6 +924,18 @@ const Agenda = () => {
                       const targetDate = addDays(weekStart, dayOffsets[dayKey]);
                       const apt = getAppointmentForDateTime(targetDate, time);
                       const slotPassed = isPastSlot(targetDate, time);
+                      
+                      // When status filter active, only show slots with matching appointments
+                      if (filters.status !== "all" && !apt) {
+                        return (
+                          <div key={dayKey} className="min-h-[48px]" />
+                        );
+                      }
+                      if (filters.status !== "all" && apt && apt.status !== filters.status) {
+                        return (
+                          <div key={dayKey} className="min-h-[48px]" />
+                        );
+                      }
                       const dentistColor = apt?.dentist?.cor || '#3b82f6';
                       const patientNoShows = apt?.patient_id ? (patientNoShowStats[apt.patient_id] || 0) : 0;
                       const isValidSlot = isSlotValidForDay(dayKey, time);
