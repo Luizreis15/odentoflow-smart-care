@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+  const { isAuthenticated, isSuperAdmin, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [isResetPassword, setIsResetPassword] = useState(searchParams.get('reset') === 'true');
@@ -35,117 +37,29 @@ const Auth = () => {
     }
   }, [searchParams]);
 
+  // Redirect authenticated users — AuthContext already loaded profile/roles
   useEffect(() => {
-    const checkUser = async () => {
-      if (searchParams.get('reset') === 'true') {
-        console.log("[AUTH] Reset mode detected - skipping auto-redirect");
-        return;
-      }
+    if (authLoading || isResetPassword) return;
+    if (!isAuthenticated) return;
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: userRoles } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .eq('role', 'super_admin')
-          .maybeSingle();
+    if (isSuperAdmin) {
+      navigate("/super-admin");
+    } else {
+      // AuthContext already handles onboarding redirects in loadUserData,
+      // so if we reach here the user is fully onboarded
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, isSuperAdmin, authLoading, isResetPassword, navigate]);
 
-        if (userRoles) {
-          console.log("[AUTH] Super admin detected, redirecting to /super-admin");
-          navigate("/super-admin");
-          return;
-        }
-
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('clinic_id')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (!profile?.clinic_id) {
-          navigate("/onboarding/welcome");
-          return;
-        }
-
-        const { data: clinica } = await (supabase as any)
-          .from('clinicas')
-          .select('onboarding_status')
-          .eq('id', profile.clinic_id)
-          .single();
-
-        if (clinica?.onboarding_status !== 'completed') {
-          navigate("/onboarding/welcome");
-          return;
-        }
-
-        navigate("/dashboard");
-      }
-    };
-    checkUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("[AUTH] onAuthStateChange - Event:", event, "Session:", !!session);
-      
+  // Handle PASSWORD_RECOVERY event only
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
-        console.log("[AUTH] PASSWORD_RECOVERY detected - staying on reset password screen");
         setIsResetPassword(true);
-        return;
-      }
-      
-      if (isResetPassword && session?.user) {
-        console.log("[AUTH] Reset mode active - waiting for password update");
-        return;
-      }
-
-      if (session?.user) {
-        setTimeout(async () => {
-          try {
-            const { data: userRoles } = await supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', session.user.id)
-              .eq('role', 'super_admin')
-              .maybeSingle();
-
-            if (userRoles) {
-              console.log("[AUTH] Super admin detected (onAuthChange), redirecting to /super-admin");
-              navigate("/super-admin");
-              return;
-            }
-
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('clinic_id')
-              .eq('id', session.user.id)
-              .single();
-            
-            if (!profile?.clinic_id) {
-              navigate("/onboarding/welcome");
-              return;
-            }
-
-            const { data: clinica } = await (supabase as any)
-              .from('clinicas')
-              .select('onboarding_status')
-              .eq('id', profile.clinic_id)
-              .single();
-
-            if (clinica?.onboarding_status !== 'completed') {
-              navigate("/onboarding/welcome");
-              return;
-            }
-
-            navigate("/dashboard");
-          } catch (error) {
-            console.error("Error checking user data:", error);
-          }
-        }, 0);
       }
     });
-
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
