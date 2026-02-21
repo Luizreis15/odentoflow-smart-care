@@ -1,97 +1,109 @@
 
-# Modulo de Relatorios Operacionais -- Flowdent v3
 
-## Resumo
-Criar um modulo completo de relatorios operacionais na rota `/dashboard/relatorios` com 7 abas (Visao Geral, Pacientes, Consultas, Especialidades, Dentistas, Comparecimento, Retencao), filtros globais, KPIs, graficos via Recharts, tabelas com exportacao PDF/Excel/CSV, e bloco de insights automaticos.
+# Otimizacao de Performance -- Carregamento de Paginas
 
-## Dados Disponiveis (sem alteracao no banco)
-Todas as queries serao feitas sobre tabelas existentes:
-- **appointments**: appointment_date, status, dentist_id, patient_id, title, clinic_id (via profissionais)
-- **patients**: full_name, created_at, status, clinic_id, tags
-- **profissionais**: nome, especialidade, clinica_id, ativo
+## Problema
+Cada pagina do dashboard executa 3-4 queries sequenciais de autenticacao (session, user_roles, profiles, clinicas) antes de renderizar qualquer conteudo. Isso causa 800ms-1.5s de tela em branco em cada navegacao.
 
-## Arquivos a Criar
+## Solucao: AuthProvider Centralizado
 
-### 1. `src/pages/dashboard/Relatorios.tsx`
-Pagina principal com:
-- Filtros globais no topo (periodo, dentista, especialidade, status)
-- Tabs: Visao Geral | Pacientes | Consultas | Especialidades | Dentistas | Comparecimento | Retencao
-- Logica de carregamento do clinicId (padrao existente)
-- Cada aba renderiza um componente dedicado recebendo `clinicId` e `filters`
+### Arquitetura Atual (lenta)
 
-### 2. `src/pages/dashboard/RelatoriosWrapper.tsx`
-Wrapper com autenticacao (mesmo padrao de FinanceiroWrapper)
+```text
+Usuario clica em "Ortodontia"
+  → Wrapper: getSession() .............. 200ms
+  → Wrapper: query user_roles .......... 150ms
+  → Wrapper: query profiles ............ 150ms
+  → Wrapper: query clinicas ............ 150ms
+  → Carrega componente Ortodontia
+  → Ortodontia: query ortho_cases ...... 200ms
+  TOTAL: ~850ms de espera
+```
 
-### 3. `src/components/relatorios/RelatorioFilters.tsx`
-Filtros globais:
-- DatePicker inicio/fim (padrao Shadcn)
-- Select de dentista (query profissionais)
-- Select de especialidade (valores unicos de profissionais.especialidade)
-- Select de status (realizado, cancelado, remarcado, faltou)
-- Botao "Aplicar" e "Limpar"
+### Arquitetura Nova (rapida)
 
-### 4. `src/components/relatorios/VisaoGeralTab.tsx`
-- KPIs: Total pacientes, Ativos (6 meses), Novos no periodo, Total consultas, Taxa comparecimento, Taxa cancelamento, Taxa remarcacao
-- Graficos Recharts: Evolucao mensal consultas (BarChart), Pacientes novos (LineChart), Comparecimento vs Faltas (BarChart empilhado)
+```text
+Login (1 vez):
+  → AuthProvider: getSession + profiles + roles + clinica ... cached
 
-### 5. `src/components/relatorios/PacientesTab.tsx`
-- KPIs: Total, Ativos, Inativos, Sem retorno 12+ meses
-- Tabela: Nome, Ultima consulta, Especialidade, Dentista, Status, Total consultas
-- Filtro por tipo (implante/ortodontia/geral via tags)
+Usuario clica em "Ortodontia"
+  → Wrapper: le do AuthContext (0ms, ja em memoria)
+  → Carrega componente Ortodontia
+  → Ortodontia: query ortho_cases ...... 200ms
+  TOTAL: ~200ms de espera
+```
 
-### 6. `src/components/relatorios/ConsultasTab.tsx`
-- KPIs: Total, Realizadas, Canceladas, Remarcadas, Faltas
-- Graficos: Distribuicao por status (PieChart), Por dia da semana (BarChart), Por horario (BarChart)
+## Implementacao
 
-### 7. `src/components/relatorios/EspecialidadesTab.tsx`
-- Metricas por especialidade com percentual
-- Grafico pizza ou barras horizontais
-- Evolucao mensal por especialidade
+### 1. Criar `src/contexts/AuthContext.tsx` (novo arquivo)
+- Centraliza toda a logica de autenticacao em um unico Provider
+- Faz as queries de session, profile, user_roles e clinica **uma unica vez** no login
+- Armazena em estado: `user`, `profile`, `clinicId`, `isSuperAdmin`, `isImpersonating`
+- Expoe hook `useAuth()` para qualquer componente consumir
+- Escuta `onAuthStateChange` para reagir a login/logout
+- Inclui funcao `refreshProfile()` para recarregar manualmente quando necessario
 
-### 8. `src/components/relatorios/DentistasTab.tsx`
-- Tabela comparativa: Dentista, Atendimentos, Comparecimento%, Cancelamentos, Procedimentos, Pacientes
-- Grafico comparativo (BarChart agrupado)
+### 2. Atualizar `src/App.tsx`
+- Envolver o app com `<AuthProvider>` (dentro do BrowserRouter, para ter acesso ao navigate)
+- Mover o AuthProvider para dentro do BrowserRouter
 
-### 9. `src/components/relatorios/ComparecimentoTab.tsx`
-- Taxa geral
-- Faltas por dia da semana, por horario, por dentista, por especialidade
-- Graficos de calor/barras
+### 3. Simplificar TODOS os Wrappers (14 arquivos)
+Cada Wrapper sera reduzido de ~70 linhas para ~15 linhas:
 
-### 10. `src/components/relatorios/RetencaoTab.tsx`
-- Pacientes que retornaram, Intervalo medio entre consultas
-- Pacientes sem retorno 6+ meses
-- Taxa de retencao
-- Coorte simples: novos -> retornaram
+Arquivos afetados:
+- `src/pages/dashboard/OrtodontiaWrapper.tsx`
+- `src/pages/dashboard/RelatoriosWrapper.tsx`
+- `src/pages/dashboard/AgendaWrapper.tsx`
+- `src/pages/dashboard/ProntuarioWrapper.tsx`
+- `src/pages/dashboard/FinanceiroWrapper.tsx`
+- `src/pages/dashboard/CRMWrapper.tsx`
+- `src/pages/dashboard/CRMAtendimentoWrapper.tsx`
+- `src/pages/dashboard/PortalPacienteWrapper.tsx`
+- `src/pages/dashboard/IAAssistenteWrapper.tsx`
+- `src/pages/dashboard/ProtesesWrapper.tsx`
+- `src/pages/dashboard/EstoqueWrapper.tsx`
+- `src/pages/dashboard/ProdutosWrapper.tsx`
+- `src/pages/dashboard/MovimentacoesWrapper.tsx`
+- `src/pages/dashboard/PerfilWrapper.tsx`
+- `src/pages/dashboard/ConfiguracoesWrapper.tsx`
+- `src/pages/dashboard/AssinaturaWrapper.tsx`
 
-### 11. `src/components/relatorios/InsightsAutomaticos.tsx`
-- Bloco fixo no topo ou lateral com insights gerados automaticamente
-- Compara periodo atual vs anterior
-- Ex: "Taxa de cancelamento subiu 12%", "26 pacientes sem retorno ha 1 ano"
+Cada wrapper passara de:
+```
+useEffect com 4 queries sequenciais ao banco
+if (loading) return null
+```
+Para:
+```
+const { profile, isLoading } = useAuth()
+if (isLoading) return skeleton
+```
 
-### 12. `src/hooks/useRelatorioExport.tsx`
-- Hook para exportar CSV, Excel (xlsx) e PDF (jspdf) com filtros aplicados
-- Reutiliza padroes do useReportExport existente
+### 4. Simplificar `src/pages/Dashboard.tsx`
+- Remover toda a logica de auth duplicada (60+ linhas)
+- Consumir `useAuth()` diretamente
+- Manter toda a renderizacao existente
 
-## Alteracoes em Arquivos Existentes
+### 5. Otimizar `src/contexts/SubscriptionContext.tsx`
+- Nao chamar Edge Function no mount inicial
+- Fazer lazy check: so chamar `check-subscription` quando o dashboard efetivamente renderizar
+- Reduzir intervalo de auto-refresh de 60s para 5 minutos
 
-### `src/components/DomainRouter.tsx`
-- Adicionar rota: `<Route path="/dashboard/relatorios" element={<RelatoriosWrapper />} />`
-- Adicionar lazy import do RelatoriosWrapper
+## Resultado Esperado
+- Navegacao entre paginas do dashboard: de ~850ms para ~200ms
+- Primeira carga apos login: mesma velocidade (queries feitas 1 vez)
+- Reducao de ~50 queries por sessao tipica para ~10
+- Tela em branco eliminada (skeletons imediatos em vez de `return null`)
 
-## Padrao Visual
-- KPIs em cards horizontais (4 por linha)
-- Graficos Recharts com ChartContainer/ChartTooltip do projeto
-- Tabelas com DataTable existente (ordenacao, paginacao, busca)
-- Botoes de exportacao no canto superior direito de cada secao
-- Layout enterprise consistente com o resto do sistema
+## Arquivos Criados
+1. `src/contexts/AuthContext.tsx`
 
-## Permissoes
-- Admin: acesso total
-- Dentista: filtra automaticamente apenas seus proprios dados (dentist_id = user profissional)
-- Recepcao: apenas abas Consultas e Comparecimento
+## Arquivos Modificados
+1. `src/App.tsx` (adicionar AuthProvider)
+2. `src/pages/Dashboard.tsx` (simplificar auth)
+3. `src/contexts/SubscriptionContext.tsx` (lazy check)
+4. 16 Wrapper files (simplificar para useAuth)
 
-## Performance
-- Queries filtradas por clinic_id e periodo no Supabase
-- Paginacao real nas tabelas
-- Loading states com Skeleton
-- Dados agregados no frontend (contagens, percentuais) -- sem necessidade de functions backend para MVP
+## Sem Impacto Visual
+Nenhuma alteracao de layout, cores ou componentes. Apenas logica interna de carregamento.
+
