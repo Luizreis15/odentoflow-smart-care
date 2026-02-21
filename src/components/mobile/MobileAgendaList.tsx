@@ -80,7 +80,7 @@ const MobileAgendaList = ({ clinicId }: MobileAgendaListProps) => {
   const handleConfirm = useCallback(
     (id: string) => {
       updateStatusMutation.mutate(
-        { id, status: "confirmado" },
+        { id, status: "confirmed" },
         {
           onSuccess: () => {
             toast({
@@ -104,7 +104,7 @@ const MobileAgendaList = ({ clinicId }: MobileAgendaListProps) => {
   const handleCancel = useCallback(
     (id: string) => {
       updateStatusMutation.mutate(
-        { id, status: "cancelado" },
+        { id, status: "cancelled" },
         {
           onSuccess: () => {
             toast({
