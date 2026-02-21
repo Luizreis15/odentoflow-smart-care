@@ -1,155 +1,110 @@
 
-# PRD v3 - Flowdent Desktop Enterprise
+# Integração Ortodontia + Financeiro com Reajuste Anual
 
-## Visao Geral
+## Problema Atual
+O módulo de Ortodontia armazena dados financeiros (`valor_mensalidade`, `dia_vencimento`, `total_meses`) na tabela `ortho_cases`, mas **nao gera automaticamente as parcelas** na tabela `receivable_titles`. A aba Financeiro do caso depende de um `budget_id` que geralmente nao existe para casos de ortodontia.
 
-Transformar o desktop de um layout com sidebar retratil (64px/256px hover) e sem header fixo em uma plataforma SaaS enterprise com sidebar fixa de 260px, header fixo de 64px e conteudo estruturado com padding de 32px.
+## Solucao em 4 Partes
 
----
+### Parte 1 - Schema: Adicionar coluna `ortho_case_id` em `receivable_titles`
+- Criar migration adicionando `ortho_case_id UUID REFERENCES ortho_cases(id)` na tabela `receivable_titles`
+- Isso permite vincular parcelas diretamente ao caso ortodontico, sem depender de um orcamento intermediario
+- RLS policies existentes ja cobrem a tabela
 
-## Fases de Implementacao
+### Parte 2 - Edge Function: `generate-ortho-installments`
+Nova Edge Function que recebe `ortho_case_id` e:
+1. Busca os dados do caso (`valor_total`, `valor_entrada`, `valor_mensalidade`, `dia_vencimento`, `total_meses`, `clinic_id`, `patient_id`)
+2. Verifica se ja existem titulos gerados para este caso (evitar duplicacao)
+3. Gera o titulo de entrada (se `valor_entrada > 0`) com vencimento imediato
+4. Gera N titulos mensais (um por mes), usando `dia_vencimento` como dia fixo e `valor_mensalidade` como valor de cada parcela
+5. Retorna os titulos criados
 
-### Fase 1 - App Shell Enterprise (Estrutura Base)
+Sera chamada automaticamente ao criar um novo caso ortodontico (no `handleSubmit` do `NovoCasoModal`) e tambem disponivel como botao "Gerar Parcelas" na aba financeira do caso.
 
-**Objetivo:** Sidebar fixa 260px + Header fixo 64px + Content area padronizada
+### Parte 3 - Edge Function: `ortho-price-adjustment` (Reajuste)
+Nova Edge Function que implementa reajuste de mensalidades:
 
-**Alteracoes:**
+**Parametros:**
+- `mode`: `"individual"` ou `"bulk"`
+- `ortho_case_id`: (para modo individual)
+- `clinic_id`: (para modo bulk - aplica a todos os casos ativos da clinica)
+- `percentual_reajuste`: ex: 10 (para 10%)
+- `valor_fixo_novo`: alternativa ao percentual, define novo valor absoluto (apenas modo individual)
 
-1. **`src/components/DashboardLayout.tsx`** - Reescrever o layout desktop:
-   - Sidebar fixa de 260px (sem hover expand/collapse) com icones + texto sempre visiveis
-   - Estado ativo com barra lateral colorida (border-left 3px primary)
-   - Sub-itens expansiveis (Estoque -> Painel/Produtos/Movimentacoes)
-   - Logo Flowdent no topo da sidebar
-   - Header fixo de 64px com: titulo da pagina, breadcrumb, busca global, perfil, notificacoes
-   - Content area com padding 32px e fundo `background` (cinza leve)
-   - Manter toda a logica mobile (MobileBottomNav, condicional `lg:`)
+**Logica:**
+1. Busca as parcelas pendentes (status != 'paid') com `due_date` futuro
+2. Calcula o novo valor aplicando o percentual ou usando o valor fixo
+3. Atualiza `amount` e `balance` das parcelas pendentes
+4. Atualiza `valor_mensalidade` na tabela `ortho_cases`
+5. Registra o reajuste em `audit_logs` para rastreabilidade
 
-2. **`src/components/desktop/DesktopHeader.tsx`** (novo) - Header enterprise:
-   - Altura fixa 64px
-   - Titulo da pagina dinamico (baseado na rota)
-   - Breadcrumb (Dashboard > Agenda)
-   - Busca global centralizada
-   - Icone notificacoes + Avatar/perfil do usuario
-   - Nome da clinica visivel
+### Parte 4 - Atualizacoes no Frontend
 
-3. **`src/components/desktop/DesktopSidebar.tsx`** (novo) - Sidebar enterprise:
-   - Largura fixa 260px
-   - Logo no topo
-   - Itens: Dashboard, Agenda, Pacientes (renomear Prontuario), Financeiro, Proteses, Ortodontia, Estoque (com sub-itens), CRM, Portal, IA, Relatorios (novo)
-   - Hover state sutil, ativo com barra lateral colorida e bg accent
-   - Separador visual entre modulos principais e configuracoes
+**4a. `NovoCasoModal.tsx`**
+- Apos criar o caso com sucesso, chamar automaticamente `generate-ortho-installments` para gerar as parcelas
+- Feedback via toast informando quantas parcelas foram geradas
 
-### Fase 2 - Dashboard Enterprise (KPIs + Tabela + Alertas)
+**4b. `OrthoFinanceiroTab.tsx`**
+- Alterar a query para buscar titulos por `ortho_case_id` em vez de (ou alem de) `budget_id`
+- Adicionar botao "Gerar Parcelas" caso nenhum titulo exista
+- Adicionar botao "Aplicar Reajuste" com dialog que pede percentual ou valor fixo
+- Exibir historico de reajustes (via audit_logs)
 
-**Objetivo:** Dashboard com 3 linhas: KPIs, agenda resumida em tabela, alertas operacionais
+**4c. Nova UI de Reajuste em Massa**
+- Adicionar na pagina Ortodontia (`Ortodontia.tsx`) um botao "Reajuste Anual" no header
+- Modal `ReajusteAnualModal.tsx` com:
+  - Campo de percentual de reajuste
+  - Preview mostrando: lista de pacientes ativos, valor atual, novo valor calculado
+  - Botao de confirmacao que chama a Edge Function em modo bulk
+  - Resumo pos-execucao (X pacientes reajustados, Y parcelas atualizadas)
 
-**Alteracoes:**
-
-1. **`src/pages/Dashboard.tsx`** - Reestruturar o desktop view:
-   - Remover `ModuleCards` do dashboard desktop (sidebar ja tem navegacao)
-   - Linha 1: 4 KPIs horizontais (Consultas hoje, Faturamento do dia, Confirmacoes pendentes, Pacientes novos) com comparativo percentual
-   - Linha 2: Tabela de agenda resumida com colunas: Hora, Paciente, Procedimento, Status (badge), Dentista
-   - Linha 3: Alertas operacionais (pagamentos atrasados, tratamentos nao finalizados, orcamentos pendentes)
-
-2. **`src/components/dashboard/DashboardMetrics.tsx`** - Redesign enterprise:
-   - Cards com numero grande, icone discreto, comparativo (seta + percentual vs periodo anterior)
-   - Layout horizontal 4 colunas em cards brancos
-   - Sem gradientes exagerados, visual limpo
-
-3. **`src/components/dashboard/DashboardAgendaTable.tsx`** (novo) - Tabela agenda do dia:
-   - Cabecalho fixo com colunas: Hora, Paciente, Procedimento, Status, Dentista
-   - Badge elegante para status (Confirmado=verde, Pendente=amarelo, Cancelado=vermelho)
-   - Hover leve nas linhas
-   - Sem paginacao (max 10-15 consultas do dia)
-
-4. **`src/components/dashboard/DashboardAlerts.tsx`** (novo) - Alertas operacionais:
-   - Cards de alerta com icone, titulo e contagem
-   - Categorias: pagamentos atrasados, tratamentos pendentes, orcamentos aguardando
-
-### Fase 3 - Design System Desktop Tokens
-
-**Objetivo:** Refinar tipografia, espacamento e cores para padrao enterprise
-
-**Alteracoes:**
-
-1. **`src/index.css`** - Adicionar tokens desktop:
-   - Tipografia desktop: h1 (24-28px), h2 (20px), section (18px), body (14-16px), table (13-14px)
-   - Garantir que background geral e cinza leve, cards brancos
-   - Sombras controladas (nada exagerado)
-
-2. **`tailwind.config.ts`** - Tokens de espacamento 8pt grid:
-   - Garantir que o sistema usa multiplos de 8 (8, 16, 24, 32, 48)
-
-### Fase 4 - Tabelas Profissionais (Padrao ERP)
-
-**Objetivo:** Todas as tabelas do sistema com cabecalho fixo, ordenacao, filtros, paginacao
-
-**Alteracoes:**
-
-1. **`src/components/desktop/DataTable.tsx`** (novo) - Componente de tabela enterprise reutilizavel:
-   - Cabecalho fixo (sticky)
-   - Ordenacao por coluna (click no header)
-   - Filtro por campo
-   - Busca global
-   - Paginacao elegante (10/25/50 por pagina)
-   - Selecao multipla com checkbox
-   - Acoes em lote
-   - Skeleton loading
-
-2. Migrar tabelas existentes para usar `DataTable`:
-   - `ProfissionaisTable.tsx`
-   - `UsuariosTable.tsx`
-   - `ProdutosTable.tsx`
-   - `PlanosTable.tsx`
-   - Tabela de pacientes em `Prontuario.tsx`
-
-### Fase 5 - Pagina Paciente (Vista Profissional 2 Colunas)
-
-**Objetivo:** Layout de detalhe do paciente em 2 colunas
-
-**Alteracoes:**
-
-1. **`src/pages/dashboard/PatientDetails.tsx`** - Redesign:
-   - Coluna esquerda (1/3): dados pessoais, contato, convenio, historico basico
-   - Coluna direita (2/3): tabs com Timeline clinica, Procedimentos, Financeiro, Documentos
-   - Header com nome do paciente, avatar, e acoes rapidas
-
-### Fase 6 - Formularios Enterprise
-
-**Objetivo:** Todos os formularios em grid 2-3 colunas desktop, labels fixos, botoes alinhados
-
-**Alteracoes:**
-
-1. Padronizar modais e formularios:
-   - Grid 2-3 colunas no desktop (`lg:grid-cols-2` / `lg:grid-cols-3`)
-   - Labels sempre acima do input
-   - Botao primario a direita, cancelar secundario
-   - Inputs padronizados em altura (40px desktop)
-
-### Fase 7 - Performance e Estabilidade
-
-**Objetivo:** Zero reflow, skeleton em tabelas, transicoes suaves
-
-**Alteracoes:**
-
-1. Skeleton loading em todas as tabelas e listas
-2. Memoizacao de componentes pesados
-3. Verificar responsividade em 1280, 1440 e 1920
-4. Zero overflow horizontal
-
----
-
-## Recomendacao de Execucao
-
-Dado o tamanho do PRD, recomendo implementar **Fase 1** primeiro (App Shell: Sidebar fixa + Header fixo + Content area) pois e a fundacao de todas as outras mudancas. Cada fase subsequente pode ser solicitada com "Fase 2", "Fase 3", etc.
+**4d. Aba Financeiro do Paciente (`FinanceiroTab.tsx`)**
+- Os titulos gerados pelo ortho ja aparecerao automaticamente pois sao `receivable_titles` do mesmo paciente
+- Nenhuma alteracao necessaria neste componente
 
 ---
 
 ## Detalhes Tecnicos
 
-- A sidebar atual usa hover expand/collapse (`w-16` -> `w-64`). Sera substituida por uma sidebar fixa de `w-[260px]` no desktop
-- O header atual esta dentro de `Dashboard.tsx`. Sera extraido para um componente dedicado `DesktopHeader.tsx` fixo no layout
-- O content tera `ml-[260px]` e `mt-16` no desktop, mantendo o mobile inalterado
-- O breakpoint `lg:` (1024px) continuara separando mobile/desktop
-- Componente `DataTable` usara estado local para sort/filter/pagination sem dependencias extras
-- Todas as alteracoes mantem compatibilidade total com o sistema mobile (Fases 1-6 do PRD v2)
+### Migration SQL
+```sql
+ALTER TABLE public.receivable_titles 
+  ADD COLUMN ortho_case_id UUID REFERENCES public.ortho_cases(id);
+
+CREATE INDEX idx_receivable_titles_ortho_case 
+  ON public.receivable_titles(ortho_case_id);
+```
+
+### Fluxo de Dados
+
+```text
+Novo Caso Ortho (24 meses, R$350/mes, dia 10)
+    |
+    v
+generate-ortho-installments
+    |
+    v
+24 receivable_titles (ortho_case_id = X, status = 'open')
+    |
+    v
+Aparecem na aba Financeiro do paciente + aba Financeiro do caso ortho
+    |
+    v  (1 ano depois)
+ortho-price-adjustment (percentual = 8%)
+    |
+    v
+Parcelas restantes: R$350 -> R$378
+ortho_cases.valor_mensalidade -> R$378
+```
+
+### Arquivos Novos
+- `supabase/functions/generate-ortho-installments/index.ts`
+- `supabase/functions/ortho-price-adjustment/index.ts`
+- `src/components/ortodontia/ReajusteAnualModal.tsx`
+- `src/components/ortodontia/ReajusteIndividualModal.tsx`
+
+### Arquivos Modificados
+- `src/components/ortodontia/NovoCasoModal.tsx` - chamar geracao de parcelas apos criar caso
+- `src/components/ortodontia/OrthoFinanceiroTab.tsx` - buscar por ortho_case_id, botoes de reajuste e geracao
+- `src/pages/dashboard/Ortodontia.tsx` - botao de reajuste anual no header
+- `supabase/config.toml` - registrar novas edge functions com verify_jwt = false
