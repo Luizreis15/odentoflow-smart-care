@@ -23,6 +23,7 @@ import { EditPatientModal } from "@/components/pacientes/EditPatientModal";
 import { FinanceiroTab } from "@/components/pacientes/FinanceiroTab";
 import { OdontogramaTab } from "@/components/pacientes/OdontogramaTab";
 import { AgendamentosTab } from "@/components/pacientes/AgendamentosTab";
+import { OrthoPatientTab } from "@/components/ortodontia/OrthoPatientTab";
 import { cn, formatPhone } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -229,6 +230,7 @@ const PatientDetails = () => {
     { value: "financeiro", label: "Financeiro" },
     { value: "odontograma", label: "Odontograma" },
     { value: "tratamentos", label: "Tratamentos" },
+    { value: "ortodontia", label: "Ortodontia" },
     { value: "anamnese", label: "Anamnese" },
     { value: "imagens", label: "Imagens" },
     { value: "documentos", label: "Documentos" },
@@ -934,6 +936,10 @@ const PatientDetails = () => {
 
           <TabsContent value="agendamentos" className="mt-0">
             <AgendamentosTab patientId={id!} />
+          </TabsContent>
+
+          <TabsContent value="ortodontia" className="mt-0">
+            <OrthoPatientTab patientId={id!} />
           </TabsContent>
         </div>
       </Tabs>

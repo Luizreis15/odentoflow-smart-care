@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, User, Calendar, Clock, Stethoscope, DollarSign, AlertTriangle, SmilePlus, ImageIcon } from "lucide-react";
 import { AlignerTrackingTab } from "./AlignerTrackingTab";
 import { OrthoImagesTab } from "./OrthoImagesTab";
+import { OrthoFinanceiroTab } from "./OrthoFinanceiroTab";
 import { format, parseISO, differenceInMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ConsultaManutencaoModal } from "./ConsultaManutencaoModal";
@@ -190,6 +191,10 @@ export function DetalhesCasoModal({ open, onOpenChange, casoId, onRefresh }: Det
               <TabsTrigger value="imagens" className="flex-1">
                 <ImageIcon className="w-3.5 h-3.5 mr-1" />
                 Imagens
+              </TabsTrigger>
+              <TabsTrigger value="financeiro" className="flex-1">
+                <DollarSign className="w-3.5 h-3.5 mr-1" />
+                Financeiro
               </TabsTrigger>
             </TabsList>
 
@@ -427,6 +432,19 @@ export function DetalhesCasoModal({ open, onOpenChange, casoId, onRefresh }: Det
             {/* ===== IMAGENS TAB ===== */}
             <TabsContent value="imagens">
               <OrthoImagesTab casoId={casoId!} patientId={caso.patient_id} />
+            </TabsContent>
+
+            {/* ===== FINANCEIRO TAB ===== */}
+            <TabsContent value="financeiro">
+              <OrthoFinanceiroTab
+                casoId={casoId!}
+                budgetId={caso.budget_id}
+                valorTotal={caso.valor_total}
+                valorEntrada={caso.valor_entrada}
+                valorMensalidade={caso.valor_mensalidade}
+                diaVencimento={caso.dia_vencimento}
+                totalMeses={caso.total_meses}
+              />
             </TabsContent>
           </Tabs>
         </DialogContent>
