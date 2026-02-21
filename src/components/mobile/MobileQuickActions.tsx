@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { CalendarPlus, Search, DollarSign, CheckCircle } from "lucide-react";
+import { CalendarPlus, Search, DollarSign, FileText } from "lucide-react";
 
 interface MobileQuickActionsProps {
   clinicId: string;
@@ -12,45 +12,49 @@ const MobileQuickActions = ({ clinicId }: MobileQuickActionsProps) => {
     {
       icon: CalendarPlus,
       label: "Agendar",
-      gradient: "bg-gradient-to-br from-[hsl(205,84%,35%)] to-[hsl(205,84%,25%)]",
+      colorClass: "text-[hsl(var(--flowdent-blue))]",
+      bgClass: "bg-[hsl(var(--card-blue))]",
       onClick: () => navigate("/dashboard/agenda"),
     },
     {
       icon: Search,
-      label: "Buscar",
-      gradient: "bg-gradient-to-br from-[hsl(var(--success-green))] to-emerald-600",
+      label: "Pacientes",
+      colorClass: "text-[hsl(var(--flow-turquoise))]",
+      bgClass: "bg-[hsl(var(--card-turquoise))]",
       onClick: () => navigate("/dashboard/prontuario"),
     },
     {
       icon: DollarSign,
-      label: "Receber",
-      gradient: "bg-gradient-to-br from-green-500 to-green-600",
+      label: "Financeiro",
+      colorClass: "text-[hsl(var(--success-green))]",
+      bgClass: "bg-[hsl(var(--card-green))]",
       onClick: () => navigate("/dashboard/financeiro"),
     },
     {
-      icon: CheckCircle,
-      label: "Confirmar",
-      gradient: "bg-gradient-to-br from-[hsl(192,100%,42%)] to-[hsl(192,100%,35%)]",
-      onClick: () => navigate("/dashboard/agenda"),
+      icon: FileText,
+      label: "Prontuário",
+      colorClass: "text-[hsl(var(--health-mint))]",
+      bgClass: "bg-[hsl(var(--card-mint))]",
+      onClick: () => navigate("/dashboard/prontuario"),
     },
   ];
 
   return (
-    <div className="px-4 w-full max-w-full overflow-hidden">
-      <h2 className="text-label text-muted-foreground mb-3">
+    <div className="px-4 w-full max-w-full overflow-hidden mb-5">
+      <h2 className="text-label text-muted-foreground mb-2">
         Ações Rápidas
       </h2>
-      <div className="grid grid-cols-2 gap-3 w-full">
+      <div className="grid grid-cols-4 gap-2 w-full">
         {actions.map((action, index) => (
           <button
             key={index}
             onClick={action.onClick}
-            className={`w-full h-14 flex flex-col items-center justify-center gap-1 text-white font-medium rounded-btn border-none press-scale ${action.gradient} shadow-md`}
+            className={`w-full flex flex-col items-center justify-center gap-1.5 py-3 rounded-card press-scale ${action.bgClass} shadow-sm min-h-[72px]`}
           >
-            <div className="p-1 rounded-lg bg-white/20">
-              <action.icon className="h-4 w-4" />
+            <div className={`p-2 rounded-btn bg-white/70 ${action.colorClass}`}>
+              <action.icon className="h-5 w-5" />
             </div>
-            <span className="text-xs">{action.label}</span>
+            <span className="text-[11px] font-semibold text-foreground">{action.label}</span>
           </button>
         ))}
       </div>
