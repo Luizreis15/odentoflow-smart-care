@@ -99,24 +99,26 @@ export const InviteUserModal = ({ open, onClose, clinicaId }: InviteUserModalPro
           <DialogTitle>Criar Novo Usuário</DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="nome">Nome *</Label>
-            <Input
-              id="nome"
-              value={formData.nome}
-              onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-            />
-          </div>
+        <div className="space-y-4 py-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="nome">Nome *</Label>
+              <Input
+                id="nome"
+                value={formData.nome}
+                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">E-mail *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
+            <div className="space-y-2">
+              <Label htmlFor="email">E-mail *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+            </div>
           </div>
 
           <div className="space-y-2">

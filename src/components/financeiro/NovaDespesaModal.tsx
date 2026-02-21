@@ -139,24 +139,24 @@ export const NovaDespesaModal = ({ open, onOpenChange, clinicId, onSuccess }: No
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Nova Despesa</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div>
-            <Label htmlFor="description">Descrição *</Label>
-            <Input
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Ex: Material de escritório"
-            />
-          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="sm:col-span-2 space-y-2">
+              <Label htmlFor="description">Descrição *</Label>
+              <Input
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Ex: Material de escritório"
+              />
+            </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="amount">Valor *</Label>
               <Input
                 id="amount"
@@ -165,8 +165,10 @@ export const NovaDespesaModal = ({ open, onOpenChange, clinicId, onSuccess }: No
                 placeholder="0,00"
               />
             </div>
+          </div>
 
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-2">
               <Label htmlFor="dueDate">Vencimento *</Label>
               <Input
                 id="dueDate"
@@ -175,24 +177,34 @@ export const NovaDespesaModal = ({ open, onOpenChange, clinicId, onSuccess }: No
                 onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="supplier">Fornecedor</Label>
+              <Select value={formData.supplierId} onValueChange={(v) => setFormData({ ...formData, supplierId: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um fornecedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {suppliers.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>{getSupplierDisplayName(s)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="documentNumber">Nº Documento/NF</Label>
+              <Input
+                id="documentNumber"
+                value={formData.documentNumber}
+                onChange={(e) => setFormData({ ...formData, documentNumber: e.target.value })}
+                placeholder="Ex: NF-12345"
+              />
+            </div>
           </div>
 
-          <div>
-            <Label htmlFor="supplier">Fornecedor</Label>
-            <Select value={formData.supplierId} onValueChange={(v) => setFormData({ ...formData, supplierId: v })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um fornecedor" />
-              </SelectTrigger>
-              <SelectContent>
-                {suppliers.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>{getSupplierDisplayName(s)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-2">
               <Label htmlFor="category">Categoria</Label>
               <Select value={formData.categoryId} onValueChange={(v) => setFormData({ ...formData, categoryId: v })}>
                 <SelectTrigger>
@@ -211,7 +223,7 @@ export const NovaDespesaModal = ({ open, onOpenChange, clinicId, onSuccess }: No
               </Select>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="expenseType">Tipo</Label>
               <Select value={formData.expenseTypeId} onValueChange={(v) => setFormData({ ...formData, expenseTypeId: v })}>
                 <SelectTrigger>
@@ -226,20 +238,8 @@ export const NovaDespesaModal = ({ open, onOpenChange, clinicId, onSuccess }: No
                 </SelectContent>
               </Select>
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="documentNumber">Nº Documento/NF</Label>
-              <Input
-                id="documentNumber"
-                value={formData.documentNumber}
-                onChange={(e) => setFormData({ ...formData, documentNumber: e.target.value })}
-                placeholder="Ex: NF-12345"
-              />
-            </div>
-
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="recurrence">Recorrência</Label>
               <Select value={formData.recurrence} onValueChange={(v) => setFormData({ ...formData, recurrence: v })}>
                 <SelectTrigger>
@@ -255,7 +255,7 @@ export const NovaDespesaModal = ({ open, onOpenChange, clinicId, onSuccess }: No
             </div>
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="notes">Observações</Label>
             <Textarea
               id="notes"

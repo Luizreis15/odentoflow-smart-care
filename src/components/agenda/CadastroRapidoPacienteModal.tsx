@@ -85,7 +85,7 @@ export const CadastroRapidoPacienteModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-[450px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg">Cadastro Rápido de Paciente</DialogTitle>
           <DialogDescription className="text-sm">
@@ -93,7 +93,7 @@ export const CadastroRapidoPacienteModal = ({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label htmlFor="full_name" className="text-sm">Nome Completo *</Label>
             <Input
               id="full_name"
@@ -106,70 +106,74 @@ export const CadastroRapidoPacienteModal = ({
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="phone" className="text-sm">Telefone *</Label>
-            <Input
-              id="phone"
-              placeholder="(11) 99999-9999"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              disabled={saving}
-              required
-              inputMode="tel"
-              className="h-12 sm:h-10"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-sm">Telefone *</Label>
+              <Input
+                id="phone"
+                placeholder="(11) 99999-9999"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                disabled={saving}
+                required
+                inputMode="tel"
+                className="h-12 sm:h-10"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="email@exemplo.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                disabled={saving}
+                inputMode="email"
+                className="h-12 sm:h-10"
+              />
+            </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-sm">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="email@exemplo.com"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              disabled={saving}
-              inputMode="email"
-              className="h-12 sm:h-10"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="birth_date" className="text-sm">Data de Nascimento</Label>
+              <Input
+                id="birth_date"
+                type="date"
+                value={formData.birth_date}
+                onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
+                disabled={saving}
+                className="h-12 sm:h-10"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cpf" className="text-sm">CPF</Label>
+              <Input
+                id="cpf"
+                placeholder="000.000.000-00"
+                value={formData.cpf}
+                onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                disabled={saving}
+                inputMode="numeric"
+                className="h-12 sm:h-10"
+              />
+            </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="birth_date" className="text-sm">Data de Nascimento</Label>
-            <Input
-              id="birth_date"
-              type="date"
-              value={formData.birth_date}
-              onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
-              disabled={saving}
-              className="h-12 sm:h-10"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="cpf" className="text-sm">CPF</Label>
-            <Input
-              id="cpf"
-              placeholder="000.000.000-00"
-              value={formData.cpf}
-              onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
-              disabled={saving}
-              inputMode="numeric"
-              className="h-12 sm:h-10"
-            />
-          </div>
-
-          <div className="flex gap-3 pt-3">
+          <div className="flex justify-end gap-3 pt-4">
             <Button
               type="button"
               variant="outline"
-              className="flex-1 h-12 sm:h-10"
+              className="h-12 sm:h-10"
               onClick={() => onOpenChange(false)}
               disabled={saving}
             >
               Cancelar
             </Button>
-            <Button type="submit" className="flex-1 h-12 sm:h-10" disabled={saving}>
+            <Button type="submit" className="h-12 sm:h-10" disabled={saving}>
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {saving ? "Cadastrando..." : "Cadastrar"}
             </Button>

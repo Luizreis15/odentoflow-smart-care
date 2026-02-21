@@ -121,27 +121,29 @@ export const EditUserModal = ({ open, onClose, usuario, clinicaId }: EditUserMod
           <DialogTitle>Editar Permissões: {usuario.nome}</DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="nome">Nome *</Label>
-            <Input
-              id="nome"
-              value={formData.nome}
-              onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-            />
+        <div className="space-y-4 py-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="nome">Nome *</Label>
+              <Input
+                id="nome"
+                value={formData.nome}
+                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">E-mail *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">E-mail *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="cpf">CPF</Label>
               <Input
@@ -161,24 +163,24 @@ export const EditUserModal = ({ open, onClose, usuario, clinicaId }: EditUserMod
                 onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
               />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="perfil">Perfil *</Label>
-            <Select
-              value={formData.perfil}
-              onValueChange={(value) => setFormData({ ...formData, perfil: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">Administrador</SelectItem>
-                <SelectItem value="recepcao">Recepcionista</SelectItem>
-                <SelectItem value="dentista">Cirurgião-Dentista</SelectItem>
-                <SelectItem value="assistente">Assistente</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="space-y-2">
+              <Label htmlFor="perfil">Perfil *</Label>
+              <Select
+                value={formData.perfil}
+                onValueChange={(value) => setFormData({ ...formData, perfil: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="recepcao">Recepcionista</SelectItem>
+                  <SelectItem value="dentista">Cirurgião-Dentista</SelectItem>
+                  <SelectItem value="assistente">Assistente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
