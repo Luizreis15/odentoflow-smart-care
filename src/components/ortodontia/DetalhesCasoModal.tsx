@@ -417,21 +417,20 @@ export function DetalhesCasoModal({ open, onOpenChange, casoId, onRefresh }: Det
                             </p>
                           )}
 
-                          {consulta.appointment_id && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="mt-1 h-7 text-xs gap-1.5"
-                              onClick={() => {
-                                const dateStr = format(parseISO(consulta.data_consulta), "yyyy-MM-dd");
-                                onOpenChange(false);
-                                navigate(`/dashboard/agenda?date=${dateStr}`);
-                              }}
-                            >
-                              <ExternalLink className="w-3 h-3" />
-                              Ver na Agenda
-                            </Button>
-                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-1 h-7 text-xs gap-1.5"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const dateStr = format(parseISO(consulta.proxima_consulta_prevista || consulta.data_consulta), "yyyy-MM-dd");
+                              onOpenChange(false);
+                              navigate(`/dashboard/agenda?date=${dateStr}`);
+                            }}
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            Ver na Agenda
+                          </Button>
                         </CardContent>
                       </Card>
                     </div>
