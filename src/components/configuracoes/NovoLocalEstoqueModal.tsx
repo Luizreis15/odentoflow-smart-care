@@ -61,32 +61,34 @@ export function NovoLocalEstoqueModal({ open, onOpenChange, clinicaId }: NovoLoc
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <Label htmlFor="nome">Nome do Local *</Label>
-            <Input id="nome" {...register("nome")} required placeholder="Ex: Consultório 1, Depósito Principal" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="nome">Nome do Local *</Label>
+              <Input id="nome" {...register("nome")} required placeholder="Ex: Consultório 1, Depósito Principal" />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tipo">Tipo</Label>
+              <Select defaultValue="deposito" onValueChange={(value) => setValue("tipo", value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="deposito">Depósito</SelectItem>
+                  <SelectItem value="consultorio">Consultório</SelectItem>
+                  <SelectItem value="armario">Armário</SelectItem>
+                  <SelectItem value="sala">Sala</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div>
-            <Label htmlFor="tipo">Tipo</Label>
-            <Select defaultValue="deposito" onValueChange={(value) => setValue("tipo", value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="deposito">Depósito</SelectItem>
-                <SelectItem value="consultorio">Consultório</SelectItem>
-                <SelectItem value="armario">Armário</SelectItem>
-                <SelectItem value="sala">Sala</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="descricao">Descrição</Label>
             <Textarea id="descricao" {...register("descricao")} placeholder="Informações adicionais sobre o local" />
           </div>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
