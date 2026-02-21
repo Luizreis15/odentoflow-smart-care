@@ -64,7 +64,7 @@ const AdminSubscriptions = () => {
   const getStatusBadge = (status: string | null) => {
     const statusConfig: Record<string, { icon: any; color: string; label: string }> = {
       active: { icon: CheckCircle, color: "bg-green-500/20 text-green-400", label: "Ativo" },
-      trialing: { icon: Clock, color: "bg-amber-500/20 text-amber-400", label: "Trial" },
+      trialing: { icon: Clock, color: "bg-amber-500/20 text-amber-400", label: "Teste Grátis" },
       past_due: { icon: AlertTriangle, color: "bg-red-500/20 text-red-400", label: "Pendente" },
       cancelled: { icon: XCircle, color: "bg-slate-500/20 text-slate-400", label: "Cancelado" },
       incomplete: { icon: AlertTriangle, color: "bg-orange-500/20 text-orange-400", label: "Incompleto" },
@@ -106,7 +106,7 @@ const AdminSubscriptions = () => {
   const statusButtons = [
     { value: "all", label: "Todas", count: stats.total },
     { value: "active", label: "Ativas", count: stats.active },
-    { value: "trialing", label: "Trial", count: stats.trial },
+    { value: "trialing", label: "Teste Grátis", count: stats.trial },
     { value: "past_due", label: "Pendentes", count: stats.pastDue },
     { value: "cancelled", label: "Canceladas", count: stats.cancelled },
   ];
@@ -134,7 +134,7 @@ const AdminSubscriptions = () => {
         </Card>
         <Card className="bg-slate-800 border-slate-700">
           <CardContent className="pt-6">
-            <p className="text-amber-400 text-sm">Trial</p>
+            <p className="text-amber-400 text-sm">Teste Grátis</p>
             <p className="text-2xl font-bold text-white">{stats.trial}</p>
           </CardContent>
         </Card>

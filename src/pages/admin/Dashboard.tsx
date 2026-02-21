@@ -95,7 +95,7 @@ const AdminDashboard = () => {
   const statCards = [
     { label: "Clínicas Totais", value: stats.totalClinics, icon: Building2, color: "text-blue-500" },
     { label: "Clínicas Ativas", value: stats.activeClinics, icon: CheckCircle, color: "text-green-500" },
-    { label: "Em Trial", value: stats.trialClinics, icon: Clock, color: "text-amber-500" },
+    { label: "Em Teste Grátis", value: stats.trialClinics, icon: Clock, color: "text-amber-500" },
     { label: "Usuários", value: stats.totalUsers, icon: Users, color: "text-purple-500" },
     { label: "Pacientes", value: stats.totalPatients, icon: Users, color: "text-cyan-500" },
     { label: "Leads Total", value: stats.totalLeads, icon: UserPlus, color: "text-indigo-500" },
@@ -112,7 +112,7 @@ const AdminDashboard = () => {
     };
     const labels: Record<string, string> = {
       active: "Ativo",
-      trialing: "Trial",
+      trialing: "Teste Grátis",
       past_due: "Pendente",
       cancelled: "Cancelado",
     };

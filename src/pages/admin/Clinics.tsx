@@ -156,7 +156,7 @@ const AdminClinics = () => {
     };
     const labels: Record<string, string> = {
       active: "Ativo",
-      trialing: "Trial",
+      trialing: "Teste Grátis",
       past_due: "Pendente",
       cancelled: "Cancelado",
       incomplete: "Incompleto",

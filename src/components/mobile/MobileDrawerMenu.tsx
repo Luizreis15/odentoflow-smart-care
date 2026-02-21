@@ -28,7 +28,7 @@ const menuCategories = [
   {
     title: "PRINCIPAIS",
     items: [
-      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { name: "Painel", href: "/dashboard", icon: LayoutDashboard },
       { name: "Agenda", href: "/dashboard/agenda", icon: Calendar },
       { name: "Prontuário", href: "/dashboard/prontuario", icon: FileText },
     ],
