@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Calendar, User, Clock, AlertTriangle } from "lucide-react";
+import { Plus, Search, Calendar, User, Clock, AlertTriangle, TrendingUp } from "lucide-react";
 import { NovoCasoModal } from "@/components/ortodontia/NovoCasoModal";
 import { DetalhesCasoModal } from "@/components/ortodontia/DetalhesCasoModal";
+import { ReajusteAnualModal } from "@/components/ortodontia/ReajusteAnualModal";
 import { format, differenceInMonths, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -35,6 +36,7 @@ export default function Ortodontia() {
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
   const [filtroTipo, setFiltroTipo] = useState<string>("todos");
+  const [reajusteOpen, setReajusteOpen] = useState(false);
 
   const { data: casos, refetch } = useQuery({
     queryKey: ["ortho-cases"],
@@ -78,10 +80,16 @@ export default function Ortodontia() {
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Ortodontia</h1>
           <p className="text-muted-foreground text-sm">Acompanhamento de casos ortodônticos</p>
         </div>
-        <Button onClick={() => setNovoCasoOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Caso
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setReajusteOpen(true)}>
+            <TrendingUp className="w-4 h-4 mr-2" />
+            Reajuste Anual
+          </Button>
+          <Button onClick={() => setNovoCasoOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Caso
+          </Button>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -216,6 +224,11 @@ export default function Ortodontia() {
         onOpenChange={setDetalhesOpen}
         casoId={selectedCasoId}
         onRefresh={refetch}
+      />
+      <ReajusteAnualModal
+        open={reajusteOpen}
+        onOpenChange={setReajusteOpen}
+        onSuccess={refetch}
       />
     </div>
   );

@@ -4153,6 +4153,7 @@ export type Database = {
           installment_number: number | null
           notes: string | null
           origin: string | null
+          ortho_case_id: string | null
           patient_id: string
           payment_method: string | null
           status: string | null
@@ -4176,6 +4177,7 @@ export type Database = {
           installment_number?: number | null
           notes?: string | null
           origin?: string | null
+          ortho_case_id?: string | null
           patient_id: string
           payment_method?: string | null
           status?: string | null
@@ -4199,6 +4201,7 @@ export type Database = {
           installment_number?: number | null
           notes?: string | null
           origin?: string | null
+          ortho_case_id?: string | null
           patient_id?: string
           payment_method?: string | null
           status?: string | null
@@ -4221,6 +4224,13 @@ export type Database = {
             columns: ["clinic_id"]
             isOneToOne: false
             referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receivable_titles_ortho_case_id_fkey"
+            columns: ["ortho_case_id"]
+            isOneToOne: false
+            referencedRelation: "ortho_cases"
             referencedColumns: ["id"]
           },
           {
