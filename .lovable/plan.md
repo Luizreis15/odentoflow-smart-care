@@ -1,86 +1,104 @@
 
+# Modulo de Edicao de Documentos Antes da Impressao
 
-# Corrigir Selecao de Medicamentos no Receituario
+## Contexto
 
-## Problema
-
-O componente `Command` (cmdk v0.2.1) tem um bug conhecido no evento `onSelect` que impede a selecao correta de itens. O medicamento fica "travado" no primeiro da lista (paracetamol) e o scroll dentro do `CommandList` tambem nao funciona corretamente dentro do Dialog.
-
-Este mesmo problema ja foi resolvido em outros modulos (Agenda, Orcamentos) usando um padrao customizado sem cmdk.
+Atualmente, ao visualizar um documento no historico (`HistoricoDocumentosModal`), o conteudo e exibido apenas em modo leitura (read-only). O usuario nao consegue corrigir erros de cadastro, ajustar espaçamento, alterar nome do dentista ou mudar a data antes de imprimir.
 
 ## Solucao
 
-Substituir o `Popover` + `Command` por um padrao customizado com:
-- `Input` para busca
-- Container `div` com scroll nativo e `onClick` nos itens
-- Deteccao de clique fora para fechar
+Adicionar um modo de edicao no `HistoricoDocumentosModal` que permite ao usuario editar o conteudo completo do documento antes de imprimir ou assinar.
 
 ## Alteracoes
 
-### Arquivo: `src/components/documentos/NovoReceituarioModal.tsx`
+### Arquivo: `src/components/documentos/HistoricoDocumentosModal.tsx`
 
-**1. Remover imports do cmdk (linha 6)**
+**1. Adicionar botao "Editar" na visualizacao do documento**
 
-Remover:
-```typescript
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+Na view mode (quando `selectedDoc` esta ativo), adicionar um botao "Editar" ao lado dos botoes "Voltar" e "Imprimir". Ao clicar, o sistema entra em modo de edicao.
+
+**2. Novo estado `editMode` e `editedContent` / `editedTitle`**
+
+Adicionar estados:
+- `editMode: boolean` -- controla se o documento esta em modo edicao
+- `editedContent: string` -- conteudo editavel
+- `editedTitle: string` -- titulo editavel
+
+Quando o usuario clica em "Editar":
+- `editMode = true`
+- `editedContent = selectedDoc.content`
+- `editedTitle = selectedDoc.title`
+
+**3. Substituir a area de conteudo por campos editaveis**
+
+Quando `editMode === true`:
+- O titulo (`DialogTitle`) vira um `<Input>` editavel com o titulo do documento
+- O bloco `<div className="whitespace-pre-wrap">` vira um `<Textarea>` grande e editavel, permitindo ao usuario:
+  - Ajustar espaçamento entre linhas
+  - Corrigir erros de texto
+  - Alterar nome do dentista
+  - Mudar datas
+  - Qualquer outro ajuste textual
+
+**4. Botoes de acao no modo edicao**
+
+Quando em modo edicao, os botoes serao:
+- **Cancelar** -- volta ao modo visualizacao sem salvar
+- **Salvar** -- salva as alteracoes no banco de dados (UPDATE na tabela `patient_documents`) e volta ao modo visualizacao
+- **Salvar e Imprimir** -- salva e abre a janela de impressao em seguida
+
+**5. Adicionar botao "Editar" tambem na listagem**
+
+Na lista de documentos (cards), adicionar um botao com icone de edicao (`Pencil`) ao lado dos botoes existentes (Visualizar, Imprimir, Assinar, Excluir). Ao clicar, abre diretamente no modo de edicao.
+
+### Detalhes Tecnicos
+
+**Novos imports necessarios:**
+- `Pencil` do `lucide-react`
+- `Textarea` de `@/components/ui/textarea`
+- `Input` de `@/components/ui/input` (ja importado na pagina)
+
+**Funcao de salvar edicao:**
+```text
+const handleSaveEdit = async () => {
+  // UPDATE patient_documents SET content = editedContent, title = editedTitle WHERE id = selectedDoc.id
+  // Atualizar selectedDoc local com novos valores
+  // Recarregar lista de documentos
+  // Sair do modo edicao
+}
 ```
 
-**2. Adicionar estado e ref para o combobox customizado**
-
-Adicionar:
-- `useRef` no import do React
-- Ref para o container do dropdown (`dropdownRef`)
-- Efeito para detectar clique fora e fechar o dropdown
-
-**3. Substituir bloco Popover+Command (linhas 396-469) por combobox customizado**
-
-Substituir todo o bloco `<Popover>...</Popover>` por:
-
-- Botao trigger que abre/fecha o dropdown (mesmo visual atual)
-- Container absoluto (`position: absolute`, `z-[9999]`) com:
-  - Input de busca
-  - Badges de filtro por categoria (mesmo layout atual)
-  - Div scrollavel (`max-h-[300px] overflow-y-auto`) com os medicamentos filtrados
-  - Cada medicamento como um `div` com `onClick={() => atualizarMedicamento(medSel.id, med)}`
-
-**4. Remover import do Popover (linha 7)**
-
-Remover:
-```typescript
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+**Funcao de salvar e imprimir:**
+```text
+const handleSaveAndPrint = async () => {
+  await handleSaveEdit();
+  handlePrintDoc({ ...selectedDoc, content: editedContent, title: editedTitle });
+}
 ```
 
-## Estrutura do Combobox Customizado
+**Textarea configurado para edicao confortavel:**
+- `rows={20}` para area grande de edicao
+- `className="font-mono text-sm"` para visualizacao de texto formatado
+- `style={{ lineHeight: '1.8' }}` para espaçamento confortavel
+
+### Fluxo do Usuario
 
 ```text
-<div className="relative">
-  <Button onClick={toggle}>
-    {medicamento selecionado}
-  </Button>
-
-  {searchOpen === medSel.id && (
-    <div ref={dropdownRef} className="absolute z-[9999] w-[600px] bg-popover border rounded-md shadow-lg">
-      <Input placeholder="Buscar medicamento..." />
-      <div className="flex gap-2 p-2 border-b flex-wrap">
-        {badges de categoria}
-      </div>
-      <div className="max-h-[300px] overflow-y-auto">
-        {medicamentosFiltrados.map(med => (
-          <div onClick={() => atualizarMedicamento(medSel.id, med)} className="cursor-pointer p-2 hover:bg-accent">
-            {nome} {concentracao} - {indicacao}
-          </div>
-        ))}
-        {medicamentosFiltrados.length === 0 && <p>Nenhum encontrado</p>}
-      </div>
-    </div>
-  )}
-</div>
+Historico -> Clica "Editar" (ou "Visualizar" + "Editar")
+  -> Documento abre em modo edicao
+  -> Usuario ajusta titulo, conteudo, datas, nomes
+  -> Clica "Salvar" (salva no banco)
+  -> Ou clica "Salvar e Imprimir" (salva e imprime)
+  -> Ou clica "Cancelar" (descarta alteracoes)
 ```
 
-## Resultado Esperado
+### Resumo de Alteracoes
 
-- Selecao de medicamento funciona ao clicar em qualquer item da lista
-- Scroll funciona normalmente dentro do dropdown
-- Filtro por categoria e busca por texto continuam funcionando
-- Visual praticamente identico ao atual
+| Alteracao | Detalhes |
+|---|---|
+| Novos estados | `editMode`, `editedContent`, `editedTitle` |
+| Botao Editar na listagem | Icone `Pencil`, abre doc em modo edicao |
+| Botao Editar na visualizacao | Ao lado de Imprimir e Assinar |
+| Modo edicao | Titulo em Input, conteudo em Textarea |
+| Salvar edicao | UPDATE no banco, recarrega lista |
+| Salvar e Imprimir | Salva + abre impressao |
