@@ -9,7 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { FileText, Trash2, Eye, Loader2, Printer, FileSignature, Pencil, Save } from "lucide-react";
+import { FileText, Trash2, Eye, Loader2, Printer, FileSignature, Pencil, Save, FileDown } from "lucide-react";
+import { generateDocumentoPDF, type DocumentoPDFData } from "@/utils/generateDocumentoPDF";
 
 interface HistoricoDocumentosModalProps {
   open: boolean;
@@ -187,38 +188,89 @@ export const HistoricoDocumentosModal = ({
   const handlePrintDoc = (doc: Document) => {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      const isReceituario = doc.title.toLowerCase().includes('receituário') || doc.title.toLowerCase().includes('receituario');
-      const isAtestado = doc.title.toLowerCase().includes('atestado');
-      const needsSpecialFormat = isReceituario || isAtestado;
-
       printWindow.document.write(`
         <!DOCTYPE html>
         <html>
           <head>
             <title>${doc.title}</title>
             <style>
-              @media print {
-                @page { margin: 2cm; }
-                body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-              }
-              body { font-family: Arial, sans-serif; padding: ${needsSpecialFormat ? '20px' : '40px'}; line-height: 1.6; color: #000; max-width: 800px; margin: 0 auto; }
-              h1 { font-size: 24px; margin-bottom: 20px; text-align: ${needsSpecialFormat ? 'center' : 'left'}; border-bottom: ${needsSpecialFormat ? '2px solid #000' : 'none'}; padding-bottom: ${needsSpecialFormat ? '10px' : '0'}; }
-              .content { white-space: pre-wrap; line-height: 1.8; font-size: ${needsSpecialFormat ? '12pt' : '11pt'}; }
+              @media print { @page { margin: 2cm; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+              body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; color: #000; max-width: 800px; margin: 0 auto; }
+              h1 { font-size: 24px; margin-bottom: 20px; text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; }
+              .content { white-space: pre-wrap; line-height: 1.8; font-size: 12pt; }
               .meta { color: #666; margin-bottom: 20px; font-size: 14px; }
-              ${needsSpecialFormat ? `.signature-area { margin-top: 80px; text-align: center; } .signature-line { border-top: 1px solid #000; width: 300px; margin: 60px auto 10px; } @media print { button { display: none; } }` : ''}
+              .signature-area { margin-top: 80px; text-align: center; }
+              .signature-line { border-top: 1px solid #000; width: 300px; margin: 60px auto 10px; }
+              @media print { button { display: none; } }
             </style>
           </head>
           <body>
             <h1>${doc.title}</h1>
             <div class="meta">Criado em ${format(new Date(doc.created_at), "dd/MM/yyyy 'às' HH:mm")}</div>
-            ${doc.signed_at ? `<div class="meta" style="color: green;">Assinado em ${format(new Date(doc.signed_at), "dd/MM/yyyy 'às' HH:mm")}</div>` : ''}
             <div class="content">${doc.content.replace(/\n/g, '<br>')}</div>
-            ${needsSpecialFormat ? `<div class="signature-area"><div class="signature-line"></div><p>Assinatura do Profissional</p></div>` : ''}
+            <div class="signature-area"><div class="signature-line"></div><p>Assinatura do Profissional</p></div>
             <script>window.onload = function() { setTimeout(function() { window.print(); }, 250); }</script>
           </body>
         </html>
       `);
       printWindow.document.close();
+    }
+  };
+
+  const handleGeneratePDF = async (doc: Document) => {
+    try {
+      // Load clinic and professional data
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Usuário não autenticado"); return; }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("clinic_id")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (!profile?.clinic_id) { toast.error("Clínica não encontrada"); return; }
+
+      const [clinicResult, configResult, profResult] = await Promise.all([
+        supabase.from("clinicas").select("*").eq("id", profile.clinic_id).maybeSingle(),
+        supabase.from("configuracoes_clinica").select("logotipo_url, whatsapp, email_contato").eq("clinica_id", profile.clinic_id).maybeSingle(),
+        user.email
+          ? supabase.from("profissionais").select("nome, cro, especialidade").eq("email", user.email.toUpperCase()).maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
+
+      const clinic = clinicResult.data;
+      const config = configResult.data;
+      const prof = profResult.data;
+
+      const isAtestado = doc.title.toLowerCase().includes("atestado");
+      const address = clinic?.address as any;
+      const addressStr = address?.rua
+        ? `${address.rua}, ${address.numero || "S/N"} - ${address.cidade || ""} / ${address.estado || ""}`
+        : "";
+
+      const pdfData: DocumentoPDFData = {
+        tipo: isAtestado ? "atestado" : "receituario",
+        title: doc.title,
+        content: doc.content,
+        clinicName: clinic?.nome || "Clínica",
+        clinicCnpj: clinic?.cnpj || undefined,
+        clinicPhone: clinic?.telefone || undefined,
+        clinicAddress: addressStr || undefined,
+        clinicEmail: config?.email_contato || undefined,
+        clinicWhatsapp: config?.whatsapp || undefined,
+        clinicLogoUrl: config?.logotipo_url || undefined,
+        professionalName: prof?.nome || undefined,
+        professionalCro: prof?.cro || undefined,
+        professionalEspecialidade: prof?.especialidade || undefined,
+        documentId: doc.id,
+        createdAt: doc.created_at,
+      };
+
+      await generateDocumentoPDF(pdfData);
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      toast.error("Erro ao gerar PDF");
     }
   };
 
@@ -304,6 +356,10 @@ export const HistoricoDocumentosModal = ({
                   <Printer className="h-4 w-4 mr-2" />
                   Imprimir
                 </Button>
+                <Button onClick={() => handleGeneratePDF(selectedDoc)}>
+                  <FileDown className="h-4 w-4 mr-2" />
+                  PDF Premium
+                </Button>
                 {selectedDoc.status !== "assinado" && (
                   <Button onClick={() => handleSign(selectedDoc.id)}>
                     <FileSignature className="h-4 w-4 mr-2" />
@@ -365,6 +421,9 @@ export const HistoricoDocumentosModal = ({
                       </Button>
                       <Button size="sm" variant="outline" onClick={() => handlePrintDoc(doc)} title="Imprimir">
                         <Printer className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="default" onClick={() => handleGeneratePDF(doc)} title="PDF Premium">
+                        <FileDown className="h-4 w-4" />
                       </Button>
                       {doc.status !== "assinado" && (
                         <Button size="sm" variant="outline" onClick={() => handleSign(doc.id)} title="Assinar">
