@@ -240,7 +240,7 @@ export const HistoricoDocumentosModal = ({
 
       const [clinicResult, configResult, profResult] = await Promise.all([
         supabase.from("clinicas").select("*").eq("id", profile.clinic_id).maybeSingle(),
-        supabase.from("configuracoes_clinica").select("logotipo_url, whatsapp, email_contato").eq("clinica_id", profile.clinic_id).maybeSingle(),
+        supabase.from("configuracoes_clinica").select("logotipo_url, whatsapp, email_contato, cor_primaria, layout_cabecalho, marca_dagua_ativa, instagram, website").eq("clinica_id", profile.clinic_id).maybeSingle(),
         profQuery,
       ]);
 
@@ -263,10 +263,15 @@ export const HistoricoDocumentosModal = ({
         clinicCnpj: clinic?.cnpj || undefined,
         clinicPhone: clinic?.telefone || undefined,
         clinicAddress: addressStr || undefined,
-        clinicEmail: config?.email_contato || undefined,
-        clinicWhatsapp: config?.whatsapp || undefined,
-        clinicLogoUrl: config?.logotipo_url || undefined,
+        clinicEmail: (config as any)?.email_contato || undefined,
+        clinicWhatsapp: (config as any)?.whatsapp || undefined,
+        clinicLogoUrl: (config as any)?.logotipo_url || undefined,
         clinicCity: clinicCity || undefined,
+        corPrimaria: (config as any)?.cor_primaria || undefined,
+        layoutCabecalho: (config as any)?.layout_cabecalho || undefined,
+        marcaDaguaAtiva: (config as any)?.marca_dagua_ativa ?? undefined,
+        instagram: (config as any)?.instagram || undefined,
+        website: (config as any)?.website || undefined,
         professionalName: prof?.nome || undefined,
         professionalCro: prof?.cro || undefined,
         professionalEspecialidade: prof?.especialidade || undefined,

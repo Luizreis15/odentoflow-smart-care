@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { HorarioFuncionamentoCard, HorarioFuncionamento, DEFAULT_HORARIO } from "./HorarioFuncionamentoCard";
+import { IdentidadeVisualCard, type BrandingConfig } from "./IdentidadeVisualCard";
+
 interface ClinicaTabProps {
   clinicaId: string;
 }
@@ -57,6 +59,13 @@ export function ClinicaTab({ clinicaId }: ClinicaTabProps) {
         imprimir_papel_timbrado: configData?.imprimir_papel_timbrado || false,
         horario_funcionamento: configData?.horario_funcionamento || DEFAULT_HORARIO,
         google_review_link: (clinicaData as any)?.google_review_link || "",
+        // Branding
+        logotipo_url: configData?.logotipo_url || null,
+        cor_primaria: (configData as any)?.cor_primaria || "#22577A",
+        layout_cabecalho: (configData as any)?.layout_cabecalho || "logo_esquerda",
+        marca_dagua_ativa: (configData as any)?.marca_dagua_ativa || false,
+        instagram: (configData as any)?.instagram || "",
+        website: (configData as any)?.website || "",
         // Extrair endereço do JSONB
         cep: address?.cep || "",
         rua: address?.rua || "",
@@ -158,8 +167,14 @@ export function ClinicaTab({ clinicaId }: ClinicaTabProps) {
           email_contato: config.email_contato,
           whatsapp: config.whatsapp,
           imprimir_papel_timbrado: config.imprimir_papel_timbrado,
-          horario_funcionamento: config.horario_funcionamento
-        }, { 
+          horario_funcionamento: config.horario_funcionamento,
+          logotipo_url: config.logotipo_url,
+          cor_primaria: config.cor_primaria,
+          layout_cabecalho: config.layout_cabecalho,
+          marca_dagua_ativa: config.marca_dagua_ativa,
+          instagram: config.instagram || null,
+          website: config.website || null,
+        } as any, {
           onConflict: 'clinica_id' 
         });
 
@@ -240,6 +255,19 @@ export function ClinicaTab({ clinicaId }: ClinicaTabProps) {
           </div>
         </CardContent>
       </Card>
+
+      <IdentidadeVisualCard
+        clinicaId={clinicaId}
+        value={{
+          logotipo_url: config?.logotipo_url || null,
+          cor_primaria: config?.cor_primaria || "#22577A",
+          layout_cabecalho: config?.layout_cabecalho || "logo_esquerda",
+          marca_dagua_ativa: config?.marca_dagua_ativa || false,
+          instagram: config?.instagram || "",
+          website: config?.website || "",
+        }}
+        onChange={(branding) => setConfig({ ...config, ...branding })}
+      />
 
       <HorarioFuncionamentoCard
         value={config?.horario_funcionamento}

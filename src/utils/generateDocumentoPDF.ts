@@ -13,6 +13,12 @@ export interface DocumentoPDFData {
   clinicWhatsapp?: string;
   clinicLogoUrl?: string;
   clinicCity?: string;
+  // Branding
+  corPrimaria?: string;
+  layoutCabecalho?: string;
+  marcaDaguaAtiva?: boolean;
+  instagram?: string;
+  website?: string;
   // Professional
   professionalName?: string;
   professionalCro?: string;
@@ -34,7 +40,14 @@ const CONTENT_W = PAGE_W - MARGIN_X * 2;
 const COLOR_BLACK: [number, number, number] = [30, 30, 30];
 const COLOR_GRAY: [number, number, number] = [120, 120, 120];
 const COLOR_LIGHT: [number, number, number] = [180, 180, 180];
-const COLOR_PRIMARY: [number, number, number] = [34, 87, 122]; // Elegant teal
+const DEFAULT_PRIMARY: [number, number, number] = [34, 87, 122];
+
+function hexToRgb(hex: string): [number, number, number] {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)]
+    : DEFAULT_PRIMARY;
+}
 
 function drawThinLine(doc: jsPDF, y: number, color: [number, number, number] = COLOR_LIGHT) {
   doc.setDrawColor(...color);
@@ -42,8 +55,8 @@ function drawThinLine(doc: jsPDF, y: number, color: [number, number, number] = C
   doc.line(MARGIN_X, y, PAGE_W - MARGIN_X, y);
 }
 
-function drawElegantLine(doc: jsPDF, y: number) {
-  doc.setDrawColor(...COLOR_PRIMARY);
+function drawElegantLine(doc: jsPDF, y: number, primaryColor: [number, number, number]) {
+  doc.setDrawColor(...primaryColor);
   doc.setLineWidth(0.5);
   doc.line(MARGIN_X, y, PAGE_W - MARGIN_X, y);
   doc.setLineWidth(0.15);
@@ -81,69 +94,78 @@ function drawWatermark(doc: jsPDF, logoBase64: string | null) {
   doc.restoreGraphicsState();
 }
 
-function drawHeader(doc: jsPDF, data: DocumentoPDFData, logoBase64: string | null): number {
+function drawHeader(doc: jsPDF, data: DocumentoPDFData, logoBase64: string | null, primaryColor: [number, number, number]): number {
   let y = MARGIN_TOP;
-
   const logoSize = 18;
+  const layout = data.layoutCabecalho || "logo_esquerda";
 
-  if (logoBase64) {
-    try {
-      doc.addImage(logoBase64, "PNG", MARGIN_X, y - 6, logoSize, logoSize);
-    } catch {
-      // ignore
+  if (layout === "logo_centralizado") {
+    // Centered layout: logo on top, text below centered
+    if (logoBase64) {
+      try {
+        doc.addImage(logoBase64, "PNG", (PAGE_W - logoSize) / 2, y - 6, logoSize, logoSize);
+      } catch { /* ignore */ }
+      y += logoSize - 2;
     }
+
+    doc.setFont("times", "bold");
+    doc.setFontSize(16);
+    doc.setTextColor(...COLOR_BLACK);
+    doc.text(data.clinicName.toUpperCase(), PAGE_W / 2, y, { align: "center" });
+    y += 5;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...COLOR_GRAY);
+    if (data.clinicCnpj) { doc.text(`CNPJ: ${data.clinicCnpj}`, PAGE_W / 2, y, { align: "center" }); y += 3.5; }
+    if (data.clinicAddress) { doc.text(data.clinicAddress, PAGE_W / 2, y, { align: "center", maxWidth: CONTENT_W }); y += 3.5; }
+    if (data.clinicPhone) { doc.text(data.clinicPhone, PAGE_W / 2, y, { align: "center" }); y += 3.5; }
+  } else {
+    // logo_esquerda or logo_direita
+    const logoOnRight = layout === "logo_direita";
+    const logoX = logoOnRight ? PAGE_W - MARGIN_X - logoSize : MARGIN_X;
+    const textAlign = logoOnRight ? "left" as const : "right" as const;
+    const textX = logoOnRight ? MARGIN_X : PAGE_W - MARGIN_X;
+
+    if (logoBase64) {
+      try { doc.addImage(logoBase64, "PNG", logoX, y - 6, logoSize, logoSize); } catch { /* ignore */ }
+    }
+
+    doc.setFont("times", "bold");
+    doc.setFontSize(16);
+    doc.setTextColor(...COLOR_BLACK);
+    doc.text(data.clinicName.toUpperCase(), textX, y, { align: textAlign });
+    y += 5;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...COLOR_GRAY);
+    if (data.clinicCnpj) { doc.text(`CNPJ: ${data.clinicCnpj}`, textX, y, { align: textAlign }); y += 3.5; }
+    if (data.clinicAddress) { doc.text(data.clinicAddress, textX, y, { align: textAlign, maxWidth: CONTENT_W - logoSize - 10 }); y += 3.5; }
+    if (data.clinicPhone) {
+      const contactLine = [data.clinicPhone, data.clinicWhatsapp ? `WhatsApp: ${data.clinicWhatsapp}` : null].filter(Boolean).join("  •  ");
+      doc.text(contactLine, textX, y, { align: textAlign }); y += 3.5;
+    }
+    if (data.clinicEmail) { doc.text(data.clinicEmail, textX, y, { align: textAlign }); y += 3.5; }
+
+    y = Math.max(y, MARGIN_TOP + logoSize - 2);
   }
 
-  // Right-aligned institutional text block
-  const rightX = PAGE_W - MARGIN_X;
-
-  doc.setFont("times", "bold");
-  doc.setFontSize(16);
-  doc.setTextColor(...COLOR_BLACK);
-  doc.text(data.clinicName.toUpperCase(), rightX, y, { align: "right" });
-  y += 5;
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(...COLOR_GRAY);
-
-  if (data.clinicCnpj) {
-    doc.text(`CNPJ: ${data.clinicCnpj}`, rightX, y, { align: "right" });
-    y += 3.5;
-  }
-  if (data.clinicAddress) {
-    doc.text(data.clinicAddress, rightX, y, { align: "right", maxWidth: CONTENT_W - logoSize - 10 });
-    y += 3.5;
-  }
-  if (data.clinicPhone) {
-    const contactLine = [data.clinicPhone, data.clinicWhatsapp ? `WhatsApp: ${data.clinicWhatsapp}` : null]
-      .filter(Boolean)
-      .join("  •  ");
-    doc.text(contactLine, rightX, y, { align: "right" });
-    y += 3.5;
-  }
-  if (data.clinicEmail) {
-    doc.text(data.clinicEmail, rightX, y, { align: "right" });
-    y += 3.5;
-  }
-
-  y = Math.max(y, MARGIN_TOP + logoSize - 2);
   y += 4;
-
-  drawElegantLine(doc, y);
+  drawElegantLine(doc, y, primaryColor);
   y += 8;
 
   return y;
 }
 
-function drawDocumentTitle(doc: jsPDF, title: string, y: number): number {
+function drawDocumentTitle(doc: jsPDF, title: string, y: number, primaryColor: [number, number, number]): number {
   doc.setFont("times", "bold");
   doc.setFontSize(20);
   doc.setTextColor(...COLOR_BLACK);
   doc.text(title, PAGE_W / 2, y, { align: "center" });
   y += 4;
 
-  doc.setDrawColor(...COLOR_PRIMARY);
+  doc.setDrawColor(...primaryColor);
   doc.setLineWidth(0.8);
   const titleWidth = doc.getTextWidth(title);
   const lineHalf = Math.min(titleWidth / 2, 30);
@@ -181,7 +203,7 @@ function isRedundantLine(line: string, clinicName?: string): boolean {
   return false;
 }
 
-function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicName?: string): number {
+function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicName?: string, primaryColor: [number, number, number] = DEFAULT_PRIMARY): number {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.setTextColor(...COLOR_BLACK);
@@ -232,7 +254,7 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
       y += 4;
       doc.setFont("times", "bold");
       doc.setFontSize(13);
-      doc.setTextColor(...COLOR_PRIMARY);
+      doc.setTextColor(...primaryColor);
       doc.text(trimmed, MARGIN_X, y);
       doc.setTextColor(...COLOR_BLACK);
       doc.setFont("helvetica", "normal");
@@ -381,31 +403,46 @@ function drawFooter(doc: jsPDF, data: DocumentoPDFData) {
     y += 3.5;
   }
 
+  // Social media line
+  const socialParts: string[] = [];
+  if (data.instagram) socialParts.push(`@${data.instagram.replace(/^@/, "")}`);
+  if (data.website) socialParts.push(data.website.replace(/^https?:\/\//, ""));
+  if (socialParts.length > 0) {
+    doc.setFontSize(7);
+    const socialText = socialParts.join("  •  ");
+    doc.text(socialText, PAGE_W / 2, y, { align: "center" });
+    y += 3.5;
+  }
+
   // Document ID
   if (data.documentId) {
     const docIdStr = `ID: FLD-${data.tipo === "atestado" ? "AT" : "RC"}-${new Date().getFullYear()}-${data.documentId.substring(0, 8).toUpperCase()}`;
     doc.setFontSize(6.5);
     doc.text(docIdStr, MARGIN_X, y);
   }
-
 }
 
 export async function generateDocumentoPDF(data: DocumentoPDFData): Promise<void> {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+  const primaryColor = hexToRgb(data.corPrimaria || "#22577A");
 
   let logoBase64: string | null = null;
   if (data.clinicLogoUrl) {
     logoBase64 = await loadImage(data.clinicLogoUrl);
   }
 
-  drawWatermark(doc, logoBase64);
+  // Watermark only if enabled
+  if (data.marcaDaguaAtiva !== false) {
+    drawWatermark(doc, logoBase64);
+  }
 
-  let y = drawHeader(doc, data, logoBase64);
+  let y = drawHeader(doc, data, logoBase64, primaryColor);
 
   const titleText = data.tipo === "atestado" ? "ATESTADO ODONTOLÓGICO" : "RECEITUÁRIO";
-  y = drawDocumentTitle(doc, titleText, y);
+  y = drawDocumentTitle(doc, titleText, y, primaryColor);
 
-  y = drawBody(doc, data.content, y, data.tipo, data.clinicName);
+  y = drawBody(doc, data.content, y, data.tipo, data.clinicName, primaryColor);
 
   drawSignature(doc, data, y);
 
