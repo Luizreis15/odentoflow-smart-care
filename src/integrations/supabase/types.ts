@@ -1137,40 +1137,55 @@ export type Database = {
         Row: {
           cabecalho_personalizado: Json | null
           clinica_id: string
+          cor_primaria: string | null
           created_at: string | null
           email_contato: string | null
           horario_funcionamento: Json | null
           id: string
           imprimir_papel_timbrado: boolean | null
+          instagram: string | null
+          layout_cabecalho: string | null
           logotipo_url: string | null
+          marca_dagua_ativa: boolean | null
           rodape_personalizado: Json | null
           updated_at: string | null
+          website: string | null
           whatsapp: string | null
         }
         Insert: {
           cabecalho_personalizado?: Json | null
           clinica_id: string
+          cor_primaria?: string | null
           created_at?: string | null
           email_contato?: string | null
           horario_funcionamento?: Json | null
           id?: string
           imprimir_papel_timbrado?: boolean | null
+          instagram?: string | null
+          layout_cabecalho?: string | null
           logotipo_url?: string | null
+          marca_dagua_ativa?: boolean | null
           rodape_personalizado?: Json | null
           updated_at?: string | null
+          website?: string | null
           whatsapp?: string | null
         }
         Update: {
           cabecalho_personalizado?: Json | null
           clinica_id?: string
+          cor_primaria?: string | null
           created_at?: string | null
           email_contato?: string | null
           horario_funcionamento?: Json | null
           id?: string
           imprimir_papel_timbrado?: boolean | null
+          instagram?: string | null
+          layout_cabecalho?: string | null
           logotipo_url?: string | null
+          marca_dagua_ativa?: boolean | null
           rodape_personalizado?: Json | null
           updated_at?: string | null
+          website?: string | null
           whatsapp?: string | null
         }
         Relationships: [
