@@ -128,7 +128,8 @@ export const NovoAtestadoModal = ({
   const gerarConteudoAtestado = () => {
     if (!patientData || !professionalData || !clinicData) return "";
 
-    const dataFormatada = format(new Date(dataAtestado), "dd/MM/yyyy");
+    const [ano, mes, dia] = dataAtestado.split("-");
+    const dataFormatada = `${dia}/${mes}/${ano}`;
     const hoje = format(new Date(), "dd/MM/yyyy");
     
     let conteudo = `ATESTADO ODONTOLÓGICO\n\n`;
