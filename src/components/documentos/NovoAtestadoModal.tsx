@@ -6,12 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { cidsOdontologicos } from "@/data/cids";
 
@@ -42,6 +41,7 @@ export const NovoAtestadoModal = ({
   const [cid, setCid] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [openCidCombobox, setOpenCidCombobox] = useState(false);
+  const [cidSearch, setCidSearch] = useState("");
 
   useEffect(() => {
     if (open && patientId) {
@@ -339,55 +339,64 @@ export const NovoAtestadoModal = ({
             )}
           </div>
 
-          {/* CID */}
           <div className="space-y-2">
             <Label htmlFor="cid">CID (Classificação Internacional de Doenças)</Label>
-            <Popover open={openCidCombobox} onOpenChange={setOpenCidCombobox}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={openCidCombobox}
-                  className="w-full justify-between"
-                >
+            <div className="relative">
+              <div
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm cursor-pointer"
+                onClick={() => setOpenCidCombobox(!openCidCombobox)}
+              >
+                <span className={cid ? "text-foreground" : "text-muted-foreground"}>
                   {cid
-                    ? cidsOdontologicos.find((c) => c.code === cid)?.code + " - " + cidsOdontologicos.find((c) => c.code === cid)?.description
+                    ? `${cid} - ${cidsOdontologicos.find((c) => c.code === cid)?.description || ""}`
                     : "Selecione o CID (opcional)"}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0" align="start">
-                <Command>
-                  <CommandInput placeholder="Pesquisar CID..." />
-                  <CommandList>
-                    <CommandEmpty>Nenhum CID encontrado.</CommandEmpty>
-                    <CommandGroup>
-                      {cidsOdontologicos.map((cidItem) => (
-                        <CommandItem
+                </span>
+                <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+              </div>
+
+              {openCidCombobox && (
+                <div className="absolute z-[9999] mt-1 w-full rounded-md border bg-popover shadow-lg">
+                  <div className="flex items-center border-b px-3 py-2">
+                    <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                    <input
+                      type="text"
+                      className="flex h-8 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                      placeholder="Pesquisar CID..."
+                      value={cidSearch}
+                      onChange={(e) => setCidSearch(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+                  <div className="max-h-[200px] overflow-y-auto p-1">
+                    {cidsOdontologicos
+                      .filter((c) => {
+                        const term = cidSearch.toLowerCase();
+                        return !term || c.code.toLowerCase().includes(term) || c.description.toLowerCase().includes(term);
+                      })
+                      .map((cidItem) => (
+                        <div
                           key={cidItem.code}
-                          value={`${cidItem.code} ${cidItem.description}`}
-                          onSelect={() => {
+                          className={cn(
+                            "flex items-center gap-2 rounded-sm px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground",
+                            cid === cidItem.code && "bg-accent text-accent-foreground"
+                          )}
+                          onClick={() => {
                             setCid(cidItem.code);
                             setOpenCidCombobox(false);
+                            setCidSearch("");
                           }}
                         >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              cid === cidItem.code ? "opacity-100" : "opacity-0"
-                            )}
-                          />
+                          <Check className={cn("h-4 w-4", cid === cidItem.code ? "opacity-100" : "opacity-0")} />
                           <div className="flex flex-col">
                             <span className="font-medium">{cidItem.code}</span>
-                            <span className="text-sm text-muted-foreground">{cidItem.description}</span>
+                            <span className="text-xs text-muted-foreground">{cidItem.description}</span>
                           </div>
-                        </CommandItem>
+                        </div>
                       ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+                  </div>
+                </div>
+              )}
+            </div>
             {cid && (
               <Button
                 variant="ghost"
