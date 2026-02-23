@@ -153,7 +153,7 @@ function drawHeader(doc: jsPDF, data: DocumentoPDFData, logoBase64: string | nul
 
   y += 4;
   drawElegantLine(doc, y, primaryColor);
-  y += 8;
+  y += 14;
 
   return y;
 }
@@ -343,10 +343,14 @@ function drawSignature(doc: jsPDF, data: DocumentoPDFData, y: number): number {
   doc.setFontSize(11);
   doc.setTextColor(...COLOR_BLACK);
 
-  const dateObj = data.createdAt ? new Date(data.createdAt) : new Date();
-  const longDate = dateObj.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  // Use local date parts to avoid timezone offset (d-1 bug)
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, "0");
+  const months = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+  const month = months[now.getMonth()];
+  const year = now.getFullYear();
   const cityPrefix = data.clinicCity ? `${data.clinicCity}, ` : "";
-  const dateStr = `${cityPrefix}${longDate}`;
+  const dateStr = `${cityPrefix}${day} de ${month} de ${year}`;
 
   doc.text(dateStr, PAGE_W / 2, y, { align: "center" });
   y += 20;
