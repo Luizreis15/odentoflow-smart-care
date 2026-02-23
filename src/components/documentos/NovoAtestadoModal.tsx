@@ -231,12 +231,7 @@ export const NovoAtestadoModal = ({
     }
 
     conteudo += `\n`;
-    conteudo += `${clinicData.address?.cidade || "São Paulo"}, ${hoje}\n\n`;
-    conteudo += `\n\n`;
-    conteudo += `${"_".repeat(50)}\n`;
-    conteudo += `${professionalData.nome}\n`;
-    conteudo += `${professionalData.especialidade}\n`;
-    conteudo += `CRO: ${professionalData.cro}\n`;
+    conteudo += `${clinicData.address?.cidade || "São Paulo"}, ${hoje}\n`;
 
     return conteudo;
   };
