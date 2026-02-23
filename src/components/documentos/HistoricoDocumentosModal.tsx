@@ -1,13 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { FileText, Trash2, Eye, Loader2, Printer, FileSignature } from "lucide-react";
+import { FileText, Trash2, Eye, Loader2, Printer, FileSignature, Pencil, Save } from "lucide-react";
 
 interface HistoricoDocumentosModalProps {
   open: boolean;
@@ -47,6 +49,10 @@ export const HistoricoDocumentosModal = ({
   const [loading, setLoading] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [viewMode, setViewMode] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editedContent, setEditedContent] = useState("");
+  const [editedTitle, setEditedTitle] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open && documentType) {
@@ -76,15 +82,9 @@ export const HistoricoDocumentosModal = ({
 
   const handleDelete = async (docId: string) => {
     if (!confirm("Deseja realmente excluir este documento?")) return;
-
     try {
-      const { error } = await supabase
-        .from("patient_documents")
-        .delete()
-        .eq("id", docId);
-
+      const { error } = await supabase.from("patient_documents").delete().eq("id", docId);
       if (error) throw error;
-
       toast.success("Documento excluído com sucesso");
       loadDocuments();
     } catch (error: any) {
@@ -96,24 +96,86 @@ export const HistoricoDocumentosModal = ({
   const handleView = (doc: Document) => {
     setSelectedDoc(doc);
     setViewMode(true);
+    setEditMode(false);
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleEdit = (doc: Document) => {
+    setSelectedDoc(doc);
+    setViewMode(true);
+    setEditMode(true);
+    setEditedContent(doc.content);
+    setEditedTitle(doc.title);
+  };
+
+  const handleEnterEditMode = () => {
+    if (!selectedDoc) return;
+    setEditMode(true);
+    setEditedContent(selectedDoc.content);
+    setEditedTitle(selectedDoc.title);
+  };
+
+  const handleCancelEdit = () => {
+    setEditMode(false);
+    setEditedContent("");
+    setEditedTitle("");
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedDoc) return;
+    try {
+      setSaving(true);
+      const { error } = await supabase
+        .from("patient_documents")
+        .update({ title: editedTitle, content: editedContent })
+        .eq("id", selectedDoc.id);
+
+      if (error) throw error;
+
+      const updatedDoc = { ...selectedDoc, title: editedTitle, content: editedContent };
+      setSelectedDoc(updatedDoc);
+      setEditMode(false);
+      toast.success("Documento salvo com sucesso");
+      loadDocuments();
+    } catch (error: any) {
+      console.error("Erro ao salvar documento:", error);
+      toast.error("Erro ao salvar documento");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveAndPrint = async () => {
+    if (!selectedDoc) return;
+    try {
+      setSaving(true);
+      const { error } = await supabase
+        .from("patient_documents")
+        .update({ title: editedTitle, content: editedContent })
+        .eq("id", selectedDoc.id);
+
+      if (error) throw error;
+
+      const updatedDoc = { ...selectedDoc, title: editedTitle, content: editedContent };
+      setSelectedDoc(updatedDoc);
+      setEditMode(false);
+      toast.success("Documento salvo com sucesso");
+      loadDocuments();
+      handlePrintDoc(updatedDoc);
+    } catch (error: any) {
+      console.error("Erro ao salvar documento:", error);
+      toast.error("Erro ao salvar documento");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleSign = async (docId: string) => {
     try {
       const { error } = await supabase
         .from("patient_documents")
-        .update({
-          status: "assinado",
-          signed_at: new Date().toISOString(),
-        })
+        .update({ status: "assinado", signed_at: new Date().toISOString() })
         .eq("id", docId);
-
       if (error) throw error;
-
       toast.success("Documento assinado com sucesso");
       loadDocuments();
     } catch (error: any) {
@@ -125,11 +187,10 @@ export const HistoricoDocumentosModal = ({
   const handlePrintDoc = (doc: Document) => {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      // Formatação especial para receituários e atestados
       const isReceituario = doc.title.toLowerCase().includes('receituário') || doc.title.toLowerCase().includes('receituario');
       const isAtestado = doc.title.toLowerCase().includes('atestado');
       const needsSpecialFormat = isReceituario || isAtestado;
-      
+
       printWindow.document.write(`
         <!DOCTYPE html>
         <html>
@@ -137,55 +198,14 @@ export const HistoricoDocumentosModal = ({
             <title>${doc.title}</title>
             <style>
               @media print {
-                @page {
-                  margin: 2cm;
-                }
-                body {
-                  -webkit-print-color-adjust: exact;
-                  print-color-adjust: exact;
-                }
+                @page { margin: 2cm; }
+                body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
               }
-              body { 
-                font-family: Arial, sans-serif; 
-                padding: ${needsSpecialFormat ? '20px' : '40px'}; 
-                line-height: 1.6;
-                color: #000;
-                max-width: 800px;
-                margin: 0 auto;
-              }
-              h1 { 
-                font-size: 24px; 
-                margin-bottom: 20px; 
-                text-align: ${needsSpecialFormat ? 'center' : 'left'};
-                border-bottom: ${needsSpecialFormat ? '2px solid #000' : 'none'};
-                padding-bottom: ${needsSpecialFormat ? '10px' : '0'};
-              }
-              .content { 
-                white-space: pre-wrap; 
-                line-height: 1.8;
-                font-size: ${needsSpecialFormat ? '12pt' : '11pt'};
-              }
-              .meta { 
-                color: #666; 
-                margin-bottom: 20px; 
-                font-size: 14px; 
-              }
-              ${needsSpecialFormat ? `
-              .signature-area {
-                margin-top: 80px;
-                text-align: center;
-              }
-              .signature-line {
-                border-top: 1px solid #000;
-                width: 300px;
-                margin: 60px auto 10px;
-              }
-              @media print {
-                button {
-                  display: none;
-                }
-              }
-              ` : ''}
+              body { font-family: Arial, sans-serif; padding: ${needsSpecialFormat ? '20px' : '40px'}; line-height: 1.6; color: #000; max-width: 800px; margin: 0 auto; }
+              h1 { font-size: 24px; margin-bottom: 20px; text-align: ${needsSpecialFormat ? 'center' : 'left'}; border-bottom: ${needsSpecialFormat ? '2px solid #000' : 'none'}; padding-bottom: ${needsSpecialFormat ? '10px' : '0'}; }
+              .content { white-space: pre-wrap; line-height: 1.8; font-size: ${needsSpecialFormat ? '12pt' : '11pt'}; }
+              .meta { color: #666; margin-bottom: 20px; font-size: 14px; }
+              ${needsSpecialFormat ? `.signature-area { margin-top: 80px; text-align: center; } .signature-line { border-top: 1px solid #000; width: 300px; margin: 60px auto 10px; } @media print { button { display: none; } }` : ''}
             </style>
           </head>
           <body>
@@ -193,19 +213,8 @@ export const HistoricoDocumentosModal = ({
             <div class="meta">Criado em ${format(new Date(doc.created_at), "dd/MM/yyyy 'às' HH:mm")}</div>
             ${doc.signed_at ? `<div class="meta" style="color: green;">Assinado em ${format(new Date(doc.signed_at), "dd/MM/yyyy 'às' HH:mm")}</div>` : ''}
             <div class="content">${doc.content.replace(/\n/g, '<br>')}</div>
-            ${needsSpecialFormat ? `
-            <div class="signature-area">
-              <div class="signature-line"></div>
-              <p>Assinatura do Profissional</p>
-            </div>
-            ` : ''}
-            <script>
-              window.onload = function() {
-                setTimeout(function() {
-                  window.print();
-                }, 250);
-              }
-            </script>
+            ${needsSpecialFormat ? `<div class="signature-area"><div class="signature-line"></div><p>Assinatura do Profissional</p></div>` : ''}
+            <script>window.onload = function() { setTimeout(function() { window.print(); }, 250); }</script>
           </body>
         </html>
       `);
@@ -219,13 +228,22 @@ export const HistoricoDocumentosModal = ({
         if (!isOpen) {
           setViewMode(false);
           setSelectedDoc(null);
+          setEditMode(false);
         }
         onOpenChange(isOpen);
       }}>
         <DialogContent className="max-w-4xl max-h-[90vh]">
           <DialogHeader>
-            <div className="flex items-center justify-between">
-              <DialogTitle>{selectedDoc.title}</DialogTitle>
+            <div className="flex items-center justify-between gap-2">
+              {editMode ? (
+                <Input
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  className="text-lg font-semibold"
+                />
+              ) : (
+                <DialogTitle>{selectedDoc.title}</DialogTitle>
+              )}
               <Badge className={statusColors[selectedDoc.status]}>
                 {statusLabels[selectedDoc.status]}
               </Badge>
@@ -237,9 +255,19 @@ export const HistoricoDocumentosModal = ({
               Criado em {format(new Date(selectedDoc.created_at), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
             </div>
 
-            <div className="whitespace-pre-wrap bg-muted/30 rounded-lg p-4">
-              {selectedDoc.content}
-            </div>
+            {editMode ? (
+              <Textarea
+                value={editedContent}
+                onChange={(e) => setEditedContent(e.target.value)}
+                rows={20}
+                className="font-mono text-sm"
+                style={{ lineHeight: '1.8' }}
+              />
+            ) : (
+              <div className="whitespace-pre-wrap bg-muted/30 rounded-lg p-4">
+                {selectedDoc.content}
+              </div>
+            )}
 
             {selectedDoc.signed_at && (
               <div className="text-sm text-green-600 dark:text-green-400 font-medium">
@@ -248,28 +276,41 @@ export const HistoricoDocumentosModal = ({
             )}
           </div>
 
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setViewMode(false);
-                setSelectedDoc(null);
-              }}
-            >
-              Voltar
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handlePrint}
-            >
-              <Printer className="h-4 w-4 mr-2" />
-              Imprimir
-            </Button>
-            {selectedDoc.status !== "assinado" && (
-              <Button onClick={() => handleSign(selectedDoc.id)}>
-                <FileSignature className="h-4 w-4 mr-2" />
-                Assinar Documento
-              </Button>
+          <div className="flex gap-2 flex-wrap">
+            {editMode ? (
+              <>
+                <Button variant="outline" onClick={handleCancelEdit} disabled={saving}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleSaveEdit} disabled={saving}>
+                  {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                  Salvar
+                </Button>
+                <Button variant="secondary" onClick={handleSaveAndPrint} disabled={saving}>
+                  {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Printer className="h-4 w-4 mr-2" />}
+                  Salvar e Imprimir
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => { setViewMode(false); setSelectedDoc(null); }}>
+                  Voltar
+                </Button>
+                <Button variant="outline" onClick={handleEnterEditMode}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Editar
+                </Button>
+                <Button variant="outline" onClick={() => handlePrintDoc(selectedDoc)}>
+                  <Printer className="h-4 w-4 mr-2" />
+                  Imprimir
+                </Button>
+                {selectedDoc.status !== "assinado" && (
+                  <Button onClick={() => handleSign(selectedDoc.id)}>
+                    <FileSignature className="h-4 w-4 mr-2" />
+                    Assinar Documento
+                  </Button>
+                )}
+              </>
             )}
           </div>
         </DialogContent>
@@ -292,9 +333,7 @@ export const HistoricoDocumentosModal = ({
           ) : documents.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-              <p className="text-muted-foreground">
-                Nenhum documento encontrado
-              </p>
+              <p className="text-muted-foreground">Nenhum documento encontrado</p>
             </div>
           ) : (
             documents.map((doc) => (
@@ -318,38 +357,21 @@ export const HistoricoDocumentosModal = ({
                       )}
                     </div>
                     <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleView(doc)}
-                        title="Visualizar"
-                      >
+                      <Button size="sm" variant="outline" onClick={() => handleView(doc)} title="Visualizar">
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handlePrintDoc(doc)}
-                        title="Imprimir"
-                      >
+                      <Button size="sm" variant="outline" onClick={() => handleEdit(doc)} title="Editar">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => handlePrintDoc(doc)} title="Imprimir">
                         <Printer className="h-4 w-4" />
                       </Button>
                       {doc.status !== "assinado" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleSign(doc.id)}
-                          title="Assinar"
-                        >
+                        <Button size="sm" variant="outline" onClick={() => handleSign(doc.id)} title="Assinar">
                           <FileSignature className="h-4 w-4" />
                         </Button>
                       )}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDelete(doc.id)}
-                        title="Excluir"
-                      >
+                      <Button size="sm" variant="outline" onClick={() => handleDelete(doc.id)} title="Excluir">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
