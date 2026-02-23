@@ -111,7 +111,7 @@ export const NovoReceituarioModal = ({
         const { data: profissional, error: profissionalError } = await supabase
           .from("profissionais")
           .select("*")
-          .eq("email", user.email.toUpperCase())
+          .ilike("email", user.email)
           .maybeSingle();
 
         if (!profissionalError && profissional) {
@@ -233,10 +233,21 @@ export const NovoReceituarioModal = ({
     if (clinicData?.cnpj) conteudo += `CNPJ: ${clinicData.cnpj}\n`;
     if (clinicData?.telefone) conteudo += `Telefone: ${clinicData.telefone}\n`;
     if (clinicData?.address) {
-      const address = typeof clinicData.address === 'string' 
-        ? clinicData.address 
-        : JSON.stringify(clinicData.address);
-      conteudo += `Endereço: ${address}\n`;
+      const addr = clinicData.address;
+      let addressStr: string;
+      if (typeof addr === 'string') {
+        addressStr = addr;
+      } else {
+        const parts = [
+          addr.rua ? `${addr.rua}${addr.numero ? `, ${addr.numero}` : ''}` : '',
+          addr.complemento || '',
+          addr.bairro || '',
+          addr.cidade && addr.estado ? `${addr.cidade}/${addr.estado}` : (addr.cidade || addr.estado || ''),
+          addr.cep || '',
+        ].filter(Boolean);
+        addressStr = parts.join(' - ');
+      }
+      conteudo += `Endereço: ${addressStr}\n`;
     }
     conteudo += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
@@ -302,6 +313,7 @@ export const NovoReceituarioModal = ({
           patient_id: patientId,
           clinic_id: profile.clinic_id,
           document_type: "receituario",
+          professional_id: professionalData?.id || null,
           title: `Receituário ${tipo === "impresso" ? "Impresso" : "Digital"} - ${format(new Date(data), "dd/MM/yyyy")}`,
           content: conteudo,
           created_by: user.id,
