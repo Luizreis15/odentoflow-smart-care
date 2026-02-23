@@ -1,104 +1,97 @@
 
-# Modulo de Edicao de Documentos Antes da Impressao
 
-## Contexto
+# Correcao do Modulo PDF Premium - Dados e Formatacao
 
-Atualmente, ao visualizar um documento no historico (`HistoricoDocumentosModal`), o conteudo e exibido apenas em modo leitura (read-only). O usuario nao consegue corrigir erros de cadastro, ajustar espaçamento, alterar nome do dentista ou mudar a data antes de imprimir.
+## Problemas Identificados
+
+### Problema 1: Profissional nao encontrado (CRO "[Nao cadastrado]")
+
+A busca do profissional usa `user.email.toUpperCase()` para comparar com o campo `email` da tabela `profissionais`. Porem o email esta armazenado em minusculo (`aserecrutamento@gmail.com`), entao a comparacao com `ASERECRUTAMENTO@GMAIL.COM` falha.
+
+O profissional **existe** no banco com todos os dados corretos:
+- Nome: Dr Luiz Eduardo Reis
+- CRO: CROSP 161836
+- Especialidade: CIRURGIAO
+
+Mas nunca e encontrado por causa da comparacao case-sensitive.
+
+### Problema 2: Endereco aparece como JSON cru
+
+O campo `address` da clinica e um objeto JSON (`{rua, numero, bairro, cidade...}`), mas no `NovoReceituarioModal` ele e serializado com `JSON.stringify()` gerando texto ilegivel no documento.
+
+### Problema 3: PDF Premium nao busca profissional correto
+
+O `handleGeneratePDF` no `HistoricoDocumentosModal` tem o **mesmo bug** de case-sensitivity na busca do profissional. Alem disso, nao utiliza o campo `professional_id` do documento (que esta `NULL` porque nao esta sendo salvo).
+
+### Problema 4: `professional_id` nunca e salvo no documento
+
+Ao criar o receituario, o campo `professional_id` do `patient_documents` nao e preenchido, impossibilitando rastreabilidade.
+
+---
 
 ## Solucao
 
-Adicionar um modo de edicao no `HistoricoDocumentosModal` que permite ao usuario editar o conteudo completo do documento antes de imprimir ou assinar.
+### Arquivo 1: `src/components/documentos/NovoReceituarioModal.tsx`
 
-## Alteracoes
+**1. Corrigir busca do profissional (case-insensitive)**
 
-### Arquivo: `src/components/documentos/HistoricoDocumentosModal.tsx`
-
-**1. Adicionar botao "Editar" na visualizacao do documento**
-
-Na view mode (quando `selectedDoc` esta ativo), adicionar um botao "Editar" ao lado dos botoes "Voltar" e "Imprimir". Ao clicar, o sistema entra em modo de edicao.
-
-**2. Novo estado `editMode` e `editedContent` / `editedTitle`**
-
-Adicionar estados:
-- `editMode: boolean` -- controla se o documento esta em modo edicao
-- `editedContent: string` -- conteudo editavel
-- `editedTitle: string` -- titulo editavel
-
-Quando o usuario clica em "Editar":
-- `editMode = true`
-- `editedContent = selectedDoc.content`
-- `editedTitle = selectedDoc.title`
-
-**3. Substituir a area de conteudo por campos editaveis**
-
-Quando `editMode === true`:
-- O titulo (`DialogTitle`) vira um `<Input>` editavel com o titulo do documento
-- O bloco `<div className="whitespace-pre-wrap">` vira um `<Textarea>` grande e editavel, permitindo ao usuario:
-  - Ajustar espaçamento entre linhas
-  - Corrigir erros de texto
-  - Alterar nome do dentista
-  - Mudar datas
-  - Qualquer outro ajuste textual
-
-**4. Botoes de acao no modo edicao**
-
-Quando em modo edicao, os botoes serao:
-- **Cancelar** -- volta ao modo visualizacao sem salvar
-- **Salvar** -- salva as alteracoes no banco de dados (UPDATE na tabela `patient_documents`) e volta ao modo visualizacao
-- **Salvar e Imprimir** -- salva e abre a janela de impressao em seguida
-
-**5. Adicionar botao "Editar" tambem na listagem**
-
-Na lista de documentos (cards), adicionar um botao com icone de edicao (`Pencil`) ao lado dos botoes existentes (Visualizar, Imprimir, Assinar, Excluir). Ao clicar, abre diretamente no modo de edicao.
-
-### Detalhes Tecnicos
-
-**Novos imports necessarios:**
-- `Pencil` do `lucide-react`
-- `Textarea` de `@/components/ui/textarea`
-- `Input` de `@/components/ui/input` (ja importado na pagina)
-
-**Funcao de salvar edicao:**
+Trocar:
 ```text
-const handleSaveEdit = async () => {
-  // UPDATE patient_documents SET content = editedContent, title = editedTitle WHERE id = selectedDoc.id
-  // Atualizar selectedDoc local com novos valores
-  // Recarregar lista de documentos
-  // Sair do modo edicao
-}
+.eq("email", user.email.toUpperCase())
+```
+Por busca case-insensitive usando `.ilike("email", user.email)`.
+
+**2. Corrigir formatacao do endereco**
+
+Na funcao `gerarConteudoReceituario`, quando `clinicData.address` for um objeto, formatar como texto legivel:
+```text
+Rua X, 123 - Bairro, Cidade/UF
 ```
 
-**Funcao de salvar e imprimir:**
-```text
-const handleSaveAndPrint = async () => {
-  await handleSaveEdit();
-  handlePrintDoc({ ...selectedDoc, content: editedContent, title: editedTitle });
-}
-```
+**3. Salvar `professional_id` ao criar documento**
 
-**Textarea configurado para edicao confortavel:**
-- `rows={20}` para area grande de edicao
-- `className="font-mono text-sm"` para visualizacao de texto formatado
-- `style={{ lineHeight: '1.8' }}` para espaçamento confortavel
+No `handleSalvar`, incluir o campo `professional_id: professionalData?.id` no INSERT do `patient_documents`.
 
-### Fluxo do Usuario
+### Arquivo 2: `src/components/documentos/HistoricoDocumentosModal.tsx`
 
-```text
-Historico -> Clica "Editar" (ou "Visualizar" + "Editar")
-  -> Documento abre em modo edicao
-  -> Usuario ajusta titulo, conteudo, datas, nomes
-  -> Clica "Salvar" (salva no banco)
-  -> Ou clica "Salvar e Imprimir" (salva e imprime)
-  -> Ou clica "Cancelar" (descarta alteracoes)
-```
+**4. Corrigir busca do profissional no PDF Premium**
 
-### Resumo de Alteracoes
+Trocar a busca por email uppercase por `.ilike("email", user.email)`.
 
-| Alteracao | Detalhes |
-|---|---|
-| Novos estados | `editMode`, `editedContent`, `editedTitle` |
-| Botao Editar na listagem | Icone `Pencil`, abre doc em modo edicao |
-| Botao Editar na visualizacao | Ao lado de Imprimir e Assinar |
-| Modo edicao | Titulo em Input, conteudo em Textarea |
-| Salvar edicao | UPDATE no banco, recarrega lista |
-| Salvar e Imprimir | Salva + abre impressao |
+**5. Usar `professional_id` do documento quando disponivel**
+
+Se o documento tem `professional_id` preenchido, buscar diretamente por ID ao inves de depender do email do usuario logado. Isso garante que o profissional correto aparece mesmo quando outro usuario gera o PDF.
+
+**6. Adicionar `professional_id` ao tipo Document**
+
+Incluir `professional_id: string | null` na interface e no SELECT.
+
+### Arquivo 3: `src/utils/generateDocumentoPDF.ts`
+
+**7. Melhorias de formatacao premium**
+
+- Corrigir o parser de conteudo (`drawBody`) para lidar melhor com o formato do receituario: parar de renderizar dados que ja estao no cabecalho/rodape do PDF (nome da clinica, CNPJ, telefone, endereco)
+- Garantir que secoes como "DADOS DO PACIENTE" e "MEDICAMENTOS PRESCRITOS" sao renderizadas com estilo premium (titulo em cor primaria, spacing adequado)
+- Nao duplicar informacoes que ja aparecem no header institucional
+- Formatar corretamente campos label:valor com bold no label
+
+---
+
+## Resumo das Alteracoes
+
+| Arquivo | Alteracao | Impacto |
+|---|---|---|
+| NovoReceituarioModal.tsx | Busca profissional case-insensitive | CRO e nome corretos no documento |
+| NovoReceituarioModal.tsx | Formatacao endereco como texto | Endereco legivel no conteudo |
+| NovoReceituarioModal.tsx | Salvar professional_id | Rastreabilidade do profissional |
+| HistoricoDocumentosModal.tsx | Busca profissional case-insensitive | PDF Premium com dados corretos |
+| HistoricoDocumentosModal.tsx | Usar professional_id do documento | Profissional correto no PDF |
+| generateDocumentoPDF.ts | Parser de conteudo mais robusto | Sem duplicacao de dados no PDF |
+
+## Resultado Esperado
+
+- Nome, CRO e especialidade do dentista aparecem corretamente no PDF
+- Endereco formatado como texto legivel
+- PDF Premium sem dados duplicados (cabecalho institucional + conteudo nao repetem clinica/endereco)
+- Dados do profissional rastreados por ID no documento
+
