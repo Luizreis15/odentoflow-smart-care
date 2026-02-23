@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,6 +14,62 @@ import { format } from "date-fns";
 import { Check, ChevronsUpDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { cidsOdontologicos } from "@/data/cids";
+
+const TIMES = Array.from({ length: 48 }, (_, i) => {
+  const h = Math.floor(i / 2);
+  const m = i % 2 === 0 ? "00" : "30";
+  return `${h.toString().padStart(2, "0")}:${m}`;
+});
+
+const TimeScrollPicker = ({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+}) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <div
+        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm cursor-pointer"
+        onClick={() => setOpen(!open)}
+      >
+        <span className={value ? "text-foreground" : "text-muted-foreground"}>
+          {value || placeholder}
+        </span>
+        <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+      </div>
+      {open && (
+        <div className="absolute z-[9999] mt-1 w-full rounded-md border bg-popover shadow-lg">
+          <ScrollArea className="h-[200px]">
+            <div className="p-1">
+              {TIMES.map((t) => (
+                <div
+                  key={t}
+                  className={cn(
+                    "flex items-center gap-2 rounded-sm px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground",
+                    value === t && "bg-accent text-accent-foreground font-medium"
+                  )}
+                  onClick={() => {
+                    onChange(t);
+                    setOpen(false);
+                  }}
+                >
+                  {t}
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
+      )}
+    </div>
+  );
+};
+
 
 interface NovoAtestadoModalProps {
   open: boolean;
@@ -38,6 +95,8 @@ export const NovoAtestadoModal = ({
   const [tipoAtestado, setTipoAtestado] = useState<"dias" | "presenca">("dias");
   const [dataAtestado, setDataAtestado] = useState(format(new Date(), "yyyy-MM-dd"));
   const [quantidadeDias, setQuantidadeDias] = useState("");
+  const [horarioInicio, setHorarioInicio] = useState("");
+  const [horarioFim, setHorarioFim] = useState("");
   const [cid, setCid] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [openCidCombobox, setOpenCidCombobox] = useState(false);
@@ -148,13 +207,19 @@ export const NovoAtestadoModal = ({
     }
     conteudo += `\n`;
 
+    const horarioTexto = horarioInicio && horarioFim
+      ? ` no horário das ${horarioInicio} às ${horarioFim}`
+      : horarioInicio
+      ? ` a partir das ${horarioInicio}`
+      : "";
+
     if (tipoAtestado === "dias") {
       conteudo += `Atesto para os devidos fins que o(a) paciente acima identificado(a) `;
-      conteudo += `esteve sob meus cuidados profissionais na data de ${dataFormatada}, `;
+      conteudo += `esteve sob meus cuidados profissionais na data de ${dataFormatada}${horarioTexto}, `;
       conteudo += `necessitando de afastamento de suas atividades por ${quantidadeDias} dia(s).\n\n`;
     } else {
       conteudo += `Atesto para os devidos fins que o(a) paciente acima identificado(a) `;
-      conteudo += `compareceu à consulta odontológica nesta data (${dataFormatada}).\n\n`;
+      conteudo += `compareceu à consulta odontológica nesta data (${dataFormatada})${horarioTexto}.\n\n`;
     }
 
     if (cid) {
@@ -234,6 +299,8 @@ export const NovoAtestadoModal = ({
       setTipoAtestado("dias");
       setDataAtestado(format(new Date(), "yyyy-MM-dd"));
       setQuantidadeDias("");
+      setHorarioInicio("");
+      setHorarioFim("");
       setCid("");
       setObservacoes("");
     } catch (error) {
@@ -331,6 +398,18 @@ export const NovoAtestadoModal = ({
                 />
               </div>
             )}
+          </div>
+
+          {/* Horário da consulta */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Horário início da consulta</Label>
+              <TimeScrollPicker value={horarioInicio} onChange={setHorarioInicio} placeholder="Início" />
+            </div>
+            <div className="space-y-2">
+              <Label>Horário fim da consulta</Label>
+              <TimeScrollPicker value={horarioFim} onChange={setHorarioFim} placeholder="Fim" />
+            </div>
           </div>
 
           <div className="space-y-2">
