@@ -1318,7 +1318,16 @@ const Agenda = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="dentist">Dentista *</Label>
-                  <Select value={formData.dentistId} onValueChange={(value) => setFormData({ ...formData, dentistId: value })}>
+                  <Select value={formData.dentistId} onValueChange={(value) => {
+                    const dentistConfig = dentistConfigs[value];
+                    const defaultDuration = dentistConfig?.intervalo_padrao || 30;
+                    setFormData({
+                      ...formData,
+                      dentistId: value,
+                      duration: String(defaultDuration),
+                      time: "",
+                    });
+                  }}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o dentista" />
                     </SelectTrigger>
@@ -1355,36 +1364,118 @@ const Agenda = () => {
                       id="date"
                       type="date"
                       value={formData.date}
-                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                      onChange={(e) => setFormData({ ...formData, date: e.target.value, time: "" })}
                       className={formData.date ? "border-[hsl(var(--success-green))] bg-[hsl(var(--card-green))]" : ""}
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="time">Horário *</Label>
-                    <Input
-                      id="time"
-                      type="time"
-                      value={formData.time}
-                      onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                      className={formData.time ? "border-[hsl(var(--success-green))] bg-[hsl(var(--card-green))]" : ""}
-                    />
+                    {(() => {
+                      // Calculate available slots for the form
+                      const formDentistConfig = formData.dentistId ? dentistConfigs[formData.dentistId] : null;
+                      const formConfig = formDentistConfig || clinicConfig;
+                      const formDate = formData.date ? new Date(`${formData.date}T12:00:00`) : null;
+                      const formDayKey = formDate ? DAY_KEYS[formDate.getDay()] : null;
+                      const durationMin = parseInt(formData.duration) || 30;
+                      const interval = formConfig.intervalo_padrao || 30;
+
+                      let availableSlots: string[] = [];
+                      if (formDayKey) {
+                        const allSlots = generateDynamicTimeSlots(formDayKey, formConfig);
+                        const now = new Date();
+                        const isFormToday = formData.date === format(now, "yyyy-MM-dd");
+
+                        // Get appointments for this dentist on this date
+                        const dayAppts = formData.date ? appointments.filter(apt => {
+                          if (formData.dentistId && apt.dentist?.id !== formData.dentistId) return false;
+                          return apt.appointment_date.startsWith(formData.date) && apt.status !== "cancelled";
+                        }) : [];
+
+                        // Build occupied minutes set
+                        const occupiedMinutes = new Set<number>();
+                        dayAppts.forEach(apt => {
+                          const aptDate = parseISO(apt.appointment_date);
+                          const startMin = aptDate.getHours() * 60 + aptDate.getMinutes();
+                          const dur = apt.duration_minutes || interval;
+                          for (let m = startMin; m < startMin + dur; m++) {
+                            occupiedMinutes.add(m);
+                          }
+                        });
+
+                        availableSlots = allSlots.filter(slot => {
+                          const [h, m] = slot.split(":").map(Number);
+                          const slotMin = h * 60 + m;
+
+                          // Filter past slots
+                          if (isFormToday && slotMin <= now.getHours() * 60 + now.getMinutes()) return false;
+
+                          // Check if all minutes needed for this duration are free
+                          for (let offset = 0; offset < durationMin; offset++) {
+                            if (occupiedMinutes.has(slotMin + offset)) return false;
+                          }
+
+                          return true;
+                        });
+                      }
+
+                      return (
+                        <Select
+                          value={formData.time}
+                          onValueChange={(value) => setFormData({ ...formData, time: value })}
+                          disabled={!formData.date || !formData.dentistId}
+                        >
+                          <SelectTrigger className={formData.time ? "border-[hsl(var(--success-green))] bg-[hsl(var(--card-green))]" : ""}>
+                            <SelectValue placeholder={!formData.dentistId ? "Selecione dentista" : !formData.date ? "Selecione data" : "Selecione horário"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableSlots.length === 0 ? (
+                              <div className="px-2 py-1.5 text-sm text-muted-foreground">Nenhum horário disponível</div>
+                            ) : (
+                              availableSlots.map((slot) => (
+                                <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      );
+                    })()}
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="duration">Duração (minutos) *</Label>
-                  <Select value={formData.duration} onValueChange={(value) => setFormData({ ...formData, duration: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="30">30 minutos</SelectItem>
-                      <SelectItem value="60">60 minutos</SelectItem>
-                      <SelectItem value="90">90 minutos</SelectItem>
-                      <SelectItem value="120">120 minutos</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Duração *</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {[15, 30, 45, 60].map((val) => (
+                      <Button
+                        key={val}
+                        type="button"
+                        size="sm"
+                        variant={formData.duration === String(val) ? "default" : "outline"}
+                        onClick={() => setFormData({ ...formData, duration: String(val), time: "" })}
+                      >
+                        {val}min
+                      </Button>
+                    ))}
+                    <div className="w-px bg-border mx-1" />
+                    {[15, 30, 60].map((inc) => (
+                      <Button
+                        key={`inc-${inc}`}
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          const current = parseInt(formData.duration) || 30;
+                          setFormData({ ...formData, duration: String(current + inc), time: "" });
+                        }}
+                      >
+                        +{inc}
+                      </Button>
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground font-medium">
+                    Total: {formData.duration} minutos
+                  </p>
                 </div>
 
                 <div className="flex gap-3 pt-4">
