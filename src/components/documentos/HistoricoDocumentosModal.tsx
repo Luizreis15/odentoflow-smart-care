@@ -207,7 +207,7 @@ export const HistoricoDocumentosModal = ({
           </head>
           <body>
             <h1>${doc.title}</h1>
-            <div class="meta">Criado em ${format(new Date(doc.created_at), "dd/MM/yyyy 'às' HH:mm")}</div>
+            <div class="meta">${format(new Date(doc.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</div>
             <div class="content">${doc.content.replace(/\n/g, '<br>')}</div>
             <div class="signature-area"><div class="signature-line"></div><p>Assinatura do Profissional</p></div>
             <script>window.onload = function() { setTimeout(function() { window.print(); }, 250); }</script>
@@ -253,6 +253,7 @@ export const HistoricoDocumentosModal = ({
       const addressStr = address?.rua
         ? `${address.rua}, ${address.numero || "S/N"} - ${address.cidade || ""} / ${address.estado || ""}`
         : "";
+      const clinicCity = address?.cidade || "";
 
       const pdfData: DocumentoPDFData = {
         tipo: isAtestado ? "atestado" : "receituario",
@@ -265,6 +266,7 @@ export const HistoricoDocumentosModal = ({
         clinicEmail: config?.email_contato || undefined,
         clinicWhatsapp: config?.whatsapp || undefined,
         clinicLogoUrl: config?.logotipo_url || undefined,
+        clinicCity: clinicCity || undefined,
         professionalName: prof?.nome || undefined,
         professionalCro: prof?.cro || undefined,
         professionalEspecialidade: prof?.especialidade || undefined,
