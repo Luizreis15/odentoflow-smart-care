@@ -26,6 +26,7 @@ interface Document {
   status: string;
   created_at: string;
   signed_at: string | null;
+  professional_id: string | null;
 }
 
 const statusColors: Record<string, string> = {
@@ -66,7 +67,7 @@ export const HistoricoDocumentosModal = ({
       setLoading(true);
       const { data, error } = await supabase
         .from("patient_documents")
-        .select("id, title, content, status, created_at, signed_at")
+        .select("id, title, content, status, created_at, signed_at, professional_id")
         .eq("patient_id", patientId)
         .eq("document_type", documentType)
         .order("created_at", { ascending: false });
@@ -231,12 +232,16 @@ export const HistoricoDocumentosModal = ({
 
       if (!profile?.clinic_id) { toast.error("Clínica não encontrada"); return; }
 
+      const profQuery = doc.professional_id
+        ? supabase.from("profissionais").select("nome, cro, especialidade").eq("id", doc.professional_id).maybeSingle()
+        : user.email
+          ? supabase.from("profissionais").select("nome, cro, especialidade").ilike("email", user.email).maybeSingle()
+          : Promise.resolve({ data: null });
+
       const [clinicResult, configResult, profResult] = await Promise.all([
         supabase.from("clinicas").select("*").eq("id", profile.clinic_id).maybeSingle(),
         supabase.from("configuracoes_clinica").select("logotipo_url, whatsapp, email_contato").eq("clinica_id", profile.clinic_id).maybeSingle(),
-        user.email
-          ? supabase.from("profissionais").select("nome, cro, especialidade").eq("email", user.email.toUpperCase()).maybeSingle()
-          : Promise.resolve({ data: null }),
+        profQuery,
       ]);
 
       const clinic = clinicResult.data;
