@@ -223,42 +223,17 @@ export const NovoReceituarioModal = ({
   };
 
   const gerarConteudoReceituario = (): string => {
-    const dataFormatada = format(new Date(data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
     const dataNascimento = patientData?.birth_date 
       ? format(new Date(patientData.birth_date), "dd/MM/yyyy")
       : "[Data de Nascimento]";
 
-    let conteudo = `RECEITUÁRIO ${tipo?.toUpperCase()}\n\n`;
-    conteudo += `${clinicData?.nome || "[Nome da Clínica]"}\n`;
-    if (clinicData?.cnpj) conteudo += `CNPJ: ${clinicData.cnpj}\n`;
-    if (clinicData?.telefone) conteudo += `Telefone: ${clinicData.telefone}\n`;
-    if (clinicData?.address) {
-      const addr = clinicData.address;
-      let addressStr: string;
-      if (typeof addr === 'string') {
-        addressStr = addr;
-      } else {
-        const parts = [
-          addr.rua ? `${addr.rua}${addr.numero ? `, ${addr.numero}` : ''}` : '',
-          addr.complemento || '',
-          addr.bairro || '',
-          addr.cidade && addr.estado ? `${addr.cidade}/${addr.estado}` : (addr.cidade || addr.estado || ''),
-          addr.cep || '',
-        ].filter(Boolean);
-        addressStr = parts.join(' - ');
-      }
-      conteudo += `Endereço: ${addressStr}\n`;
-    }
-    conteudo += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-
-    conteudo += `DADOS DO PACIENTE\n`;
+    let conteudo = `DADOS DO PACIENTE\n`;
     conteudo += `Nome: ${patientData?.full_name || "[Nome do Paciente]"}\n`;
     conteudo += `Data de Nascimento: ${dataNascimento}\n`;
     if (patientData?.cpf) conteudo += `CPF: ${patientData.cpf}\n`;
     if (patientData?.address) conteudo += `Endereço: ${patientData.address}\n`;
-    conteudo += `\nData da Prescrição: ${dataFormatada}\n\n`;
+    conteudo += `\n`;
 
-    conteudo += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
     conteudo += `MEDICAMENTOS PRESCRITOS\n\n`;
 
     medicamentosSelecionados.forEach((med, index) => {
@@ -269,13 +244,6 @@ export const NovoReceituarioModal = ({
       }
       conteudo += `\n`;
     });
-
-    conteudo += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-
-    conteudo += `PROFISSIONAL RESPONSÁVEL\n`;
-    conteudo += `${professionalData?.nome || "[Nome do Profissional]"}\n`;
-    conteudo += `CRO: ${professionalData?.cro || "[CRO]"}\n`;
-    if (professionalData?.especialidade) conteudo += `Especialidade: ${professionalData.especialidade}\n`;
 
     return conteudo;
   };
@@ -314,7 +282,7 @@ export const NovoReceituarioModal = ({
           clinic_id: profile.clinic_id,
           document_type: "receituario",
           professional_id: professionalData?.id || null,
-          title: `Receituário ${tipo === "impresso" ? "Impresso" : "Digital"} - ${format(new Date(data), "dd/MM/yyyy")}`,
+          title: `Receituário - ${format(new Date(data), "dd/MM/yyyy")}`,
           content: conteudo,
           created_by: user.id,
           status: "finalizado",

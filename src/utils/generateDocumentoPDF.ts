@@ -12,6 +12,7 @@ export interface DocumentoPDFData {
   clinicEmail?: string;
   clinicWhatsapp?: string;
   clinicLogoUrl?: string;
+  clinicCity?: string;
   // Professional
   professionalName?: string;
   professionalCro?: string;
@@ -320,9 +321,10 @@ function drawSignature(doc: jsPDF, data: DocumentoPDFData, y: number): number {
   doc.setFontSize(11);
   doc.setTextColor(...COLOR_BLACK);
 
-  const dateStr = data.createdAt
-    ? new Date(data.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
-    : new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  const dateObj = data.createdAt ? new Date(data.createdAt) : new Date();
+  const longDate = dateObj.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  const cityPrefix = data.clinicCity ? `${data.clinicCity}, ` : "";
+  const dateStr = `${cityPrefix}${longDate}`;
 
   doc.text(dateStr, PAGE_W / 2, y, { align: "center" });
   y += 20;
@@ -386,15 +388,6 @@ function drawFooter(doc: jsPDF, data: DocumentoPDFData) {
     doc.text(docIdStr, MARGIN_X, y);
   }
 
-  // Generation timestamp
-  const now = new Date();
-  doc.setFontSize(6.5);
-  doc.text(
-    `Gerado em ${now.toLocaleDateString("pt-BR")} às ${now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`,
-    PAGE_W - MARGIN_X,
-    y,
-    { align: "right" }
-  );
 }
 
 export async function generateDocumentoPDF(data: DocumentoPDFData): Promise<void> {
