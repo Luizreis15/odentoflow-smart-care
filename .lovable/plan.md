@@ -1,164 +1,90 @@
 
 
-# WhatsApp Marketing + Lembretes + Google Review — Sistema CRM Completo
+# Corrigir Duracao de Consulta: Botoes Flexiveis + Slots Dinamicos
 
-## Visao Geral
+## Problema Atual
 
-Transformar o CRM (atualmente com dados mockados) em um sistema funcional de comunicacao automatizada via WhatsApp, cobrindo 4 pilares:
+1. O seletor de duracao oferece apenas 30, 60, 90 e 120 minutos (falta 15 e 45)
+2. O campo de horario e um `<Input type="time">` livre, permitindo qualquer hora -- deveria mostrar apenas slots disponiveis
+3. Quando o dentista tem config de 15 min, o formulario nao reflete isso
+4. Agendamentos longos (ex: 1h) nao bloqueiam corretamente os slots subsequentes no formulario
 
-1. **Lembretes de consulta** (cron automatico, ja tem estrutura)
-2. **Link Google Review pos-consulta** (disparo automatico ao concluir atendimento)
-3. **Campanhas de marketing** (segmentadas por perfil de paciente)
-4. **Automacoes configuráveis** (recall, aniversario, follow-up)
+## Solucao
 
-## Arquitetura
+### 1. Novo seletor de duracao com botoes rapidos
+
+Substituir o `<Select>` de duracao por um componente com:
+- **Botoes base**: `15min`, `30min`, `45min`, `60min` (clique para selecionar)
+- **Botoes incrementais**: `+15`, `+30`, `+60` (somam ao valor atual)
+- Display do valor total selecionado
+- Auto-default: ao selecionar um dentista, o valor inicial sera o `duracao_consulta_minutos` da config dele
 
 ```text
-+------------------+     +----------------------+     +-----------+
-| Triggers         |     | Edge Functions       |     | Z-API     |
-|                  |     |                      |     |           |
-| - Cron (18h)     +---->+ send-appointment-    +---->+ WhatsApp  |
-| - Status change  |     |   reminders (existe) |     |           |
-| - Campanha manual|     |                      |     |           |
-| - Cron aniver.   +---->+ send-whatsapp        +---->+           |
-|                  |     |   (existe)           |     |           |
-+------------------+     |                      |     |           |
-                         | send-campaign-msgs   +---->+           |
-                         |   (NOVO)             |     |           |
-                         +----------------------+     +-----------+
-                                   |
-                                   v
-                         +----------------------+
-                         | whatsapp_campaigns   |
-                         | whatsapp_automations |
-                         | whatsapp_message_log |
-                         | clinics.google_      |
-                         |   review_link        |
-                         +----------------------+
+Duracao: [15] [30] [45] [60]   [+15] [+30] [+60]    Total: 45 min
 ```
 
-## Fase 1 — Banco de Dados (Novas Tabelas e Colunas)
+### 2. Trocar Input de horario por Select de slots disponiveis
 
-### 1.1 Tabela `whatsapp_campaigns`
-Substitui os dados mockados do CRM com campanhas reais.
+Substituir `<Input type="time">` por `<Select>` que:
+- Gera slots baseados na config do dentista selecionado (ou clinica como fallback)
+- Filtra horarios ja ocupados naquele dia para aquele dentista
+- Filtra horarios passados (se for hoje)
+- Considera a duracao selecionada: um slot so aparece se ha espaco suficiente para a duracao completa
 
-| Coluna | Tipo | Descricao |
-|--------|------|-----------|
-| id | uuid PK | |
-| clinic_id | uuid FK clinics | |
-| name | text | Nome da campanha |
-| type | text | recall, aniversario, retorno, promocao, custom |
-| message_template | text | Mensagem com placeholders |
-| target_segment | jsonb | Filtros (ex: inativos ha 6 meses, aniversariantes) |
-| status | text | draft, scheduled, sending, completed, cancelled |
-| scheduled_at | timestamptz | Quando disparar |
-| sent_count | int | Total enviados |
-| response_count | int | Total respostas |
-| created_by | uuid FK profiles | |
-| created_at / updated_at | timestamptz | |
+Exemplo: se duracao = 60min e intervalo = 15min, o slot 14:00 so aparece se 14:00, 14:15, 14:30 e 14:45 estiverem todos livres.
 
-### 1.2 Tabela `whatsapp_campaign_recipients`
-Destinatarios de cada campanha com status individual.
+### 3. Auto-ajuste ao selecionar dentista
 
-| Coluna | Tipo | Descricao |
-|--------|------|-----------|
-| id | uuid PK | |
-| campaign_id | uuid FK | |
-| patient_id | uuid FK patients | |
-| phone | text | |
-| status | text | pending, sent, delivered, failed |
-| sent_at | timestamptz | |
-| error_message | text | |
+No `onValueChange` do Select de dentista:
+- Buscar config em `dentistConfigs[dentistId]`
+- Se existir, setar `formData.duration` para o `intervalo_padrao` do dentista
+- Recalcular os slots disponiveis
 
-### 1.3 Tabela `whatsapp_automations`
-Configuracoes de automacoes ativas por clinica.
+## Alteracoes Tecnicas
 
-| Coluna | Tipo | Descricao |
-|--------|------|-----------|
-| id | uuid PK | |
-| clinic_id | uuid FK | |
-| name | text | Ex: Confirmacao, Lembrete, Review, Recall |
-| trigger_type | text | pre_appointment, post_appointment, recall, birthday |
-| trigger_config | jsonb | Ex: {"hours_before": 24} ou {"months_after": 6} |
-| message_template | text | Mensagem com {paciente}, {data}, {link_review} |
-| channel | text | whatsapp |
-| is_active | boolean | |
-| created_at | timestamptz | |
+### Arquivo: `src/pages/dashboard/Agenda.tsx`
 
-### 1.4 Coluna `google_review_link` na tabela `clinics`
-Para armazenar o link do Google Meu Negocio da clinica, usado no disparo pos-consulta.
+**A. Linhas ~1321 (Select de dentista)** -- adicionar logica de auto-ajuste:
+```typescript
+onValueChange={(value) => {
+  const dentistConfig = dentistConfigs[value];
+  const defaultDuration = dentistConfig?.intervalo_padrao || 30;
+  setFormData({
+    ...formData,
+    dentistId: value,
+    duration: String(defaultDuration),
+    time: "", // limpar horario pois slots mudam
+  });
+}}
+```
 
-## Fase 2 — Edge Functions
+**B. Linhas ~1363-1372 (Input de horario)** -- substituir por Select com slots calculados:
+- Calcular slots usando `generateDynamicTimeSlots` com config do dentista selecionado
+- Filtrar slots ocupados usando `isSlotOccupied` para o dentista e data
+- Filtrar por espaco suficiente para a duracao escolhida
+- Renderizar como `<Select>` com horarios disponiveis
 
-### 2.1 `send-campaign-messages` (NOVA)
-- Recebe `campaign_id`
-- Busca recipients pendentes
-- Envia em lote via `send-whatsapp` existente
-- Atualiza status de cada recipient
-- Rate limit: 1 msg/segundo para nao bloquear Z-API
+**C. Linhas ~1375-1388 (Select de duracao)** -- substituir por componente de botoes:
+- Botoes de selecao base: 15, 30, 45, 60
+- Botoes de incremento: +15, +30, +60
+- Ao mudar duracao, limpar `formData.time` para recalcular slots disponiveis
 
-### 2.2 Atualizar `send-whatsapp` (EXISTENTE)
-- Adicionar tipo `review` com template que inclui o link do Google
-- Adicionar tipo `campaign` para mensagens de campanha
-- Suportar placeholder `{link_review}` nos templates
+**D. Logica de filtragem de slots no formulario:**
+Nova funcao `getFormAvailableSlots` que:
+1. Pega config do dentista selecionado (ou clinica)
+2. Gera todos os slots do dia selecionado
+3. Remove slots ocupados
+4. Remove slots passados
+5. Remove slots onde nao cabe a duracao escolhida (verifica N slots consecutivos livres)
 
-### 2.3 `send-post-appointment-review` (NOVA)
-- Disparada quando appointment.status muda para "completed"
-- Busca google_review_link da clinica
-- Envia mensagem com link de avaliacao
-- Registra no whatsapp_message_log com type "review"
-- Pode ser chamada via trigger de banco ou pelo frontend ao concluir consulta
+### Impacto na ocupacao existente
 
-## Fase 3 — Frontend (CRM Funcional)
+A logica `isSlotOccupied` (linhas 502-518) ja funciona corretamente com `duration_minutes`. Ao salvar com duracao de 60min, os 4 slots de 15min serao bloqueados na visualizacao da agenda. Nenhuma alteracao necessaria aqui.
 
-### 3.1 Refatorar `CRM.tsx`
-Substituir dados mockados por queries reais:
-- Listar campanhas de `whatsapp_campaigns`
-- Listar automacoes de `whatsapp_automations`
-- Metricas reais de `whatsapp_message_log`
+## Resultado Esperado
 
-### 3.2 Modal "Nova Campanha"
-- Nome, tipo, template de mensagem
-- Seletor de segmento (pacientes inativos, aniversariantes do mes, todos)
-- Preview da mensagem
-- Agendar ou enviar agora
-- Ao salvar: cria campanha + gera recipients baseado no segmento
-
-### 3.3 Modal "Configurar Automacoes"
-- Lista de automacoes com toggle ativo/inativo
-- Editar template de cada automacao
-- Configurar trigger (24h antes, apos consulta, 6 meses apos, aniversario)
-
-### 3.4 Configuracao Google Review
-- Campo no `ClinicaTab` (Configuracoes) para colar o link do Google Meu Negocio
-- Toggle para ativar/desativar envio automatico pos-consulta
-
-### 3.5 Dashboard de metricas
-- Total enviados / entregues / falhas (de `whatsapp_message_log`)
-- Taxa de resposta das campanhas
-- NPS baseado em respostas (futuro)
-
-## Fase 4 — Cron Jobs
-
-### 4.1 Cron para campanhas agendadas
-- Roda a cada hora
-- Busca campanhas com status "scheduled" e `scheduled_at <= now()`
-- Chama `send-campaign-messages` para cada uma
-
-### 4.2 Cron para automacoes de recall/aniversario
-- Roda diariamente
-- Busca pacientes que se encaixam nos criterios de cada automacao ativa
-- Gera e envia mensagens automaticamente
-
-## Ordem de Implementacao
-
-1. Criar tabelas e colunas no banco
-2. Atualizar `send-whatsapp` com tipos `review` e `campaign`
-3. Criar `send-post-appointment-review` (Google Review pos-consulta)
-4. Criar `send-campaign-messages` (disparo de campanhas)
-5. Refatorar CRM.tsx com dados reais
-6. Criar modal Nova Campanha
-7. Criar modal Configurar Automacoes
-8. Adicionar campo Google Review nas configuracoes da clinica
-9. Configurar crons para campanhas agendadas e automacoes
+- Dra Victoria (15min): formulario mostra slots de 15 em 15, default 15min
+- Outros dentistas (30min): formulario mostra slots de 30 em 30, default 30min
+- Consulta de 1h: bloqueia 4 slots de 15min (ou 2 de 30min) automaticamente
+- Botoes +15/+30/+60 permitem duracao customizada (ex: 75min = 60+15)
 
