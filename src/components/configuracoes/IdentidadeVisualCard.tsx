@@ -72,7 +72,7 @@ export function IdentidadeVisualCard({ clinicaId, value, onChange }: IdentidadeV
         .from("patient-files")
         .getPublicUrl(filePath);
 
-      onChange({ ...value, logotipo_url: urlData.publicUrl });
+      onChange({ ...value, logotipo_url: `${urlData.publicUrl}?t=${Date.now()}` });
       toast({ title: "Sucesso", description: "Logo enviado com sucesso" });
     } catch (error) {
       console.error("Erro ao enviar logo:", error);
