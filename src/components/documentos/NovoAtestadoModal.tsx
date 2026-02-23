@@ -131,15 +131,8 @@ export const NovoAtestadoModal = ({
     const dataFormatada = format(new Date(dataAtestado), "dd/MM/yyyy");
     const hoje = format(new Date(), "dd/MM/yyyy");
     
-    let conteudo = `ATESTADO MÉDICO ODONTOLÓGICO\n\n`;
+    let conteudo = `ATESTADO ODONTOLÓGICO\n\n`;
     conteudo += `${clinicData.nome}\n`;
-    if (clinicData.address?.rua) {
-      conteudo += `${clinicData.address.rua}, ${clinicData.address.numero || "S/N"}\n`;
-      conteudo += `${clinicData.address.cidade || ""} - ${clinicData.address.estado || ""}\n`;
-    }
-    if (clinicData.telefone) {
-      conteudo += `Tel: ${clinicData.telefone}\n`;
-    }
     conteudo += `\n${"=".repeat(60)}\n\n`;
 
     conteudo += `Paciente: ${patientData.full_name}\n`;
