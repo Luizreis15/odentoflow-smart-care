@@ -1,10 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2, ChevronDown, X } from "lucide-react";
@@ -43,6 +41,20 @@ export const NovoReceituarioModal = ({
   const [searchOpen, setSearchOpen] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Detectar clique fora para fechar dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setSearchOpen(null);
+      }
+    };
+    if (searchOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [searchOpen]);
 
   useEffect(() => {
     if (open && tipo) {
@@ -393,26 +405,32 @@ export const NovoReceituarioModal = ({
                         {/* Seleção do Medicamento */}
                         <div className="space-y-2">
                           <Label>Medicamento {index + 1}</Label>
-                          <Popover open={searchOpen === medSel.id} onOpenChange={(open) => setSearchOpen(open ? medSel.id : null)}>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                role="combobox"
-                                className="w-full justify-between"
-                              >
-                                <span className="truncate">
-                                  {medSel.medicamento.nome} {medSel.medicamento.concentracao}
-                                </span>
-                                <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[600px] p-0" align="start">
-                              <Command>
-                                <CommandInput
-                                  placeholder="Buscar medicamento..."
-                                  value={searchTerm}
-                                  onValueChange={setSearchTerm}
-                                />
+                          <div className="relative" ref={searchOpen === medSel.id ? dropdownRef : undefined}>
+                            <Button
+                              variant="outline"
+                              className="w-full justify-between"
+                              onClick={() => {
+                                setSearchOpen(searchOpen === medSel.id ? null : medSel.id);
+                                setSearchTerm("");
+                                setCategoriaFiltro(null);
+                              }}
+                            >
+                              <span className="truncate">
+                                {medSel.medicamento.nome} {medSel.medicamento.concentracao}
+                              </span>
+                              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+
+                            {searchOpen === medSel.id && (
+                              <div className="absolute z-[9999] w-[600px] bg-popover text-popover-foreground border rounded-md shadow-lg mt-1 left-0">
+                                <div className="p-2 border-b">
+                                  <Input
+                                    placeholder="Buscar medicamento..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    autoFocus
+                                  />
+                                </div>
                                 <div className="flex gap-2 p-2 border-b flex-wrap">
                                   <Badge
                                     variant={categoriaFiltro === null ? "default" : "outline"}
@@ -432,35 +450,34 @@ export const NovoReceituarioModal = ({
                                     </Badge>
                                   ))}
                                 </div>
-                                <CommandList className="max-h-[300px]">
-                                  <CommandEmpty>Nenhum medicamento encontrado.</CommandEmpty>
-                                  <CommandGroup>
-                                    {medicamentosFiltrados.map((med) => (
-                                      <CommandItem
+                                <div className="max-h-[300px] overflow-y-auto">
+                                  {medicamentosFiltrados.length === 0 ? (
+                                    <p className="py-6 text-center text-sm text-muted-foreground">Nenhum medicamento encontrado.</p>
+                                  ) : (
+                                    medicamentosFiltrados.map((med) => (
+                                      <div
                                         key={`${med.nome}-${med.concentracao}`}
-                                        onSelect={() => atualizarMedicamento(medSel.id, med)}
-                                        className="cursor-pointer"
+                                        className="cursor-pointer px-3 py-2 hover:bg-accent hover:text-accent-foreground"
+                                        onClick={() => atualizarMedicamento(medSel.id, med)}
                                       >
-                                        <div className="flex flex-col gap-1 w-full">
-                                          <div className="flex items-center justify-between">
-                                            <span className="font-medium">
-                                              {med.nome} {med.concentracao}
-                                            </span>
-                                            <Badge variant="outline" className="text-xs">
-                                              {med.categoria}
-                                            </Badge>
-                                          </div>
-                                          <span className="text-xs text-muted-foreground">
-                                            {med.indicacao}
+                                        <div className="flex items-center justify-between">
+                                          <span className="font-medium">
+                                            {med.nome} {med.concentracao}
                                           </span>
+                                          <Badge variant="outline" className="text-xs">
+                                            {med.categoria}
+                                          </Badge>
                                         </div>
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
-                                </CommandList>
-                              </Command>
-                            </PopoverContent>
-                          </Popover>
+                                        <span className="text-xs text-muted-foreground">
+                                          {med.indicacao}
+                                        </span>
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                           <div className="text-xs text-muted-foreground">
                             <p><strong>Indicação:</strong> {medSel.medicamento.indicacao}</p>
                           </div>
