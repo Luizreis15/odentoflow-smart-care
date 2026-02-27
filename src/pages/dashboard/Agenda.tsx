@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Plus, Filter, X, UserPlus, ArrowLeft, Users, Check, ChevronsUpDown, Search, RefreshCw, Printer, LayoutGrid, List, AlertTriangle } from "lucide-react";
@@ -131,6 +131,7 @@ const isPastSlot = (date: Date, time: string) => {
 const Agenda = () => {
   const { clinicId: authClinicId } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<"calendar" | "week" | "day-slots">("calendar");
@@ -745,7 +746,14 @@ const Agenda = () => {
                           className="w-2.5 h-2.5 rounded-full shrink-0" 
                           style={{ backgroundColor: dentistColor }}
                         />
-                        <p className="font-semibold text-foreground truncate">
+                        <p 
+                          className="font-semibold text-primary hover:underline cursor-pointer truncate"
+                          title="Abrir prontuário"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/dashboard/prontuario/${appointment.patient_id}`);
+                          }}
+                        >
                           {appointment.patient?.full_name}
                         </p>
                         <Badge className={statusColors[appointment.status as keyof typeof statusColors]}>
@@ -976,7 +984,14 @@ const Agenda = () => {
                           {apt ? (
                             <div className="h-full flex flex-col justify-center">
                               <div className="flex items-center gap-1">
-                                <div className="text-xs font-semibold truncate" title={apt.patient?.full_name}>
+                              <div 
+                                className="text-xs font-semibold truncate text-primary hover:underline cursor-pointer" 
+                                title="Abrir prontuário"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/dashboard/prontuario/${apt.patient_id}`);
+                                }}
+                              >
                                   {apt.patient?.full_name?.split(' ').slice(0, 2).join(' ')}
                                 </div>
                                 {patientNoShows >= 2 && (

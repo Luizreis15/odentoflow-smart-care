@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Calendar, Clock, User, Stethoscope, Check, X, RefreshCw, Trash2, Edit2, Save } from "lucide-react";
+import { Calendar, Clock, User, Stethoscope, Check, X, RefreshCw, Trash2, Edit2, Save, FileText } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -56,6 +57,7 @@ export const DetalhesAgendamentoModal = ({
   dentists,
   onUpdate,
 }: DetalhesAgendamentoModalProps) => {
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [isRescheduling, setIsRescheduling] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -231,7 +233,16 @@ export const DetalhesAgendamentoModal = ({
                   <User className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-lg">{appointment.patient?.full_name}</p>
+                  <p 
+                    className="font-semibold text-lg text-primary hover:underline cursor-pointer"
+                    title="Abrir prontuário"
+                    onClick={() => {
+                      onOpenChange(false);
+                      navigate(`/dashboard/prontuario/${appointment.patient_id}`);
+                    }}
+                  >
+                    {appointment.patient?.full_name}
+                  </p>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                     <Calendar className="h-3.5 w-3.5" />
                     <span>{format(aptDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
@@ -425,6 +436,17 @@ export const DetalhesAgendamentoModal = ({
 
                 {/* Ações */}
                 <div className="flex gap-2 pt-2 border-t">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      onOpenChange(false);
+                      navigate(`/dashboard/prontuario/${appointment.patient_id}`);
+                    }}
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Prontuário
+                  </Button>
                   <Button
                     variant="outline"
                     className="flex-1"
