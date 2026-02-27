@@ -1,96 +1,41 @@
 
 
-# Reformulacao do Conteudo do Receituario e Layout do PDF Premium
+## Plano: Atalhos estratégicos para o Prontuário do Paciente
 
-## Problemas Apontados
+### Objetivo
+Tornar o nome do paciente clicável em todos os locais onde aparece, redirecionando para `/dashboard/prontuario/{patient_id}` — facilitando o acesso rápido ao prontuário.
 
-1. **"RECEITUARIO IMPRESSO"** -- a palavra "Impresso" e redundante e nao deve aparecer no titulo do documento
-2. **Dados da clinica no corpo** (nome, CNPJ, telefone, endereco) -- devem compor apenas o cabecalho e rodape (papel timbrado), nao o corpo do texto
-3. **"Criado em DD/MM/YYYY as HH:MM"** -- desnecessario; a data deve aparecer apenas na area de assinatura como "Cidade, DD de mes de AAAA"
-4. **"Data da Prescricao"** abaixo dos dados do paciente -- tambem desnecessario, ja que a data esta na assinatura
+### Locais que serão alterados
 
-## Solucao
+1. **Agenda — Day Slots View** (`src/pages/dashboard/Agenda.tsx`, ~linha 748)
+   - O nome do paciente nos slots ocupados será um link clicável para o prontuário
+   - Adicionar `e.stopPropagation()` para não abrir o modal de detalhes ao clicar no nome
+   - Usar `useNavigate` (já importado via `react-router-dom`) + estilo de link (underline on hover, cursor pointer)
 
-### Arquivo 1: `src/components/documentos/NovoReceituarioModal.tsx`
+2. **Agenda — Week View** (`src/pages/dashboard/Agenda.tsx`, ~linha 979)
+   - O nome do paciente na célula semanal será clicável para o prontuário
+   - `e.stopPropagation()` para não disparar o `handleAppointmentClick`
 
-**Reformular `gerarConteudoReceituario()`** para que o conteudo salvo no banco contenha APENAS:
+3. **Agenda — Detalhes do Agendamento Modal** (`src/components/agenda/DetalhesAgendamentoModal.tsx`, ~linha 234)
+   - O nome do paciente no modal será um link clicável para o prontuário
+   - Adicionar botão "Abrir Prontuário" nas ações do modal
 
-- Dados do paciente (nome, nascimento, CPF, endereco)
-- Medicamentos prescritos (nome, concentracao, posologia, obs)
+4. **Dashboard — Agenda do Dia (tabela)** (`src/components/dashboard/DashboardAgendaTable.tsx`, ~linha 122)
+   - A coluna "Paciente" na tabela do dashboard será um link clicável
+   - Usar `useNavigate` para redirecionar
 
-Remover do conteudo gerado:
-- Titulo "RECEITUARIO IMPRESSO/DIGITAL"
-- Nome da clinica, CNPJ, telefone, endereco
-- Separadores visuais (linhas de caracteres)
-- "Data da Prescricao"
-- Secao "PROFISSIONAL RESPONSAVEL" (ja tratada pela assinatura do PDF)
+5. **Dashboard — Próximas Consultas** (`src/components/dashboard/UpcomingAppointments.tsx`, ~linha 83)
+   - O nome do paciente será clicável
 
-**Corrigir titulo salvo no banco**: de `Receituario Impresso - DD/MM/YYYY` para `Receituario - DD/MM/YYYY`
+6. **Mobile — Agenda List** (`src/components/mobile/MobileAgendaList.tsx`)
+   - Já redireciona para prontuário no `onClick` do card — manter como está
 
-### Arquivo 2: `src/utils/generateDocumentoPDF.ts`
+7. **Mobile — MobileAgenda** (`src/pages/mobile/MobileAgenda.tsx`)
+   - Já redireciona para prontuário no `onClick` — manter como está
 
-**Adicionar cidade a assinatura**: usar `clinicCity` (extraida do endereco) para formatar como:
-```text
-Santo Andre, 23 de fevereiro de 2026
-```
-
-**Adicionar `clinicCity` ao `DocumentoPDFData`** interface.
-
-**Remover timestamp "Gerado em"** do rodape (desnecessario conforme feedback).
-
-### Arquivo 3: `src/components/documentos/HistoricoDocumentosModal.tsx`
-
-**Passar `clinicCity`** ao gerar PDF: extrair `address.cidade` e enviar no `pdfData`.
-
-**Remover "Criado em"** da impressao simples (`handlePrintDoc`): a data ja aparece na assinatura.
-
-## Estrutura Final do Documento PDF
-
-```text
-+------------------------------------------+
-|  [LOGO]          NOME DA CLINICA         |
-|                  CNPJ: XX.XXX.XXX/XXXX   |
-|                  Av Dom Pedro II, 1107    |
-|                  Tel: (11) 2866-7666      |
-|  ======================================  |
-|                                          |
-|              RECEITUARIO                 |
-|              ___________                 |
-|                                          |
-|  DADOS DO PACIENTE                       |
-|  Nome: Fulano de Tal                     |
-|  Data de Nascimento: 01/01/1990          |
-|  CPF: 123.456.789-00                     |
-|                                          |
-|  MEDICAMENTOS PRESCRITOS                 |
-|                                          |
-|  1. Amoxicilina 500mg                    |
-|     Tomar 1 capsula de 8 em 8 horas      |
-|     por 7 dias                           |
-|                                          |
-|  2. Ibuprofeno 600mg                     |
-|     Tomar 1 comprimido de 6 em 6 horas   |
-|                                          |
-|                                          |
-|  Santo Andre, 23 de fevereiro de 2026    |
-|                                          |
-|          ________________________        |
-|          Dr. Eduardo Reis                |
-|          CRO: CROSP 161836               |
-|          Cirurgiao                        |
-|                                          |
-|  ------                                  |
-|  Av Dom Pedro II, 1107 - Santo Andre/SP  |
-|  Tel: (11) 2866-7666                     |
-|  ID: FLD-RC-2026-XXXXXXXX               |
-+------------------------------------------+
-```
-
-## Resumo das Alteracoes
-
-| Arquivo | O que muda |
-|---|---|
-| NovoReceituarioModal.tsx | Conteudo limpo: so paciente + medicamentos. Titulo sem "Impresso" |
-| generateDocumentoPDF.ts | Assinatura com cidade + data. Sem "Gerado em" no rodape. Nova prop `clinicCity` |
-| HistoricoDocumentosModal.tsx | Passa `clinicCity`. Remove "Criado em" da impressao simples |
+### Detalhes técnicos
+- Estilo do link: `hover:underline text-primary cursor-pointer` no nome do paciente
+- Navegação: `navigate(\`/dashboard/prontuario/\${patientId}\`)`
+- `e.stopPropagation()` em todos os locais onde o clique no nome conflita com um clique no container pai (slot, card, row)
+- No modal de detalhes: adicionar um botão "Ir ao Prontuário" com ícone `FileText`
 
