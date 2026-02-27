@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -11,6 +12,7 @@ interface UpcomingAppointmentsProps {
 }
 
 export const UpcomingAppointments = ({ clinicId }: UpcomingAppointmentsProps) => {
+  const navigate = useNavigate();
   const { data: appointments, isLoading } = useQuery({
     queryKey: ["upcoming-appointments", clinicId],
     queryFn: async () => {
@@ -80,7 +82,17 @@ export const UpcomingAppointments = ({ clinicId }: UpcomingAppointmentsProps) =>
               >
                 <div className={`w-0.5 h-8 rounded-full ${getStatusColor(apt.status || "scheduled")}`} />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-xs truncate">
+                  <p 
+                    className="font-medium text-xs truncate text-primary hover:underline cursor-pointer"
+                    title="Abrir prontuário"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const patientId = apt.patient_id && typeof apt.patient_id === 'object' && 'id' in apt.patient_id
+                        ? (apt.patient_id as any).id
+                        : null;
+                      if (patientId) navigate(`/dashboard/prontuario/${patientId}`);
+                    }}
+                  >
                     {apt.patient_id && typeof apt.patient_id === 'object' && 'full_name' in apt.patient_id 
                       ? apt.patient_id.full_name 
                       : "Paciente"}

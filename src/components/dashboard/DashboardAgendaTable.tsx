@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfDay, endOfDay } from "date-fns";
@@ -31,6 +32,7 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
 };
 
 export const DashboardAgendaTable = React.memo(({ clinicId }: DashboardAgendaTableProps) => {
+  const navigate = useNavigate();
   const today = new Date();
 
   const { data: appointments, isLoading } = useQuery({
@@ -119,7 +121,20 @@ export const DashboardAgendaTable = React.memo(({ clinicId }: DashboardAgendaTab
                     <TableCell className="text-sm font-medium py-2.5">
                       {format(new Date(apt.appointment_date), "HH:mm")}
                     </TableCell>
-                    <TableCell className="text-sm py-2.5">{patientName}</TableCell>
+                    <TableCell className="text-sm py-2.5">
+                      <span 
+                        className="text-primary hover:underline cursor-pointer"
+                        title="Abrir prontuário"
+                        onClick={() => {
+                          const patientId = apt.patient_id && typeof apt.patient_id === "object" && "id" in apt.patient_id
+                            ? (apt.patient_id as any).id
+                            : null;
+                          if (patientId) navigate(`/dashboard/prontuario/${patientId}`);
+                        }}
+                      >
+                        {patientName}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground py-2.5">
                       {apt.title || "—"}
                     </TableCell>
