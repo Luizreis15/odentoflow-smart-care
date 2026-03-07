@@ -189,17 +189,18 @@ const Agenda = () => {
     const isNew = searchParams.get("new") === "true";
 
     if (isNew) {
-      const today = format(new Date(), "yyyy-MM-dd");
-      setSelectedDate(new Date());
-      setCurrentMonth(new Date());
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      setSelectedDate(now);
+      setCurrentMonth(now);
       setViewMode("day-slots");
       setFormData(prev => ({
         ...prev,
         date: today,
         time: "",
       }));
-      setIsSheetOpen(true);
-      setSearchParams({});
+      setTimeout(() => setIsSheetOpen(true), 100);
+      setSearchParams({}, { replace: true });
     } else if (dateParam) {
       const parsedDate = parseISO(dateParam);
       setSelectedDate(parsedDate);
