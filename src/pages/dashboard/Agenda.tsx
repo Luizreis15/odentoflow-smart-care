@@ -186,14 +186,27 @@ const Agenda = () => {
     const dateParam = searchParams.get("date");
     const timeParam = searchParams.get("time");
     
-    if (dateParam) {
+    const isNew = searchParams.get("new") === "true";
+
+    if (isNew) {
+      const today = format(new Date(), "yyyy-MM-dd");
+      setSelectedDate(new Date());
+      setCurrentMonth(new Date());
+      setViewMode("day-slots");
+      setFormData(prev => ({
+        ...prev,
+        date: today,
+        time: "",
+      }));
+      setIsSheetOpen(true);
+      setSearchParams({});
+    } else if (dateParam) {
       const parsedDate = parseISO(dateParam);
       setSelectedDate(parsedDate);
       setCurrentMonth(parsedDate);
       setViewMode("day-slots");
       
       if (timeParam) {
-        // Only open form if slot is not in the past
         if (!isPastSlot(parsedDate, timeParam)) {
           setFormData(prev => ({
             ...prev,
@@ -206,7 +219,6 @@ const Agenda = () => {
         }
       }
       
-      // Clear params after processing
       setSearchParams({});
     }
   }, [searchParams, setSearchParams]);

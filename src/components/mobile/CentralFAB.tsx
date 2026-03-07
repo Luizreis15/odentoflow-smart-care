@@ -21,7 +21,7 @@ const CentralFAB = () => {
       description: "Agendar consulta ou procedimento",
       color: "text-primary",
       bgColor: "bg-primary/10",
-      onClick: () => { navigate("/dashboard/agenda"); setOpen(false); },
+      onClick: () => { navigate("/dashboard/agenda?new=true"); setOpen(false); },
     },
     {
       icon: UserPlus,
