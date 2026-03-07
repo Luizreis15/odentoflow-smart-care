@@ -4,10 +4,13 @@ import MobileAgenda from "@/pages/mobile/MobileAgenda";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSearchParams } from "react-router-dom";
 
 const AgendaWrapper = () => {
   const isMobile = useIsMobile();
   const { profile, clinicId, isLoading } = useAuth();
+  const [searchParams] = useSearchParams();
+  const isNewAppointment = searchParams.get("new") === "true";
 
   if (isLoading) {
     return (
@@ -20,7 +23,7 @@ const AgendaWrapper = () => {
     );
   }
 
-  if (isMobile && clinicId) {
+  if (isMobile && clinicId && !isNewAppointment) {
     return (
       <DashboardLayout user={profile}>
         <MobileAgenda clinicId={clinicId} />
