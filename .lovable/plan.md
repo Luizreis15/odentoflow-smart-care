@@ -1,27 +1,41 @@
 
 
-## Plano: Corrigir botões de agendamento na versão Mobile
+## Plano: Atalhos estratégicos para o Prontuário do Paciente
 
-### Problema
-Os botões "Novo" e "Novo Agendamento" na MobileAgenda navegam para `/dashboard/agenda?new=true`, mas nenhum código trata o parâmetro `?new=true`. A Agenda desktop só abre o formulário quando recebe `?date=...&time=...`. O resultado é que nada acontece ao clicar.
+### Objetivo
+Tornar o nome do paciente clicável em todos os locais onde aparece, redirecionando para `/dashboard/prontuario/{patient_id}` — facilitando o acesso rápido ao prontuário.
 
-O mesmo problema existe no CentralFAB (botão "+" central), que navega para `/dashboard/agenda` sem abrir o formulário.
+### Locais que serão alterados
 
-### Solução
+1. **Agenda — Day Slots View** (`src/pages/dashboard/Agenda.tsx`, ~linha 748)
+   - O nome do paciente nos slots ocupados será um link clicável para o prontuário
+   - Adicionar `e.stopPropagation()` para não abrir o modal de detalhes ao clicar no nome
+   - Usar `useNavigate` (já importado via `react-router-dom`) + estilo de link (underline on hover, cursor pointer)
 
-**1. Agenda.tsx — Tratar o parâmetro `new=true`** (~linha 184-212)
-- No `useEffect` que lê `searchParams`, adicionar tratamento para `new=true`
-- Quando `new=true` estiver presente, abrir o Sheet de novo agendamento (`setIsSheetOpen(true)`) e pré-preencher a data com a data atual
-- Limpar o parâmetro após processar
+2. **Agenda — Week View** (`src/pages/dashboard/Agenda.tsx`, ~linha 979)
+   - O nome do paciente na célula semanal será clicável para o prontuário
+   - `e.stopPropagation()` para não disparar o `handleAppointmentClick`
 
-**2. MobileAgenda.tsx — Corrigir navegação dos botões**
-- Botão "Novo" (linha 200): mudar de `navigate("/dashboard/agenda?new=true")` para abrir o formulário diretamente na Agenda desktop via parâmetro `new=true` (que agora será tratado)
-- Botão "Novo Agendamento" no empty state (linha 289): mesmo ajuste — já usa `?new=true`, funcionará após a correção no passo 1
+3. **Agenda — Detalhes do Agendamento Modal** (`src/components/agenda/DetalhesAgendamentoModal.tsx`, ~linha 234)
+   - O nome do paciente no modal será um link clicável para o prontuário
+   - Adicionar botão "Abrir Prontuário" nas ações do modal
 
-**3. CentralFAB.tsx — Corrigir ação "Novo Agendamento"**
-- Linha 24: mudar de `navigate("/dashboard/agenda")` para `navigate("/dashboard/agenda?new=true")` para que o formulário abra automaticamente
+4. **Dashboard — Agenda do Dia (tabela)** (`src/components/dashboard/DashboardAgendaTable.tsx`, ~linha 122)
+   - A coluna "Paciente" na tabela do dashboard será um link clicável
+   - Usar `useNavigate` para redirecionar
 
-### Arquivos alterados
-- `src/pages/dashboard/Agenda.tsx` — adicionar handler para `?new=true`
-- `src/components/mobile/CentralFAB.tsx` — corrigir URL de navegação
+5. **Dashboard — Próximas Consultas** (`src/components/dashboard/UpcomingAppointments.tsx`, ~linha 83)
+   - O nome do paciente será clicável
+
+6. **Mobile — Agenda List** (`src/components/mobile/MobileAgendaList.tsx`)
+   - Já redireciona para prontuário no `onClick` do card — manter como está
+
+7. **Mobile — MobileAgenda** (`src/pages/mobile/MobileAgenda.tsx`)
+   - Já redireciona para prontuário no `onClick` — manter como está
+
+### Detalhes técnicos
+- Estilo do link: `hover:underline text-primary cursor-pointer` no nome do paciente
+- Navegação: `navigate(\`/dashboard/prontuario/\${patientId}\`)`
+- `e.stopPropagation()` em todos os locais onde o clique no nome conflita com um clique no container pai (slot, card, row)
+- No modal de detalhes: adicionar um botão "Ir ao Prontuário" com ícone `FileText`
 
