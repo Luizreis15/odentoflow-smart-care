@@ -361,8 +361,10 @@ const NovoAgendamentoMobileModal = ({ open, onOpenChange, clinicId, onSuccess }:
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="Consulta inicial">Consulta inicial</SelectItem>
+                  <SelectItem value="Retorno">Retorno</SelectItem>
+                  <SelectItem value="Continuação de tratamento">Continuação de tratamento</SelectItem>
                   <SelectItem value="Limpeza">Limpeza</SelectItem>
-                  <SelectItem value="Consulta">Consulta</SelectItem>
                   <SelectItem value="Canal">Canal</SelectItem>
                   <SelectItem value="Clareamento">Clareamento</SelectItem>
                   <SelectItem value="Ortodontia">Ortodontia</SelectItem>
