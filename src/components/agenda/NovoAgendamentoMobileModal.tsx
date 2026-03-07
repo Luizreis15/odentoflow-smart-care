@@ -457,10 +457,15 @@ const NovoAgendamentoMobileModal = ({ open, onOpenChange, clinicId, onSuccess }:
       <CadastroRapidoPacienteModal
         open={isNewPatientModalOpen}
         onOpenChange={setIsNewPatientModalOpen}
-        clinicId={clinicId}
-        onSuccess={(newPatient) => {
-          setPatients(prev => [...prev, newPatient].sort((a, b) => a.full_name.localeCompare(b.full_name)));
-          setFormData(prev => ({ ...prev, patientId: newPatient.id }));
+        onPatientCreated={(patientId) => {
+          // Reload patients to get the new one
+          supabase.from("patients").select("id, full_name").eq("clinic_id", clinicId).order("full_name")
+            .then(({ data }) => {
+              if (data) {
+                setPatients(data);
+                setFormData(prev => ({ ...prev, patientId }));
+              }
+            });
         }}
       />
     </>
