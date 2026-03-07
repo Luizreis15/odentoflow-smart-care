@@ -31,7 +31,7 @@ const AgendaWrapper = () => {
     );
   }
 
-  if (isMobile && clinicId && !isNewAppointment) {
+  if (isMobile && clinicId && !isNewAppointment && !forceDesktopAgenda) {
     return (
       <DashboardLayout user={profile}>
         <MobileAgenda clinicId={clinicId} />
