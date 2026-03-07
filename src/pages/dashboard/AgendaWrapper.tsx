@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import Agenda from "./Agenda";
 import MobileAgenda from "@/pages/mobile/MobileAgenda";
@@ -11,6 +12,13 @@ const AgendaWrapper = () => {
   const { profile, clinicId, isLoading } = useAuth();
   const [searchParams] = useSearchParams();
   const isNewAppointment = searchParams.get("new") === "true";
+  const [forceDesktopAgenda, setForceDesktopAgenda] = useState(false);
+
+  useEffect(() => {
+    if (isNewAppointment) {
+      setForceDesktopAgenda(true);
+    }
+  }, [isNewAppointment]);
 
   if (isLoading) {
     return (
@@ -23,7 +31,7 @@ const AgendaWrapper = () => {
     );
   }
 
-  if (isMobile && clinicId && !isNewAppointment) {
+  if (isMobile && clinicId && !isNewAppointment && !forceDesktopAgenda) {
     return (
       <DashboardLayout user={profile}>
         <MobileAgenda clinicId={clinicId} />
