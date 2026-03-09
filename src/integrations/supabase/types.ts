@@ -4448,6 +4448,7 @@ export type Database = {
           patient_id: string
           payment_method: string | null
           payment_plan_id: string | null
+          renegotiation_id: string | null
           status: string | null
           taxa_adquirente: number | null
           title_number: number
@@ -4478,6 +4479,7 @@ export type Database = {
           patient_id: string
           payment_method?: string | null
           payment_plan_id?: string | null
+          renegotiation_id?: string | null
           status?: string | null
           taxa_adquirente?: number | null
           title_number?: number
@@ -4508,6 +4510,7 @@ export type Database = {
           patient_id?: string
           payment_method?: string | null
           payment_plan_id?: string | null
+          renegotiation_id?: string | null
           status?: string | null
           taxa_adquirente?: number | null
           title_number?: number
@@ -4563,6 +4566,128 @@ export type Database = {
             columns: ["payment_plan_id"]
             isOneToOne: false
             referencedRelation: "payment_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receivable_titles_renegotiation_id_fkey"
+            columns: ["renegotiation_id"]
+            isOneToOne: false
+            referencedRelation: "renegotiations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      renegotiation_titles: {
+        Row: {
+          created_at: string
+          id: string
+          original_balance: number
+          original_title_id: string
+          renegotiation_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          original_balance?: number
+          original_title_id: string
+          renegotiation_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          original_balance?: number
+          original_title_id?: string
+          renegotiation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "renegotiation_titles_original_title_id_fkey"
+            columns: ["original_title_id"]
+            isOneToOne: false
+            referencedRelation: "receivable_titles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "renegotiation_titles_renegotiation_id_fkey"
+            columns: ["renegotiation_id"]
+            isOneToOne: false
+            referencedRelation: "renegotiations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      renegotiations: {
+        Row: {
+          clinic_id: string
+          created_at: string
+          created_by: string
+          discount_amount: number
+          id: string
+          new_entry_amount: number
+          new_entry_method: string | null
+          new_installment_method: string | null
+          new_installments: number
+          new_total: number
+          original_total: number
+          patient_id: string
+          reason: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string
+          created_by: string
+          discount_amount?: number
+          id?: string
+          new_entry_amount?: number
+          new_entry_method?: string | null
+          new_installment_method?: string | null
+          new_installments?: number
+          new_total?: number
+          original_total?: number
+          patient_id: string
+          reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string
+          created_by?: string
+          discount_amount?: number
+          id?: string
+          new_entry_amount?: number
+          new_entry_method?: string | null
+          new_installment_method?: string | null
+          new_installments?: number
+          new_total?: number
+          original_total?: number
+          patient_id?: string
+          reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "renegotiations_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "renegotiations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "renegotiations_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
             referencedColumns: ["id"]
           },
         ]
