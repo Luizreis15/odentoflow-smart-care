@@ -31,6 +31,7 @@ import {
   RefreshCcw,
   Undo2,
   XCircle,
+  Plus,
 } from "lucide-react";
 import { generateRecibo, type ReciboData } from "@/utils/generateRecibo";
 import { RenegociacaoModal } from "@/components/financeiro/RenegociacaoModal";
@@ -39,6 +40,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PaymentDrawer } from "@/components/financeiro/PaymentDrawer";
+import { NovoTituloAvulsoModal } from "./NovoTituloAvulsoModal";
 
 interface FinanceiroTabProps {
   patientId: string;
@@ -110,6 +112,7 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchMode, setBatchMode] = useState(false);
   const [renegoOpen, setRenegoOpen] = useState(false);
+  const [showNovoTitulo, setShowNovoTitulo] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -494,6 +497,14 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
             <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
               <CardTitle className="text-base">Parcelas</CardTitle>
               <div className="flex gap-2 items-center">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowNovoTitulo(true)}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Título avulso
+                </Button>
                 {batchMode && selectedIds.size > 0 && (
                   <>
                     <Button size="sm" onClick={handleBatchPayment}>
@@ -768,6 +779,15 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
           onSuccess={handlePaymentSuccess}
         />
       )}
+
+      {/* Manual Title Modal */}
+      <NovoTituloAvulsoModal
+        open={showNovoTitulo}
+        onOpenChange={setShowNovoTitulo}
+        patientId={patientId}
+        clinicId={clinicId}
+        onSuccess={loadData}
+      />
     </div>
   );
 };
