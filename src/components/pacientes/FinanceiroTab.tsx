@@ -28,6 +28,8 @@ import {
   Ban,
   Loader2,
   RefreshCcw,
+  Undo2,
+  XCircle,
 } from "lucide-react";
 import { generateRecibo, type ReciboData } from "@/utils/generateRecibo";
 import { RenegociacaoModal } from "@/components/financeiro/RenegociacaoModal";
