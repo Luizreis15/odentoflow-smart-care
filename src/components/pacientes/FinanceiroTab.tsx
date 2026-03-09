@@ -39,6 +39,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PaymentDrawer } from "@/components/financeiro/PaymentDrawer";
+import { NovoTituloAvulsoModal } from "./NovoTituloAvulsoModal";
 
 interface FinanceiroTabProps {
   patientId: string;
