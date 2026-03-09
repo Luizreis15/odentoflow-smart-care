@@ -27,6 +27,7 @@ import {
   Printer,
   Ban,
   Loader2,
+  RefreshCcw,
 } from "lucide-react";
 import { generateRecibo, type ReciboData } from "@/utils/generateRecibo";
 import { RenegociacaoModal } from "@/components/financeiro/RenegociacaoModal";
