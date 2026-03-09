@@ -203,18 +203,14 @@ export const PaymentDrawer = ({
     if (!lastPaymentData) return;
 
     try {
-      const { data: clinic } = await supabase
-        .from("clinicas")
-        .select("nome, cnpj, telefone, address")
-        .eq("id", clinicId)
-        .single();
+      const [clinicRes, patientRes, configRes] = await Promise.all([
+        supabase.from("clinicas").select("nome, cnpj, telefone, address").eq("id", clinicId).single(),
+        supabase.from("patients").select("cpf").eq("id", title.patient_id).single(),
+        supabase.from("configuracoes_clinica").select("logotipo_url").eq("clinica_id", clinicId).single(),
+      ]);
 
-      const { data: patient } = await supabase
-        .from("patients")
-        .select("cpf")
-        .eq("id", title.patient_id)
-        .single();
-
+      const clinic = clinicRes.data;
+      const patient = patientRes.data;
       const addressObj = clinic?.address as Record<string, string> | null;
       const addressStr = addressObj
         ? [addressObj.street, addressObj.number, addressObj.neighborhood, addressObj.city, addressObj.state].filter(Boolean).join(", ")
@@ -233,9 +229,10 @@ export const PaymentDrawer = ({
         clinicCnpj: clinic?.cnpj || undefined,
         clinicPhone: clinic?.telefone || undefined,
         clinicAddress: addressStr,
+        clinicLogoUrl: configRes.data?.logotipo_url || undefined,
       };
 
-      generateRecibo(reciboData);
+      await generateRecibo(reciboData);
     } catch (error) {
       console.error("Erro ao gerar recibo:", error);
       toast.error("Erro ao gerar recibo");
