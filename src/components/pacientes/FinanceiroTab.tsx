@@ -307,7 +307,54 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
     }
   };
 
-  if (loading) {
+  const handleReversePayment = async (paymentId: string, value: number) => {
+    const reason = prompt(`Motivo do estorno de ${formatCurrency(value)}:`);
+    if (!reason) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase.functions.invoke("financial-reversal", {
+        body: {
+          action: "reverse_payment",
+          payment_id: paymentId,
+          reason,
+          performed_by: user?.id,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) { toast.error(data.error); return; }
+      toast.success(`Pagamento de ${formatCurrency(value)} estornado com sucesso`);
+      loadData();
+    } catch (error) {
+      console.error("Erro ao estornar:", error);
+      toast.error("Erro ao estornar pagamento");
+    }
+  };
+
+  const handleCancelTitle = async (titleId: string, titleNumber: number) => {
+    const reason = prompt(`Motivo do cancelamento do título #${titleNumber}:`);
+    if (!reason) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase.functions.invoke("financial-reversal", {
+        body: {
+          action: "cancel_title",
+          title_id: titleId,
+          reason,
+          performed_by: user?.id,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) { toast.error(data.error); return; }
+      toast.success(`Título #${titleNumber} cancelado`);
+      loadData();
+    } catch (error) {
+      console.error("Erro ao cancelar:", error);
+      toast.error("Erro ao cancelar título");
+    }
+  };
+
     return (
       <Card>
         <CardContent className="py-12 text-center">
