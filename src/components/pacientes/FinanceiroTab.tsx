@@ -28,6 +28,8 @@ import {
   Ban,
   Loader2,
   RefreshCcw,
+  Undo2,
+  XCircle,
 } from "lucide-react";
 import { generateRecibo, type ReciboData } from "@/utils/generateRecibo";
 import { RenegociacaoModal } from "@/components/financeiro/RenegociacaoModal";
@@ -305,6 +307,54 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
     }
   };
 
+  const handleReversePayment = async (paymentId: string, value: number) => {
+    const reason = prompt(`Motivo do estorno de ${formatCurrency(value)}:`);
+    if (!reason) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase.functions.invoke("financial-reversal", {
+        body: {
+          action: "reverse_payment",
+          payment_id: paymentId,
+          reason,
+          performed_by: user?.id,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) { toast.error(data.error); return; }
+      toast.success(`Pagamento de ${formatCurrency(value)} estornado com sucesso`);
+      loadData();
+    } catch (error) {
+      console.error("Erro ao estornar:", error);
+      toast.error("Erro ao estornar pagamento");
+    }
+  };
+
+  const handleCancelTitle = async (titleId: string, titleNumber: number) => {
+    const reason = prompt(`Motivo do cancelamento do título #${titleNumber}:`);
+    if (!reason) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase.functions.invoke("financial-reversal", {
+        body: {
+          action: "cancel_title",
+          title_id: titleId,
+          reason,
+          performed_by: user?.id,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) { toast.error(data.error); return; }
+      toast.success(`Título #${titleNumber} cancelado`);
+      loadData();
+    } catch (error) {
+      console.error("Erro ao cancelar:", error);
+      toast.error("Erro ao cancelar título");
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -515,16 +565,29 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
                           <TableCell className="text-sm text-muted-foreground">{getMethodLabel(t.payment_method)}</TableCell>
                           <TableCell>{getStatusBadge(isOverdue && t.status === "open" ? "overdue" : t.status)}</TableCell>
                           <TableCell className="text-right">
-                            {canPay && !batchMode && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => { e.stopPropagation(); handleOpenPayment(t); }}
-                              >
-                                <DollarSign className="h-3.5 w-3.5 mr-1" />
-                                Pagar
-                              </Button>
-                            )}
+                            <div className="flex items-center justify-end gap-1">
+                              {canPay && !batchMode && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={(e) => { e.stopPropagation(); handleOpenPayment(t); }}
+                                >
+                                  <DollarSign className="h-3.5 w-3.5 mr-1" />
+                                  Pagar
+                                </Button>
+                              )}
+                              {canPay && !batchMode && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={(e) => { e.stopPropagation(); handleCancelTitle(t.id, t.title_number); }}
+                                  title="Cancelar título"
+                                >
+                                  <XCircle className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       );
@@ -548,12 +611,13 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                     <TableRow>
                       <TableHead>Data</TableHead>
                       <TableHead>Forma</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Obs</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -573,6 +637,19 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm max-w-[150px] truncate">
                           {p.notes || "-"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {p.status === "completed" && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => handleReversePayment(p.id, p.value)}
+                              title="Estornar pagamento"
+                            >
+                              <Undo2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
