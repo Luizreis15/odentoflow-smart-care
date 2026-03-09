@@ -517,16 +517,29 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
                           <TableCell className="text-sm text-muted-foreground">{getMethodLabel(t.payment_method)}</TableCell>
                           <TableCell>{getStatusBadge(isOverdue && t.status === "open" ? "overdue" : t.status)}</TableCell>
                           <TableCell className="text-right">
-                            {canPay && !batchMode && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => { e.stopPropagation(); handleOpenPayment(t); }}
-                              >
-                                <DollarSign className="h-3.5 w-3.5 mr-1" />
-                                Pagar
-                              </Button>
-                            )}
+                            <div className="flex items-center justify-end gap-1">
+                              {canPay && !batchMode && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={(e) => { e.stopPropagation(); handleOpenPayment(t); }}
+                                >
+                                  <DollarSign className="h-3.5 w-3.5 mr-1" />
+                                  Pagar
+                                </Button>
+                              )}
+                              {canPay && !batchMode && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={(e) => { e.stopPropagation(); handleCancelTitle(t.id, t.title_number); }}
+                                  title="Cancelar título"
+                                >
+                                  <XCircle className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       );
