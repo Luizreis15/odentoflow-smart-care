@@ -111,6 +111,7 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchMode, setBatchMode] = useState(false);
   const [renegoOpen, setRenegoOpen] = useState(false);
+  const [showNovoTitulo, setShowNovoTitulo] = useState(false);
 
   useEffect(() => {
     loadData();
