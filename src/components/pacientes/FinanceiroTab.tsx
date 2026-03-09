@@ -667,6 +667,18 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
           onSuccess={handlePaymentSuccess}
         />
       )}
+
+      {/* Renegotiation Modal */}
+      {renegoOpen && selectedTitles.length > 0 && (
+        <RenegociacaoModal
+          open={renegoOpen}
+          onOpenChange={setRenegoOpen}
+          titles={selectedTitles}
+          patientId={patientId}
+          clinicId={clinicId}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
     </div>
   );
 };
