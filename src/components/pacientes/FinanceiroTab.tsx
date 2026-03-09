@@ -505,6 +505,7 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
                       <TableHead>Descrição</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -520,6 +521,31 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
                           <Badge variant={r.status === "issued" ? "default" : "secondary"}>
                             {r.status === "issued" ? "Emitido" : r.status === "voided" ? "Anulado" : r.status}
                           </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            {r.status === "issued" && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleReprintRecibo(r)}
+                                  title="Reimprimir recibo"
+                                >
+                                  <Printer className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={() => handleVoidRecibo(r.id)}
+                                  title="Anular recibo"
+                                >
+                                  <Ban className="h-3.5 w-3.5" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
