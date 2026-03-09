@@ -563,12 +563,13 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                     <TableRow>
                       <TableHead>Data</TableHead>
                       <TableHead>Forma</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Obs</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
