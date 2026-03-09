@@ -2543,6 +2543,67 @@ export type Database = {
           },
         ]
       }
+      patient_financial_audit_logs: {
+        Row: {
+          action_type: string
+          after_json: Json | null
+          before_json: Json | null
+          clinic_id: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          patient_id: string
+          performed_by: string | null
+        }
+        Insert: {
+          action_type: string
+          after_json?: Json | null
+          before_json?: Json | null
+          clinic_id: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          patient_id: string
+          performed_by?: string | null
+        }
+        Update: {
+          action_type?: string
+          after_json?: Json | null
+          before_json?: Json | null
+          clinic_id?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          patient_id?: string
+          performed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_financial_audit_logs_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_financial_audit_logs_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_financial_audit_logs_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_portal_access: {
         Row: {
           active: boolean
@@ -2910,6 +2971,127 @@ export type Database = {
           },
         ]
       }
+      payment_plan_allocations: {
+        Row: {
+          amount: number
+          card_brand: string | null
+          created_at: string
+          first_due_date: string | null
+          id: string
+          installments_count: number
+          notes: string | null
+          payment_method_planned: string
+          payment_plan_id: string
+          recurrence_type: string | null
+          sequence: number
+        }
+        Insert: {
+          amount: number
+          card_brand?: string | null
+          created_at?: string
+          first_due_date?: string | null
+          id?: string
+          installments_count?: number
+          notes?: string | null
+          payment_method_planned: string
+          payment_plan_id: string
+          recurrence_type?: string | null
+          sequence?: number
+        }
+        Update: {
+          amount?: number
+          card_brand?: string | null
+          created_at?: string
+          first_due_date?: string | null
+          id?: string
+          installments_count?: number
+          notes?: string | null
+          payment_method_planned?: string
+          payment_plan_id?: string
+          recurrence_type?: string | null
+          sequence?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_plan_allocations_payment_plan_id_fkey"
+            columns: ["payment_plan_id"]
+            isOneToOne: false
+            referencedRelation: "payment_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_plans: {
+        Row: {
+          budget_id: string | null
+          clinic_id: string
+          created_at: string
+          created_by: string | null
+          financed_amount: number
+          id: string
+          immediate_amount: number
+          patient_id: string
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          budget_id?: string | null
+          clinic_id: string
+          created_at?: string
+          created_by?: string | null
+          financed_amount?: number
+          id?: string
+          immediate_amount?: number
+          patient_id: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          budget_id?: string | null
+          clinic_id?: string
+          created_at?: string
+          created_by?: string | null
+          financed_amount?: number
+          id?: string
+          immediate_amount?: number
+          patient_id?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_plans_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_plans_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_plans_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_plans_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           appointment_id: string | null
@@ -2921,9 +3103,11 @@ export type Database = {
           patient_id: string
           payment_date: string | null
           payment_method: string | null
+          proof_file_url: string | null
           receipt_url: string | null
           status: string | null
           title_id: string | null
+          transaction_reference: string | null
           updated_at: string | null
           value: number
         }
@@ -2937,9 +3121,11 @@ export type Database = {
           patient_id: string
           payment_date?: string | null
           payment_method?: string | null
+          proof_file_url?: string | null
           receipt_url?: string | null
           status?: string | null
           title_id?: string | null
+          transaction_reference?: string | null
           updated_at?: string | null
           value: number
         }
@@ -2953,9 +3139,11 @@ export type Database = {
           patient_id?: string
           payment_date?: string | null
           payment_method?: string | null
+          proof_file_url?: string | null
           receipt_url?: string | null
           status?: string | null
           title_id?: string | null
+          transaction_reference?: string | null
           updated_at?: string | null
           value?: number
         }
@@ -4156,8 +4344,89 @@ export type Database = {
           },
         ]
       }
+      receipt_documents: {
+        Row: {
+          amount: number
+          clinic_id: string
+          created_at: string
+          description: string | null
+          document_url: string | null
+          generated_by: string | null
+          id: string
+          issue_date: string
+          patient_id: string
+          payment_id: string | null
+          receipt_number: number
+          status: string
+          voided_at: string | null
+          voided_reason: string | null
+        }
+        Insert: {
+          amount: number
+          clinic_id: string
+          created_at?: string
+          description?: string | null
+          document_url?: string | null
+          generated_by?: string | null
+          id?: string
+          issue_date?: string
+          patient_id: string
+          payment_id?: string | null
+          receipt_number?: number
+          status?: string
+          voided_at?: string | null
+          voided_reason?: string | null
+        }
+        Update: {
+          amount?: number
+          clinic_id?: string
+          created_at?: string
+          description?: string | null
+          document_url?: string | null
+          generated_by?: string | null
+          id?: string
+          issue_date?: string
+          patient_id?: string
+          payment_id?: string | null
+          receipt_number?: number
+          status?: string
+          voided_at?: string | null
+          voided_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipt_documents_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_documents_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_documents_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_documents_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       receivable_titles: {
         Row: {
+          allocation_id: string | null
           amount: number
           antecipado: boolean | null
           balance: number
@@ -4167,13 +4436,18 @@ export type Database = {
           created_at: string | null
           data_repasse: string | null
           due_date: string
+          financial_responsible_id: string | null
           id: string
+          installment_label: string | null
           installment_number: number | null
           notes: string | null
           origin: string | null
           ortho_case_id: string | null
+          paid_amount: number | null
+          paid_at: string | null
           patient_id: string
           payment_method: string | null
+          payment_plan_id: string | null
           status: string | null
           taxa_adquirente: number | null
           title_number: number
@@ -4182,6 +4456,7 @@ export type Database = {
           valor_liquido: number | null
         }
         Insert: {
+          allocation_id?: string | null
           amount: number
           antecipado?: boolean | null
           balance: number
@@ -4191,13 +4466,18 @@ export type Database = {
           created_at?: string | null
           data_repasse?: string | null
           due_date: string
+          financial_responsible_id?: string | null
           id?: string
+          installment_label?: string | null
           installment_number?: number | null
           notes?: string | null
           origin?: string | null
           ortho_case_id?: string | null
+          paid_amount?: number | null
+          paid_at?: string | null
           patient_id: string
           payment_method?: string | null
+          payment_plan_id?: string | null
           status?: string | null
           taxa_adquirente?: number | null
           title_number?: number
@@ -4206,6 +4486,7 @@ export type Database = {
           valor_liquido?: number | null
         }
         Update: {
+          allocation_id?: string | null
           amount?: number
           antecipado?: boolean | null
           balance?: number
@@ -4215,13 +4496,18 @@ export type Database = {
           created_at?: string | null
           data_repasse?: string | null
           due_date?: string
+          financial_responsible_id?: string | null
           id?: string
+          installment_label?: string | null
           installment_number?: number | null
           notes?: string | null
           origin?: string | null
           ortho_case_id?: string | null
+          paid_amount?: number | null
+          paid_at?: string | null
           patient_id?: string
           payment_method?: string | null
+          payment_plan_id?: string | null
           status?: string | null
           taxa_adquirente?: number | null
           title_number?: number
@@ -4230,6 +4516,13 @@ export type Database = {
           valor_liquido?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "receivable_titles_allocation_id_fkey"
+            columns: ["allocation_id"]
+            isOneToOne: false
+            referencedRelation: "payment_plan_allocations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "receivable_titles_budget_id_fkey"
             columns: ["budget_id"]
@@ -4245,6 +4538,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "receivable_titles_financial_responsible_id_fkey"
+            columns: ["financial_responsible_id"]
+            isOneToOne: false
+            referencedRelation: "patient_contacts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "receivable_titles_ortho_case_id_fkey"
             columns: ["ortho_case_id"]
             isOneToOne: false
@@ -4256,6 +4556,13 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receivable_titles_payment_plan_id_fkey"
+            columns: ["payment_plan_id"]
+            isOneToOne: false
+            referencedRelation: "payment_plans"
             referencedColumns: ["id"]
           },
         ]
