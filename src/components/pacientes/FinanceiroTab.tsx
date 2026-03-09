@@ -779,6 +779,15 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
           onSuccess={handlePaymentSuccess}
         />
       )}
+
+      {/* Manual Title Modal */}
+      <NovoTituloAvulsoModal
+        open={showNovoTitulo}
+        onOpenChange={setShowNovoTitulo}
+        patientId={patientId}
+        clinicId={clinicId}
+        onSuccess={loadData}
+      />
     </div>
   );
 };
