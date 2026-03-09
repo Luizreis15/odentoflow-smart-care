@@ -400,6 +400,7 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
         <TabsList>
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
+          <TabsTrigger value="extrato">Extrato</TabsTrigger>
           <TabsTrigger value="titulos">Parcelas</TabsTrigger>
           <TabsTrigger value="pagamentos">Recebimentos</TabsTrigger>
           <TabsTrigger value="recibos">Recibos</TabsTrigger>
