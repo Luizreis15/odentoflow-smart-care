@@ -496,6 +496,14 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
             <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
               <CardTitle className="text-base">Parcelas</CardTitle>
               <div className="flex gap-2 items-center">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowNovoTitulo(true)}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Título avulso
+                </Button>
                 {batchMode && selectedIds.size > 0 && (
                   <>
                     <Button size="sm" onClick={handleBatchPayment}>
