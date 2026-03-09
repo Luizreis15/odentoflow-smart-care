@@ -355,6 +355,7 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
     }
   };
 
+  if (loading) {
     return (
       <Card>
         <CardContent className="py-12 text-center">
