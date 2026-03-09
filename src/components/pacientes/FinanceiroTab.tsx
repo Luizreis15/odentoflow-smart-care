@@ -478,6 +478,16 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
           </div>
         </TabsContent>
 
+        {/* Extrato / Relatórios */}
+        <TabsContent value="extrato" className="mt-4">
+          <ExtratoFinanceiroPaciente
+            titulos={titulos}
+            pagamentos={pagamentos}
+            patientId={patientId}
+            clinicId={clinicId}
+          />
+        </TabsContent>
+
         {/* Parcelas */}
         <TabsContent value="titulos" className="mt-4">
           <Card>
