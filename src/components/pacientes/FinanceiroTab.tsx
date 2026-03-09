@@ -31,6 +31,7 @@ import {
   RefreshCcw,
   Undo2,
   XCircle,
+  Plus,
 } from "lucide-react";
 import { generateRecibo, type ReciboData } from "@/utils/generateRecibo";
 import { RenegociacaoModal } from "@/components/financeiro/RenegociacaoModal";
