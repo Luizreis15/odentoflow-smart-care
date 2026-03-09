@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ExtratoFinanceiroPaciente } from "./ExtratoFinanceiroPaciente";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -399,6 +400,7 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
         <TabsList>
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
+          <TabsTrigger value="extrato">Extrato</TabsTrigger>
           <TabsTrigger value="titulos">Parcelas</TabsTrigger>
           <TabsTrigger value="pagamentos">Recebimentos</TabsTrigger>
           <TabsTrigger value="recibos">Recibos</TabsTrigger>
@@ -474,6 +476,16 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Extrato / Relatórios */}
+        <TabsContent value="extrato" className="mt-4">
+          <ExtratoFinanceiroPaciente
+            titulos={titulos}
+            pagamentos={pagamentos}
+            patientId={patientId}
+            clinicId={clinicId}
+          />
         </TabsContent>
 
         {/* Parcelas */}
