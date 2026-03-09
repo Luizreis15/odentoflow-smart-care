@@ -6,23 +6,39 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface PaymentRequest {
+interface SinglePayment {
   title_id: string;
+  amount: number;
+}
+
+interface PaymentRequest {
+  // Single title mode (backward compatible)
+  title_id?: string;
   amount: number;
   paid_at?: string;
   method: string;
   cash_account_id?: string;
   notes?: string;
   created_by: string;
-  // Novos campos para taxas de cartão
   taxa_adquirente?: number;
   valor_liquido?: number;
   data_repasse?: string;
   antecipado?: boolean;
+  emit_receipt?: boolean;
+  proof_file_url?: string;
+  transaction_reference?: string;
+  // Batch mode
+  titles?: SinglePayment[];
+}
+
+function jsonResp(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -33,162 +49,151 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const body: PaymentRequest = await req.json();
-    const { 
-      title_id, 
-      amount, 
-      paid_at, 
-      method, 
-      cash_account_id, 
-      notes, 
+    const {
+      amount,
+      paid_at,
+      method,
+      cash_account_id,
+      notes,
       created_by,
       taxa_adquirente,
       valor_liquido,
       data_repasse,
-      antecipado
+      antecipado,
+      emit_receipt,
+      proof_file_url,
+      transaction_reference,
     } = body;
 
-    if (!title_id || !amount || !method || !created_by) {
-      return new Response(
-        JSON.stringify({ error: "title_id, amount, method, and created_by are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (!amount || !method || !created_by) {
+      return jsonResp({ error: "amount, method, and created_by are required" }, 400);
     }
 
-    // 1. Fetch the receivable title
-    const { data: title, error: titleError } = await supabase
-      .from("receivable_titles")
-      .select("*")
-      .eq("id", title_id)
-      .single();
+    // Build list of titles to pay
+    let titlePayments: SinglePayment[] = [];
 
-    if (titleError || !title) {
-      return new Response(
-        JSON.stringify({ error: "Title not found", details: titleError }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // 2. Validate payment amount
-    if (amount <= 0) {
-      return new Response(
-        JSON.stringify({ error: "Payment amount must be positive" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (amount > title.balance) {
-      return new Response(
-        JSON.stringify({ error: `Payment amount (${amount}) exceeds balance (${title.balance})` }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (title.status === "paid" || title.status === "cancelled") {
-      return new Response(
-        JSON.stringify({ error: `Title is already ${title.status}` }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (body.titles && body.titles.length > 0) {
+      titlePayments = body.titles;
+    } else if (body.title_id) {
+      titlePayments = [{ title_id: body.title_id, amount }];
+    } else {
+      return jsonResp({ error: "title_id or titles[] is required" }, 400);
     }
 
     const paymentDate = paid_at || new Date().toISOString();
-
-    // 3. Create payment record
-    const { data: payment, error: paymentError } = await supabase
-      .from("payments")
-      .insert({
-        patient_id: title.patient_id,
-        title_id: title_id,
-        payment_date: paymentDate,
-        payment_method: method,
-        value: amount,
-        cash_account_id: cash_account_id || null,
-        notes: notes || null,
-        created_by: created_by,
-        status: "completed",
-      })
-      .select()
-      .single();
-
-    if (paymentError) {
-      console.error("Error creating payment:", paymentError);
-      return new Response(
-        JSON.stringify({ error: "Failed to create payment", details: paymentError }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // 4. Update title balance, status, and card fee fields
-    const newBalance = title.balance - amount;
-    const newStatus = newBalance <= 0 ? "paid" : "partial";
     const isCardPayment = method === "cartao_credito" || method === "cartao_debito";
+    const results: any[] = [];
+    let totalPaid = 0;
 
-    const updateData: Record<string, unknown> = {
-      balance: newBalance,
-      status: newStatus,
-      payment_method: method,
-      updated_at: new Date().toISOString(),
-    };
+    for (const tp of titlePayments) {
+      // Fetch title
+      const { data: title, error: titleError } = await supabase
+        .from("receivable_titles")
+        .select("*")
+        .eq("id", tp.title_id)
+        .single();
 
-    // Add card fee fields if applicable
-    if (isCardPayment) {
-      updateData.taxa_adquirente = taxa_adquirente || 0;
-      updateData.valor_liquido = valor_liquido || amount;
-      updateData.data_repasse = data_repasse || null;
-      updateData.antecipado = antecipado || false;
-    }
+      if (titleError || !title) {
+        results.push({ title_id: tp.title_id, error: "Title not found" });
+        continue;
+      }
 
-    const { error: updateTitleError } = await supabase
-      .from("receivable_titles")
-      .update(updateData)
-      .eq("id", title_id);
+      if (tp.amount <= 0) {
+        results.push({ title_id: tp.title_id, error: "Amount must be positive" });
+        continue;
+      }
 
-    if (updateTitleError) {
-      console.error("Error updating title:", updateTitleError);
-    }
+      if (tp.amount > title.balance + 0.01) {
+        results.push({ title_id: tp.title_id, error: `Amount (${tp.amount}) exceeds balance (${title.balance})` });
+        continue;
+      }
 
-    // 5. Create financial transaction for cash flow (using net value for card payments)
-    const transactionValue = isCardPayment && valor_liquido ? valor_liquido : amount;
-    
-    const { error: transactionError } = await supabase
-      .from("financial_transactions")
-      .insert({
+      if (title.status === "paid" || title.status === "cancelled") {
+        results.push({ title_id: tp.title_id, error: `Title already ${title.status}` });
+        continue;
+      }
+
+      // Create payment record
+      const { data: payment, error: paymentError } = await supabase
+        .from("payments")
+        .insert({
+          patient_id: title.patient_id,
+          title_id: tp.title_id,
+          payment_date: paymentDate,
+          payment_method: method,
+          value: tp.amount,
+          cash_account_id: cash_account_id || null,
+          notes: notes || null,
+          created_by,
+          status: "completed",
+          proof_file_url: proof_file_url || null,
+          transaction_reference: transaction_reference || null,
+        })
+        .select()
+        .single();
+
+      if (paymentError) {
+        console.error("Error creating payment:", paymentError);
+        results.push({ title_id: tp.title_id, error: "Failed to create payment" });
+        continue;
+      }
+
+      // Update title
+      const currentPaid = (title.paid_amount || 0) + tp.amount;
+      const newBalance = title.balance - tp.amount;
+      const newStatus = newBalance <= 0.01 ? "paid" : "partial";
+
+      const updateData: Record<string, unknown> = {
+        balance: Math.max(0, newBalance),
+        paid_amount: currentPaid,
+        status: newStatus,
+        payment_method: method,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (newStatus === "paid") {
+        updateData.paid_at = paymentDate;
+      }
+
+      if (isCardPayment) {
+        updateData.taxa_adquirente = taxa_adquirente || 0;
+        updateData.valor_liquido = valor_liquido || tp.amount;
+        updateData.data_repasse = data_repasse || null;
+        updateData.antecipado = antecipado || false;
+      }
+
+      await supabase
+        .from("receivable_titles")
+        .update(updateData)
+        .eq("id", tp.title_id);
+
+      // Financial transaction
+      const txValue = isCardPayment && valor_liquido ? valor_liquido : tp.amount;
+      await supabase.from("financial_transactions").insert({
         clinic_id: title.clinic_id,
         date: paymentDate.split("T")[0],
         type: "receita",
-        value: transactionValue,
+        value: txValue,
         category: "Recebimento de Tratamento",
-        reference: `Pagamento título #${title.title_number} - Parcela ${title.installment_number}/${title.total_installments}`,
+        reference: `Pagamento título #${title.title_number} - ${title.installment_label || `Parcela ${title.installment_number}/${title.total_installments}`}`,
       });
 
-    if (transactionError) {
-      console.error("Error creating financial transaction:", transactionError);
-    }
-
-    // 5.1 Create expense for card fees if applicable
-    if (isCardPayment && taxa_adquirente && taxa_adquirente > 0) {
-      const { error: feeError } = await supabase
-        .from("payable_titles")
-        .insert({
+      // Card fee expense
+      if (isCardPayment && taxa_adquirente && taxa_adquirente > 0) {
+        await supabase.from("payable_titles").insert({
           clinic_id: title.clinic_id,
           supplier_name: "Taxa de Cartão",
           due_date: data_repasse || paymentDate.split("T")[0],
           amount: taxa_adquirente,
           balance: taxa_adquirente,
-          status: "paid", // Already deducted from receivable
+          status: "paid",
           category: "Despesas Financeiras",
           notes: `Taxa ${method === "cartao_credito" ? "crédito" : "débito"} - Título #${title.title_number}`,
           paid_at: paymentDate,
           competencia: paymentDate.slice(0, 7) + "-01",
         });
 
-      if (feeError) {
-        console.error("Error creating card fee expense:", feeError);
-      }
-
-      // Also create a financial transaction for the fee
-      await supabase
-        .from("financial_transactions")
-        .insert({
+        await supabase.from("financial_transactions").insert({
           clinic_id: title.clinic_id,
           date: paymentDate.split("T")[0],
           type: "despesa",
@@ -196,88 +201,84 @@ serve(async (req) => {
           category: "Taxas Financeiras",
           reference: `Taxa cartão - Título #${title.title_number}`,
         });
-    }
-
-    // 6. Update commissions if title is fully paid
-    if (newStatus === "paid" && title.budget_id) {
-      // Get budget items to find professionals
-      const { data: budgetItems } = await supabase
-        .from("budget_items")
-        .select("professional_id, total_price")
-        .eq("budget_id", title.budget_id);
-
-      if (budgetItems && budgetItems.length > 0) {
-        // Calculate proportional payment for each professional's commission
-        const titlePercentage = title.amount / (await getTotalBudgetValue(supabase, title.budget_id));
-        
-        for (const item of budgetItems) {
-          if (item.professional_id) {
-            // Update commission status from provisao to payable
-            const { error: commError } = await supabase
-              .from("comissoes_provisoes")
-              .update({
-                status: "a_pagar",
-                updated_at: new Date().toISOString(),
-              })
-              .eq("profissional_id", item.professional_id)
-              .eq("status", "provisao")
-              .ilike("observacoes", `%${title.budget_id}%`);
-
-            if (commError) {
-              console.error("Error updating commission:", commError);
-            }
-          }
-        }
       }
+
+      // Create receipt_document if requested
+      let receiptId = null;
+      if (emit_receipt !== false) {
+        const { data: receipt } = await supabase
+          .from("receipt_documents")
+          .insert({
+            clinic_id: title.clinic_id,
+            patient_id: title.patient_id,
+            payment_id: payment.id,
+            issue_date: paymentDate.split("T")[0],
+            amount: tp.amount,
+            description: `Pagamento ${title.installment_label || `Parcela ${title.installment_number}/${title.total_installments}`}`,
+            status: "issued",
+            generated_by: created_by,
+          })
+          .select()
+          .single();
+
+        receiptId = receipt?.id;
+      }
+
+      // Commission update if fully paid
+      if (newStatus === "paid" && title.budget_id) {
+        await supabase
+          .from("comissoes_provisoes")
+          .update({ status: "a_pagar", updated_at: new Date().toISOString() })
+          .eq("status", "provisao")
+          .ilike("observacoes", `%${title.budget_id}%`);
+      }
+
+      // Audit log
+      await supabase.from("patient_financial_audit_logs").insert({
+        clinic_id: title.clinic_id,
+        patient_id: title.patient_id,
+        action_type: "record_payment",
+        entity_type: "receivable_title",
+        entity_id: tp.title_id,
+        before_json: { balance: title.balance, status: title.status, paid_amount: title.paid_amount },
+        after_json: { balance: Math.max(0, newBalance), status: newStatus, paid_amount: currentPaid, payment_id: payment.id },
+        performed_by: created_by,
+      });
+
+      totalPaid += tp.amount;
+      results.push({
+        title_id: tp.title_id,
+        payment_id: payment.id,
+        receipt_id: receiptId,
+        new_status: newStatus,
+        new_balance: Math.max(0, newBalance),
+        success: true,
+      });
     }
 
-    // 7. Log audit
+    // Legacy audit_logs
     await supabase.from("audit_logs").insert({
       user_id: created_by,
       acao: "record_payment",
       modulo: "financeiro",
       detalhes: {
-        title_id,
-        payment_id: payment.id,
-        amount,
+        titles_paid: results.filter((r) => r.success).length,
+        total_paid: totalPaid,
         method,
-        new_balance: newBalance,
-        new_status: newStatus,
-        taxa_adquirente: taxa_adquirente || null,
-        valor_liquido: valor_liquido || amount,
-        data_repasse: data_repasse || null,
+        results,
       },
       resultado: "success",
     });
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        payment_id: payment.id,
-        title_status: newStatus,
-        title_balance: newBalance,
-        valor_liquido: valor_liquido || amount,
-        taxa_adquirente: taxa_adquirente || 0,
-        message: `Payment of ${amount} recorded. Net value: ${valor_liquido || amount}. Title balance: ${newBalance}`,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResp({
+      success: true,
+      total_paid: totalPaid,
+      results,
+      message: `${results.filter((r) => r.success).length} payment(s) recorded. Total: ${totalPaid}`,
+    });
   } catch (error: unknown) {
     console.error("Error in record-payment:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(
-      JSON.stringify({ error: "Internal server error", details: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResp({ error: "Internal server error", details: errorMessage }, 500);
   }
 });
-
-async function getTotalBudgetValue(supabase: any, budgetId: string): Promise<number> {
-  const { data } = await supabase
-    .from("budgets")
-    .select("final_value, total_value")
-    .eq("id", budgetId)
-    .single();
-  
-  return data?.final_value || data?.total_value || 0;
-}
