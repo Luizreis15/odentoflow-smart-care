@@ -432,10 +432,20 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
               <CardTitle className="text-base">Parcelas</CardTitle>
               <div className="flex gap-2 items-center">
                 {batchMode && selectedIds.size > 0 && (
-                  <Button size="sm" onClick={handleBatchPayment}>
-                    <DollarSign className="h-4 w-4 mr-1" />
-                    Pagar {selectedIds.size} ({formatCurrency(selectedTotal)})
-                  </Button>
+                  <>
+                    <Button size="sm" onClick={handleBatchPayment}>
+                      <DollarSign className="h-4 w-4 mr-1" />
+                      Pagar {selectedIds.size} ({formatCurrency(selectedTotal)})
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setRenegoOpen(true)}
+                    >
+                      <RefreshCcw className="h-4 w-4 mr-1" />
+                      Renegociar
+                    </Button>
+                  </>
                 )}
                 <Button
                   variant={batchMode ? "default" : "outline"}
