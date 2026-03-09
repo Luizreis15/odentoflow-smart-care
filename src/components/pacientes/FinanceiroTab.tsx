@@ -90,6 +90,8 @@ interface ReceiptDoc {
   description: string | null;
   status: string;
   created_at: string;
+  payment_id: string | null;
+  clinic_id: string;
 }
 
 export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
