@@ -27,8 +27,10 @@ import {
   Printer,
   Ban,
   Loader2,
+  RefreshCcw,
 } from "lucide-react";
 import { generateRecibo, type ReciboData } from "@/utils/generateRecibo";
+import { RenegociacaoModal } from "@/components/financeiro/RenegociacaoModal";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -104,6 +106,7 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
   const [paymentDrawerOpen, setPaymentDrawerOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchMode, setBatchMode] = useState(false);
+  const [renegoOpen, setRenegoOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -430,10 +433,20 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
               <CardTitle className="text-base">Parcelas</CardTitle>
               <div className="flex gap-2 items-center">
                 {batchMode && selectedIds.size > 0 && (
-                  <Button size="sm" onClick={handleBatchPayment}>
-                    <DollarSign className="h-4 w-4 mr-1" />
-                    Pagar {selectedIds.size} ({formatCurrency(selectedTotal)})
-                  </Button>
+                  <>
+                    <Button size="sm" onClick={handleBatchPayment}>
+                      <DollarSign className="h-4 w-4 mr-1" />
+                      Pagar {selectedIds.size} ({formatCurrency(selectedTotal)})
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setRenegoOpen(true)}
+                    >
+                      <RefreshCcw className="h-4 w-4 mr-1" />
+                      Renegociar
+                    </Button>
+                  </>
                 )}
                 <Button
                   variant={batchMode ? "default" : "outline"}
@@ -650,6 +663,18 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
           onOpenChange={setPaymentDrawerOpen}
           title={selectedTitulo}
           titles={batchMode && selectedTitles.length > 1 ? selectedTitles : undefined}
+          clinicId={clinicId}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
+
+      {/* Renegotiation Modal */}
+      {renegoOpen && selectedTitles.length > 0 && (
+        <RenegociacaoModal
+          open={renegoOpen}
+          onOpenChange={setRenegoOpen}
+          titles={selectedTitles}
+          patientId={patientId}
           clinicId={clinicId}
           onSuccess={handlePaymentSuccess}
         />
