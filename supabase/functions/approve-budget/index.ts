@@ -6,20 +6,23 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface AllocationInput {
+  sequence: number;
+  payment_method_planned: string;
+  amount: number;
+  installments_count: number;
+  first_due_date: string;
+  is_immediate?: boolean;
+}
+
 interface ApproveRequest {
   budget_id: string;
   approved_by: string;
-}
-
-interface PaymentPlan {
-  entrada?: number;
-  parcelas: number;
-  vencimentos: string[];
-  metodo?: string;
+  financial_responsible_id?: string | null;
+  allocations?: AllocationInput[];
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -29,80 +32,193 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { budget_id, approved_by }: ApproveRequest = await req.json();
+    const body: ApproveRequest = await req.json();
+    const { budget_id, approved_by, financial_responsible_id, allocations } = body;
 
     if (!budget_id || !approved_by) {
-      return new Response(
-        JSON.stringify({ error: "budget_id and approved_by are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonError("budget_id and approved_by are required", 400);
     }
 
     // 1. Fetch budget with items
     const { data: budget, error: budgetError } = await supabase
       .from("budgets")
-      .select(`
-        *,
-        budget_items(*),
-        patients(id, full_name, clinic_id)
-      `)
+      .select(`*, budget_items(*), patients(id, full_name, clinic_id)`)
       .eq("id", budget_id)
       .single();
 
     if (budgetError || !budget) {
-      return new Response(
-        JSON.stringify({ error: "Budget not found", details: budgetError }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonError("Budget not found", 404);
     }
 
-    // 2. Validate budget can be approved
     if (budget.status === "approved" || budget.status === "converted") {
-      return new Response(
-        JSON.stringify({ error: "Budget already approved or converted" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonError("Budget already approved or converted", 400);
     }
 
     if (!budget.budget_items || budget.budget_items.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "Budget has no items" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonError("Budget has no items", 400);
     }
 
-    // 3. Parse payment plan
-    const paymentPlan: PaymentPlan = budget.payment_plan || { parcelas: 1, vencimentos: [] };
     const totalValue = budget.final_value || budget.total_value || 0;
     const clinicId = budget.clinic_id;
     const patientId = budget.patient_id;
 
-    // Generate installment dates if not provided
-    if (!paymentPlan.vencimentos || paymentPlan.vencimentos.length === 0) {
-      const today = new Date();
-      paymentPlan.vencimentos = [];
-      for (let i = 0; i < (paymentPlan.parcelas || 1); i++) {
-        const dueDate = new Date(today);
-        dueDate.setMonth(dueDate.getMonth() + i);
-        paymentPlan.vencimentos.push(dueDate.toISOString().split("T")[0]);
-      }
-    }
-
-    // 4. Validate that at least one item has a professional assigned
+    // Validate professional exists on at least one item
     const defaultProfessionalId = budget.budget_items.find(
       (item: any) => item.professional_id
     )?.professional_id || null;
 
     if (!defaultProfessionalId) {
-      return new Response(
-        JSON.stringify({ 
-          error: "Pelo menos um item deve ter um profissional responsável" 
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonError("Pelo menos um item deve ter um profissional responsável", 400);
     }
 
-    // 5. Create treatment with professional_id from first item
+    // 2. Determine allocations — use provided or build from legacy payment_plan
+    let finalAllocations: AllocationInput[] = [];
+
+    if (allocations && allocations.length > 0) {
+      // Validate total matches
+      const allocTotal = allocations.reduce((s, a) => s + a.amount, 0);
+      if (Math.abs(allocTotal - totalValue) > 0.01) {
+        return jsonError(
+          `Soma das alocações (${allocTotal}) não bate com o total do orçamento (${totalValue})`,
+          400
+        );
+      }
+      finalAllocations = allocations;
+    } else {
+      // Legacy: build from budget.payment_plan JSON
+      const pp = budget.payment_plan as any || { parcelas: 1, entrada: 0, metodo: "pix", vencimentos: [] };
+      const entrada = pp.entrada || 0;
+      const parcelas = pp.parcelas || 1;
+      const saldo = totalValue - entrada;
+
+      if (entrada > 0) {
+        finalAllocations.push({
+          sequence: 1,
+          payment_method_planned: pp.metodo || "pix",
+          amount: entrada,
+          installments_count: 1,
+          first_due_date: new Date().toISOString().split("T")[0],
+          is_immediate: true,
+        });
+      }
+
+      if (saldo > 0) {
+        const firstDue = pp.vencimentos?.[0] || new Date().toISOString().split("T")[0];
+        finalAllocations.push({
+          sequence: entrada > 0 ? 2 : 1,
+          payment_method_planned: pp.metodo || "pix",
+          amount: saldo,
+          installments_count: parcelas,
+          first_due_date: firstDue,
+        });
+      }
+    }
+
+    // 3. Create payment_plan
+    const { data: paymentPlan, error: ppError } = await supabase
+      .from("payment_plans")
+      .insert({
+        clinic_id: clinicId,
+        patient_id: patientId,
+        budget_id: budget_id,
+        total_amount: totalValue,
+        immediate_amount: finalAllocations
+          .filter((a) => a.is_immediate)
+          .reduce((s, a) => s + a.amount, 0),
+        financed_amount: finalAllocations
+          .filter((a) => !a.is_immediate)
+          .reduce((s, a) => s + a.amount, 0),
+        status: "active",
+        created_by: approved_by,
+      })
+      .select()
+      .single();
+
+    if (ppError) {
+      console.error("Error creating payment_plan:", ppError);
+      return jsonError("Failed to create payment plan", 500);
+    }
+
+    // 4. Create allocations
+    const allocInserts = finalAllocations.map((a) => ({
+      payment_plan_id: paymentPlan.id,
+      sequence: a.sequence,
+      payment_method_planned: a.payment_method_planned,
+      amount: a.amount,
+      installments_count: a.installments_count,
+      first_due_date: a.first_due_date,
+      notes: a.is_immediate ? "Entrada" : null,
+    }));
+
+    const { data: savedAllocations, error: allocError } = await supabase
+      .from("payment_plan_allocations")
+      .insert(allocInserts)
+      .select();
+
+    if (allocError) {
+      console.error("Error creating allocations:", allocError);
+    }
+
+    // 5. Generate receivable_titles (parcelas) from allocations
+    const titlesToCreate: any[] = [];
+    let globalInstallment = 0;
+
+    for (let aIdx = 0; aIdx < finalAllocations.length; aIdx++) {
+      const alloc = finalAllocations[aIdx];
+      const allocId = savedAllocations?.[aIdx]?.id || null;
+      const parcelaValue = alloc.amount / alloc.installments_count;
+
+      for (let i = 0; i < alloc.installments_count; i++) {
+        globalInstallment++;
+        const dueDate = addMonths(alloc.first_due_date, i);
+
+        const isEntrada = alloc.is_immediate && alloc.installments_count === 1;
+        const label = isEntrada
+          ? "Entrada"
+          : alloc.installments_count === 1
+          ? `Pagamento (${alloc.payment_method_planned})`
+          : `Parcela ${i + 1}/${alloc.installments_count}`;
+
+        titlesToCreate.push({
+          clinic_id: clinicId,
+          patient_id: patientId,
+          budget_id: budget_id,
+          payment_plan_id: paymentPlan.id,
+          allocation_id: allocId,
+          installment_number: globalInstallment,
+          total_installments: 0, // Will be updated after
+          due_date: dueDate,
+          amount: parcelaValue,
+          balance: parcelaValue,
+          paid_amount: 0,
+          status: "open",
+          origin: "budget",
+          payment_method: alloc.payment_method_planned,
+          installment_label: label,
+          financial_responsible_id:
+            financial_responsible_id && financial_responsible_id !== "proprio"
+              ? financial_responsible_id
+              : null,
+          notes: label,
+        });
+      }
+    }
+
+    // Set total_installments on all
+    const totalInstallments = titlesToCreate.length;
+    titlesToCreate.forEach((t) => (t.total_installments = totalInstallments));
+
+    const { data: titles, error: titlesError } = await supabase
+      .from("receivable_titles")
+      .insert(titlesToCreate)
+      .select();
+
+    if (titlesError) {
+      console.error("Error creating titles:", titlesError);
+      return jsonError("Failed to create payment titles", 500);
+    }
+
+    // 6. Create treatment
     const { data: treatment, error: treatmentError } = await supabase
       .from("treatments")
       .insert({
@@ -120,216 +236,67 @@ serve(async (req) => {
 
     if (treatmentError) {
       console.error("Error creating treatment:", treatmentError);
-      return new Response(
-        JSON.stringify({ error: "Failed to create treatment", details: treatmentError }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
     }
 
-    // 5. Create treatment_items from budget_items
-    const treatmentItems = budget.budget_items.map((item: any) => ({
-      treatment_id: treatment.id,
-      budget_item_id: item.id,
-      procedure_id: item.procedure_id || null,
-      professional_id: item.professional_id,
-      tooth_number: item.tooth_number ? parseInt(item.tooth_number) : null,
-      tooth_region: item.tooth_region,
-      tooth_faces: item.tooth_faces,
-      status: "planned",
-      price: item.total_price,
-      notes: item.notes,
-    }));
+    // 7. Create treatment_items
+    if (treatment) {
+      const treatmentItems = budget.budget_items.map((item: any) => ({
+        treatment_id: treatment.id,
+        budget_item_id: item.id,
+        procedure_id: item.procedure_id || null,
+        professional_id: item.professional_id,
+        tooth_number: item.tooth_number ? parseInt(item.tooth_number) : null,
+        tooth_region: item.tooth_region,
+        tooth_faces: item.tooth_faces,
+        status: "planned",
+        price: item.total_price,
+        notes: item.notes,
+      }));
 
-    const { error: itemsError } = await supabase
-      .from("treatment_items")
-      .insert(treatmentItems);
-
-    if (itemsError) {
-      console.error("Error creating treatment items:", itemsError);
-      // Continue anyway, treatment was created
+      await supabase.from("treatment_items").insert(treatmentItems);
     }
 
-    // 6. Create receivable_titles (parcelas)
-    const numParcelas = paymentPlan.parcelas || 1;
-    const entrada = paymentPlan.entrada || 0;
-    const valorRestante = totalValue - entrada;
-    const valorParcela = numParcelas > 0 ? valorRestante / numParcelas : 0;
+    // 8. Create commission entries using rules
+    await createCommissions(supabase, budget, clinicId, budget_id);
 
-    const titlesToCreate = [];
-
-    // Create entry payment title if entrada > 0
-    if (entrada > 0) {
-      titlesToCreate.push({
-        clinic_id: clinicId,
-        patient_id: patientId,
-        budget_id: budget_id,
-        installment_number: 0,
-        total_installments: numParcelas + 1,
-        due_date: new Date().toISOString().split("T")[0],
-        amount: entrada,
-        balance: entrada,
-        status: "open",
-        origin: "budget",
-        payment_method: paymentPlan.metodo || null,
-        notes: "Entrada",
-      });
+    // 9. Update budget status
+    const budgetUpdateData: Record<string, unknown> = {
+      status: "approved",
+      approved_at: new Date().toISOString(),
+      approved_by: approved_by,
+    };
+    if (financial_responsible_id && financial_responsible_id !== "proprio") {
+      budgetUpdateData.financial_responsible_contact_id = financial_responsible_id;
     }
 
-    // Create installment titles
-    for (let i = 0; i < numParcelas; i++) {
-      const dueDate = paymentPlan.vencimentos[i] || new Date().toISOString().split("T")[0];
-      titlesToCreate.push({
-        clinic_id: clinicId,
-        patient_id: patientId,
-        budget_id: budget_id,
-        installment_number: i + 1,
-        total_installments: numParcelas + (entrada > 0 ? 1 : 0),
-        due_date: dueDate,
-        amount: valorParcela,
-        balance: valorParcela,
-        status: "open",
-        origin: "budget",
-        payment_method: paymentPlan.metodo || null,
-        notes: `Parcela ${i + 1}/${numParcelas}`,
-      });
-    }
+    await supabase.from("budgets").update(budgetUpdateData).eq("id", budget_id);
 
-    const { data: titles, error: titlesError } = await supabase
-      .from("receivable_titles")
-      .insert(titlesToCreate)
-      .select();
+    // 10. Log audit
+    await supabase.from("patient_financial_audit_logs").insert({
+      clinic_id: clinicId,
+      patient_id: patientId,
+      action_type: "approve_budget",
+      entity_type: "budget",
+      entity_id: budget_id,
+      after_json: {
+        payment_plan_id: paymentPlan.id,
+        treatment_id: treatment?.id,
+        titles_count: titles?.length || 0,
+        total_value: totalValue,
+        allocations: finalAllocations,
+      },
+      performed_by: approved_by,
+    });
 
-    if (titlesError) {
-      console.error("Error creating titles:", titlesError);
-      return new Response(
-        JSON.stringify({ error: "Failed to create payment titles", details: titlesError }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // 7. Create commission entries (provisões) for each professional using commission rules
-    const commissionEntries = [];
-    for (const item of budget.budget_items) {
-      if (item.professional_id) {
-        // Buscar regra de comissão específica para este profissional/procedimento
-        // Prioridade: regra específica (prof + proc) > regra do profissional > regra do procedimento > regra geral
-        let commissionRule = null;
-        
-        // 1. Tentar encontrar regra específica (profissional + procedimento)
-        const { data: specificRule } = await supabase
-          .from("commission_rules")
-          .select("*")
-          .eq("clinic_id", clinicId)
-          .eq("profissional_id", item.professional_id)
-          .eq("procedure_id", item.procedure_id)
-          .eq("ativo", true)
-          .eq("gatilho", "aprovacao")
-          .single();
-        
-        if (specificRule) {
-          commissionRule = specificRule;
-        } else {
-          // 2. Tentar regra só do profissional
-          const { data: profRule } = await supabase
-            .from("commission_rules")
-            .select("*")
-            .eq("clinic_id", clinicId)
-            .eq("profissional_id", item.professional_id)
-            .is("procedure_id", null)
-            .eq("ativo", true)
-            .eq("gatilho", "aprovacao")
-            .single();
-          
-          if (profRule) {
-            commissionRule = profRule;
-          } else {
-            // 3. Tentar regra geral (sem profissional específico)
-            const { data: generalRule } = await supabase
-              .from("commission_rules")
-              .select("*")
-              .eq("clinic_id", clinicId)
-              .is("profissional_id", null)
-              .is("procedure_id", null)
-              .eq("ativo", true)
-              .eq("gatilho", "aprovacao")
-              .single();
-            
-            if (generalRule) {
-              commissionRule = generalRule;
-            }
-          }
-        }
-
-        // Calcular comissão baseado na regra encontrada ou usar padrão 30%
-        let commissionAmount = 0;
-        const baseValue = item.total_price || 0;
-        
-        if (commissionRule) {
-          if (commissionRule.tipo_calculo === "percentual") {
-            commissionAmount = baseValue * ((commissionRule.percentual || 30) / 100);
-          } else {
-            commissionAmount = commissionRule.valor_fixo || 0;
-          }
-          
-          // Aplicar mínimo garantido e teto
-          if (commissionRule.minimo_garantido && commissionAmount < commissionRule.minimo_garantido) {
-            commissionAmount = commissionRule.minimo_garantido;
-          }
-          if (commissionRule.teto && commissionAmount > commissionRule.teto) {
-            commissionAmount = commissionRule.teto;
-          }
-        } else {
-          // Sem regra: usar padrão de 30%
-          commissionAmount = baseValue * 0.30;
-        }
-
-        if (commissionAmount > 0) {
-          commissionEntries.push({
-            clinic_id: clinicId,
-            profissional_id: item.professional_id,
-            competencia: new Date().toISOString().slice(0, 7), // YYYY-MM
-            valor_provisionado: commissionAmount,
-            valor_devido: commissionAmount,
-            status: "provisao",
-            observacoes: `Orçamento ${budget.title || budget_id} - ${item.procedure_name}`,
-          });
-        }
-      }
-    }
-
-    if (commissionEntries.length > 0) {
-      const { error: commError } = await supabase
-        .from("comissoes_provisoes")
-        .insert(commissionEntries);
-
-      if (commError) {
-        console.error("Error creating commission entries:", commError);
-        // Continue anyway
-      }
-    }
-
-    // 8. Update budget status to approved
-    const { error: updateError } = await supabase
-      .from("budgets")
-      .update({
-        status: "approved",
-        approved_at: new Date().toISOString(),
-        approved_by: approved_by,
-      })
-      .eq("id", budget_id);
-
-    if (updateError) {
-      console.error("Error updating budget status:", updateError);
-    }
-
-    // 9. Log audit
+    // Legacy audit_logs
     await supabase.from("audit_logs").insert({
       user_id: approved_by,
       acao: "approve_budget",
       modulo: "budgets",
       detalhes: {
         budget_id,
-        treatment_id: treatment.id,
+        treatment_id: treatment?.id,
+        payment_plan_id: paymentPlan.id,
         titles_created: titles?.length || 0,
         total_value: totalValue,
       },
@@ -339,18 +306,118 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        treatment_id: treatment.id,
+        payment_plan_id: paymentPlan.id,
+        treatment_id: treatment?.id,
+        titles_created: titles?.length || 0,
         titles: titles || [],
-        message: `Budget approved. Treatment created with ${titles?.length || 0} payment titles.`,
+        message: `Budget approved. ${titles?.length || 0} installments created.`,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
     console.error("Error in approve-budget:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(
-      JSON.stringify({ error: "Internal server error", details: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonError(errorMessage, 500);
   }
 });
+
+// === Helpers ===
+
+function jsonError(message: string, status: number) {
+  return new Response(
+    JSON.stringify({ error: message }),
+    { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}
+
+function addMonths(dateStr: string, months: number): string {
+  const d = new Date(dateStr + "T12:00:00");
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().split("T")[0];
+}
+
+async function createCommissions(supabase: any, budget: any, clinicId: string, budgetId: string) {
+  const commissionEntries = [];
+
+  for (const item of budget.budget_items) {
+    if (!item.professional_id) continue;
+
+    let rule = null;
+
+    const { data: specificRule } = await supabase
+      .from("commission_rules")
+      .select("*")
+      .eq("clinic_id", clinicId)
+      .eq("profissional_id", item.professional_id)
+      .eq("procedure_id", item.procedure_id)
+      .eq("ativo", true)
+      .eq("gatilho", "aprovacao")
+      .single();
+
+    if (specificRule) {
+      rule = specificRule;
+    } else {
+      const { data: profRule } = await supabase
+        .from("commission_rules")
+        .select("*")
+        .eq("clinic_id", clinicId)
+        .eq("profissional_id", item.professional_id)
+        .is("procedure_id", null)
+        .eq("ativo", true)
+        .eq("gatilho", "aprovacao")
+        .single();
+
+      if (profRule) {
+        rule = profRule;
+      } else {
+        const { data: generalRule } = await supabase
+          .from("commission_rules")
+          .select("*")
+          .eq("clinic_id", clinicId)
+          .is("profissional_id", null)
+          .is("procedure_id", null)
+          .eq("ativo", true)
+          .eq("gatilho", "aprovacao")
+          .single();
+
+        if (generalRule) rule = generalRule;
+      }
+    }
+
+    let commissionAmount = 0;
+    const baseValue = item.total_price || 0;
+
+    if (rule) {
+      commissionAmount =
+        rule.tipo_calculo === "percentual"
+          ? baseValue * ((rule.percentual || 30) / 100)
+          : rule.valor_fixo || 0;
+
+      if (rule.minimo_garantido && commissionAmount < rule.minimo_garantido) {
+        commissionAmount = rule.minimo_garantido;
+      }
+      if (rule.teto && commissionAmount > rule.teto) {
+        commissionAmount = rule.teto;
+      }
+    } else {
+      commissionAmount = baseValue * 0.3;
+    }
+
+    if (commissionAmount > 0) {
+      commissionEntries.push({
+        clinic_id: clinicId,
+        profissional_id: item.professional_id,
+        competencia: new Date().toISOString().slice(0, 7),
+        valor_provisionado: commissionAmount,
+        valor_devido: commissionAmount,
+        status: "provisao",
+        observacoes: `Orçamento ${budget.title || budgetId} - ${item.procedure_name}`,
+      });
+    }
+  }
+
+  if (commissionEntries.length > 0) {
+    const { error } = await supabase.from("comissoes_provisoes").insert(commissionEntries);
+    if (error) console.error("Error creating commissions:", error);
+  }
+}
