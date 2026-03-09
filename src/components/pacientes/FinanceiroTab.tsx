@@ -216,6 +216,92 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
     loadData();
   };
 
+  const handleReprintRecibo = async (receipt: ReceiptDoc) => {
+    try {
+      // Fetch payment details to get method/date
+      let paymentMethod = "pix";
+      let paymentDate = receipt.issue_date;
+      let titleNumber = 0;
+      let installmentNumber = 1;
+      let totalInstallments = 1;
+
+      if (receipt.payment_id) {
+        const { data: payment } = await supabase
+          .from("payments")
+          .select("payment_method, payment_date, title_id")
+          .eq("id", receipt.payment_id)
+          .single();
+        if (payment) {
+          paymentMethod = payment.payment_method || "pix";
+          paymentDate = payment.payment_date?.split("T")[0] || receipt.issue_date;
+          if (payment.title_id) {
+            const { data: tit } = await supabase
+              .from("receivable_titles")
+              .select("title_number, installment_number, total_installments")
+              .eq("id", payment.title_id)
+              .single();
+            if (tit) {
+              titleNumber = tit.title_number;
+              installmentNumber = tit.installment_number;
+              totalInstallments = tit.total_installments;
+            }
+          }
+        }
+      }
+
+      // Fetch clinic + patient + config
+      const [clinicRes, patientRes, configRes] = await Promise.all([
+        supabase.from("clinicas").select("nome, cnpj, telefone, address").eq("id", clinicId).single(),
+        supabase.from("patients").select("full_name, cpf").eq("id", patientId).single(),
+        supabase.from("configuracoes_clinica").select("logotipo_url").eq("clinica_id", clinicId).single(),
+      ]);
+
+      const clinic = clinicRes.data;
+      const patient = patientRes.data;
+      const addressObj = clinic?.address as Record<string, string> | null;
+      const addressStr = addressObj
+        ? [addressObj.street, addressObj.number, addressObj.neighborhood, addressObj.city, addressObj.state].filter(Boolean).join(", ")
+        : undefined;
+
+      await generateRecibo({
+        receiptNumber: receipt.receipt_number,
+        titleNumber,
+        installmentNumber,
+        totalInstallments,
+        patientName: patient?.full_name || "Paciente",
+        patientCpf: patient?.cpf || undefined,
+        amount: receipt.amount,
+        paymentMethod,
+        paymentDate,
+        clinicName: clinic?.nome || "Clínica",
+        clinicCnpj: clinic?.cnpj || undefined,
+        clinicPhone: clinic?.telefone || undefined,
+        clinicAddress: addressStr,
+        clinicLogoUrl: configRes.data?.logotipo_url || undefined,
+        description: receipt.description || undefined,
+      });
+    } catch (error) {
+      console.error("Erro ao reimprimir recibo:", error);
+      toast.error("Erro ao reimprimir recibo");
+    }
+  };
+
+  const handleVoidRecibo = async (receiptId: string) => {
+    if (!confirm("Deseja anular este recibo? Esta ação não pode ser desfeita.")) return;
+    try {
+      const { error } = await supabase
+        .from("receipt_documents")
+        .update({ status: "voided" })
+        .eq("id", receiptId);
+      if (error) throw error;
+      toast.success("Recibo anulado com sucesso");
+      loadData();
+    } catch (error) {
+      console.error("Erro ao anular recibo:", error);
+      toast.error("Erro ao anular recibo");
+    }
+  };
+
   if (loading) {
     return (
       <Card>
