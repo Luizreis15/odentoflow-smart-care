@@ -342,7 +342,6 @@ async function createCommissions(supabase: any, budget: any, clinicId: string, b
   for (const item of budget.budget_items) {
     if (!item.professional_id) continue;
 
-    // Find commission rule: specific > professional > general
     let rule = null;
 
     const { data: specificRule } = await supabase
@@ -422,8 +421,3 @@ async function createCommissions(supabase: any, budget: any, clinicId: string, b
     if (error) console.error("Error creating commissions:", error);
   }
 }
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
