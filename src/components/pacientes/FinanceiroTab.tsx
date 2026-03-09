@@ -590,6 +590,19 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
                         <TableCell className="text-muted-foreground text-sm max-w-[150px] truncate">
                           {p.notes || "-"}
                         </TableCell>
+                        <TableCell className="text-right">
+                          {p.status === "completed" && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => handleReversePayment(p.id, p.value)}
+                              title="Estornar pagamento"
+                            >
+                              <Undo2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
