@@ -32,7 +32,7 @@ import { ptBR } from "date-fns/locale";
 interface TitleForRenego {
   id: string;
   title_number: number;
-  installment_label: string | null;
+  installment_label?: string | null;
   notes: string | null;
   installment_number: number | null;
   amount: number;
