@@ -42,7 +42,7 @@ const perfilColors: Record<string, string> = {
   assistente: "bg-green-100 text-green-800"
 };
 
-export const UsuariosTable = ({ usuarios, loading, onEdit, onToggleStatus, onResendInvite }: UsuariosTableProps) => {
+export const UsuariosTable = ({ usuarios, loading, onEdit, onToggleStatus, onResendInvite, onManagePermissions }: UsuariosTableProps) => {
   const columns: DataTableColumn<Usuario>[] = [
     { key: "nome", label: "Nome", sortable: true, className: "font-medium" },
     { key: "email", label: "E-mail", sortable: true },
