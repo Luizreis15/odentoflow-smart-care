@@ -20,13 +20,15 @@ import {
   BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import logoFlowdent from "@/assets/logo-flowdent.png";
 
 interface NavItem {
   name: string;
   href: string;
   icon: React.ElementType;
+  /** Permission resource required to see this item (checks 'visualizar' action) */
+  permission?: string;
   subItems?: { name: string; href: string }[];
 }
 
@@ -35,33 +37,25 @@ interface NavGroup {
   items: NavItem[];
 }
 
-// Roles that can access each route; empty = all authenticated users
-const routeAccess: Record<string, string[]> = {
-  "/dashboard/financeiro": ["admin", "super_admin"],
-  "/dashboard/crm": ["admin", "super_admin"],
-  "/dashboard/relatorios": ["admin", "super_admin"],
-  "/dashboard/configuracoes": ["admin", "super_admin"],
-  "/dashboard/portal-paciente": ["admin", "super_admin"],
-};
-
 const navGroups: NavGroup[] = [
   {
     title: "OPERACIONAL",
     items: [
       { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { name: "Agenda", href: "/dashboard/agenda", icon: Calendar },
-      { name: "Pacientes", href: "/dashboard/prontuario", icon: FileText },
+      { name: "Agenda", href: "/dashboard/agenda", icon: Calendar, permission: "agenda" },
+      { name: "Pacientes", href: "/dashboard/prontuario", icon: FileText, permission: "prontuario" },
     ],
   },
   {
     title: "CONTROLE CLÍNICO",
     items: [
-      { name: "Ortodontia", href: "/dashboard/ortodontia", icon: SmilePlus },
-      { name: "Próteses", href: "/dashboard/proteses", icon: FlaskConical },
+      { name: "Ortodontia", href: "/dashboard/ortodontia", icon: SmilePlus, permission: "ortodontia" },
+      { name: "Próteses", href: "/dashboard/proteses", icon: FlaskConical, permission: "proteses" },
       {
         name: "Estoque",
         href: "/dashboard/estoque",
         icon: Package,
+        permission: "estoque",
         subItems: [
           { name: "Painel", href: "/dashboard/estoque" },
           { name: "Produtos", href: "/dashboard/produtos" },
@@ -73,35 +67,33 @@ const navGroups: NavGroup[] = [
   {
     title: "GESTÃO E RELATÓRIOS",
     items: [
-      { name: "Financeiro", href: "/dashboard/financeiro", icon: DollarSign },
-      { name: "CRM", href: "/dashboard/crm", icon: MessageSquare },
-      { name: "Relatórios", href: "/dashboard/relatorios", icon: BarChart3 },
+      { name: "Financeiro", href: "/dashboard/financeiro", icon: DollarSign, permission: "financeiro" },
+      { name: "CRM", href: "/dashboard/crm", icon: MessageSquare, permission: "crm" },
+      { name: "Relatórios", href: "/dashboard/relatorios", icon: BarChart3, permission: "relatorios" },
     ],
   },
   {
     title: "FERRAMENTAS",
     items: [
-      { name: "Portal Paciente", href: "/dashboard/portal-paciente", icon: Users },
-      { name: "IA Assistente", href: "/dashboard/ia-assistente", icon: Sparkles },
+      { name: "Portal Paciente", href: "/dashboard/portal-paciente", icon: Users, permission: "portal_paciente" },
+      { name: "IA Assistente", href: "/dashboard/ia-assistente", icon: Sparkles, permission: "ia_assistente" },
     ],
   },
 ];
 
 const bottomNavigation: NavItem[] = [
-  { name: "Configurações", href: "/dashboard/configuracoes", icon: Settings },
+  { name: "Configurações", href: "/dashboard/configuracoes", icon: Settings, permission: "configuracoes" },
   { name: "Meu Perfil", href: "/dashboard/perfil", icon: User },
 ];
 
 const DesktopSidebar = () => {
   const location = useLocation();
-  const { isSuperAdmin, perfil } = useAuth();
+  const { isSuperAdmin, canViewModule } = usePermissions();
   const [openSubMenu, setOpenSubMenu] = useState<string | null>(null);
 
-  const canAccess = (href: string) => {
-    const allowed = routeAccess[href];
-    if (!allowed) return true; // no restriction
-    if (isSuperAdmin) return true;
-    return perfil ? allowed.includes(perfil) : false;
+  const canAccess = (item: NavItem) => {
+    if (!item.permission) return true;
+    return canViewModule(item.permission);
   };
 
   const isActive = (href: string) => location.pathname === href;
@@ -206,22 +198,22 @@ const DesktopSidebar = () => {
           )}
 
           {navGroups.map((group, groupIndex) => {
-              const visibleItems = group.items.filter((item) => canAccess(item.href));
-              if (visibleItems.length === 0) return null;
-              return (
-                <div key={group.title} className="mb-3">
-                  <div className="px-3 pt-2 pb-1">
-                    <span className="text-[11px] font-semibold text-sidebar-foreground/40 tracking-wider uppercase">
-                      {group.title}
-                    </span>
-                  </div>
-                  {visibleItems.map(renderNavItem)}
-                  {groupIndex < navGroups.length - 1 && (
-                    <div className="mx-4 mt-3 border-t border-sidebar-border" />
-                  )}
+            const visibleItems = group.items.filter(canAccess);
+            if (visibleItems.length === 0) return null;
+            return (
+              <div key={group.title} className="mb-3">
+                <div className="px-3 pt-2 pb-1">
+                  <span className="text-[11px] font-semibold text-sidebar-foreground/40 tracking-wider uppercase">
+                    {group.title}
+                  </span>
                 </div>
-              );
-            })}
+                {visibleItems.map(renderNavItem)}
+                {groupIndex < navGroups.length - 1 && (
+                  <div className="mx-4 mt-3 border-t border-sidebar-border" />
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         {/* Separator */}
@@ -229,7 +221,7 @@ const DesktopSidebar = () => {
 
         {/* Bottom items */}
         <nav className="space-y-0.5 px-3">
-          {bottomNavigation.map(renderNavItem)}
+          {bottomNavigation.filter(canAccess).map(renderNavItem)}
         </nav>
       </ScrollArea>
     </aside>
