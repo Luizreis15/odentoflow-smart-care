@@ -53,6 +53,7 @@ const Profissional = () => {
             onboarding_status: "in_progress",
             plano: "starter",
             status_assinatura: "trialing",
+            current_period_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
           })
           .select()
           .single();
