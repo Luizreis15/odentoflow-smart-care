@@ -13,6 +13,7 @@ const logStep = (step: string, details?: any) => {
 };
 
 const PRODUCT_MAP: Record<string, string> = {
+  "prod_U7hqxLZdpDnGHN": "teste",
   "prod_U7g4hLtt0H3XvC": "solo",
   "prod_U7g4RZJUZ2coRl": "solo",
   "prod_U7g4zFoakbOVu8": "crescimento",

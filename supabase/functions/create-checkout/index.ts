@@ -14,6 +14,10 @@ const logStep = (step: string, details?: any) => {
 
 // Map plan names to Stripe price IDs
 const PLAN_PRICES: Record<string, { monthly: string; annual: string }> = {
+  teste: {
+    monthly: "price_1T9SR303E2WqXSt0CYW94sUW",
+    annual: "price_1T9SR303E2WqXSt0CYW94sUW",
+  },
   solo: {
     monthly: "price_1T9QiY03E2WqXSt0Zs3NFwx7",
     annual: "price_1T9QiZ03E2WqXSt0jATFe7uj",
