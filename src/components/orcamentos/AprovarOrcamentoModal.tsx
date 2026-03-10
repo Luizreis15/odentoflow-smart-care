@@ -775,16 +775,28 @@ export const AprovarOrcamentoModal = ({
         {/* Step 4: Confirmação final */}
         {step === 4 && (
           <div className="space-y-4">
-            <Alert className="bg-accent/50 border-accent">
-              <Info className="h-4 w-4" />
-              <AlertDescription className="text-sm">
-                Ao confirmar, serão criados automaticamente:{" "}
-                <strong>plano financeiro</strong>,{" "}
-                <strong>{previewInstallments.length} parcelas</strong>,{" "}
-                <strong>tratamento</strong> e{" "}
-                <strong>provisões de comissão</strong>.
-              </AlertDescription>
-            </Alert>
+            {isAllImmediate() ? (
+              <Alert className="bg-primary/10 border-primary/30">
+                <CheckCircle className="h-4 w-4 text-primary" />
+                <AlertDescription className="text-sm">
+                  Pagamento imediato detectado. Ao confirmar, o sistema irá:{" "}
+                  <strong>aprovar o orçamento</strong>,{" "}
+                  <strong>registrar a baixa de todas as parcelas</strong> e{" "}
+                  <strong>gerar o recibo consolidado</strong> automaticamente.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <Alert className="bg-accent/50 border-accent">
+                <Info className="h-4 w-4" />
+                <AlertDescription className="text-sm">
+                  Ao confirmar, serão criados automaticamente:{" "}
+                  <strong>plano financeiro</strong>,{" "}
+                  <strong>{previewInstallments.length} parcelas</strong>,{" "}
+                  <strong>tratamento</strong> e{" "}
+                  <strong>provisões de comissão</strong>. As parcelas ficarão abertas para baixa individual.
+                </AlertDescription>
+              </Alert>
+            )}
 
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
