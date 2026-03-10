@@ -35,6 +35,15 @@ interface NavGroup {
   items: NavItem[];
 }
 
+// Roles that can access each route; empty = all authenticated users
+const routeAccess: Record<string, string[]> = {
+  "/dashboard/financeiro": ["admin", "super_admin"],
+  "/dashboard/crm": ["admin", "super_admin"],
+  "/dashboard/relatorios": ["admin", "super_admin"],
+  "/dashboard/configuracoes": ["admin", "super_admin"],
+  "/dashboard/portal-paciente": ["admin", "super_admin"],
+};
+
 const navGroups: NavGroup[] = [
   {
     title: "OPERACIONAL",
