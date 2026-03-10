@@ -13,19 +13,18 @@ const logStep = (step: string, details?: any) => {
 };
 
 // Map plan names to Stripe price IDs
-// TODO: Replace these with your actual Stripe price IDs
 const PLAN_PRICES: Record<string, { monthly: string; annual: string }> = {
   solo: {
-    monthly: "price_SOLO_MONTHLY_ID",
-    annual: "price_SOLO_ANNUAL_ID",
+    monthly: "price_1T9QdiC0BlmmmqSHnDuYCGI3",
+    annual: "price_1T9QdsC0BlmmmqSHSlO83Cq2",
   },
   crescimento: {
-    monthly: "price_CRESCIMENTO_MONTHLY_ID",
-    annual: "price_CRESCIMENTO_ANNUAL_ID",
+    monthly: "price_1T9QdtC0BlmmmqSHOQcYYNlH",
+    annual: "price_1T9QdvC0BlmmmqSHikwg1mRv",
   },
   premium: {
-    monthly: "price_PREMIUM_MONTHLY_ID",
-    annual: "price_PREMIUM_ANNUAL_ID",
+    monthly: "price_1T9QdwC0BlmmmqSHrOJI2iYG",
+    annual: "price_1T9QdxC0BlmmmqSHQOcEJnJc",
   },
 };
 

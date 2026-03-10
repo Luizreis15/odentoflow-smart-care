@@ -13,9 +13,12 @@ const logStep = (step: string, details?: any) => {
 };
 
 const PRODUCT_MAP: Record<string, string> = {
-  "prod_TJWbnb78Lpmlcp": "starter",
-  "prod_TJWdot89sJXFYW": "pro",
-  "prod_TJWfEYa5roNk9Z": "enterprise",
+  "prod_U7fzEWf4iIcjqX": "solo",
+  "prod_U7fzVpHswmo8Rr": "solo",
+  "prod_U7fz9jQ10GCTmZ": "crescimento",
+  "prod_U7fzvDOUzvm90n": "crescimento",
+  "prod_U7fzKcaSInt0rF": "premium",
+  "prod_U7fz4toGswQXER": "premium",
 };
 
 serve(async (req) => {
