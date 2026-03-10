@@ -652,15 +652,17 @@ export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
                               <Button size="sm" variant="outline" onClick={() => handleRecibo(title)}>
                                 <FileText className="h-3.5 w-3.5" />
                               </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-destructive hover:text-destructive"
-                                onClick={() => handleReversePayment(title.id, title.title_number)}
-                                title="Estornar"
-                              >
-                                <Undo2 className="h-3.5 w-3.5" />
-                              </Button>
+                              {canEstorno && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={() => handleReversePayment(title.id, title.title_number)}
+                                  title="Estornar"
+                                >
+                                  <Undo2 className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
                             </>
                           )}
                         </div>
