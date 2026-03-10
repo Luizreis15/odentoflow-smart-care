@@ -212,6 +212,36 @@ export const DetalhesAgendamentoModal = ({
     }
   };
 
+  const canFinalize = () => {
+    const date = parseISO(appointment.appointment_date);
+    const pastOrToday = isPast(date) || isToday(date);
+    return pastOrToday && (appointment.status === "scheduled" || appointment.status === "confirmed");
+  };
+
+  const handleFinalize = async () => {
+    if (!finalizeNotes.trim()) {
+      toast.error("Preencha as observações do atendimento");
+      return;
+    }
+    setFinalizing(true);
+    try {
+      const { error } = await supabase
+        .from("appointments")
+        .update({ status: "completed", description: finalizeNotes.trim() })
+        .eq("id", appointment.id);
+      if (error) throw error;
+      toast.success("Atendimento finalizado com sucesso");
+      setShowFinalize(false);
+      setFinalizeNotes("");
+      await onUpdate();
+      onOpenChange(false);
+    } catch (error: any) {
+      toast.error("Erro ao finalizar atendimento: " + error.message);
+    } finally {
+      setFinalizing(false);
+    }
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
