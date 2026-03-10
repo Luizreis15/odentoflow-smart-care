@@ -41,7 +41,7 @@ serve(async (req) => {
       .from('whatsapp_config')
       .select('*')
       .eq('clinic_id', clinicId)
-      .eq('ativo', true)
+      .eq('connected', true)
       .maybeSingle();
 
     if (configError || !config) {
@@ -62,7 +62,7 @@ serve(async (req) => {
     let message = '';
     
     if (messageType === 'confirmation' && appointmentData) {
-      message = config.template_confirmacao || 
+      message = config.mensagem_confirmacao || 
         `Olá ${appointmentData.patientName}! 🦷\n\nSua consulta está confirmada:\n📅 Data: ${appointmentData.date}\n⏰ Horário: ${appointmentData.time}\n${appointmentData.procedure ? `📋 Procedimento: ${appointmentData.procedure}\n` : ''}${appointmentData.dentistName ? `👨‍⚕️ Profissional: ${appointmentData.dentistName}\n` : ''}\nPor favor, chegue com 10 minutos de antecedência.\n\nResponda SIM para confirmar ou NÃO para reagendar.`;
       
       message = message
@@ -73,7 +73,7 @@ serve(async (req) => {
         .replace('{profissional}', appointmentData.dentistName || '');
         
     } else if (messageType === 'reminder' && appointmentData) {
-      message = config.template_lembrete || 
+      message = config.mensagem_lembrete || 
         `Olá ${appointmentData.patientName}! 🦷\n\nLembramos que você tem uma consulta amanhã:\n📅 Data: ${appointmentData.date}\n⏰ Horário: ${appointmentData.time}\n\nConfirme sua presença respondendo SIM.\n\nCaso precise reagendar, entre em contato conosco.`;
       
       message = message

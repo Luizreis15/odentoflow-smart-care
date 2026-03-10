@@ -1,53 +1,41 @@
 
 
-# Análise Crítica do Sistema - Pontos de Falha para Teste do Zero
+## Plano: Atalhos estratégicos para o Prontuário do Paciente
 
-## Problemas Encontrados (por severidade)
+### Objetivo
+Tornar o nome do paciente clicável em todos os locais onde aparece, redirecionando para `/dashboard/prontuario/{patient_id}` — facilitando o acesso rápido ao prontuário.
 
-### CRÍTICO - Bloqueiam o fluxo de novo usuário
+### Locais que serão alterados
 
-**1. Página de Login sem link para Cadastro**
-- `Auth.tsx` (login) não tem nenhum link para `/cadastro`. Um novo usuário que acessar `/auth` não consegue criar conta.
-- Correção: Adicionar link "Criar conta" apontando para `/cadastro`.
+1. **Agenda — Day Slots View** (`src/pages/dashboard/Agenda.tsx`, ~linha 748)
+   - O nome do paciente nos slots ocupados será um link clicável para o prontuário
+   - Adicionar `e.stopPropagation()` para não abrir o modal de detalhes ao clicar no nome
+   - Usar `useNavigate` (já importado via `react-router-dom`) + estilo de link (underline on hover, cursor pointer)
 
-**2. Tabela `onboarding_sessions` não existe no banco**
-- A Edge Function `create-trial-subscription` tenta inserir em `onboarding_sessions`, mas essa tabela nunca foi criada.
-- Se essa function for chamada, falhará. No fluxo atual ela não é chamada automaticamente, mas é um ponto morto.
+2. **Agenda — Week View** (`src/pages/dashboard/Agenda.tsx`, ~linha 979)
+   - O nome do paciente na célula semanal será clicável para o prontuário
+   - `e.stopPropagation()` para não disparar o `handleAppointmentClick`
 
-**3. Nenhum Stripe Customer é criado durante onboarding**
-- `Clinica.tsx` cria a clínica com `plano: "starter"` e `status_assinatura: "trialing"` diretamente no banco, sem criar customer no Stripe.
-- Quando o usuário depois compra um plano via checkout, o webhook do Stripe procura o `profile` pelo email do customer e atualiza `clinicas`. Isso funciona **se** o email do cadastro = email do Stripe checkout. OK, isso funciona.
+3. **Agenda — Detalhes do Agendamento Modal** (`src/components/agenda/DetalhesAgendamentoModal.tsx`, ~linha 234)
+   - O nome do paciente no modal será um link clicável para o prontuário
+   - Adicionar botão "Abrir Prontuário" nas ações do modal
 
-**4. Race condition no onboarding "Profissional Liberal"**
-- `Profissional.tsx` tem um `useEffect` que cria a clínica automaticamente para liberais E o `handleSubmit` também tenta criar se não encontrar. Sem `loading` guard no useEffect, podem criar clínicas duplicadas.
+4. **Dashboard — Agenda do Dia (tabela)** (`src/components/dashboard/DashboardAgendaTable.tsx`, ~linha 122)
+   - A coluna "Paciente" na tabela do dashboard será um link clicável
+   - Usar `useNavigate` para redirecionar
 
-### ALTO - Funcionalidade quebrada
+5. **Dashboard — Próximas Consultas** (`src/components/dashboard/UpcomingAppointments.tsx`, ~linha 83)
+   - O nome do paciente será clicável
 
-**5. WhatsApp Edge Function com coluna inexistente**
-- Logs mostram: `column whatsapp_config.ativo does not exist`. O envio de lembretes por WhatsApp está totalmente inoperante.
+6. **Mobile — Agenda List** (`src/components/mobile/MobileAgendaList.tsx`)
+   - Já redireciona para prontuário no `onClick` do card — manter como está
 
-**6. `SubscriptionGuard` permite TODAS as rotas /dashboard/***
-- A verificação `location.pathname.startsWith(p)` com `/dashboard` na lista permite qualquer sub-rota começando com `/dashboard`, efetivamente desabilitando o guard para todas as rotas do dashboard.
-- Correção: usar comparação exata `===` para `/dashboard` e `startsWith` apenas para `/dashboard/assinatura` e `/dashboard/perfil`.
+7. **Mobile — MobileAgenda** (`src/pages/mobile/MobileAgenda.tsx`)
+   - Já redireciona para prontuário no `onClick` — manter como está
 
-### MÉDIO - Consistência
-
-**7. Plano inicial "starter" é legado**
-- Novos planos são `teste`, `solo`, `crescimento`, `premium`. Mas onboarding cria com `plano: "starter"`. O `check-subscription` retorna `plan: "starter"` como default. Deveria ser consistente com os novos nomes.
-
-**8. Período de trial sem data de expiração**
-- Clínicas são criadas com `status_assinatura: "trialing"` mas `current_period_end: null`. O `check-subscription` trata isso como "grace period" (acesso perpétuo enquanto trialing sem data).
-
----
-
-## Plano de Correções (Implementação)
-
-1. **Adicionar link "Criar conta" no Auth.tsx** - Link para `/cadastro` na tela de login
-2. **Corrigir SubscriptionGuard** - Comparação exata para `/dashboard`
-3. **Corrigir race condition no Profissional.tsx** - Usar ref/flag para evitar criação dupla de clínica liberal
-4. **Padronizar plano inicial** - Usar `"starter"` consistentemente ou migrar para novo nome
-5. **Criar tabela `onboarding_sessions`** (se necessário) ou remover referência da Edge Function
-6. **Corrigir coluna `whatsapp_config.ativo`** - Adicionar coluna ou corrigir query
-
-Essas correções garantem que o teste end-to-end (cadastro → onboarding → dashboard → assinatura) funcione sem bloqueios.
+### Detalhes técnicos
+- Estilo do link: `hover:underline text-primary cursor-pointer` no nome do paciente
+- Navegação: `navigate(\`/dashboard/prontuario/\${patientId}\`)`
+- `e.stopPropagation()` em todos os locais onde o clique no nome conflita com um clique no container pai (slot, card, row)
+- No modal de detalhes: adicionar um botão "Ir ao Prontuário" com ícone `FileText`
 

@@ -375,6 +375,16 @@ const Auth = () => {
             Entrar
           </Button>
         </form>
+
+        <p className="text-sm text-center text-[hsl(var(--slate-gray))]">
+          Não tem uma conta?{" "}
+          <Link
+            to="/cadastro"
+            className="text-[hsl(var(--flowdent-blue))] font-semibold hover:underline"
+          >
+            Criar conta
+          </Link>
+        </p>
       </>
     );
   };

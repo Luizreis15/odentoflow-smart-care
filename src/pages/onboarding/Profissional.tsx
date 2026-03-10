@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -29,33 +29,40 @@ const Profissional = () => {
   const [telefone, setTelefone] = useState("");
   const [especialidade, setEspecialidade] = useState("");
   const isLiberal = searchParams.get("tipo") === "liberal";
+  const creatingClinicRef = useRef(false);
 
   useEffect(() => {
     const createLiberalClinic = async () => {
       if (!isLiberal) return;
+      if (creatingClinicRef.current) return;
+      creatingClinicRef.current = true;
       
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
 
-      const { data: profile } = await supabase.from("profiles").select("clinic_id").eq("id", user.id).single();
-      if (profile?.clinic_id) return;
+        const { data: profile } = await supabase.from("profiles").select("clinic_id").eq("id", user.id).single();
+        if (profile?.clinic_id) return;
 
-      const { data: clinicData, error } = await (supabase as any)
-        .from("clinicas")
-        .insert({
-          nome: `Consultório ${user.user_metadata?.full_name || "Profissional"}`,
-          tipo: "liberal",
-          owner_user_id: user.id,
-          onboarding_status: "in_progress",
-          plano: "starter",
-          status_assinatura: "trialing",
-        })
-        .select()
-        .single();
+        const { data: clinicData, error } = await (supabase as any)
+          .from("clinicas")
+          .insert({
+            nome: `Consultório ${user.user_metadata?.full_name || "Profissional"}`,
+            tipo: "liberal",
+            owner_user_id: user.id,
+            onboarding_status: "in_progress",
+            plano: "starter",
+            status_assinatura: "trialing",
+          })
+          .select()
+          .single();
 
-      if (!error && clinicData) {
-        await supabase.from("profiles").update({ clinic_id: clinicData.id }).eq("id", user.id);
-        await (supabase as any).from("usuarios").update({ clinica_id: clinicData.id }).eq("id", user.id);
+        if (!error && clinicData) {
+          await supabase.from("profiles").update({ clinic_id: clinicData.id }).eq("id", user.id);
+          await (supabase as any).from("usuarios").update({ clinica_id: clinicData.id }).eq("id", user.id);
+        }
+      } finally {
+        creatingClinicRef.current = false;
       }
     };
 

@@ -2,12 +2,6 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useAuth } from "@/contexts/AuthContext";
 
-const ALLOWED_WITHOUT_SUBSCRIPTION = [
-  "/dashboard/assinatura",
-  "/dashboard/perfil",
-  "/dashboard",
-];
-
 export default function SubscriptionGuard({ children }: { children: React.ReactNode }) {
   const { subscribed, status, loading } = useSubscription();
   const { isSuperAdmin, isLoading: authLoading } = useAuth();
@@ -19,8 +13,13 @@ export default function SubscriptionGuard({ children }: { children: React.ReactN
   // Super admins and impersonation bypass
   if (isSuperAdmin || status === "admin_impersonation") return <>{children}</>;
 
-  // Allow subscription/profile pages always
-  if (ALLOWED_WITHOUT_SUBSCRIPTION.some((p) => location.pathname.startsWith(p))) {
+  // Allow subscription/profile pages and exact /dashboard always
+  const path = location.pathname;
+  if (
+    path === "/dashboard" ||
+    path.startsWith("/dashboard/assinatura") ||
+    path.startsWith("/dashboard/perfil")
+  ) {
     return <>{children}</>;
   }
 
