@@ -16,16 +16,6 @@ const plans: Record<string, {
   popular?: boolean;
   features: string[];
 }> = {
-  teste: {
-    name: "🧪 Plano Teste",
-    monthly: 0.01,
-    annual: 0.01,
-    features: [
-      "Plano de teste R$0,01",
-      "Validação do fluxo completo",
-      "Será cancelado após teste"
-    ]
-  },
   solo: {
     name: "Plano Solo",
     monthly: 89.90,
@@ -63,7 +53,7 @@ const plans: Record<string, {
 };
 
 const comparisonRows = [
-  { label: "Nº de Agendas", solo: "1", crescimento: "3", premium: "Ilimitado", teste: "Teste" },
+  { label: "Nº de Agendas", solo: "1", crescimento: "3", premium: "Ilimitado" },
   { label: "Confirmação Automática", solo: false, crescimento: true, premium: true },
   { label: "Assinatura Digital", solo: false, crescimento: true, premium: true },
   { label: "Assistente IA", solo: false, crescimento: false, premium: true },
