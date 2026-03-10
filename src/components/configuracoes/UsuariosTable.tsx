@@ -19,6 +19,7 @@ interface UsuariosTableProps {
   onEdit: (usuario: Usuario) => void;
   onToggleStatus: (usuario: Usuario) => void;
   onResendInvite: (usuario: Usuario) => void;
+  onManagePermissions?: (perfil: string) => void;
 }
 
 const perfilLabels: Record<string, string> = {
