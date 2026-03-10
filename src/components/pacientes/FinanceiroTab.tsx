@@ -610,6 +610,25 @@ export const FinanceiroTab = ({ patientId, clinicId }: FinanceiroTabProps) => {
                                   <XCircle className="h-3.5 w-3.5" />
                                 </Button>
                               )}
+                              {t.status === "paid" && !batchMode && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const receipt = recibos.find(r => r.status === "issued" && r.payment_id && pagamentos.some(p => p.id === r.payment_id));
+                                    const matchedReceipt = recibos.find(r => r.status === "issued");
+                                    if (matchedReceipt) {
+                                      handleReprintRecibo(matchedReceipt);
+                                    } else {
+                                      toast.info("Nenhum recibo encontrado para esta parcela. Registre o pagamento primeiro.");
+                                    }
+                                  }}
+                                  title="Imprimir recibo"
+                                >
+                                  <Printer className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
