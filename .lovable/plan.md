@@ -1,41 +1,41 @@
 
 
-## Plano: Atalhos estratégicos para o Prontuário do Paciente
+# Plano: Correções e Melhorias na Aba Prontuário
 
-### Objetivo
-Tornar o nome do paciente clicável em todos os locais onde aparece, redirecionando para `/dashboard/prontuario/{patient_id}` — facilitando o acesso rápido ao prontuário.
+## 3 problemas identificados
 
-### Locais que serão alterados
+### 1. Botao "+Novo Agendamento" nao funciona (AgendamentosTab)
+O botao na linha 213 do `AgendamentosTab.tsx` nao tem `onClick`. Precisa navegar para a agenda com `?new=true` e o `patient_id` pre-selecionado.
 
-1. **Agenda — Day Slots View** (`src/pages/dashboard/Agenda.tsx`, ~linha 748)
-   - O nome do paciente nos slots ocupados será um link clicável para o prontuário
-   - Adicionar `e.stopPropagation()` para não abrir o modal de detalhes ao clicar no nome
-   - Usar `useNavigate` (já importado via `react-router-dom`) + estilo de link (underline on hover, cursor pointer)
+### 2. Campo de observacoes + Pop-up de fechamento de atendimento
+A tabela `appointments` ja possui o campo `description` (text, nullable). Vou reutiliza-lo para as observacoes da recepcionista.
 
-2. **Agenda — Week View** (`src/pages/dashboard/Agenda.tsx`, ~linha 979)
-   - O nome do paciente na célula semanal será clicável para o prontuário
-   - `e.stopPropagation()` para não disparar o `handleAppointmentClick`
+**Fluxo:** Quando o status do agendamento e "confirmed" ou "scheduled" e a data ja passou (ou e hoje), aparece um botao "Finalizar Atendimento" na listagem. Ao clicar, abre um Dialog obrigatorio com:
+- Campo de observacoes (textarea, obrigatorio) — o que foi feito na consulta
+- Ao confirmar, atualiza `status = "completed"` e `description = observacoes`
 
-3. **Agenda — Detalhes do Agendamento Modal** (`src/components/agenda/DetalhesAgendamentoModal.tsx`, ~linha 234)
-   - O nome do paciente no modal será um link clicável para o prontuário
-   - Adicionar botão "Abrir Prontuário" nas ações do modal
+Isso cria o historico de atendimento exigido.
 
-4. **Dashboard — Agenda do Dia (tabela)** (`src/components/dashboard/DashboardAgendaTable.tsx`, ~linha 122)
-   - A coluna "Paciente" na tabela do dashboard será um link clicável
-   - Usar `useNavigate` para redirecionar
+### 3. Botao de Recibo na aba Financeiro (Parcelas pagas)
+Na sub-aba "Parcelas", parcelas com status `paid` nao tem nenhuma acao. Vou adicionar um botao de impressora (Recibo) nas parcelas pagas, que busca o `receipt_document` associado e reimprime o PDF. Se nao houver recibo vinculado, gera um avulso.
 
-5. **Dashboard — Próximas Consultas** (`src/components/dashboard/UpcomingAppointments.tsx`, ~linha 83)
-   - O nome do paciente será clicável
+---
 
-6. **Mobile — Agenda List** (`src/components/mobile/MobileAgendaList.tsx`)
-   - Já redireciona para prontuário no `onClick` do card — manter como está
+## Alteracoes tecnicas
 
-7. **Mobile — MobileAgenda** (`src/pages/mobile/MobileAgenda.tsx`)
-   - Já redireciona para prontuário no `onClick` — manter como está
+### Arquivos a modificar
 
-### Detalhes técnicos
-- Estilo do link: `hover:underline text-primary cursor-pointer` no nome do paciente
-- Navegação: `navigate(\`/dashboard/prontuario/\${patientId}\`)`
-- `e.stopPropagation()` em todos os locais onde o clique no nome conflita com um clique no container pai (slot, card, row)
-- No modal de detalhes: adicionar um botão "Ir ao Prontuário" com ícone `FileText`
+1. **`src/components/pacientes/AgendamentosTab.tsx`**
+   - Adicionar `onClick` no botao "Novo Agendamento" → `navigate(/dashboard/agenda?new=true&patient={patientId})`
+   - Adicionar coluna "Observacoes" na tabela mostrando `description`
+   - Adicionar coluna "Acoes" com botao "Finalizar Atendimento" para agendamentos pendentes (confirmed/scheduled, data passada ou hoje)
+   - Criar Dialog inline com textarea obrigatoria para preencher observacoes ao finalizar
+   - Ao confirmar: update `status = "completed"`, `description = texto`
+
+2. **`src/components/pacientes/FinanceiroTab.tsx`**
+   - Na sub-aba "Parcelas", para titulos com `status === "paid"`, adicionar botao de impressora (Printer icon) que busca o recibo associado via `receipt_documents` (por `payment_id`) e chama `handleReprintRecibo`
+   - Reutilizar a logica de reimpressao ja existente no componente
+
+### Sem migracoes necessarias
+O campo `description` ja existe na tabela `appointments`. O campo `receipt_documents` ja tem tudo necessario.
 
