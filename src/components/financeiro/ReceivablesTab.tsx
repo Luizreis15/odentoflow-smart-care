@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -74,6 +75,8 @@ const PAYMENT_METHODS: Record<string, string> = {
 };
 
 export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
+  const { can } = usePermissions();
+  const canEstorno = can("financeiro", "estorno");
   const [titles, setTitles] = useState<ReceivableTitle[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -549,9 +552,11 @@ export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
                           <Button size="sm" variant="outline" onClick={() => handleRecibo(title)} className="flex-1">
                             <FileText className="h-4 w-4 mr-1" />Recibo
                           </Button>
-                          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleReversePayment(title.id, title.title_number)}>
-                            <Undo2 className="h-4 w-4" />
-                          </Button>
+                          {canEstorno && (
+                            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleReversePayment(title.id, title.title_number)}>
+                              <Undo2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </>
                       )}
                     </div>
@@ -647,15 +652,17 @@ export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
                               <Button size="sm" variant="outline" onClick={() => handleRecibo(title)}>
                                 <FileText className="h-3.5 w-3.5" />
                               </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-destructive hover:text-destructive"
-                                onClick={() => handleReversePayment(title.id, title.title_number)}
-                                title="Estornar"
-                              >
-                                <Undo2 className="h-3.5 w-3.5" />
-                              </Button>
+                              {canEstorno && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={() => handleReversePayment(title.id, title.title_number)}
+                                  title="Estornar"
+                                >
+                                  <Undo2 className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
                             </>
                           )}
                         </div>

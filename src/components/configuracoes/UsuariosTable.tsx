@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Mail } from "lucide-react";
+import { Edit, Mail, ShieldCheck } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DataTable, DataTableColumn } from "@/components/desktop/DataTable";
 
@@ -19,6 +19,7 @@ interface UsuariosTableProps {
   onEdit: (usuario: Usuario) => void;
   onToggleStatus: (usuario: Usuario) => void;
   onResendInvite: (usuario: Usuario) => void;
+  onManagePermissions?: (perfil: string) => void;
 }
 
 const perfilLabels: Record<string, string> = {
@@ -41,7 +42,7 @@ const perfilColors: Record<string, string> = {
   assistente: "bg-green-100 text-green-800"
 };
 
-export const UsuariosTable = ({ usuarios, loading, onEdit, onToggleStatus, onResendInvite }: UsuariosTableProps) => {
+export const UsuariosTable = ({ usuarios, loading, onEdit, onToggleStatus, onResendInvite, onManagePermissions }: UsuariosTableProps) => {
   const columns: DataTableColumn<Usuario>[] = [
     { key: "nome", label: "Nome", sortable: true, className: "font-medium" },
     { key: "email", label: "E-mail", sortable: true },
@@ -80,6 +81,16 @@ export const UsuariosTable = ({ usuarios, loading, onEdit, onToggleStatus, onRes
               </TooltipTrigger>
               <TooltipContent><p>Editar usuário</p></TooltipContent>
             </Tooltip>
+            {onManagePermissions && user.perfil !== "admin" && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="sm" onClick={() => onManagePermissions(user.perfil)}>
+                    <ShieldCheck className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Gerenciar permissões do perfil</p></TooltipContent>
+              </Tooltip>
+            )}
           </div>
         </TooltipProvider>
       ),

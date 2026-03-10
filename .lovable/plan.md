@@ -1,129 +1,41 @@
 
 
-# Plano: Sistema de Permissões Granular por Perfil (RBAC)
+## Plano: Atalhos estratégicos para o Prontuário do Paciente
 
-## Problema Atual
-Hoje o sistema tem apenas duas camadas: **admin/super_admin** (acesso total) e **demais perfis** (acesso limitado apenas por rotas bloqueadas). Não existe controle fino por ação — um dentista vê tudo que um admin vê nas rotas que tem acesso, e uma recepcionista não tem restrição de ações dentro das páginas.
+### Objetivo
+Tornar o nome do paciente clicável em todos os locais onde aparece, redirecionando para `/dashboard/prontuario/{patient_id}` — facilitando o acesso rápido ao prontuário.
 
-## Arquitetura Proposta
+### Locais que serão alterados
 
-### 1. Tabela de Permissões no Banco
+1. **Agenda — Day Slots View** (`src/pages/dashboard/Agenda.tsx`, ~linha 748)
+   - O nome do paciente nos slots ocupados será um link clicável para o prontuário
+   - Adicionar `e.stopPropagation()` para não abrir o modal de detalhes ao clicar no nome
+   - Usar `useNavigate` (já importado via `react-router-dom`) + estilo de link (underline on hover, cursor pointer)
 
-Criar uma tabela `clinic_permissions` que mapeia perfil → permissões granulares por clínica. O admin (master) poderá customizar quais ações cada perfil pode executar.
+2. **Agenda — Week View** (`src/pages/dashboard/Agenda.tsx`, ~linha 979)
+   - O nome do paciente na célula semanal será clicável para o prontuário
+   - `e.stopPropagation()` para não disparar o `handleAppointmentClick`
 
-```text
-clinic_permissions
-├── id (uuid, PK)
-├── clinic_id (uuid, FK → clinicas)
-├── perfil (perfil_usuario enum)
-├── recurso (text) — ex: "agenda", "financeiro", "estornos"
-├── acao (text) — ex: "visualizar", "editar", "excluir"
-├── permitido (boolean, default true)
-└── unique(clinic_id, perfil, recurso, acao)
-```
+3. **Agenda — Detalhes do Agendamento Modal** (`src/components/agenda/DetalhesAgendamentoModal.tsx`, ~linha 234)
+   - O nome do paciente no modal será um link clicável para o prontuário
+   - Adicionar botão "Abrir Prontuário" nas ações do modal
 
-### 2. Permissões Padrão por Perfil
+4. **Dashboard — Agenda do Dia (tabela)** (`src/components/dashboard/DashboardAgendaTable.tsx`, ~linha 122)
+   - A coluna "Paciente" na tabela do dashboard será um link clicável
+   - Usar `useNavigate` para redirecionar
 
-Ao criar a clínica, o sistema insere automaticamente as permissões padrão via trigger:
+5. **Dashboard — Próximas Consultas** (`src/components/dashboard/UpcomingAppointments.tsx`, ~linha 83)
+   - O nome do paciente será clicável
 
-```text
-DENTISTA:
-  ✅ agenda.visualizar (apenas própria)
-  ✅ agenda.finalizar_atendimento
-  ✅ prontuario.visualizar
-  ✅ prontuario.editar (próprios pacientes)
-  ✅ odontograma.editar
-  ✅ orcamentos.criar
-  ✅ comissoes.visualizar (apenas próprias)
-  ❌ financeiro.visualizar
-  ❌ financeiro.estorno
-  ❌ financeiro.reabrir_pagamento
-  ❌ relatorios.visualizar
-  ❌ configuracoes.visualizar
-  ❌ crm.visualizar
-  ❌ usuarios.gerenciar
+6. **Mobile — Agenda List** (`src/components/mobile/MobileAgendaList.tsx`)
+   - Já redireciona para prontuário no `onClick` do card — manter como está
 
-RECEPÇÃO:
-  ✅ agenda.visualizar (todas)
-  ✅ agenda.criar
-  ✅ agenda.editar
-  ✅ prontuario.visualizar
-  ✅ pacientes.cadastrar
-  ✅ orcamentos.visualizar
-  ❌ financeiro.estorno
-  ❌ financeiro.reabrir_pagamento
-  ❌ relatorios.visualizar
-  ❌ configuracoes.visualizar
-  ❌ usuarios.gerenciar
+7. **Mobile — MobileAgenda** (`src/pages/mobile/MobileAgenda.tsx`)
+   - Já redireciona para prontuário no `onClick` — manter como está
 
-ASSISTENTE:
-  ✅ agenda.visualizar
-  ✅ prontuario.visualizar
-  ❌ financeiro.* (tudo bloqueado)
-  ❌ relatorios.*
-  ❌ configuracoes.*
-```
-
-### 3. Hook `usePermissions` Refatorado
-
-Substituir o hook atual (deprecated) por um que carrega permissões do banco:
-
-```typescript
-const { can } = usePermissions();
-// Uso nos componentes:
-if (can("financeiro", "estorno")) { /* mostra botão */ }
-if (can("agenda", "finalizar_atendimento")) { /* mostra ação */ }
-```
-
-As permissões serão carregadas uma vez no login (junto com o AuthContext) e cacheadas em memória.
-
-### 4. Filtro de Agenda por Dentista
-
-Para dentistas, a agenda filtra automaticamente pelo `profissional_id` vinculado ao usuário. O dentista só vê seus próprios agendamentos. Admins e recepção veem todos.
-
-### 5. Comissões Filtradas
-
-Dentistas no módulo financeiro (se tiverem acesso à aba Comissões) verão apenas suas próprias comissões, filtradas pelo ID do profissional.
-
-### 6. Tela de Gerenciamento (Configurações → Usuários)
-
-O admin terá uma interface para customizar permissões por perfil, com toggles agrupados por módulo:
-
-```text
-┌─────────────────────────────────────────┐
-│ Permissões do Perfil: Recepção          │
-├─────────────────────────────────────────┤
-│ 📅 Agenda                              │
-│   ☑ Visualizar    ☑ Criar    ☑ Editar  │
-│ 📋 Prontuário                          │
-│   ☑ Visualizar    ☐ Editar             │
-│ 💰 Financeiro                          │
-│   ☐ Visualizar    ☐ Estornos           │
-│   ☐ Reabrir pagamentos                 │
-│ 📊 Relatórios                          │
-│   ☐ Visualizar                         │
-└─────────────────────────────────────────┘
-```
-
-### 7. Mudanças nos Arquivos
-
-| Arquivo | Mudança |
-|---------|---------|
-| **Migration SQL** | Criar tabela `clinic_permissions` + trigger para popular defaults + RLS |
-| `src/contexts/AuthContext.tsx` | Carregar permissões do usuário no login |
-| `src/hooks/usePermissions.tsx` | Refatorar com `can(recurso, acao)` real |
-| `src/components/ProtectedRoute.tsx` | Suportar verificação por `recurso.acao` |
-| `src/components/desktop/DesktopSidebar.tsx` | Usar `can()` ao invés de checagem hardcoded |
-| `src/components/DomainRouter.tsx` | Adicionar `requiredPermission` nas rotas |
-| `src/pages/dashboard/Agenda.tsx` | Filtrar por dentista logado se perfil=dentista |
-| `src/pages/dashboard/Financeiro.tsx` | Ocultar tabs/ações conforme permissão |
-| `src/components/financeiro/PaymentDrawer.tsx` | Ocultar botão de estorno se sem permissão |
-| `src/components/financeiro/ComissoesTab.tsx` | Filtrar por profissional se dentista |
-| `src/components/configuracoes/UsuariosTab.tsx` | Adicionar tela de gerenciamento de permissões |
-
-### 8. Segurança
-
-- RLS na tabela `clinic_permissions`: apenas admins da clínica podem alterar
-- O hook `can()` é apenas UX — as Edge Functions e RLS continuam validando no backend
-- Permissões são imutáveis para `super_admin` e `admin` (sempre acesso total)
+### Detalhes técnicos
+- Estilo do link: `hover:underline text-primary cursor-pointer` no nome do paciente
+- Navegação: `navigate(\`/dashboard/prontuario/\${patientId}\`)`
+- `e.stopPropagation()` em todos os locais onde o clique no nome conflita com um clique no container pai (slot, card, row)
+- No modal de detalhes: adicionar um botão "Ir ao Prontuário" com ícone `FileText`
 

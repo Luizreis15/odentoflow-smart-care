@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { NovaTransacaoModal } from "@/components/financeiro/NovaTransacaoModal";
 import { ComissoesTab } from "@/components/financeiro/ComissoesTab";
 import { ReceivablesTab } from "@/components/financeiro/ReceivablesTab";
@@ -27,6 +28,7 @@ interface Transaction {
 
 const Financeiro = () => {
   const { clinicId: authClinicId } = useAuth();
+  const { can } = usePermissions();
   const clinicId = authClinicId || "";
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -154,12 +156,16 @@ const Financeiro = () => {
               <TabsTrigger value="recorrencias" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
                 RECORRÊNCIAS
               </TabsTrigger>
-              <TabsTrigger value="comissoes" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
-                COMISSÕES
-              </TabsTrigger>
-              <TabsTrigger value="relatorios" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
-                RELATÓRIOS
-              </TabsTrigger>
+              {can("comissoes", "visualizar") && (
+                <TabsTrigger value="comissoes" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
+                  COMISSÕES
+                </TabsTrigger>
+              )}
+              {can("relatorios", "visualizar") && (
+                <TabsTrigger value="relatorios" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
+                  RELATÓRIOS
+                </TabsTrigger>
+              )}
             </TabsList>
           </div>
         </div>
