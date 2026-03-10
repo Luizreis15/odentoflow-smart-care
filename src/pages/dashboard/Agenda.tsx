@@ -250,6 +250,26 @@ const Agenda = () => {
     };
   }, [authClinicId]);
 
+  // Compute pending finalizations: confirmed/scheduled appointments that are past or today
+  const pendingFinalizations = useMemo(() => {
+    return appointments.filter(apt => {
+      const date = parseISO(apt.appointment_date);
+      const isPastTime = isBefore(date, new Date());
+      return isPastTime && (apt.status === "scheduled" || apt.status === "confirmed");
+    });
+  }, [appointments]);
+
+  // Warn user before closing browser if there are pending finalizations
+  useEffect(() => {
+    if (pendingFinalizations.length === 0) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [pendingFinalizations.length]);
+
   const loadData = async () => {
     if (!authClinicId) return;
     try {
