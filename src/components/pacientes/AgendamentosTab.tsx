@@ -272,7 +272,7 @@ export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
           <CardTitle className="text-lg">Histórico de Agendamentos</CardTitle>
           <Button
             size="sm"
-            onClick={() => navigate(`/dashboard/agenda?new=true&patient=${patientId}`)}
+            onClick={() => setNovoAgendamentoOpen(true)}
           >
             <Plus className="h-4 w-4 mr-2" />
             Novo Agendamento
