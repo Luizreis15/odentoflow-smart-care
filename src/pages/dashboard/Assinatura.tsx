@@ -68,7 +68,7 @@ const Assinatura = () => {
     setLoading(planId);
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { plan: planId }
+        body: { plan: planId, billingPeriod }
       });
 
       if (error) throw error;

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
@@ -11,11 +12,21 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
 };
 
-// Yampi plan SKU IDs - configure these in Yampi dashboard
-const PLAN_SKUS: Record<string, { sku_id: number; name: string }> = {
-  solo: { sku_id: 0, name: "Plano Solo" },
-  crescimento: { sku_id: 0, name: "Plano Crescimento" },
-  premium: { sku_id: 0, name: "Plano Premium" },
+// Map plan names to Stripe price IDs
+// TODO: Replace these with your actual Stripe price IDs
+const PLAN_PRICES: Record<string, { monthly: string; annual: string }> = {
+  solo: {
+    monthly: "price_SOLO_MONTHLY_ID",
+    annual: "price_SOLO_ANNUAL_ID",
+  },
+  crescimento: {
+    monthly: "price_CRESCIMENTO_MONTHLY_ID",
+    annual: "price_CRESCIMENTO_ANNUAL_ID",
+  },
+  premium: {
+    monthly: "price_PREMIUM_MONTHLY_ID",
+    annual: "price_PREMIUM_ANNUAL_ID",
+  },
 };
 
 serve(async (req) => {
@@ -31,12 +42,22 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const { plan } = await req.json();
-    if (!plan || !PLAN_SKUS[plan]) {
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+
+    const { plan, billingPeriod } = await req.json();
+    if (!plan || !PLAN_PRICES[plan]) {
       throw new Error("Invalid plan specified");
     }
 
-    logStep("Plan selected", { plan });
+    const period = billingPeriod === "annual" ? "annual" : "monthly";
+    const priceId = PLAN_PRICES[plan][period];
+
+    if (priceId.includes("_ID")) {
+      throw new Error(`Stripe price ID not configured for plan: ${plan} (${period}). Update PLAN_PRICES in create-checkout function.`);
+    }
+
+    logStep("Plan selected", { plan, period, priceId });
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
@@ -48,66 +69,34 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Yampi API credentials
-    const yampiAlias = Deno.env.get("YAMPI_ALIAS");
-    const yampiToken = Deno.env.get("YAMPI_TOKEN");
-    const yampiSecretKey = Deno.env.get("YAMPI_SECRET_KEY");
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    if (!yampiAlias || !yampiToken || !yampiSecretKey) {
-      throw new Error("Yampi credentials not configured");
+    // Check if customer already exists
+    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    let customerId: string | undefined;
+    if (customers.data.length > 0) {
+      customerId = customers.data[0].id;
+      logStep("Existing Stripe customer found", { customerId });
     }
 
-    const planConfig = PLAN_SKUS[plan];
-    if (planConfig.sku_id === 0) {
-      throw new Error(`SKU ID not configured for plan: ${plan}. Configure PLAN_SKUS in create-checkout function.`);
-    }
-
-    // Create Yampi payment link
     const origin = req.headers.get("origin") || "https://odentoflow-smart-care.lovable.app";
 
-    const yampiResponse = await fetch(
-      `https://api.dooki.com.br/v2/${yampiAlias}/checkout/payment-link`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "User-Token": yampiToken,
-          "User-Secret-Key": yampiSecretKey,
-        },
-        body: JSON.stringify({
-          name: `${planConfig.name} - ${user.email}`,
-          active: true,
-          skus: [
-            {
-              id: planConfig.sku_id,
-              quantity: 1,
-            },
-          ],
-          metadata: {
-            user_id: user.id,
-            user_email: user.email,
-            plan: plan,
-          },
-        }),
-      }
-    );
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      customer_email: customerId ? undefined : user.email,
+      line_items: [{ price: priceId, quantity: 1 }],
+      mode: "subscription",
+      success_url: `${origin}/dashboard?checkout=success`,
+      cancel_url: `${origin}/dashboard/assinatura?checkout=cancel`,
+      metadata: {
+        user_id: user.id,
+        plan: plan,
+      },
+    });
 
-    if (!yampiResponse.ok) {
-      const errorBody = await yampiResponse.text();
-      throw new Error(`Yampi API error [${yampiResponse.status}]: ${errorBody}`);
-    }
+    logStep("Checkout session created", { sessionId: session.id, url: session.url });
 
-    const yampiData = await yampiResponse.json();
-    const checkoutUrl = yampiData?.data?.url || yampiData?.data?.checkout_url;
-
-    if (!checkoutUrl) {
-      logStep("Yampi response", yampiData);
-      throw new Error("No checkout URL returned from Yampi");
-    }
-
-    logStep("Checkout link created", { url: checkoutUrl });
-
-    return new Response(JSON.stringify({ url: checkoutUrl }), {
+    return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
