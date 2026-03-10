@@ -136,6 +136,7 @@ const Cadastro = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return; // Prevent double-submit
     
     const validation = signupSchema.safeParse({ 
       email: signupEmail, 
