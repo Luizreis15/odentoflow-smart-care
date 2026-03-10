@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 import { format, addMonths } from "date-fns";
+import { generateRecibo, type ReciboData } from "@/utils/generateRecibo";
 import {
   Check,
   ChevronRight,
@@ -23,7 +24,11 @@ import {
   User,
   FileText,
   Loader2,
+  Printer,
+  CheckCircle,
 } from "lucide-react";
+
+const IMMEDIATE_METHODS = ["pix", "dinheiro", "cartao_credito", "cartao_debito", "transferencia", "carteira_digital"];
 
 const PAYMENT_METHODS = [
   { value: "pix", label: "PIX" },
@@ -232,6 +237,17 @@ export const AprovarOrcamentoModal = ({
     return allocations.every((a) => a.amount > 0);
   };
 
+  const isAllImmediate = () =>
+    allocations.length > 0 && allocations.every((a) => IMMEDIATE_METHODS.includes(a.payment_method));
+
+  const getPaymentMethodSummary = () => {
+    const methods = allocations.map((a) => {
+      const label = getMethodLabel(a.payment_method);
+      return a.installments_count > 1 ? `${label} ${a.installments_count}x` : label;
+    });
+    return methods.join(" + ");
+  };
+
   const handleApprove = async () => {
     if (!budget) return;
     setLoading(true);
@@ -259,8 +275,85 @@ export const AprovarOrcamentoModal = ({
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
+      const createdTitles = data?.titles || [];
+
+      // If all methods are immediate, auto-pay all titles and generate consolidated receipt
+      if (isAllImmediate() && createdTitles.length > 0) {
+        const primaryMethod = allocations[0].payment_method;
+        const paymentDate = new Date().toISOString();
+
+        // Batch pay all titles
+        const { data: payData, error: payError } = await supabase.functions.invoke("record-payment", {
+          body: {
+            titles: createdTitles.map((t: any) => ({
+              title_id: t.id,
+              amount: t.balance || t.amount,
+            })),
+            amount: budget.final_value,
+            method: primaryMethod,
+            created_by: user.id,
+            paid_at: paymentDate,
+            emit_receipt: true,
+          },
+        });
+
+        if (payError) {
+          console.error("Erro ao registrar pagamento automático:", payError);
+          toast.warning("Orçamento aprovado, mas houve erro ao registrar pagamento automático.");
+        } else {
+          // Generate consolidated receipt
+          try {
+            // Fetch clinic and patient data for receipt
+            const [clinicRes, patientRes, configRes] = await Promise.all([
+              supabase.from("clinicas").select("nome, cnpj, telefone, address").eq("id", budget.clinic_id).single(),
+              supabase.from("patients").select("full_name, cpf").eq("id", budget.patient_id).single(),
+              supabase.from("configuracoes_clinica").select("logotipo_url").eq("clinica_id", budget.clinic_id).maybeSingle(),
+            ]);
+
+            const clinic = clinicRes.data;
+            const patient = patientRes.data;
+            const config = configRes.data;
+
+            const proceduresList = budget.budget_items.map((i) => i.procedure_name).join(", ");
+            const description = `${budget.title} — ${proceduresList} — ${getPaymentMethodSummary()}`;
+
+            const address = clinic?.address as any;
+            const clinicAddress = address
+              ? [address.street, address.number, address.neighborhood, address.city, address.state]
+                  .filter(Boolean)
+                  .join(", ")
+              : undefined;
+
+            const reciboData: ReciboData = {
+              receiptNumber: createdTitles[0]?.title_number || 1,
+              titleNumber: createdTitles[0]?.title_number || 1,
+              installmentNumber: 1,
+              totalInstallments: 1,
+              patientName: patient?.full_name || "Paciente",
+              patientCpf: patient?.cpf || undefined,
+              amount: budget.final_value,
+              paymentMethod: primaryMethod,
+              paymentDate: format(new Date(), "yyyy-MM-dd"),
+              clinicName: clinic?.nome || "Clínica",
+              clinicCnpj: clinic?.cnpj || undefined,
+              clinicPhone: clinic?.telefone || undefined,
+              clinicAddress,
+              clinicLogoUrl: config?.logotipo_url || undefined,
+              description,
+            };
+
+            await generateRecibo(reciboData);
+          } catch (receiptErr) {
+            console.error("Erro ao gerar recibo:", receiptErr);
+            toast.warning("Pagamento registrado, mas houve erro ao gerar o recibo.");
+          }
+        }
+      }
+
       toast.success(
-        `Orçamento aprovado! ${data?.titles_created || 0} parcela(s) gerada(s).`
+        isAllImmediate()
+          ? `Orçamento aprovado e pagamento registrado! Recibo gerado.`
+          : `Orçamento aprovado! ${data?.titles_created || 0} parcela(s) gerada(s).`
       );
       onSuccess();
       onOpenChange(false);
@@ -682,16 +775,28 @@ export const AprovarOrcamentoModal = ({
         {/* Step 4: Confirmação final */}
         {step === 4 && (
           <div className="space-y-4">
-            <Alert className="bg-accent/50 border-accent">
-              <Info className="h-4 w-4" />
-              <AlertDescription className="text-sm">
-                Ao confirmar, serão criados automaticamente:{" "}
-                <strong>plano financeiro</strong>,{" "}
-                <strong>{previewInstallments.length} parcelas</strong>,{" "}
-                <strong>tratamento</strong> e{" "}
-                <strong>provisões de comissão</strong>.
-              </AlertDescription>
-            </Alert>
+            {isAllImmediate() ? (
+              <Alert className="bg-primary/10 border-primary/30">
+                <CheckCircle className="h-4 w-4 text-primary" />
+                <AlertDescription className="text-sm">
+                  Pagamento imediato detectado. Ao confirmar, o sistema irá:{" "}
+                  <strong>aprovar o orçamento</strong>,{" "}
+                  <strong>registrar a baixa de todas as parcelas</strong> e{" "}
+                  <strong>gerar o recibo consolidado</strong> automaticamente.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <Alert className="bg-accent/50 border-accent">
+                <Info className="h-4 w-4" />
+                <AlertDescription className="text-sm">
+                  Ao confirmar, serão criados automaticamente:{" "}
+                  <strong>plano financeiro</strong>,{" "}
+                  <strong>{previewInstallments.length} parcelas</strong>,{" "}
+                  <strong>tratamento</strong> e{" "}
+                  <strong>provisões de comissão</strong>. As parcelas ficarão abertas para baixa individual.
+                </AlertDescription>
+              </Alert>
+            )}
 
             <div className="space-y-2">
               <div className="flex justify-between text-sm">

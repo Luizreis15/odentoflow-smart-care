@@ -1,43 +1,41 @@
 
 
-# Recibo Imediato na Aprovação do Orçamento
+## Plano: Atalhos estratégicos para o Prontuário do Paciente
 
-## Problema Atual
-Ao aprovar um orçamento com cartão de crédito 10x, o sistema cria 10 parcelas individuais. O usuário precisa ir à aba "Parcelas", dar baixa em cada uma manualmente e gerar recibos individuais. Isso não faz sentido para pagamentos em cartão — o valor total já foi pago no ato.
+### Objetivo
+Tornar o nome do paciente clicável em todos os locais onde aparece, redirecionando para `/dashboard/prontuario/{patient_id}` — facilitando o acesso rápido ao prontuário.
 
-## Regra de Negócio
-- **Pagamento imediato** (cartão crédito/débito, PIX, dinheiro, transferência): O recibo sai **na hora**, com o **valor total** e descritivo do tratamento. As parcelas são apenas o parcelamento da operadora — a clínica recebeu o pagamento integral.
-- **Carnê / boleto / convênio**: As parcelas continuam abertas para baixa individual conforme o paciente paga.
+### Locais que serão alterados
 
-## Solução
+1. **Agenda — Day Slots View** (`src/pages/dashboard/Agenda.tsx`, ~linha 748)
+   - O nome do paciente nos slots ocupados será um link clicável para o prontuário
+   - Adicionar `e.stopPropagation()` para não abrir o modal de detalhes ao clicar no nome
+   - Usar `useNavigate` (já importado via `react-router-dom`) + estilo de link (underline on hover, cursor pointer)
 
-### 1. Modificar `AprovarOrcamentoModal.tsx`
-Após a aprovação bem-sucedida (step 4), quando o método de pagamento for imediato (cartão, PIX, dinheiro, transferência):
-- Chamar automaticamente `record-payment` para **todas as parcelas** de uma vez
-- Gerar **um único recibo** com o valor total e descrição do orçamento (tratamento)
-- Exibir o diálogo de confirmação com opção de imprimir o recibo
+2. **Agenda — Week View** (`src/pages/dashboard/Agenda.tsx`, ~linha 979)
+   - O nome do paciente na célula semanal será clicável para o prontuário
+   - `e.stopPropagation()` para não disparar o `handleAppointmentClick`
 
-Métodos considerados "imediatos": `pix`, `dinheiro`, `cartao_credito`, `cartao_debito`, `transferencia`, `carteira_digital`.
-Métodos de "carnê" (baixa manual): `boleto`, `cheque`, `convenio`.
+3. **Agenda — Detalhes do Agendamento Modal** (`src/components/agenda/DetalhesAgendamentoModal.tsx`, ~linha 234)
+   - O nome do paciente no modal será um link clicável para o prontuário
+   - Adicionar botão "Abrir Prontuário" nas ações do modal
 
-### 2. Ajustar o recibo consolidado
-O recibo gerado na aprovação terá:
-- Valor total do orçamento (não da parcela individual)
-- Descrição: nome do tratamento/orçamento + lista de procedimentos
-- Forma de pagamento com indicação de parcelamento (ex: "Cartão de Crédito 10x")
+4. **Dashboard — Agenda do Dia (tabela)** (`src/components/dashboard/DashboardAgendaTable.tsx`, ~linha 122)
+   - A coluna "Paciente" na tabela do dashboard será um link clicável
+   - Usar `useNavigate` para redirecionar
 
-### 3. Fluxo final
-```text
-Aprovar Orçamento
-  → Cria parcelas (títulos)
-  → Se método imediato:
-      → Baixa automática de TODAS as parcelas
-      → Gera 1 recibo com valor total + descritivo
-      → Exibe PDF do recibo
-  → Se carnê:
-      → Parcelas ficam abertas para baixa manual
-```
+5. **Dashboard — Próximas Consultas** (`src/components/dashboard/UpcomingAppointments.tsx`, ~linha 83)
+   - O nome do paciente será clicável
 
-### Arquivos a modificar
-- **`src/components/orcamentos/AprovarOrcamentoModal.tsx`** — Adicionar lógica pós-aprovação para pagamento imediato + geração de recibo consolidado
+6. **Mobile — Agenda List** (`src/components/mobile/MobileAgendaList.tsx`)
+   - Já redireciona para prontuário no `onClick` do card — manter como está
+
+7. **Mobile — MobileAgenda** (`src/pages/mobile/MobileAgenda.tsx`)
+   - Já redireciona para prontuário no `onClick` — manter como está
+
+### Detalhes técnicos
+- Estilo do link: `hover:underline text-primary cursor-pointer` no nome do paciente
+- Navegação: `navigate(\`/dashboard/prontuario/\${patientId}\`)`
+- `e.stopPropagation()` em todos os locais onde o clique no nome conflita com um clique no container pai (slot, card, row)
+- No modal de detalhes: adicionar um botão "Ir ao Prontuário" com ícone `FileText`
 
