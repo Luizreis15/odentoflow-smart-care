@@ -122,20 +122,20 @@ function AppRoutes() {
         <Route path="/dashboard/agenda" element={<ProtectedRoute><SubscriptionGuard><AgendaWrapper /></SubscriptionGuard></ProtectedRoute>} />
         <Route path="/dashboard/prontuario" element={<ProtectedRoute><SubscriptionGuard><ProntuarioWrapper /></SubscriptionGuard></ProtectedRoute>} />
         <Route path="/dashboard/prontuario/:id" element={<ProtectedRoute><SubscriptionGuard><PatientDetails /></SubscriptionGuard></ProtectedRoute>} />
-        <Route path="/dashboard/financeiro" element={<ProtectedRoute requiredRole={["admin", "super_admin"]}><SubscriptionGuard><FinanceiroWrapper /></SubscriptionGuard></ProtectedRoute>} />
-        <Route path="/dashboard/crm" element={<ProtectedRoute requiredRole={["admin", "super_admin"]}><SubscriptionGuard><CRMWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/financeiro" element={<ProtectedRoute requiredPermission="financeiro.visualizar"><SubscriptionGuard><FinanceiroWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/crm" element={<ProtectedRoute requiredPermission="crm.visualizar"><SubscriptionGuard><CRMWrapper /></SubscriptionGuard></ProtectedRoute>} />
         <Route path="/dashboard/crm/atendimento" element={<ProtectedRoute><SubscriptionGuard><CRMAtendimentoWrapper /></SubscriptionGuard></ProtectedRoute>} />
-        <Route path="/dashboard/portal-paciente" element={<ProtectedRoute requiredRole={["admin", "super_admin"]}><SubscriptionGuard><PortalPacienteWrapper /></SubscriptionGuard></ProtectedRoute>} />
-        <Route path="/dashboard/ia-assistente" element={<ProtectedRoute><SubscriptionGuard><IAAssistenteWrapper /></SubscriptionGuard></ProtectedRoute>} />
-        <Route path="/dashboard/proteses" element={<ProtectedRoute><SubscriptionGuard><ProtesesWrapper /></SubscriptionGuard></ProtectedRoute>} />
-        <Route path="/dashboard/ortodontia" element={<ProtectedRoute><SubscriptionGuard><OrtodontiaWrapper /></SubscriptionGuard></ProtectedRoute>} />
-        <Route path="/dashboard/estoque" element={<ProtectedRoute><SubscriptionGuard><EstoqueWrapper /></SubscriptionGuard></ProtectedRoute>} />
-        <Route path="/dashboard/produtos" element={<ProtectedRoute><SubscriptionGuard><ProdutosWrapper /></SubscriptionGuard></ProtectedRoute>} />
-        <Route path="/dashboard/movimentacoes" element={<ProtectedRoute><SubscriptionGuard><MovimentacoesWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/portal-paciente" element={<ProtectedRoute requiredPermission="portal_paciente.visualizar"><SubscriptionGuard><PortalPacienteWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/ia-assistente" element={<ProtectedRoute requiredPermission="ia_assistente.visualizar"><SubscriptionGuard><IAAssistenteWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/proteses" element={<ProtectedRoute requiredPermission="proteses.visualizar"><SubscriptionGuard><ProtesesWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/ortodontia" element={<ProtectedRoute requiredPermission="ortodontia.visualizar"><SubscriptionGuard><OrtodontiaWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/estoque" element={<ProtectedRoute requiredPermission="estoque.visualizar"><SubscriptionGuard><EstoqueWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/produtos" element={<ProtectedRoute requiredPermission="estoque.visualizar"><SubscriptionGuard><ProdutosWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/movimentacoes" element={<ProtectedRoute requiredPermission="estoque.visualizar"><SubscriptionGuard><MovimentacoesWrapper /></SubscriptionGuard></ProtectedRoute>} />
         <Route path="/dashboard/perfil" element={<ProtectedRoute><PerfilWrapper /></ProtectedRoute>} />
         <Route path="/dashboard/assinatura" element={<ProtectedRoute><AssinaturaWrapper /></ProtectedRoute>} />
-        <Route path="/dashboard/configuracoes" element={<ProtectedRoute requiredRole={["admin", "super_admin"]}><SubscriptionGuard><ConfiguracoesWrapper /></SubscriptionGuard></ProtectedRoute>} />
-        <Route path="/dashboard/relatorios" element={<ProtectedRoute requiredRole={["admin", "super_admin"]}><SubscriptionGuard><RelatoriosWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/configuracoes" element={<ProtectedRoute requiredPermission="configuracoes.visualizar"><SubscriptionGuard><ConfiguracoesWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/relatorios" element={<ProtectedRoute requiredPermission="relatorios.visualizar"><SubscriptionGuard><RelatoriosWrapper /></SubscriptionGuard></ProtectedRoute>} />
         
         {/* Super Admin Routes */}
         <Route path="/super-admin" element={<ProtectedRoute requiredRole={["super_admin"]}><SuperAdminDashboardWrapper /></ProtectedRoute>} />
