@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { NovoAgendamentoPacienteModal } from "./NovoAgendamentoPacienteModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -55,7 +55,6 @@ interface Appointment {
 }
 
 export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
-  const navigate = useNavigate();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("todos");
@@ -63,10 +62,26 @@ export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
   const [finalizeTarget, setFinalizeTarget] = useState<Appointment | null>(null);
   const [finalizeNotes, setFinalizeNotes] = useState("");
   const [finalizing, setFinalizing] = useState(false);
+  const [novoAgendamentoOpen, setNovoAgendamentoOpen] = useState(false);
+  const [patientName, setPatientName] = useState("");
+  const [clinicId, setClinicId] = useState("");
 
   useEffect(() => {
     loadAppointments();
+    loadPatientInfo();
   }, [patientId]);
+
+  const loadPatientInfo = async () => {
+    const { data } = await supabase
+      .from("patients")
+      .select("full_name, clinic_id")
+      .eq("id", patientId)
+      .single();
+    if (data) {
+      setPatientName(data.full_name);
+      setClinicId(data.clinic_id);
+    }
+  };
 
   const loadAppointments = async () => {
     try {
@@ -257,7 +272,7 @@ export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
           <CardTitle className="text-lg">Histórico de Agendamentos</CardTitle>
           <Button
             size="sm"
-            onClick={() => navigate(`/dashboard/agenda?new=true&patient=${patientId}`)}
+            onClick={() => setNovoAgendamentoOpen(true)}
           >
             <Plus className="h-4 w-4 mr-2" />
             Novo Agendamento
@@ -467,6 +482,18 @@ export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal Novo Agendamento inline */}
+      {clinicId && (
+        <NovoAgendamentoPacienteModal
+          open={novoAgendamentoOpen}
+          onOpenChange={setNovoAgendamentoOpen}
+          patientId={patientId}
+          patientName={patientName}
+          clinicId={clinicId}
+          onSuccess={loadAppointments}
+        />
+      )}
     </div>
   );
 };
