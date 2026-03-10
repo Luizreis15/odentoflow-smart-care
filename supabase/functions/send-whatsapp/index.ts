@@ -41,7 +41,7 @@ serve(async (req) => {
       .from('whatsapp_config')
       .select('*')
       .eq('clinic_id', clinicId)
-      .eq('ativo', true)
+      .eq('connected', true)
       .maybeSingle();
 
     if (configError || !config) {
