@@ -13,12 +13,12 @@ const logStep = (step: string, details?: any) => {
 };
 
 const PRODUCT_MAP: Record<string, string> = {
-  "prod_U7fzEWf4iIcjqX": "solo",
-  "prod_U7fzVpHswmo8Rr": "solo",
-  "prod_U7fz9jQ10GCTmZ": "crescimento",
-  "prod_U7fzvDOUzvm90n": "crescimento",
-  "prod_U7fzKcaSInt0rF": "premium",
-  "prod_U7fz4toGswQXER": "premium",
+  "prod_U7g4hLtt0H3XvC": "solo",
+  "prod_U7g4RZJUZ2coRl": "solo",
+  "prod_U7g4zFoakbOVu8": "crescimento",
+  "prod_U7g4zw0JYOWCMm": "crescimento",
+  "prod_U7g4gvgzDEs6Ob": "premium",
+  "prod_U7g4yGk6WwWwx4": "premium",
 };
 
 serve(async (req) => {
