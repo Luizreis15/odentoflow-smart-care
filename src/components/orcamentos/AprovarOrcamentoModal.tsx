@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 import { format, addMonths } from "date-fns";
+import { generateRecibo, type ReciboData } from "@/utils/generateRecibo";
 import {
   Check,
   ChevronRight,
@@ -23,7 +24,11 @@ import {
   User,
   FileText,
   Loader2,
+  Printer,
+  CheckCircle,
 } from "lucide-react";
+
+const IMMEDIATE_METHODS = ["pix", "dinheiro", "cartao_credito", "cartao_debito", "transferencia", "carteira_digital"];
 
 const PAYMENT_METHODS = [
   { value: "pix", label: "PIX" },
