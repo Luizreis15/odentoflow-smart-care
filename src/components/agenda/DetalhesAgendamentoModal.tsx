@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Calendar, Clock, User, Stethoscope, Check, X, RefreshCw, Trash2, Edit2, Save, FileText } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { Calendar, Clock, User, Stethoscope, Check, X, RefreshCw, Trash2, Edit2, Save, FileText, ClipboardCheck, MessageSquare, Loader2 } from "lucide-react";
+import { format, parseISO, isPast, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,6 +62,9 @@ export const DetalhesAgendamentoModal = ({
   const [isEditing, setIsEditing] = useState(false);
   const [isRescheduling, setIsRescheduling] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showFinalize, setShowFinalize] = useState(false);
+  const [finalizeNotes, setFinalizeNotes] = useState("");
+  const [finalizing, setFinalizing] = useState(false);
   const [saving, setSaving] = useState(false);
   
   const [editData, setEditData] = useState({
@@ -208,6 +212,36 @@ export const DetalhesAgendamentoModal = ({
     }
   };
 
+  const canFinalize = () => {
+    const date = parseISO(appointment.appointment_date);
+    const pastOrToday = isPast(date) || isToday(date);
+    return pastOrToday && (appointment.status === "scheduled" || appointment.status === "confirmed");
+  };
+
+  const handleFinalize = async () => {
+    if (!finalizeNotes.trim()) {
+      toast.error("Preencha as observações do atendimento");
+      return;
+    }
+    setFinalizing(true);
+    try {
+      const { error } = await supabase
+        .from("appointments")
+        .update({ status: "completed", description: finalizeNotes.trim() })
+        .eq("id", appointment.id);
+      if (error) throw error;
+      toast.success("Atendimento finalizado com sucesso");
+      setShowFinalize(false);
+      setFinalizeNotes("");
+      await onUpdate();
+      onOpenChange(false);
+    } catch (error: any) {
+      toast.error("Erro ao finalizar atendimento: " + error.message);
+    } finally {
+      setFinalizing(false);
+    }
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -278,7 +312,28 @@ export const DetalhesAgendamentoModal = ({
                     {statusLabels[appointment.status] || appointment.status}
                   </Badge>
                 </div>
+                {appointment.description && (
+                  <div className="col-span-2">
+                    <p className="text-muted-foreground mb-1 flex items-center gap-1.5">
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      Observações
+                    </p>
+                    <p className="text-sm bg-muted/50 rounded-md p-2.5">{appointment.description}</p>
+                  </div>
+                )}
               </div>
+            )}
+
+            {/* Botão Finalizar Atendimento */}
+            {!isEditing && !isRescheduling && canFinalize() && (
+              <Button
+                className="w-full"
+                onClick={() => setShowFinalize(true)}
+                disabled={saving}
+              >
+                <ClipboardCheck className="h-4 w-4 mr-2" />
+                Finalizar Atendimento
+              </Button>
             )}
 
             {/* Form de Edição */}
@@ -493,6 +548,65 @@ export const DetalhesAgendamentoModal = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog Finalizar Atendimento */}
+      <Dialog open={showFinalize} onOpenChange={setShowFinalize}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ClipboardCheck className="h-5 w-5" />
+              Finalizar Atendimento
+            </DialogTitle>
+            <DialogDescription>
+              Registre o que foi realizado nesta consulta. Este campo é obrigatório.
+            </DialogDescription>
+          </DialogHeader>
+
+          {appointment && (
+            <div className="space-y-4">
+              <div className="rounded-lg bg-muted/50 p-3 space-y-1 text-sm">
+                <p><strong>Paciente:</strong> {appointment.patient?.full_name}</p>
+                <p><strong>Procedimento:</strong> {appointment.title}</p>
+                <p><strong>Data:</strong> {format(parseISO(appointment.appointment_date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                <p><strong>Profissional:</strong> {appointment.dentist?.nome || "Não informado"}</p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-1.5">
+                  <MessageSquare className="h-4 w-4" />
+                  Observações do atendimento *
+                </label>
+                <Textarea
+                  value={finalizeNotes}
+                  onChange={(e) => setFinalizeNotes(e.target.value)}
+                  placeholder="Descreva o que foi realizado nesta consulta..."
+                  rows={5}
+                  className="resize-none"
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowFinalize(false)} disabled={finalizing}>
+              Cancelar
+            </Button>
+            <Button onClick={handleFinalize} disabled={finalizing || !finalizeNotes.trim()}>
+              {finalizing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Finalizando...
+                </>
+              ) : (
+                <>
+                  <ClipboardCheck className="h-4 w-4 mr-2" />
+                  Confirmar Finalização
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
