@@ -68,7 +68,20 @@ export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
 
   useEffect(() => {
     loadAppointments();
+    loadPatientInfo();
   }, [patientId]);
+
+  const loadPatientInfo = async () => {
+    const { data } = await supabase
+      .from("patients")
+      .select("full_name, clinic_id")
+      .eq("id", patientId)
+      .single();
+    if (data) {
+      setPatientName(data.full_name);
+      setClinicId(data.clinic_id);
+    }
+  };
 
   const loadAppointments = async () => {
     try {
