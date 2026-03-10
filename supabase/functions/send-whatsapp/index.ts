@@ -62,7 +62,7 @@ serve(async (req) => {
     let message = '';
     
     if (messageType === 'confirmation' && appointmentData) {
-      message = config.template_confirmacao || 
+      message = config.mensagem_confirmacao || 
         `Olá ${appointmentData.patientName}! 🦷\n\nSua consulta está confirmada:\n📅 Data: ${appointmentData.date}\n⏰ Horário: ${appointmentData.time}\n${appointmentData.procedure ? `📋 Procedimento: ${appointmentData.procedure}\n` : ''}${appointmentData.dentistName ? `👨‍⚕️ Profissional: ${appointmentData.dentistName}\n` : ''}\nPor favor, chegue com 10 minutos de antecedência.\n\nResponda SIM para confirmar ou NÃO para reagendar.`;
       
       message = message
