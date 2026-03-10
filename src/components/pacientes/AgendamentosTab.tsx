@@ -482,6 +482,18 @@ export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal Novo Agendamento inline */}
+      {clinicId && (
+        <NovoAgendamentoPacienteModal
+          open={novoAgendamentoOpen}
+          onOpenChange={setNovoAgendamentoOpen}
+          patientId={patientId}
+          patientName={patientName}
+          clinicId={clinicId}
+          onSuccess={loadAppointments}
+        />
+      )}
     </div>
   );
 };
