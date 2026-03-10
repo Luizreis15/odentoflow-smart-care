@@ -369,8 +369,8 @@ const Cadastro = () => {
                     <SelectContent>
                       <SelectItem value="dentista">Dentista</SelectItem>
                       <SelectItem value="secretaria">Secretária(o)</SelectItem>
-                      <SelectItem value="administrador">Administrador</SelectItem>
-                      <SelectItem value="paciente">Paciente</SelectItem>
+                      <SelectItem value="administrador">Administrador(a)</SelectItem>
+                      <SelectItem value="auxiliar">Auxiliar / ASB</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

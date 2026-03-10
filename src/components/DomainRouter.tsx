@@ -113,32 +113,33 @@ function AppRoutes() {
         <Route path="/onboarding/tipo" element={<Tipo />} />
         <Route path="/onboarding/clinica" element={<Clinica />} />
         <Route path="/onboarding/profissional" element={<Profissional />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/dashboard/agenda" element={<AgendaWrapper />} />
-        <Route path="/dashboard/prontuario" element={<ProntuarioWrapper />} />
-        <Route path="/dashboard/prontuario/:id" element={<PatientDetails />} />
-        <Route path="/dashboard/financeiro" element={<FinanceiroWrapper />} />
-        <Route path="/dashboard/crm" element={<CRMWrapper />} />
-        <Route path="/dashboard/crm/atendimento" element={<CRMAtendimentoWrapper />} />
-        <Route path="/dashboard/portal-paciente" element={<PortalPacienteWrapper />} />
-        <Route path="/dashboard/ia-assistente" element={<IAAssistenteWrapper />} />
-        <Route path="/dashboard/proteses" element={<ProtesesWrapper />} />
-        <Route path="/dashboard/ortodontia" element={<OrtodontiaWrapper />} />
-        <Route path="/dashboard/estoque" element={<EstoqueWrapper />} />
-        <Route path="/dashboard/produtos" element={<ProdutosWrapper />} />
-        <Route path="/dashboard/movimentacoes" element={<MovimentacoesWrapper />} />
-        <Route path="/dashboard/perfil" element={<PerfilWrapper />} />
-        <Route path="/dashboard/assinatura" element={<AssinaturaWrapper />} />
-        <Route path="/dashboard/configuracoes" element={<ConfiguracoesWrapper />} />
-        <Route path="/dashboard/relatorios" element={<RelatoriosWrapper />} />
+        {/* Protected Dashboard Routes */}
+        <Route path="/dashboard" element={<ProtectedRoute><SubscriptionGuard><Dashboard /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/agenda" element={<ProtectedRoute><SubscriptionGuard><AgendaWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/prontuario" element={<ProtectedRoute><SubscriptionGuard><ProntuarioWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/prontuario/:id" element={<ProtectedRoute><SubscriptionGuard><PatientDetails /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/financeiro" element={<ProtectedRoute requiredRole={["admin", "super_admin"]}><SubscriptionGuard><FinanceiroWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/crm" element={<ProtectedRoute requiredRole={["admin", "super_admin"]}><SubscriptionGuard><CRMWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/crm/atendimento" element={<ProtectedRoute><SubscriptionGuard><CRMAtendimentoWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/portal-paciente" element={<ProtectedRoute requiredRole={["admin", "super_admin"]}><SubscriptionGuard><PortalPacienteWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/ia-assistente" element={<ProtectedRoute><SubscriptionGuard><IAAssistenteWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/proteses" element={<ProtectedRoute><SubscriptionGuard><ProtesesWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/ortodontia" element={<ProtectedRoute><SubscriptionGuard><OrtodontiaWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/estoque" element={<ProtectedRoute><SubscriptionGuard><EstoqueWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/produtos" element={<ProtectedRoute><SubscriptionGuard><ProdutosWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/movimentacoes" element={<ProtectedRoute><SubscriptionGuard><MovimentacoesWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/perfil" element={<ProtectedRoute><PerfilWrapper /></ProtectedRoute>} />
+        <Route path="/dashboard/assinatura" element={<ProtectedRoute><AssinaturaWrapper /></ProtectedRoute>} />
+        <Route path="/dashboard/configuracoes" element={<ProtectedRoute requiredRole={["admin", "super_admin"]}><SubscriptionGuard><ConfiguracoesWrapper /></SubscriptionGuard></ProtectedRoute>} />
+        <Route path="/dashboard/relatorios" element={<ProtectedRoute requiredRole={["admin", "super_admin"]}><SubscriptionGuard><RelatoriosWrapper /></SubscriptionGuard></ProtectedRoute>} />
         
         {/* Super Admin Routes */}
-        <Route path="/super-admin" element={<SuperAdminDashboardWrapper />} />
-        <Route path="/super-admin/planos" element={<PlanosWrapper />} />
-        <Route path="/super-admin/modulos" element={<ModulosWrapper />} />
-        <Route path="/super-admin/anamnese" element={<GlobalAnamneseWrapper />} />
-        <Route path="/super-admin/locatarios" element={<LocatariosWrapper />} />
-        <Route path="/super-admin/auditoria" element={<AuditoriaWrapper />} />
+        <Route path="/super-admin" element={<ProtectedRoute requiredRole={["super_admin"]}><SuperAdminDashboardWrapper /></ProtectedRoute>} />
+        <Route path="/super-admin/planos" element={<ProtectedRoute requiredRole={["super_admin"]}><PlanosWrapper /></ProtectedRoute>} />
+        <Route path="/super-admin/modulos" element={<ProtectedRoute requiredRole={["super_admin"]}><ModulosWrapper /></ProtectedRoute>} />
+        <Route path="/super-admin/anamnese" element={<ProtectedRoute requiredRole={["super_admin"]}><GlobalAnamneseWrapper /></ProtectedRoute>} />
+        <Route path="/super-admin/locatarios" element={<ProtectedRoute requiredRole={["super_admin"]}><LocatariosWrapper /></ProtectedRoute>} />
+        <Route path="/super-admin/auditoria" element={<ProtectedRoute requiredRole={["super_admin"]}><AuditoriaWrapper /></ProtectedRoute>} />
         
         {/* Portal do Paciente */}
         <Route path="/portal/auth" element={<PortalAuth />} />
