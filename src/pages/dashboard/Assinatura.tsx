@@ -16,16 +16,6 @@ const plans: Record<string, {
   popular?: boolean;
   features: string[];
 }> = {
-  teste: {
-    name: "🧪 Plano Teste",
-    monthly: 0.01,
-    annual: 0.01,
-    features: [
-      "Plano de teste R$0,01",
-      "Validação do fluxo completo",
-      "Será cancelado após teste"
-    ]
-  },
   solo: {
     name: "Plano Solo",
     monthly: 89.90,
