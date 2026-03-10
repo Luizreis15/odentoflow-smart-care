@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { UsuariosTable } from "./UsuariosTable";
 import { InviteUserModal } from "./InviteUserModal";
 import { EditUserModal } from "./EditUserModal";
+import { PermissoesPerfilModal } from "./PermissoesPerfilModal";
 
 interface Usuario {
   id: string;
@@ -24,6 +25,16 @@ interface UsuariosTabProps {
   clinicaId: string;
 }
 
+const perfilLabels: Record<string, string> = {
+  admin: "Administrador",
+  dentista: "Dentista",
+  recepcao: "Recepção",
+  assistente: "Assistente",
+  recepcionista: "Recepcionista",
+  asb: "ASB",
+  cirurgiao_dentista: "Cirurgião-Dentista",
+};
+
 export const UsuariosTab = ({ clinicaId }: UsuariosTabProps) => {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [filteredUsuarios, setFilteredUsuarios] = useState<Usuario[]>([]);
@@ -32,6 +43,8 @@ export const UsuariosTab = ({ clinicaId }: UsuariosTabProps) => {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingUsuario, setEditingUsuario] = useState<Usuario | null>(null);
+  const [permModalOpen, setPermModalOpen] = useState(false);
+  const [permPerfil, setPermPerfil] = useState("");
 
   useEffect(() => {
     loadUsuarios();
@@ -118,6 +131,11 @@ export const UsuariosTab = ({ clinicaId }: UsuariosTabProps) => {
     }
   };
 
+  const handleManagePermissions = (perfil: string) => {
+    setPermPerfil(perfil);
+    setPermModalOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
@@ -142,6 +160,7 @@ export const UsuariosTab = ({ clinicaId }: UsuariosTabProps) => {
         onEdit={handleEdit}
         onToggleStatus={handleToggleStatus}
         onResendInvite={handleResendInvite}
+        onManagePermissions={handleManagePermissions}
       />
 
       <InviteUserModal
@@ -162,6 +181,14 @@ export const UsuariosTab = ({ clinicaId }: UsuariosTabProps) => {
         }}
         usuario={editingUsuario}
         clinicaId={clinicaId}
+      />
+
+      <PermissoesPerfilModal
+        open={permModalOpen}
+        onClose={() => setPermModalOpen(false)}
+        clinicId={clinicaId}
+        perfil={permPerfil}
+        perfilLabel={perfilLabels[permPerfil] || permPerfil}
       />
     </div>
   );
