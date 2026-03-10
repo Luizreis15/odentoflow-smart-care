@@ -156,12 +156,16 @@ const Financeiro = () => {
               <TabsTrigger value="recorrencias" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
                 RECORRÊNCIAS
               </TabsTrigger>
-              <TabsTrigger value="comissoes" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
-                COMISSÕES
-              </TabsTrigger>
-              <TabsTrigger value="relatorios" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
-                RELATÓRIOS
-              </TabsTrigger>
+              {can("comissoes", "visualizar") && (
+                <TabsTrigger value="comissoes" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
+                  COMISSÕES
+                </TabsTrigger>
+              )}
+              {can("relatorios", "visualizar") && (
+                <TabsTrigger value="relatorios" className="text-primary-foreground data-[state=active]:bg-primary-foreground data-[state=active]:text-primary text-xs md:text-sm px-3 md:px-4">
+                  RELATÓRIOS
+                </TabsTrigger>
+              )}
             </TabsList>
           </div>
         </div>
