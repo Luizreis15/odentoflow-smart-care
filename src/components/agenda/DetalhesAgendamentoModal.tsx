@@ -312,7 +312,28 @@ export const DetalhesAgendamentoModal = ({
                     {statusLabels[appointment.status] || appointment.status}
                   </Badge>
                 </div>
+                {appointment.description && (
+                  <div className="col-span-2">
+                    <p className="text-muted-foreground mb-1 flex items-center gap-1.5">
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      Observações
+                    </p>
+                    <p className="text-sm bg-muted/50 rounded-md p-2.5">{appointment.description}</p>
+                  </div>
+                )}
               </div>
+            )}
+
+            {/* Botão Finalizar Atendimento */}
+            {!isEditing && !isRescheduling && canFinalize() && (
+              <Button
+                className="w-full"
+                onClick={() => setShowFinalize(true)}
+                disabled={saving}
+              >
+                <ClipboardCheck className="h-4 w-4 mr-2" />
+                Finalizar Atendimento
+              </Button>
             )}
 
             {/* Form de Edição */}
