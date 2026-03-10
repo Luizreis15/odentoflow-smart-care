@@ -750,6 +750,47 @@ export type Database = {
           },
         ]
       }
+      clinic_permissions: {
+        Row: {
+          acao: string
+          clinic_id: string
+          created_at: string
+          id: string
+          perfil: Database["public"]["Enums"]["perfil_usuario"]
+          permitido: boolean
+          recurso: string
+          updated_at: string
+        }
+        Insert: {
+          acao: string
+          clinic_id: string
+          created_at?: string
+          id?: string
+          perfil: Database["public"]["Enums"]["perfil_usuario"]
+          permitido?: boolean
+          recurso: string
+          updated_at?: string
+        }
+        Update: {
+          acao?: string
+          clinic_id?: string
+          created_at?: string
+          id?: string
+          perfil?: Database["public"]["Enums"]["perfil_usuario"]
+          permitido?: boolean
+          recurso?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_permissions_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinicas: {
         Row: {
           address: Json | null
@@ -6238,6 +6279,10 @@ export type Database = {
       }
       is_portal_patient: { Args: never; Returns: string }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      seed_default_permissions: {
+        Args: { _clinic_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       base_calculo_repasse: "valor_bruto" | "valor_liquido" | "valor_recebido"
