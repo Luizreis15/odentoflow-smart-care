@@ -1,0 +1,27 @@
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+
+const PageLoader = () => (
+  <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
+
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  requiredRole?: string[];
+}
+
+export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+  const { isAuthenticated, isLoading, perfil, isSuperAdmin } = useAuth();
+
+  if (isLoading) return <PageLoader />;
+  if (!isAuthenticated) return <Navigate to="/auth" replace />;
+
+  if (requiredRole && requiredRole.length > 0) {
+    const hasRole = isSuperAdmin || (perfil && requiredRole.includes(perfil));
+    if (!hasRole) return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+}
