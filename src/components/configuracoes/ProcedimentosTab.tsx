@@ -133,6 +133,21 @@ export const ProcedimentosTab = ({ clinicaId }: ProcedimentosTabProps) => {
     }
   };
 
+  const handleCriarPlanoPadrao = async () => {
+    setCreatingDefault(true);
+    try {
+      const success = await criarPlanoPadrao(clinicaId);
+      if (success) {
+        toast.success("Tabela Padrão criada com sucesso!");
+        loadData();
+      } else {
+        toast.error("Erro ao criar Tabela Padrão");
+      }
+    } finally {
+      setCreatingDefault(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
