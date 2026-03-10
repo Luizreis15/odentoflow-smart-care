@@ -28,6 +28,7 @@ interface Transaction {
 
 const Financeiro = () => {
   const { clinicId: authClinicId } = useAuth();
+  const { can } = usePermissions();
   const clinicId = authClinicId || "";
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
