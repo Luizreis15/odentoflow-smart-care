@@ -80,6 +80,8 @@ function SiteRoutes() {
         <Route path="/recursos/prontuario" element={<ProntuarioRecurso />} />
         <Route path="/recursos/documentos" element={<DocumentosRecurso />} />
         <Route path="/recursos/financeiro" element={<FinanceiroRecurso />} />
+        <Route path="/termos" element={<Termos />} />
+        <Route path="/privacidade" element={<Privacidade />} />
         
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminAuth />} />

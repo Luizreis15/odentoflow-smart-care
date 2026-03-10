@@ -64,6 +64,8 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (loading) return; // Prevent double-submit
+
     const validation = signinSchema.safeParse({ 
       email: loginEmail, 
       password: loginPassword 
@@ -85,9 +87,8 @@ const Auth = () => {
       password: validation.data.password,
     });
 
-    setLoading(false);
-
     if (error) {
+      setLoading(false);
       toast({
         variant: "destructive",
         title: "Erro ao fazer login",
