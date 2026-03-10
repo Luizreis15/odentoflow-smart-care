@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -249,6 +249,26 @@ const Agenda = () => {
       window.removeEventListener("focus", handleFocus);
     };
   }, [authClinicId]);
+
+  // Compute pending finalizations: confirmed/scheduled appointments that are past or today
+  const pendingFinalizations = useMemo(() => {
+    return appointments.filter(apt => {
+      const date = parseISO(apt.appointment_date);
+      const isPastTime = isBefore(date, new Date());
+      return isPastTime && (apt.status === "scheduled" || apt.status === "confirmed");
+    });
+  }, [appointments]);
+
+  // Warn user before closing browser if there are pending finalizations
+  useEffect(() => {
+    if (pendingFinalizations.length === 0) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [pendingFinalizations.length]);
 
   const loadData = async () => {
     if (!authClinicId) return;
@@ -1056,6 +1076,39 @@ const Agenda = () => {
 
   return (
     <div className="space-y-4">
+      {/* Banner de pendências de finalização */}
+      {pendingFinalizations.length > 0 && (
+        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-700 rounded-lg p-4 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-semibold text-amber-800 dark:text-amber-300">
+              {pendingFinalizations.length} atendimento{pendingFinalizations.length > 1 ? "s" : ""} pendente{pendingFinalizations.length > 1 ? "s" : ""} de finalização
+            </p>
+            <p className="text-sm text-amber-700 dark:text-amber-400 mt-0.5">
+              Clique nos agendamentos abaixo para registrar as observações e finalizar.
+            </p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {pendingFinalizations.slice(0, 5).map(apt => (
+                <Button
+                  key={apt.id}
+                  variant="outline"
+                  size="sm"
+                  className="border-amber-400 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50"
+                  onClick={() => {
+                    setSelectedAppointment(apt);
+                    setIsDetailsModalOpen(true);
+                  }}
+                >
+                  {apt.patient?.full_name} — {format(parseISO(apt.appointment_date), "HH:mm")}
+                </Button>
+              ))}
+              {pendingFinalizations.length > 5 && (
+                <span className="text-xs text-amber-600 self-center">+{pendingFinalizations.length - 5} mais</span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header Estilo Clinicorp */}
       <div className="bg-card border rounded-lg p-4 space-y-4">
         {/* Linha 1: Data atual + Navegação + Ações */}
