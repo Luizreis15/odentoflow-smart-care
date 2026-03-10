@@ -94,8 +94,15 @@ const bottomNavigation: NavItem[] = [
 
 const DesktopSidebar = () => {
   const location = useLocation();
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, perfil } = useAuth();
   const [openSubMenu, setOpenSubMenu] = useState<string | null>(null);
+
+  const canAccess = (href: string) => {
+    const allowed = routeAccess[href];
+    if (!allowed) return true; // no restriction
+    if (isSuperAdmin) return true;
+    return perfil ? allowed.includes(perfil) : false;
+  };
 
   const isActive = (href: string) => location.pathname === href;
   const isParentActive = (item: NavItem) =>
