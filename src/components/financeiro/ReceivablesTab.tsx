@@ -75,6 +75,8 @@ const PAYMENT_METHODS: Record<string, string> = {
 };
 
 export const ReceivablesTab = ({ clinicId }: ReceivablesTabProps) => {
+  const { can } = usePermissions();
+  const canEstorno = can("financeiro", "estorno");
   const [titles, setTitles] = useState<ReceivableTitle[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
