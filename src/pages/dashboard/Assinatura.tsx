@@ -9,53 +9,60 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 
+const plans: Record<string, {
+  name: string;
+  monthly: number;
+  annual: number;
+  popular?: boolean;
+  features: string[];
+}> = {
+  solo: {
+    name: "Plano Solo",
+    monthly: 89.90,
+    annual: 899.00,
+    features: [
+      "1 Profissional/Agenda",
+      "Agendamento Online",
+      "Prontuário Digital",
+      "Gestão Financeira Básica"
+    ]
+  },
+  crescimento: {
+    name: "Plano Crescimento",
+    monthly: 134.90,
+    annual: 1349.00,
+    popular: true,
+    features: [
+      "Até 3 Profissionais/Agendas",
+      "Confirmação Automática (SMS/WhatsApp)",
+      "Assinatura Digital de Documentos",
+      "Relatórios Avançados"
+    ]
+  },
+  premium: {
+    name: "Plano Premium",
+    monthly: 179.90,
+    annual: 1799.00,
+    features: [
+      "Profissionais Ilimitados",
+      "Assistente IA para Anamnese",
+      "Integração com Laboratórios",
+      "Suporte Prioritário 24/7"
+    ]
+  }
+};
+
+const comparisonRows = [
+  { label: "Nº de Agendas", solo: "1", crescimento: "3", premium: "Ilimitado" },
+  { label: "Confirmação Automática", solo: false, crescimento: true, premium: true },
+  { label: "Assinatura Digital", solo: false, crescimento: true, premium: true },
+  { label: "Assistente IA", solo: false, crescimento: false, premium: true },
+];
+
 const Assinatura = () => {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("annual");
   const [loading, setLoading] = useState<string | null>(null);
   const { plan: currentPlan, status } = useSubscription();
-
-  const plans: Record<string, {
-    name: string;
-    monthly: number;
-    annual: number;
-    popular?: boolean;
-    features: string[];
-  }> = {
-    solo: {
-      name: "Plano Solo",
-      monthly: 89.90,
-      annual: 899.00,
-      features: [
-        "1 Profissional/Agenda",
-        "Agendamento Online",
-        "Prontuário Digital",
-        "Gestão Financeira Básica"
-      ]
-    },
-    crescimento: {
-      name: "Plano Crescimento",
-      monthly: 134.90,
-      annual: 1349.00,
-      popular: true,
-      features: [
-        "Até 3 Profissionais/Agendas",
-        "Confirmação Automática (SMS/WhatsApp)",
-        "Assinatura Digital de Documentos",
-        "Relatórios Avançados"
-      ]
-    },
-    premium: {
-      name: "Plano Premium",
-      monthly: 179.90,
-      annual: 1799.00,
-      features: [
-        "Profissionais Ilimitados",
-        "Assistente IA para Anamnese",
-        "Integração com Laboratórios",
-        "Suporte Prioritário 24/7"
-      ]
-    }
-  };
 
   const handleCheckout = async (planId: string) => {
     setLoading(planId);
@@ -77,20 +84,11 @@ const Assinatura = () => {
     }
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(price);
-  };
-
-  const getDiscountPercentage = () => {
-    return "10%";
-  };
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
 
   return (
     <div className="space-y-8 p-6 max-w-7xl mx-auto">
-      {/* Header */}
       <div className="text-center space-y-4">
         <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
           Escolha Seu Plano Flowdent e Transforme Sua Clínica
@@ -100,7 +98,6 @@ const Assinatura = () => {
         </p>
       </div>
 
-      {/* Billing Toggle */}
       <div className="flex items-center justify-center gap-4 p-4 bg-muted/50 rounded-lg max-w-md mx-auto">
         <Label htmlFor="billing-toggle" className={billingPeriod === "monthly" ? "font-semibold" : ""}>
           Mensal
@@ -114,13 +111,10 @@ const Assinatura = () => {
           Anual
         </Label>
         {billingPeriod === "annual" && (
-          <Badge variant="secondary" className="ml-2">
-            Economize {getDiscountPercentage()}
-          </Badge>
+          <Badge variant="secondary" className="ml-2">Economize 10%</Badge>
         )}
       </div>
 
-      {/* Plan Cards */}
       <div className="grid md:grid-cols-3 gap-6">
         {Object.entries(plans).map(([planId, plan]) => {
           const price = billingPeriod === "monthly" ? plan.monthly : plan.annual;
@@ -128,7 +122,7 @@ const Assinatura = () => {
           const isPopular = plan.popular;
 
           return (
-            <Card 
+            <Card
               key={planId}
               className={`relative ${isPopular ? 'border-primary shadow-lg scale-105' : ''} ${isCurrentPlan ? 'ring-2 ring-primary' : ''}`}
             >
@@ -142,13 +136,11 @@ const Assinatura = () => {
                   Plano Atual
                 </Badge>
               )}
-              
+
               <CardHeader className="text-center pb-8 pt-6">
                 <CardTitle className="text-2xl mb-2">{plan.name}</CardTitle>
                 <div className="space-y-1">
-                  <div className="text-4xl font-bold">
-                    {formatPrice(price)}
-                  </div>
+                  <div className="text-4xl font-bold">{formatPrice(price)}</div>
                   <CardDescription>
                     por {billingPeriod === "monthly" ? "mês" : "ano"}
                   </CardDescription>
@@ -192,7 +184,6 @@ const Assinatura = () => {
         })}
       </div>
 
-      {/* Comparison Table */}
       <Card>
         <CardHeader>
           <CardTitle>Comparação Rápida</CardTitle>
@@ -210,37 +201,26 @@ const Assinatura = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr className="border-b">
-                  <td className="py-3 px-4">Nº de Agendas</td>
-                  <td className="text-center py-3 px-4">1</td>
-                  <td className="text-center py-3 px-4">3</td>
-                  <td className="text-center py-3 px-4">Ilimitado</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-3 px-4">Confirmação Automática</td>
-                  <td className="text-center py-3 px-4">-</td>
-                  <td className="text-center py-3 px-4"><Check className="h-5 w-5 text-primary mx-auto" /></td>
-                  <td className="text-center py-3 px-4"><Check className="h-5 w-5 text-primary mx-auto" /></td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-3 px-4">Assinatura Digital</td>
-                  <td className="text-center py-3 px-4">-</td>
-                  <td className="text-center py-3 px-4"><Check className="h-5 w-5 text-primary mx-auto" /></td>
-                  <td className="text-center py-3 px-4"><Check className="h-5 w-5 text-primary mx-auto" /></td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-3 px-4">Assistente IA</td>
-                  <td className="text-center py-3 px-4">-</td>
-                  <td className="text-center py-3 px-4">-</td>
-                  <td className="text-center py-3 px-4"><Check className="h-5 w-5 text-primary mx-auto" /></td>
-                </tr>
+                {comparisonRows.map((row, i) => (
+                  <tr key={i} className="border-b">
+                    <td className="py-3 px-4">{row.label}</td>
+                    {(["solo", "crescimento", "premium"] as const).map((col) => (
+                      <td key={col} className="text-center py-3 px-4">
+                        {typeof row[col] === "boolean" ? (
+                          row[col] ? <Check className="h-5 w-5 text-primary mx-auto" /> : "-"
+                        ) : (
+                          row[col]
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         </CardContent>
       </Card>
 
-      {/* Current Status */}
       {status === "trialing" && (
         <Card className="bg-yellow-50 dark:bg-yellow-950/20 border-yellow-500">
           <CardContent className="pt-6">

@@ -73,7 +73,7 @@ const PlanoCobrancaTab = ({ userId }: PlanoCobrancaTabProps) => {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            Gerencie seus métodos de pagamento através do portal do Stripe.
+            Gerencie seus métodos de pagamento através do portal de cobrança.
           </p>
           <Button variant="outline" className="w-full">
             <CreditCard className="mr-2 h-4 w-4" />
