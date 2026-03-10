@@ -1,7 +1,17 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   Table, 
   TableBody, 
@@ -16,10 +26,11 @@ import {
   Clock, 
   CheckCircle2, 
   XCircle, 
-  AlertCircle,
   Plus,
-  Filter,
-  User
+  User,
+  ClipboardCheck,
+  Loader2,
+  MessageSquare,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -44,9 +55,14 @@ interface Appointment {
 }
 
 export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("todos");
+  const [finalizeOpen, setFinalizeOpen] = useState(false);
+  const [finalizeTarget, setFinalizeTarget] = useState<Appointment | null>(null);
+  const [finalizeNotes, setFinalizeNotes] = useState("");
+  const [finalizing, setFinalizing] = useState(false);
 
   useEffect(() => {
     loadAppointments();
@@ -55,7 +71,6 @@ export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
   const loadAppointments = async () => {
     try {
       setLoading(true);
-
       const { data, error } = await supabase
         .from("appointments")
         .select(`
@@ -67,7 +82,6 @@ export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
 
       if (error) throw error;
       setAppointments(data || []);
-
     } catch (error: any) {
       console.error("Erro ao carregar agendamentos:", error);
       toast.error("Erro ao carregar agendamentos");
@@ -76,10 +90,8 @@ export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
     }
   };
 
-  // Filtrar por tab
   const filteredAppointments = appointments.filter(apt => {
     const date = parseISO(apt.appointment_date);
-    
     switch (activeTab) {
       case "proximos":
         return isFuture(date) || isToday(date);
@@ -92,7 +104,6 @@ export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
     }
   });
 
-  // Estatísticas
   const totalAgendamentos = appointments.length;
   const agendamentosRealizados = appointments.filter(a => 
     a.status === "completed" || a.status === "confirmed"
@@ -105,12 +116,46 @@ export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
     return isFuture(date) || isToday(date);
   }).length;
 
+  const canFinalize = (apt: Appointment) => {
+    const date = parseISO(apt.appointment_date);
+    const pastOrToday = isPast(date) || isToday(date);
+    return pastOrToday && (apt.status === "scheduled" || apt.status === "confirmed" || !apt.status);
+  };
+
+  const handleOpenFinalize = (apt: Appointment) => {
+    setFinalizeTarget(apt);
+    setFinalizeNotes("");
+    setFinalizeOpen(true);
+  };
+
+  const handleFinalize = async () => {
+    if (!finalizeTarget || !finalizeNotes.trim()) {
+      toast.error("Preencha as observações do atendimento");
+      return;
+    }
+    try {
+      setFinalizing(true);
+      const { error } = await supabase
+        .from("appointments")
+        .update({ status: "completed", description: finalizeNotes.trim() })
+        .eq("id", finalizeTarget.id);
+      if (error) throw error;
+      toast.success("Atendimento finalizado com sucesso");
+      setFinalizeOpen(false);
+      loadAppointments();
+    } catch (error: any) {
+      console.error("Erro ao finalizar atendimento:", error);
+      toast.error("Erro ao finalizar atendimento");
+    } finally {
+      setFinalizing(false);
+    }
+  };
+
   const getStatusBadge = (status: string | null, date: string) => {
     const appointmentDate = parseISO(date);
-    
     switch (status) {
       case "completed":
-        return <Badge className="bg-green-500 text-white">Realizado</Badge>;
+        return <Badge className="bg-[hsl(var(--success-green))] text-white">Realizado</Badge>;
       case "confirmed":
         return <Badge className="bg-blue-500 text-white">Confirmado</Badge>;
       case "cancelled":
@@ -210,7 +255,10 @@ export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg">Histórico de Agendamentos</CardTitle>
-          <Button size="sm">
+          <Button
+            size="sm"
+            onClick={() => navigate(`/dashboard/agenda?new=true&patient=${patientId}`)}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Novo Agendamento
           </Button>
@@ -244,7 +292,9 @@ export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
                         <TableHead>Procedimento</TableHead>
                         <TableHead>Profissional</TableHead>
                         <TableHead>Duração</TableHead>
+                        <TableHead>Observações</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -268,14 +318,7 @@ export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="flex flex-col">
-                                <span className="font-medium">{appointment.title}</span>
-                                {appointment.description && (
-                                  <span className="text-sm text-muted-foreground line-clamp-1">
-                                    {appointment.description}
-                                  </span>
-                                )}
-                              </div>
+                              <span className="font-medium">{appointment.title}</span>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
@@ -286,8 +329,30 @@ export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
                             <TableCell>
                               {formatDuration(appointment.duration_minutes)}
                             </TableCell>
+                            <TableCell className="max-w-[200px]">
+                              {appointment.description ? (
+                                <span className="text-sm text-muted-foreground line-clamp-2">
+                                  {appointment.description}
+                                </span>
+                              ) : (
+                                <span className="text-sm text-muted-foreground/50">—</span>
+                              )}
+                            </TableCell>
                             <TableCell>
                               {getStatusBadge(appointment.status, appointment.appointment_date)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {canFinalize(appointment) && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleOpenFinalize(appointment)}
+                                  title="Finalizar atendimento"
+                                >
+                                  <ClipboardCheck className="h-3.5 w-3.5 mr-1" />
+                                  Finalizar
+                                </Button>
+                              )}
                             </TableCell>
                           </TableRow>
                         );
@@ -313,14 +378,11 @@ export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
                 <h4 className="font-semibold text-lg mb-1">Próximo Agendamento</h4>
                 {(() => {
                   const next = appointments.find(a => {
-                    const date = parseISO(a.appointment_date);
-                    return isFuture(date) || isToday(date);
+                    const d = parseISO(a.appointment_date);
+                    return isFuture(d) || isToday(d);
                   });
-                  
                   if (!next) return null;
-                  
-                  const date = parseISO(next.appointment_date);
-                  
+                  const d = parseISO(next.appointment_date);
                   return (
                     <div className="space-y-1">
                       <p className="text-muted-foreground">
@@ -332,11 +394,11 @@ export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
                       </p>
                       <p className="text-sm">
                         <span className="font-semibold text-blue-600">
-                          {isToday(date) ? "Hoje" : format(date, "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                          {isToday(d) ? "Hoje" : format(d, "EEEE, dd 'de' MMMM", { locale: ptBR })}
                         </span>
                         {" às "}
                         <span className="font-semibold text-blue-600">
-                          {format(date, "HH:mm", { locale: ptBR })}
+                          {format(d, "HH:mm", { locale: ptBR })}
                         </span>
                       </p>
                     </div>
@@ -347,6 +409,64 @@ export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
           </CardContent>
         </Card>
       )}
+
+      {/* Dialog Finalizar Atendimento */}
+      <Dialog open={finalizeOpen} onOpenChange={setFinalizeOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ClipboardCheck className="h-5 w-5" />
+              Finalizar Atendimento
+            </DialogTitle>
+            <DialogDescription>
+              Registre o que foi realizado nesta consulta. Este campo é obrigatório para gerar o histórico do paciente.
+            </DialogDescription>
+          </DialogHeader>
+
+          {finalizeTarget && (
+            <div className="space-y-4">
+              <div className="rounded-lg bg-muted/50 p-3 space-y-1 text-sm">
+                <p><strong>Procedimento:</strong> {finalizeTarget.title}</p>
+                <p><strong>Data:</strong> {format(parseISO(finalizeTarget.appointment_date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                <p><strong>Profissional:</strong> {finalizeTarget.profissional?.nome || "Não informado"}</p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-1.5">
+                  <MessageSquare className="h-4 w-4" />
+                  Observações do atendimento *
+                </label>
+                <Textarea
+                  value={finalizeNotes}
+                  onChange={(e) => setFinalizeNotes(e.target.value)}
+                  placeholder="Descreva o que foi realizado nesta consulta... Ex: Limpeza completa, aplicação de flúor, orientações de higiene bucal."
+                  rows={5}
+                  className="resize-none"
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFinalizeOpen(false)} disabled={finalizing}>
+              Cancelar
+            </Button>
+            <Button onClick={handleFinalize} disabled={finalizing || !finalizeNotes.trim()}>
+              {finalizing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Finalizando...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Confirmar Finalização
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
