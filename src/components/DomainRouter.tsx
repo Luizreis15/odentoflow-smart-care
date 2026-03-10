@@ -19,6 +19,8 @@ const AgendaRecurso = lazy(() => import("@/pages/recursos/Agenda"));
 const ProntuarioRecurso = lazy(() => import("@/pages/recursos/Prontuario"));
 const DocumentosRecurso = lazy(() => import("@/pages/recursos/Documentos"));
 const FinanceiroRecurso = lazy(() => import("@/pages/recursos/Financeiro"));
+const Termos = lazy(() => import("@/pages/Termos"));
+const Privacidade = lazy(() => import("@/pages/Privacidade"));
 const AdminAuth = lazy(() => import("@/pages/admin/AdminAuth"));
 const AdminLayout = lazy(() => import("@/components/AdminLayout"));
 const AdminDashboard = lazy(() => import("@/pages/admin/Dashboard"));
