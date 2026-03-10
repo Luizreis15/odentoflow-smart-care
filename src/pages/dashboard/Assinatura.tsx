@@ -63,7 +63,7 @@ const plans: Record<string, {
 };
 
 const comparisonRows = [
-  { label: "Nº de Agendas", solo: "1", crescimento: "3", premium: "Ilimitado" },
+  { label: "Nº de Agendas", solo: "1", crescimento: "3", premium: "Ilimitado", teste: "Teste" },
   { label: "Confirmação Automática", solo: false, crescimento: true, premium: true },
   { label: "Assinatura Digital", solo: false, crescimento: true, premium: true },
   { label: "Assistente IA", solo: false, crescimento: false, premium: true },
