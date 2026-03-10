@@ -439,9 +439,9 @@ export const DetalhesAgendamentoModal = ({
                   <Button variant="outline" className="flex-1" onClick={() => setIsRescheduling(false)} disabled={saving}>
                     Cancelar
                   </Button>
-                  <Button className="flex-1" onClick={handleReschedule} disabled={saving}>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    {saving ? "Reagendando..." : "Confirmar Reagendamento"}
+                  <Button className="flex-1 whitespace-normal" onClick={handleReschedule} disabled={saving}>
+                    <RefreshCw className="mr-2 h-4 w-4 shrink-0" />
+                    {saving ? "Reagendando..." : "Reagendar"}
                   </Button>
                 </div>
               </div>
