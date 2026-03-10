@@ -62,6 +62,9 @@ export const DetalhesAgendamentoModal = ({
   const [isEditing, setIsEditing] = useState(false);
   const [isRescheduling, setIsRescheduling] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showFinalize, setShowFinalize] = useState(false);
+  const [finalizeNotes, setFinalizeNotes] = useState("");
+  const [finalizing, setFinalizing] = useState(false);
   const [saving, setSaving] = useState(false);
   
   const [editData, setEditData] = useState({
