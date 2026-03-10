@@ -205,19 +205,23 @@ const DesktopSidebar = () => {
             </Link>
           )}
 
-          {navGroups.map((group, groupIndex) => (
-            <div key={group.title} className="mb-3">
-              <div className="px-3 pt-2 pb-1">
-                <span className="text-[11px] font-semibold text-sidebar-foreground/40 tracking-wider uppercase">
-                  {group.title}
-                </span>
-              </div>
-              {group.items.map(renderNavItem)}
-              {groupIndex < navGroups.length - 1 && (
-                <div className="mx-4 mt-3 border-t border-sidebar-border" />
-              )}
-            </div>
-          ))}
+          {navGroups.map((group, groupIndex) => {
+              const visibleItems = group.items.filter((item) => canAccess(item.href));
+              if (visibleItems.length === 0) return null;
+              return (
+                <div key={group.title} className="mb-3">
+                  <div className="px-3 pt-2 pb-1">
+                    <span className="text-[11px] font-semibold text-sidebar-foreground/40 tracking-wider uppercase">
+                      {group.title}
+                    </span>
+                  </div>
+                  {visibleItems.map(renderNavItem)}
+                  {groupIndex < navGroups.length - 1 && (
+                    <div className="mx-4 mt-3 border-t border-sidebar-border" />
+                  )}
+                </div>
+              );
+            })}
         </nav>
 
         {/* Separator */}
