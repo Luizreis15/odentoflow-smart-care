@@ -6298,7 +6298,14 @@ export type Database = {
         | "assistente"
         | "recepcao"
         | "super_admin"
-      plano_tipo: "starter" | "pro" | "enterprise"
+      plano_tipo:
+        | "starter"
+        | "pro"
+        | "enterprise"
+        | "teste"
+        | "solo"
+        | "crescimento"
+        | "premium"
       responsavel_tributario: "profissional" | "clinica"
       status_assinatura:
         | "trialing"
@@ -6470,7 +6477,15 @@ export const Constants = {
         "recepcao",
         "super_admin",
       ],
-      plano_tipo: ["starter", "pro", "enterprise"],
+      plano_tipo: [
+        "starter",
+        "pro",
+        "enterprise",
+        "teste",
+        "solo",
+        "crescimento",
+        "premium",
+      ],
       responsavel_tributario: ["profissional", "clinica"],
       status_assinatura: [
         "trialing",
