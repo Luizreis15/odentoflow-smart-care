@@ -55,7 +55,6 @@ interface Appointment {
 }
 
 export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
-  const navigate = useNavigate();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("todos");
@@ -63,6 +62,9 @@ export const AgendamentosTab = ({ patientId }: AgendamentosTabProps) => {
   const [finalizeTarget, setFinalizeTarget] = useState<Appointment | null>(null);
   const [finalizeNotes, setFinalizeNotes] = useState("");
   const [finalizing, setFinalizing] = useState(false);
+  const [novoAgendamentoOpen, setNovoAgendamentoOpen] = useState(false);
+  const [patientName, setPatientName] = useState("");
+  const [clinicId, setClinicId] = useState("");
 
   useEffect(() => {
     loadAppointments();
