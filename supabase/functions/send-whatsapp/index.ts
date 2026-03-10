@@ -73,7 +73,7 @@ serve(async (req) => {
         .replace('{profissional}', appointmentData.dentistName || '');
         
     } else if (messageType === 'reminder' && appointmentData) {
-      message = config.template_lembrete || 
+      message = config.mensagem_lembrete || 
         `Olá ${appointmentData.patientName}! 🦷\n\nLembramos que você tem uma consulta amanhã:\n📅 Data: ${appointmentData.date}\n⏰ Horário: ${appointmentData.time}\n\nConfirme sua presença respondendo SIM.\n\nCaso precise reagendar, entre em contato conosco.`;
       
       message = message

@@ -81,21 +81,31 @@ serve(async (req) => {
       trialEnd: subscription.trial_end,
     });
 
-    // Save to onboarding_sessions table
-    const { error: insertError } = await supabaseClient
-      .from("onboarding_sessions")
-      .upsert({
-        user_id: user.id,
-        stripe_customer_id: customerId,
-        stripe_subscription_id: subscription.id,
-      }, {
-        onConflict: "user_id",
-      });
+    // Update clinica with Stripe data
+    const { data: profile } = await supabaseClient
+      .from("profiles")
+      .select("clinic_id")
+      .eq("id", user.id)
+      .single();
 
-    if (insertError) {
-      logStep("Error saving onboarding session", { error: insertError.message });
+    if (profile?.clinic_id) {
+      const { error: updateError } = await supabaseClient
+        .from("clinicas")
+        .update({
+          stripe_customer_id: customerId,
+          stripe_subscription_id: subscription.id,
+          status_assinatura: "trialing",
+          current_period_end: new Date(subscription.trial_end! * 1000).toISOString(),
+        })
+        .eq("id", profile.clinic_id);
+
+      if (updateError) {
+        logStep("Error updating clinic", { error: updateError.message });
+      } else {
+        logStep("Clinic updated with Stripe data");
+      }
     } else {
-      logStep("Onboarding session saved");
+      logStep("No clinic found for user, skipping clinic update");
     }
 
     return new Response(
