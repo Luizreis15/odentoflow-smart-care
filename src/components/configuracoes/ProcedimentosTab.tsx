@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Upload, Download, Search } from "lucide-react";
+import { Plus, Upload, Download, Search, Sparkles, Loader2 } from "lucide-react";
 import { ImportProcedimentosModal } from "./ImportProcedimentosModal";
 import { NovoPlanoProcedimentosModal } from "./NovoPlanoProcedimentosModal";
 import { PlanosTable } from "./PlanosTable";
+import { criarPlanoPadrao } from "@/utils/criarPlanoPadrao";
 
 interface ProcedimentosTabProps {
   clinicaId: string;
@@ -19,6 +20,7 @@ export const ProcedimentosTab = ({ clinicaId }: ProcedimentosTabProps) => {
   const [totalProcedimentos, setTotalProcedimentos] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [creatingDefault, setCreatingDefault] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showNovoPlanoModal, setShowNovoPlanoModal] = useState(false);
   const [planoPadrao, setPlanoPadrao] = useState<any>(null);
@@ -131,6 +133,21 @@ export const ProcedimentosTab = ({ clinicaId }: ProcedimentosTabProps) => {
     }
   };
 
+  const handleCriarPlanoPadrao = async () => {
+    setCreatingDefault(true);
+    try {
+      const success = await criarPlanoPadrao(clinicaId);
+      if (success) {
+        toast.success("Tabela Padrão criada com sucesso!");
+        loadData();
+      } else {
+        toast.error("Erro ao criar Tabela Padrão");
+      }
+    } finally {
+      setCreatingDefault(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -206,6 +223,35 @@ export const ProcedimentosTab = ({ clinicaId }: ProcedimentosTabProps) => {
           </div>
         </Card>
       </div>
+
+      {planos.length === 0 && (
+        <Card className="p-6 border-dashed border-2 border-primary/30 bg-primary/5">
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex-shrink-0 p-3 rounded-full bg-primary/10">
+              <Sparkles className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1 text-center sm:text-left">
+              <h3 className="font-semibold text-lg">Habilitar Tabela Padrão</h3>
+              <p className="text-muted-foreground text-sm mt-1">
+                Crie automaticamente um plano com todos os {totalProcedimentos} procedimentos da base, 
+                pronto para usar nos seus orçamentos.
+              </p>
+            </div>
+            <Button
+              onClick={handleCriarPlanoPadrao}
+              disabled={creatingDefault}
+              className="gap-2 whitespace-nowrap"
+            >
+              {creatingDefault ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              {creatingDefault ? "Criando..." : "Habilitar Tabela Padrão"}
+            </Button>
+          </div>
+        </Card>
+      )}
 
       <Card className="p-6">
         <div className="space-y-4">

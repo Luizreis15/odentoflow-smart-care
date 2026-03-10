@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowLeft } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { z } from "zod";
+import { criarPlanoPadrao } from "@/utils/criarPlanoPadrao";
 
 const clinicSchema = z.object({
   nome: z.string().trim().min(2, "Nome deve ter pelo menos 2 caracteres").max(100),
@@ -70,6 +71,9 @@ const Clinica = () => {
         .from("usuarios")
         .update({ clinica_id: (clinicData as any).id } as any)
         .eq("id", user.id);
+
+      // Create default plan with all base procedures
+      await criarPlanoPadrao((clinicData as any).id);
 
       toast({
         title: "Clínica criada com sucesso!",

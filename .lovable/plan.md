@@ -1,31 +1,41 @@
 
 
-# Plano Padrão de Procedimentos para Novas Clínicas
+## Plano: Atalhos estratégicos para o Prontuário do Paciente
 
-## Contexto
-Existem 334 procedimentos na tabela base `procedimentos`, mas nenhum plano padrão é criado automaticamente para novas clínicas. Isso significa que ao tentar criar orçamentos, o cliente não tem plano disponível para selecionar procedimentos.
+### Objetivo
+Tornar o nome do paciente clicável em todos os locais onde aparece, redirecionando para `/dashboard/prontuario/{patient_id}` — facilitando o acesso rápido ao prontuário.
 
-## Solução
+### Locais que serão alterados
 
-### 1. Criar plano padrão automaticamente no onboarding
-Quando uma clínica é criada (em `Clinica.tsx` e `Profissional.tsx`), após inserir a clínica no banco, criar automaticamente um plano chamado **"Tabela Padrão"** em `planos_procedimentos` com `is_padrao = true`, e popular `planos_procedimentos_itens` com todos os 334 procedimentos da tabela base usando os valores originais (ajuste 0%).
+1. **Agenda — Day Slots View** (`src/pages/dashboard/Agenda.tsx`, ~linha 748)
+   - O nome do paciente nos slots ocupados será um link clicável para o prontuário
+   - Adicionar `e.stopPropagation()` para não abrir o modal de detalhes ao clicar no nome
+   - Usar `useNavigate` (já importado via `react-router-dom`) + estilo de link (underline on hover, cursor pointer)
 
-### 2. Adicionar botão "Habilitar Tabela Padrão" na aba de Procedimentos
-No `ProcedimentosTab.tsx`, quando a clínica não tem nenhum plano cadastrado, exibir um card/banner com a opção de **"Habilitar Tabela Padrão"** que cria o plano com os 334 procedimentos base. Isso cobre clínicas existentes que ainda não têm plano.
+2. **Agenda — Week View** (`src/pages/dashboard/Agenda.tsx`, ~linha 979)
+   - O nome do paciente na célula semanal será clicável para o prontuário
+   - `e.stopPropagation()` para não disparar o `handleAppointmentClick`
 
-### 3. Atualizar a clínica atual via banco
-Inserir o plano padrão para a clínica `Momento Sorriso` (do teste atual) diretamente no banco.
+3. **Agenda — Detalhes do Agendamento Modal** (`src/components/agenda/DetalhesAgendamentoModal.tsx`, ~linha 234)
+   - O nome do paciente no modal será um link clicável para o prontuário
+   - Adicionar botão "Abrir Prontuário" nas ações do modal
 
-## Arquivos a modificar
+4. **Dashboard — Agenda do Dia (tabela)** (`src/components/dashboard/DashboardAgendaTable.tsx`, ~linha 122)
+   - A coluna "Paciente" na tabela do dashboard será um link clicável
+   - Usar `useNavigate` para redirecionar
 
-- **`src/pages/onboarding/Clinica.tsx`** — Após criar a clínica, chamar função para criar plano padrão
-- **`src/pages/onboarding/Profissional.tsx`** — Mesmo ajuste para fluxo liberal
-- **`src/components/configuracoes/ProcedimentosTab.tsx`** — Adicionar botão "Habilitar Tabela Padrão" quando não há planos, e função `criarPlanoPadrao(clinicaId)`
-- **Banco de dados** — Inserir plano padrão para clínica existente
+5. **Dashboard — Próximas Consultas** (`src/components/dashboard/UpcomingAppointments.tsx`, ~linha 83)
+   - O nome do paciente será clicável
 
-## Fluxo do usuário
+6. **Mobile — Agenda List** (`src/components/mobile/MobileAgendaList.tsx`)
+   - Já redireciona para prontuário no `onClick` do card — manter como está
 
-1. **Novo cliente**: Onboarding cria clínica + plano padrão automaticamente
-2. **Cliente existente sem plano**: Vê banner "Habilitar Tabela Padrão" na aba Procedimentos
-3. **Personalização**: Cliente pode criar planos adicionais ou editar o padrão a qualquer momento
+7. **Mobile — MobileAgenda** (`src/pages/mobile/MobileAgenda.tsx`)
+   - Já redireciona para prontuário no `onClick` — manter como está
+
+### Detalhes técnicos
+- Estilo do link: `hover:underline text-primary cursor-pointer` no nome do paciente
+- Navegação: `navigate(\`/dashboard/prontuario/\${patientId}\`)`
+- `e.stopPropagation()` em todos os locais onde o clique no nome conflita com um clique no container pai (slot, card, row)
+- No modal de detalhes: adicionar um botão "Ir ao Prontuário" com ícone `FileText`
 
