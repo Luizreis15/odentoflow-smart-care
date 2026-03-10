@@ -86,7 +86,7 @@ export const PermissoesPerfilModal = ({
         .from("clinic_permissions")
         .select("id, recurso, acao, permitido")
         .eq("clinic_id", clinicId)
-        .eq("perfil", perfil)
+        .eq("perfil", perfil as any)
         .order("recurso")
         .order("acao");
 

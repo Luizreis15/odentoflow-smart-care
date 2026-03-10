@@ -33,7 +33,7 @@ export const usePermissions = () => {
           .from("clinic_permissions")
           .select("recurso, acao, permitido")
           .eq("clinic_id", clinicId)
-          .eq("perfil", perfil as string);
+          .eq("perfil", perfil as any);
 
         if (error) throw error;
         setPermissions(data || []);
