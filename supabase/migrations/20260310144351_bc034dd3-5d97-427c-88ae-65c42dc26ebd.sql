@@ -1,0 +1,1 @@
+ALTER TYPE status_assinatura ADD VALUE IF NOT EXISTS 'expired';

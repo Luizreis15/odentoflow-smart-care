@@ -6261,6 +6261,7 @@ export type Database = {
         | "past_due"
         | "canceled"
         | "incomplete"
+        | "expired"
       status_comissao: "provisionado" | "aprovado" | "pago" | "cancelado"
       status_nfe: "pendente" | "conferida" | "lancada" | "cancelada"
       status_protese:
@@ -6432,6 +6433,7 @@ export const Constants = {
         "past_due",
         "canceled",
         "incomplete",
+        "expired",
       ],
       status_comissao: ["provisionado", "aprovado", "pago", "cancelado"],
       status_nfe: ["pendente", "conferida", "lancada", "cancelada"],
