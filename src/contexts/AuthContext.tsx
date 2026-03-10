@@ -78,8 +78,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsImpersonating(false);
       }
 
-      // Validate onboarding for non-admins
-      if (!isSuperAdminRole && profileData) {
+      // Validate onboarding for non-admins (skip if already on onboarding pages)
+      const currentPath = window.location.pathname;
+      const isOnOnboarding = currentPath.startsWith("/onboarding");
+      
+      if (!isSuperAdminRole && profileData && !isOnOnboarding) {
         if (!profileData.clinic_id) {
           navigate("/onboarding/welcome");
           return;
