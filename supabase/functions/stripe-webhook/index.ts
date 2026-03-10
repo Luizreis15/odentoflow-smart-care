@@ -175,7 +175,10 @@ async function handleSubscriptionChange(
   // Determine plan from product
   const productId = subscription.items.data[0]?.price?.product as string;
   const planName = PRODUCT_MAP[productId] || "starter";
-  const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+  logStep("Subscription details", { productId, planName, currentPeriodEnd: subscription.current_period_end, status: subscription.status });
+  const subscriptionEnd = subscription.current_period_end 
+    ? new Date(subscription.current_period_end * 1000).toISOString() 
+    : null;
 
   // Map Stripe status to our status
   let statusAssinatura = subscription.status;
