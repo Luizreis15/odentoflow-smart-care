@@ -209,6 +209,35 @@ export const ProcedimentosTab = ({ clinicaId }: ProcedimentosTabProps) => {
         </Card>
       </div>
 
+      {planos.length === 0 && (
+        <Card className="p-6 border-dashed border-2 border-primary/30 bg-primary/5">
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex-shrink-0 p-3 rounded-full bg-primary/10">
+              <Sparkles className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1 text-center sm:text-left">
+              <h3 className="font-semibold text-lg">Habilitar Tabela Padrão</h3>
+              <p className="text-muted-foreground text-sm mt-1">
+                Crie automaticamente um plano com todos os {totalProcedimentos} procedimentos da base, 
+                pronto para usar nos seus orçamentos.
+              </p>
+            </div>
+            <Button
+              onClick={handleCriarPlanoPadrao}
+              disabled={creatingDefault}
+              className="gap-2 whitespace-nowrap"
+            >
+              {creatingDefault ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              {creatingDefault ? "Criando..." : "Habilitar Tabela Padrão"}
+            </Button>
+          </div>
+        </Card>
+      )}
+
       <Card className="p-6">
         <div className="space-y-4">
           <div className="flex items-center gap-4">
