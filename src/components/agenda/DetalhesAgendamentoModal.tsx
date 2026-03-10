@@ -548,6 +548,65 @@ export const DetalhesAgendamentoModal = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog Finalizar Atendimento */}
+      <Dialog open={showFinalize} onOpenChange={setShowFinalize}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ClipboardCheck className="h-5 w-5" />
+              Finalizar Atendimento
+            </DialogTitle>
+            <DialogDescription>
+              Registre o que foi realizado nesta consulta. Este campo é obrigatório.
+            </DialogDescription>
+          </DialogHeader>
+
+          {appointment && (
+            <div className="space-y-4">
+              <div className="rounded-lg bg-muted/50 p-3 space-y-1 text-sm">
+                <p><strong>Paciente:</strong> {appointment.patient?.full_name}</p>
+                <p><strong>Procedimento:</strong> {appointment.title}</p>
+                <p><strong>Data:</strong> {format(parseISO(appointment.appointment_date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                <p><strong>Profissional:</strong> {appointment.dentist?.nome || "Não informado"}</p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-1.5">
+                  <MessageSquare className="h-4 w-4" />
+                  Observações do atendimento *
+                </label>
+                <Textarea
+                  value={finalizeNotes}
+                  onChange={(e) => setFinalizeNotes(e.target.value)}
+                  placeholder="Descreva o que foi realizado nesta consulta..."
+                  rows={5}
+                  className="resize-none"
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowFinalize(false)} disabled={finalizing}>
+              Cancelar
+            </Button>
+            <Button onClick={handleFinalize} disabled={finalizing || !finalizeNotes.trim()}>
+              {finalizing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Finalizando...
+                </>
+              ) : (
+                <>
+                  <ClipboardCheck className="h-4 w-4 mr-2" />
+                  Confirmar Finalização
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
