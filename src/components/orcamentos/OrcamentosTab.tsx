@@ -2,9 +2,25 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Check, FileText, Calendar, DollarSign } from "lucide-react";
+import { Plus, Check, FileText, Calendar, DollarSign, Printer, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { AprovarOrcamentoModal } from "./AprovarOrcamentoModal";
+import { supabase } from "@/integrations/supabase/client";
+import { generateRecibo, type ReciboData } from "@/utils/generateRecibo";
+import { toast } from "sonner";
+import { format } from "date-fns";
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  pix: "PIX",
+  dinheiro: "Dinheiro",
+  cartao_credito: "Cartão de Crédito",
+  cartao_debito: "Cartão de Débito",
+  transferencia: "Transferência Bancária",
+  boleto: "Boleto",
+  cheque: "Cheque",
+  convenio: "Convênio",
+  carteira_digital: "Carteira Digital",
+};
 
 interface Budget {
   id: string;
@@ -27,6 +43,7 @@ interface OrcamentosTabProps {
 
 export const OrcamentosTab = ({ budgets, onRefresh, onNewBudget }: OrcamentosTabProps) => {
   const [approvalBudgetId, setApprovalBudgetId] = useState<string | null>(null);
+  const [generatingReceipt, setGeneratingReceipt] = useState<string | null>(null);
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -49,6 +66,86 @@ export const OrcamentosTab = ({ budgets, onRefresh, onNewBudget }: OrcamentosTab
 
   const canApprove = (status: string) =>
     status === "draft" || status === "pending" || status === "sent";
+
+  const handleEmitirRecibo = async (budget: Budget) => {
+    setGeneratingReceipt(budget.id);
+    try {
+      // Fetch titles, budget_items, clinic, patient data
+      const [titlesRes, itemsRes] = await Promise.all([
+        supabase
+          .from("receivable_titles")
+          .select("title_number, payment_method, status, amount, patient_id, clinic_id")
+          .eq("budget_id", budget.id)
+          .order("installment_number", { ascending: true }),
+        supabase
+          .from("budget_items")
+          .select("procedure_name")
+          .eq("budget_id", budget.id),
+      ]);
+
+      const titles = titlesRes.data || [];
+      const items = itemsRes.data || [];
+
+      if (titles.length === 0) {
+        toast.error("Nenhuma parcela encontrada para este orçamento.");
+        return;
+      }
+
+      const firstTitle = titles[0];
+      const clinicId = firstTitle.clinic_id;
+      const patientId = firstTitle.patient_id;
+
+      const [clinicRes, patientRes, configRes] = await Promise.all([
+        supabase.from("clinicas").select("nome, cnpj, telefone, address").eq("id", clinicId).single(),
+        supabase.from("patients").select("full_name, cpf").eq("id", patientId).single(),
+        supabase.from("configuracoes_clinica").select("logotipo_url").eq("clinica_id", clinicId).maybeSingle(),
+      ]);
+
+      const clinic = clinicRes.data;
+      const patient = patientRes.data;
+      const config = configRes.data;
+
+      const proceduresList = items.map((i) => i.procedure_name).join(", ");
+      const primaryMethod = firstTitle.payment_method || "pix";
+      const installmentsCount = titles.length;
+      const methodLabel = PAYMENT_METHOD_LABELS[primaryMethod] || primaryMethod;
+      const methodSummary = installmentsCount > 1 ? `${methodLabel} ${installmentsCount}x` : methodLabel;
+      const description = `${budget.title} — ${proceduresList} — ${methodSummary}`;
+
+      const address = clinic?.address as any;
+      const clinicAddress = address
+        ? [address.street, address.number, address.neighborhood, address.city, address.state]
+            .filter(Boolean)
+            .join(", ")
+        : undefined;
+
+      const reciboData: ReciboData = {
+        receiptNumber: firstTitle.title_number || 1,
+        titleNumber: firstTitle.title_number || 1,
+        installmentNumber: 1,
+        totalInstallments: 1,
+        patientName: patient?.full_name || "Paciente",
+        patientCpf: patient?.cpf || undefined,
+        amount: budget.final_value,
+        paymentMethod: primaryMethod,
+        paymentDate: budget.approved_at ? format(new Date(budget.approved_at), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
+        clinicName: clinic?.nome || "Clínica",
+        clinicCnpj: clinic?.cnpj || undefined,
+        clinicPhone: clinic?.telefone || undefined,
+        clinicAddress,
+        clinicLogoUrl: config?.logotipo_url || undefined,
+        description,
+      };
+
+      await generateRecibo(reciboData);
+      toast.success("Recibo gerado com sucesso!");
+    } catch (error: any) {
+      console.error("Erro ao gerar recibo:", error);
+      toast.error("Erro ao gerar recibo");
+    } finally {
+      setGeneratingReceipt(null);
+    }
+  };
 
   if (budgets.length === 0) {
     return (
@@ -124,17 +221,17 @@ export const OrcamentosTab = ({ budgets, onRefresh, onNewBudget }: OrcamentosTab
       </div>
 
       <div className="grid gap-4">
-        {budgets.map((budget) => (
-          <Card key={budget.id}>
+        {budgets.map((b) => (
+          <Card key={b.id}>
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
-                  <CardTitle className="text-lg">{budget.title}</CardTitle>
-                  {budget.description && (
-                    <p className="text-sm text-muted-foreground">{budget.description}</p>
+                  <CardTitle className="text-lg">{b.title}</CardTitle>
+                  {b.description && (
+                    <p className="text-sm text-muted-foreground">{b.description}</p>
                   )}
                 </div>
-                {getStatusBadge(budget.status)}
+                {getStatusBadge(b.status)}
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -143,52 +240,67 @@ export const OrcamentosTab = ({ budgets, onRefresh, onNewBudget }: OrcamentosTab
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="text-xs text-muted-foreground">Valor Total</p>
-                    <p className="font-semibold">{formatCurrency(budget.final_value)}</p>
+                    <p className="font-semibold">{formatCurrency(b.final_value)}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="text-xs text-muted-foreground">Criado em</p>
-                    <p className="font-semibold">{formatDate(budget.created_at)}</p>
+                    <p className="font-semibold">{formatDate(b.created_at)}</p>
                   </div>
                 </div>
-                {budget.valid_until && (
+                {b.valid_until && (
                   <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <p className="text-xs text-muted-foreground">Válido até</p>
-                      <p className="font-semibold">{formatDate(budget.valid_until)}</p>
+                      <p className="font-semibold">{formatDate(b.valid_until)}</p>
                     </div>
                   </div>
                 )}
               </div>
 
-              {budget.discount_value > 0 && (
+              {b.discount_value > 0 && (
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-muted-foreground">Desconto:</span>
                   <span className="font-medium text-destructive">
-                    -{formatCurrency(budget.discount_value)}
+                    -{formatCurrency(b.discount_value)}
                   </span>
                 </div>
               )}
 
-              <div className="flex gap-2">
-                {canApprove(budget.status) && (
+              <div className="flex gap-2 items-center flex-wrap">
+                {canApprove(b.status) && (
                   <Button
                     size="sm"
-                    onClick={() => setApprovalBudgetId(budget.id)}
+                    onClick={() => setApprovalBudgetId(b.id)}
                   >
                     <Check className="h-4 w-4 mr-2" />
                     Aprovar Orçamento
                   </Button>
                 )}
                 
-                {budget.approved_at && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Check className="h-4 w-4 text-primary" />
-                    <span>Aprovado em {formatDate(budget.approved_at)}</span>
-                  </div>
+                {b.status === "approved" && (
+                  <>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Check className="h-4 w-4 text-primary" />
+                      <span>Aprovado em {formatDate(b.approved_at!)}</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEmitirRecibo(b)}
+                      disabled={generatingReceipt === b.id}
+                    >
+                      {generatingReceipt === b.id ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Printer className="h-4 w-4 mr-2" />
+                      )}
+                      Emitir Recibo
+                    </Button>
+                  </>
                 )}
               </div>
             </CardContent>
