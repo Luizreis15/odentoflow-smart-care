@@ -136,6 +136,7 @@ const Cadastro = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return; // Prevent double-submit
     
     const validation = signupSchema.safeParse({ 
       email: signupEmail, 
@@ -392,10 +393,13 @@ const Cadastro = () => {
 
                 <p className="text-xs text-center text-[hsl(var(--slate-gray))]">
                   Ao clicar em "Iniciar teste" você está concordando com nossos{" "}
-                  <Link to="/" className="text-[hsl(var(--flowdent-blue))] hover:underline">
+                  <Link to="/termos" target="_blank" className="text-[hsl(var(--flowdent-blue))] hover:underline">
                     termos de uso
-                  </Link>
-                  .
+                  </Link>{" "}
+                  e{" "}
+                  <Link to="/privacidade" target="_blank" className="text-[hsl(var(--flowdent-blue))] hover:underline">
+                    política de privacidade
+                  </Link>.
                 </p>
 
                 <Button 

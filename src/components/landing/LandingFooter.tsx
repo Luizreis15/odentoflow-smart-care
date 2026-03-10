@@ -102,9 +102,9 @@ export default function LandingFooter() {
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 text-xs text-gray-500">
               <span>© 2025 Flowdent - Todos os direitos reservados</span>
               <span className="hidden md:inline">|</span>
-              <a href="#termos" className="hover:text-[hsl(var(--flow-turquoise))] transition">Termos de uso</a>
+              <a href="/termos" className="hover:text-[hsl(var(--flow-turquoise))] transition">Termos de uso</a>
               <span className="hidden md:inline">|</span>
-              <a href="#privacidade" className="hover:text-[hsl(var(--flow-turquoise))] transition">Política de Privacidade</a>
+              <a href="/privacidade" className="hover:text-[hsl(var(--flow-turquoise))] transition">Política de Privacidade</a>
             </div>
 
             {/* Redes Sociais */}
