@@ -75,13 +75,7 @@ serve(async (req) => {
     const isExpired = periodEnd && periodEnd < now && status === "trialing";
 
     if (isExpired) {
-      // Auto-expire trial
-      await supabaseClient
-        .from("clinicas")
-        .update({ status_assinatura: "expired" })
-        .eq("id", profile.clinic_id);
-
-      logStep("Trial expired, updated status");
+      logStep("Trial expired", { periodEnd: clinica.current_period_end });
       return new Response(
         JSON.stringify({
           subscribed: false,
@@ -89,6 +83,21 @@ serve(async (req) => {
           plan,
           subscription_end: clinica.current_period_end,
           trial_end: clinica.current_period_end,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
+
+    // If no period end set, treat trialing as active (grace period)
+    if (!periodEnd && status === "trialing") {
+      logStep("Trialing without period end - granting access");
+      return new Response(
+        JSON.stringify({
+          subscribed: true,
+          status: "trialing",
+          plan,
+          subscription_end: null,
+          trial_end: null,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );

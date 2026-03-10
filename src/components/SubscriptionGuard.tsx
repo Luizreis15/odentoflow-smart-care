@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const ALLOWED_WITHOUT_SUBSCRIPTION = [
   "/dashboard/assinatura",
   "/dashboard/perfil",
+  "/dashboard",
 ];
 
 export default function SubscriptionGuard({ children }: { children: React.ReactNode }) {
