@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Upload, Download, Search } from "lucide-react";
+import { Plus, Upload, Download, Search, Sparkles, Loader2 } from "lucide-react";
 import { ImportProcedimentosModal } from "./ImportProcedimentosModal";
 import { NovoPlanoProcedimentosModal } from "./NovoPlanoProcedimentosModal";
 import { PlanosTable } from "./PlanosTable";
+import { criarPlanoPadrao } from "@/utils/criarPlanoPadrao";
 
 interface ProcedimentosTabProps {
   clinicaId: string;
