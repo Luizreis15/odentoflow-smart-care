@@ -20,6 +20,7 @@ export const ProcedimentosTab = ({ clinicaId }: ProcedimentosTabProps) => {
   const [totalProcedimentos, setTotalProcedimentos] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [creatingDefault, setCreatingDefault] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showNovoPlanoModal, setShowNovoPlanoModal] = useState(false);
   const [planoPadrao, setPlanoPadrao] = useState<any>(null);
