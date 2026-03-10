@@ -81,6 +81,16 @@ export const UsuariosTable = ({ usuarios, loading, onEdit, onToggleStatus, onRes
               </TooltipTrigger>
               <TooltipContent><p>Editar usuário</p></TooltipContent>
             </Tooltip>
+            {onManagePermissions && user.perfil !== "admin" && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="sm" onClick={() => onManagePermissions(user.perfil)}>
+                    <ShieldCheck className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Gerenciar permissões do perfil</p></TooltipContent>
+              </Tooltip>
+            )}
           </div>
         </TooltipProvider>
       ),
