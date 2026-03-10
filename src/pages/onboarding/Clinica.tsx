@@ -72,6 +72,9 @@ const Clinica = () => {
         .update({ clinica_id: (clinicData as any).id } as any)
         .eq("id", user.id);
 
+      // Create default plan with all base procedures
+      await criarPlanoPadrao((clinicData as any).id);
+
       toast({
         title: "Clínica criada com sucesso!",
         description: "Agora vamos cadastrar o profissional responsável.",

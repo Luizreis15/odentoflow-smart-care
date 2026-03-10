@@ -166,6 +166,9 @@ const Profissional = () => {
         }
       }
 
+      // Create default plan with all base procedures
+      await criarPlanoPadrao(profile.clinic_id);
+
       await (supabase as any).from("clinicas").update({ onboarding_status: "completed" }).eq("id", profile.clinic_id);
 
       toast({ title: "Cadastro concluído!", description: "Bem-vindo ao Flowdent!" });
