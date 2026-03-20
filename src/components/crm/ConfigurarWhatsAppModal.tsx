@@ -202,7 +202,18 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
             />
           </div>
 
-          <Alert className={isActive ? "border-green-600/30 bg-green-50 dark:bg-green-950/20" : "border-yellow-600/30 bg-yellow-50 dark:bg-yellow-950/20"}>
+          <div>
+            <Label htmlFor="client_token">Client-Token (Token de Segurança) *</Label>
+            <Input
+              id="client_token"
+              type="password"
+              value={clientToken}
+              onChange={(e) => setClientToken(e.target.value)}
+              placeholder="Token de segurança da instância"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Encontre em: Z-API → Sua instância → Token de segurança</p>
+          </div>
+
             <AlertDescription>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
