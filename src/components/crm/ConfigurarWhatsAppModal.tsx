@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, CheckCircle2, ExternalLink } from "lucide-react";
+import { Loader2, ExternalLink } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 
@@ -53,6 +53,46 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
     }
   };
 
+  const registerWebhook = async (instId: string, instToken: string) => {
+    try {
+      const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/whatsapp-webhook`;
+
+      // Registrar webhook de mensagens recebidas
+      const receivedRes = await fetch(
+        `https://api.z-api.io/instances/${instId}/token/${instToken}/update-webhook-received`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value: webhookUrl }),
+        }
+      );
+
+      // Registrar webhook de status de mensagens
+      const statusRes = await fetch(
+        `https://api.z-api.io/instances/${instId}/token/${instToken}/update-webhook-message-status`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value: webhookUrl }),
+        }
+      );
+
+      console.log('Webhook received registration:', receivedRes.status);
+      console.log('Webhook status registration:', statusRes.status);
+
+      if (receivedRes.ok) {
+        toast.success("Webhook registrado na Z-API com sucesso!");
+      } else {
+        const err = await receivedRes.text();
+        console.error('Webhook registration error:', err);
+        toast.warning("Config salva, mas o webhook pode não ter sido registrado. Verifique as credenciais.");
+      }
+    } catch (error) {
+      console.error("Erro ao registrar webhook:", error);
+      toast.warning("Config salva, mas erro ao registrar webhook na Z-API.");
+    }
+  };
+
   const handleSave = async () => {
     if (!instanceId.trim() || !instanceToken.trim()) {
       toast.error("Preencha o Instance ID e o Token");
@@ -69,17 +109,37 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
 
       if (!profile?.clinic_id) throw new Error("Clínica não encontrada");
 
-      const { error } = await supabase
-        .from("whatsapp_configs" as any)
-        .upsert({
-          clinica_id: profile.clinic_id,
-          connection_type: "web_qrcode",
-          instance_id: instanceId.trim(),
-          instance_token: instanceToken.trim(),
-          is_active: isActive,
-        }, { onConflict: "clinica_id" });
+      if (existingConfig) {
+        const { error } = await supabase
+          .from("whatsapp_configs" as any)
+          .update({
+            connection_type: "web_qrcode",
+            instance_id: instanceId.trim(),
+            instance_token: instanceToken.trim(),
+            is_active: isActive,
+          } as any)
+          .eq("clinica_id", profile.clinic_id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("whatsapp_configs" as any)
+          .insert({
+            clinica_id: profile.clinic_id,
+            connection_type: "web_qrcode",
+            instance_id: instanceId.trim(),
+            instance_token: instanceToken.trim(),
+            is_active: isActive,
+          } as any);
+
+        if (error) throw error;
+        setExistingConfig(true);
+      }
+
+      // Se ativou, registrar webhook na Z-API automaticamente
+      if (isActive) {
+        await registerWebhook(instanceId.trim(), instanceToken.trim());
+      }
 
       toast.success(isActive ? "WhatsApp configurado e ativado!" : "Configuração salva (inativa)");
       onSuccess?.();

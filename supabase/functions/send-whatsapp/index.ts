@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 interface WhatsAppRequest {
@@ -36,18 +36,26 @@ serve(async (req) => {
 
     console.log('[SEND-WHATSAPP] Request received:', { clinicId, phone, messageType });
 
-    // Buscar configuração do WhatsApp da clínica
+    // Buscar configuração do WhatsApp da clínica — tabela correta: whatsapp_configs
     const { data: config, error: configError } = await supabase
-      .from('whatsapp_config')
+      .from('whatsapp_configs')
       .select('*')
-      .eq('clinic_id', clinicId)
-      .eq('connected', true)
+      .eq('clinica_id', clinicId)
+      .eq('is_active', true)
       .maybeSingle();
 
     if (configError || !config) {
       console.error('[SEND-WHATSAPP] Config not found:', configError);
       return new Response(
         JSON.stringify({ error: 'WhatsApp não configurado para esta clínica' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!config.instance_id || !config.instance_token) {
+      console.error('[SEND-WHATSAPP] Missing Z-API credentials');
+      return new Response(
+        JSON.stringify({ error: 'Credenciais Z-API não configuradas' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -87,10 +95,6 @@ serve(async (req) => {
       const name = patientName || appointmentData?.patientName || 'Paciente';
       const link = googleReviewLink || '';
       message = `Olá ${name}! 😊\n\nObrigado por confiar em nós! Seu feedback é muito importante.\n\n⭐ Avalie nossa clínica no Google:\n${link}\n\nSua opinião nos ajuda a melhorar cada vez mais! 🙏`;
-      
-      message = message
-        .replace('{paciente}', name)
-        .replace('{link_review}', link);
 
     } else if (messageType === 'campaign' && customMessage) {
       message = customMessage;
@@ -127,14 +131,13 @@ serve(async (req) => {
     if (!zapiResponse.ok) {
       console.error('[SEND-WHATSAPP] Z-API error:', zapiResult);
 
-      // Log failure
       await supabase.from('whatsapp_message_log').insert({
         clinic_id: clinicId,
         phone: formattedPhone,
         message_type: messageType,
         status: 'failed',
         error_message: JSON.stringify(zapiResult),
-      }).then(() => {});
+      });
 
       return new Response(
         JSON.stringify({ error: 'Erro ao enviar mensagem', details: zapiResult }),
@@ -142,14 +145,13 @@ serve(async (req) => {
       );
     }
 
-    // Log success
     await supabase.from('whatsapp_message_log').insert({
       clinic_id: clinicId,
       phone: formattedPhone,
       message_type: messageType,
       status: 'sent',
       zapi_message_id: zapiResult.messageId,
-    }).then(() => {});
+    });
 
     console.log('[SEND-WHATSAPP] Message sent successfully');
 
