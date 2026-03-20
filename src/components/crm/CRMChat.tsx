@@ -186,7 +186,7 @@ export function CRMChat({ clinicId }: CRMChatProps) {
   const selectedConv = conversations.find(c => c.id === selectedId);
 
   const statusIcon = (status: string) => {
-    if (status === 'read') return <CheckCheck className="w-3 h-3 text-blue-500" />;
+    if (status === 'read') return <CheckCheck className="w-3 h-3 text-primary" />;
     if (status === 'delivered') return <CheckCheck className="w-3 h-3 opacity-50" />;
     if (status === 'sent') return <CheckCheck className="w-3 h-3 opacity-30" />;
     return <Clock className="w-3 h-3 opacity-30" />;
