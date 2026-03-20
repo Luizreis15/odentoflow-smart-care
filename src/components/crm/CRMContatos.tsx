@@ -61,7 +61,7 @@ export function CRMContatos({ clinicId }: CRMContatosProps) {
       // Buscar pacientes com telefone que não estão nos contatos
       const { data: patients, error: pError } = await supabase
         .from("patients")
-        .select("id, name, phone")
+        .select("id, full_name, phone")
         .eq("clinic_id", clinicId)
         .not("phone", "is", null);
 
