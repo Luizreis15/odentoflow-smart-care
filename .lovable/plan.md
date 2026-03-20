@@ -1,117 +1,66 @@
 
 
-# CRM WhatsApp — Rebuild Completo com Infraestrutura Real
+# Correção da Integração WhatsApp Z-API — Tornar Operacional
 
 ## Diagnóstico
-- Tabelas `crm_conversations`, `crm_contacts`, `crm_messages` **não existem** no banco
-- Conexão QR Code é **simulada** (setTimeout de 10s marca como conectado)
-- Envio de mensagens só insere em tabela inexistente, sem integração real
-- Contatos da clínica (pacientes) nunca são carregados no CRM
 
-## Estratégia de Integração WhatsApp
+Encontrei 3 problemas que impedem o funcionamento:
 
-A integração real com WhatsApp requer um provedor externo. O sistema já referencia **Z-API** nas Edge Functions existentes (`send-whatsapp`). Para uma integração real, precisamos:
+### Problema 1: Envio não funciona — tabela errada
+A Edge Function `send-whatsapp` consulta a tabela `whatsapp_config` com colunas `clinic_id` e `connected = true`. A tabela real é `whatsapp_configs` com colunas `clinica_id` e `is_active`.
 
-1. **Z-API** (já referenciado no código) — serviço brasileiro de API WhatsApp que funciona via instância web
-2. Credenciais: `instance_id` e `instance_token` (configurados pela clínica na tela de config)
+Logs confirmam: `[SEND-WHATSAPP] Config not found: null`
 
-A Z-API já é o provedor escolhido no `send-whatsapp/index.ts`. Vamos manter essa escolha e construir o CRM em torno dela.
+### Problema 2: Recebimento não funciona — webhook com formato Meta
+A Edge Function `whatsapp-webhook` espera o payload da API Meta (`entry.changes.value.messages`). A Z-API envia um formato completamente diferente — objeto plano com campos `phone`, `text.message`, `instanceId`, etc.
 
-## Plano de Implementação
+Além disso, busca configuração por `phone_number_id` (campo da Meta API) que é NULL.
 
-### 1. Criar tabelas no banco de dados
-```sql
--- Contatos do CRM (sincronizados com pacientes + contatos avulsos)
-CREATE TABLE crm_contacts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  clinica_id UUID REFERENCES clinics(id) ON DELETE CASCADE NOT NULL,
-  patient_id UUID REFERENCES patients(id) ON DELETE SET NULL,
-  name TEXT NOT NULL,
-  phone TEXT NOT NULL,
-  tags TEXT[] DEFAULT '{}',
-  notes TEXT,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(clinica_id, phone)
-);
+### Problema 3: Webhook não configurado na Z-API
+A URL do webhook precisa ser configurada na Z-API via API PUT, apontando para nossa Edge Function.
 
--- Conversas
-CREATE TABLE crm_conversations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  clinica_id UUID REFERENCES clinics(id) ON DELETE CASCADE NOT NULL,
-  contact_id UUID REFERENCES crm_contacts(id) ON DELETE CASCADE NOT NULL,
-  status TEXT DEFAULT 'pending', -- pending, active, closed
-  assigned_to UUID REFERENCES auth.users(id),
-  last_message_at TIMESTAMPTZ DEFAULT now(),
-  unread_count INT DEFAULT 0,
-  kanban_stage TEXT DEFAULT 'novo', -- novo, em_atendimento, aguardando, finalizado
-  created_at TIMESTAMPTZ DEFAULT now()
-);
+## Plano de Correções
 
--- Mensagens
-CREATE TABLE crm_messages (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  conversation_id UUID REFERENCES crm_conversations(id) ON DELETE CASCADE NOT NULL,
-  whatsapp_message_id TEXT,
-  content TEXT,
-  is_from_me BOOLEAN DEFAULT false,
-  sender_id UUID,
-  message_type TEXT DEFAULT 'text',
-  media_url TEXT,
-  status TEXT DEFAULT 'pending', -- pending, sent, delivered, read, failed, received
-  created_at TIMESTAMPTZ DEFAULT now()
-);
+### 1. Corrigir `send-whatsapp/index.ts`
+- Mudar query de `whatsapp_config` → `whatsapp_configs`
+- Mudar filtro de `clinic_id` → `clinica_id`
+- Mudar filtro de `connected = true` → `is_active = true`
+- A URL da Z-API e body já estão corretos (`/send-text` com `{phone, message}`)
 
--- Respostas rápidas
-CREATE TABLE crm_quick_replies (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  clinica_id UUID REFERENCES clinics(id) ON DELETE CASCADE NOT NULL,
-  title TEXT NOT NULL,
-  content TEXT NOT NULL,
-  shortcut TEXT,
-  category TEXT DEFAULT 'geral',
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Habilitar realtime
-ALTER PUBLICATION supabase_realtime ADD TABLE crm_messages;
-ALTER PUBLICATION supabase_realtime ADD TABLE crm_conversations;
+### 2. Reescrever `whatsapp-webhook/index.ts` para formato Z-API
+O payload da Z-API é um objeto plano:
+```text
+{
+  "instanceId": "3EF19...",
+  "phone": "5511999999999",
+  "fromMe": false,
+  "text": { "message": "teste" },
+  "type": "ReceivedCallback",
+  "messageId": "...",
+  "senderName": "...",
+  "connectedPhone": "554499999999"
+}
 ```
 
-RLS policies para todas as tabelas filtrando por `clinica_id` do usuário autenticado.
+A webhook deve:
+- Receber POST com esse formato
+- Buscar config por `instance_id` (campo que identifica qual clínica)
+- Criar/buscar contato em `crm_contacts`
+- Criar/buscar conversa em `crm_conversations`
+- Inserir mensagem em `crm_messages`
 
-### 2. Sincronizar pacientes como contatos
-- Ao abrir o CRM, verificar pacientes da clínica que têm telefone e não existem em `crm_contacts`
-- Criar automaticamente contatos para esses pacientes (sync one-way)
-- Permitir adicionar contatos avulsos (não-pacientes)
+### 3. Configurar webhook na Z-API automaticamente
+Adicionar no `ConfigurarWhatsAppModal` (ao salvar com sucesso e is_active=true) uma chamada PUT para a Z-API registrando a URL do webhook:
+```
+PUT https://api.z-api.io/instances/{ID}/token/{TOKEN}/update-webhook-received
+Body: { "value": "https://aiavrxefjnoldukcdywd.supabase.co/functions/v1/whatsapp-webhook" }
+```
 
-### 3. Refatorar tela CRM Atendimento
-O `CRMAtendimento.tsx` será reescrito com:
+### Arquivos a modificar
 
-- **Aba Contatos**: Lista todos os contatos (pacientes sincronizados + avulsos), busca, filtros por tag
-- **Aba Conversas/Chat**: Layout atual de chat, mas usando tabelas reais
-- **Aba Kanban**: Board com colunas (Novo, Em Atendimento, Aguardando, Finalizado) — arrastar conversas entre etapas
-- **Aba Respostas Rápidas**: CRUD de templates de mensagem com atalhos (ex: `/bv` = "Bem-vindo!")
-- **Aba Campanhas**: (já existe em CRM.tsx, manter link)
-
-### 4. Integração real com Z-API
-A Edge Function `send-whatsapp` já faz a chamada para Z-API. O que falta:
-- Ao enviar mensagem no chat, chamar `send-whatsapp` ao invés de só inserir no banco
-- Webhook `whatsapp-webhook` já processa mensagens recebidas — só precisa das tabelas existirem
-- Configuração de WhatsApp: salvar `instance_id` e `instance_token` da Z-API (campos já existem na tabela `whatsapp_config`)
-
-### 5. Arquivos a modificar/criar
-
-| Arquivo | Ação |
-|---------|------|
-| **Migração SQL** | Criar tabelas crm_contacts, crm_conversations, crm_messages, crm_quick_replies + RLS |
-| `src/pages/dashboard/CRMAtendimento.tsx` | Reescrever com abas: Contatos, Chat, Kanban, Respostas Rápidas |
-| `src/components/crm/CRMContatos.tsx` | **Novo** — Lista/busca de contatos, sync de pacientes |
-| `src/components/crm/CRMKanban.tsx` | **Novo** — Board kanban de conversas |
-| `src/components/crm/RespostasRapidas.tsx` | **Novo** — CRUD de templates |
-| `src/components/crm/CRMChat.tsx` | **Novo** — Componente de chat extraído, com integração real via send-whatsapp |
-
-### Fora de escopo (requer ação do usuário)
-- Criar conta Z-API e configurar instância (o sistema já suporta os campos `instance_id` e `instance_token`)
-- A conexão real com WhatsApp depende de ter uma conta Z-API ativa
+| Arquivo | Mudança |
+|---------|---------|
+| `supabase/functions/send-whatsapp/index.ts` | Corrigir tabela e colunas na query de config |
+| `supabase/functions/whatsapp-webhook/index.ts` | Reescrever para formato Z-API |
+| `src/components/crm/ConfigurarWhatsAppModal.tsx` | Ao salvar, registrar webhook na Z-API via PUT |
 
