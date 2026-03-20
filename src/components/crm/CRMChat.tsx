@@ -1,0 +1,332 @@
+import { useState, useEffect, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { MessageSquare, Send, Phone, CheckCheck, Clock, Search, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+interface CRMChatProps {
+  clinicId: string;
+}
+
+interface Contact {
+  id: string;
+  name: string;
+  phone: string;
+}
+
+interface Conversation {
+  id: string;
+  contact_id: string;
+  status: string;
+  last_message_at: string;
+  unread_count: number;
+  kanban_stage: string;
+  contact: Contact;
+}
+
+interface Message {
+  id: string;
+  content: string;
+  is_from_me: boolean;
+  created_at: string;
+  status: string;
+  message_type: string;
+}
+
+export function CRMChat({ clinicId }: CRMChatProps) {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    loadConversations();
+  }, [clinicId]);
+
+  useEffect(() => {
+    if (selectedId) {
+      loadMessages(selectedId);
+
+      const channel = supabase
+        .channel(`crm-msgs-${selectedId}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'crm_messages',
+          filter: `conversation_id=eq.${selectedId}`
+        }, (payload) => {
+          setMessages(prev => [...prev, payload.new as Message]);
+          scrollToBottom();
+        })
+        .subscribe();
+
+      return () => { supabase.removeChannel(channel); };
+    }
+  }, [selectedId]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+  };
+
+  const loadConversations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("crm_conversations")
+        .select(`*, contact:crm_contacts(id, name, phone)`)
+        .eq("clinica_id", clinicId)
+        .order("last_message_at", { ascending: false });
+
+      if (error) throw error;
+      setConversations((data as any) || []);
+    } catch (error) {
+      console.error("Erro ao carregar conversas:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMessages = async (conversationId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("crm_messages")
+        .select("*")
+        .eq("conversation_id", conversationId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      setMessages(data || []);
+
+      // Mark as read
+      await supabase
+        .from("crm_conversations")
+        .update({ unread_count: 0 })
+        .eq("id", conversationId);
+
+      // Update local state
+      setConversations(prev => prev.map(c =>
+        c.id === conversationId ? { ...c, unread_count: 0 } : c
+      ));
+    } catch (error) {
+      console.error("Erro ao carregar mensagens:", error);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!input.trim() || !selectedId) return;
+
+    const conv = conversations.find(c => c.id === selectedId);
+    if (!conv) return;
+
+    setSending(true);
+    try {
+      // Insert message in DB
+      const { error: msgError } = await supabase
+        .from("crm_messages")
+        .insert({
+          conversation_id: selectedId,
+          content: input.trim(),
+          is_from_me: true,
+          sender_id: (await supabase.auth.getUser()).data.user?.id,
+          message_type: "text",
+          status: "pending"
+        });
+
+      if (msgError) throw msgError;
+
+      // Send via WhatsApp (Z-API)
+      const { error: sendError } = await supabase.functions.invoke('send-whatsapp', {
+        body: {
+          clinicId,
+          phone: conv.contact.phone,
+          messageType: 'custom',
+          customMessage: input.trim()
+        }
+      });
+
+      if (sendError) {
+        console.warn("WhatsApp send failed:", sendError);
+        toast.warning("Mensagem salva, mas falha ao enviar via WhatsApp");
+      }
+
+      // Update conversation
+      await supabase
+        .from("crm_conversations")
+        .update({ last_message_at: new Date().toISOString(), status: 'active' })
+        .eq("id", selectedId);
+
+      setInput("");
+      loadConversations();
+    } catch (error) {
+      console.error("Erro ao enviar:", error);
+      toast.error("Erro ao enviar mensagem");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const filteredConvs = conversations.filter(c =>
+    c.contact?.name?.toLowerCase().includes(search.toLowerCase()) ||
+    c.contact?.phone?.includes(search)
+  );
+
+  const selectedConv = conversations.find(c => c.id === selectedId);
+
+  const statusIcon = (status: string) => {
+    if (status === 'read') return <CheckCheck className="w-3 h-3 text-blue-500" />;
+    if (status === 'delivered') return <CheckCheck className="w-3 h-3 opacity-50" />;
+    if (status === 'sent') return <CheckCheck className="w-3 h-3 opacity-30" />;
+    return <Clock className="w-3 h-3 opacity-30" />;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-[calc(100vh-12rem)] border rounded-lg overflow-hidden bg-background">
+      {/* Sidebar */}
+      <div className="w-80 border-r flex flex-col">
+        <div className="p-3 border-b">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar conversas..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
+        </div>
+        <ScrollArea className="flex-1">
+          {filteredConvs.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              Nenhuma conversa ainda
+            </div>
+          )}
+          {filteredConvs.map(conv => (
+            <div
+              key={conv.id}
+              onClick={() => setSelectedId(conv.id)}
+              className={`p-3 border-b cursor-pointer hover:bg-accent/50 transition-colors ${
+                selectedId === conv.id ? 'bg-accent' : ''
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarFallback className="text-sm">
+                    {conv.contact?.name?.[0]?.toUpperCase() || '?'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-sm truncate">
+                      {conv.contact?.name || conv.contact?.phone}
+                    </span>
+                    {conv.last_message_at && (
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(conv.last_message_at), "HH:mm")}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                      {conv.kanban_stage === 'novo' ? 'Novo' :
+                       conv.kanban_stage === 'em_atendimento' ? 'Atendendo' :
+                       conv.kanban_stage === 'aguardando' ? 'Aguardando' : 'Finalizado'}
+                    </Badge>
+                    {conv.unread_count > 0 && (
+                      <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4 min-w-4 flex items-center justify-center">
+                        {conv.unread_count}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </ScrollArea>
+      </div>
+
+      {/* Chat Area */}
+      <div className="flex-1 flex flex-col">
+        {selectedConv ? (
+          <>
+            <div className="p-3 border-b flex items-center gap-3">
+              <Avatar>
+                <AvatarFallback>{selectedConv.contact?.name?.[0]?.toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="font-medium">{selectedConv.contact?.name}</div>
+                <div className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Phone className="w-3 h-3" />
+                  {selectedConv.contact?.phone}
+                </div>
+              </div>
+            </div>
+
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-3">
+                {messages.map(msg => (
+                  <div key={msg.id} className={`flex ${msg.is_from_me ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[70%] rounded-lg px-3 py-2 ${
+                      msg.is_from_me ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                    }`}>
+                      <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                      <div className="flex items-center justify-end gap-1 mt-1">
+                        <span className="text-[10px] opacity-70">
+                          {format(new Date(msg.created_at), "HH:mm")}
+                        </span>
+                        {msg.is_from_me && statusIcon(msg.status)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
+
+            <div className="p-3 border-t">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Digite sua mensagem..."
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                  disabled={sending}
+                />
+                <Button onClick={sendMessage} disabled={sending || !input.trim()} size="icon">
+                  {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </Button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-muted-foreground">
+            <div className="text-center">
+              <MessageSquare className="w-16 h-16 mx-auto mb-3 opacity-30" />
+              <p className="text-sm">Selecione uma conversa para começar</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
