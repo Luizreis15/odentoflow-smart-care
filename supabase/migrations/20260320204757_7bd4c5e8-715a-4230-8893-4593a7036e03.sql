@@ -1,0 +1,1 @@
+ALTER TABLE public.whatsapp_configs ADD COLUMN IF NOT EXISTS client_token TEXT;

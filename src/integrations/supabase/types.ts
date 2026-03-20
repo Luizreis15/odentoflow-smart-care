@@ -6326,6 +6326,7 @@ export type Database = {
         Row: {
           access_token: string | null
           business_account_id: string | null
+          client_token: string | null
           clinica_id: string
           connected_at: string | null
           connection_type: string
@@ -6344,6 +6345,7 @@ export type Database = {
         Insert: {
           access_token?: string | null
           business_account_id?: string | null
+          client_token?: string | null
           clinica_id: string
           connected_at?: string | null
           connection_type?: string
@@ -6362,6 +6364,7 @@ export type Database = {
         Update: {
           access_token?: string | null
           business_account_id?: string | null
+          client_token?: string | null
           clinica_id?: string
           connected_at?: string | null
           connection_type?: string
