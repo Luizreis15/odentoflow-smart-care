@@ -1283,6 +1283,193 @@ export type Database = {
           },
         ]
       }
+      crm_contacts: {
+        Row: {
+          clinica_id: string
+          created_at: string | null
+          id: string
+          name: string
+          notes: string | null
+          patient_id: string | null
+          phone: string
+          tags: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          clinica_id: string
+          created_at?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          patient_id?: string | null
+          phone: string
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          clinica_id?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          patient_id?: string | null
+          phone?: string
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_contacts_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_contacts_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_conversations: {
+        Row: {
+          assigned_to: string | null
+          clinica_id: string
+          contact_id: string
+          created_at: string | null
+          id: string
+          kanban_stage: string | null
+          last_message_at: string | null
+          status: string | null
+          unread_count: number | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          clinica_id: string
+          contact_id: string
+          created_at?: string | null
+          id?: string
+          kanban_stage?: string | null
+          last_message_at?: string | null
+          status?: string | null
+          unread_count?: number | null
+        }
+        Update: {
+          assigned_to?: string | null
+          clinica_id?: string
+          contact_id?: string
+          created_at?: string | null
+          id?: string
+          kanban_stage?: string | null
+          last_message_at?: string | null
+          status?: string | null
+          unread_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_conversations_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_conversations_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_messages: {
+        Row: {
+          content: string | null
+          conversation_id: string
+          created_at: string | null
+          id: string
+          is_from_me: boolean | null
+          media_url: string | null
+          message_type: string | null
+          sender_id: string | null
+          status: string | null
+          whatsapp_message_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          is_from_me?: boolean | null
+          media_url?: string | null
+          message_type?: string | null
+          sender_id?: string | null
+          status?: string | null
+          whatsapp_message_id?: string | null
+        }
+        Update: {
+          content?: string | null
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          is_from_me?: boolean | null
+          media_url?: string | null
+          message_type?: string | null
+          sender_id?: string | null
+          status?: string | null
+          whatsapp_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "crm_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_quick_replies: {
+        Row: {
+          category: string | null
+          clinica_id: string
+          content: string
+          created_at: string | null
+          id: string
+          shortcut: string | null
+          title: string
+        }
+        Insert: {
+          category?: string | null
+          clinica_id: string
+          content: string
+          created_at?: string | null
+          id?: string
+          shortcut?: string | null
+          title: string
+        }
+        Update: {
+          category?: string | null
+          clinica_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          shortcut?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_quick_replies_clinica_id_fkey"
+            columns: ["clinica_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_campaign_recipients: {
         Row: {
           campaign_id: string
