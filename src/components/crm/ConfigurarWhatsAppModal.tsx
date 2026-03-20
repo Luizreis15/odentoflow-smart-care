@@ -214,6 +214,7 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
             <p className="text-xs text-muted-foreground mt-1">Encontre em: Z-API → Sua instância → Token de segurança</p>
           </div>
 
+          <Alert className={isActive ? "border-green-600/30 bg-green-50 dark:bg-green-950/20" : "border-yellow-600/30 bg-yellow-50 dark:bg-yellow-950/20"}>
             <AlertDescription>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
