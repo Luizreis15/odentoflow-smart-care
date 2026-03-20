@@ -134,6 +134,7 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
             connection_type: "web_qrcode",
             instance_id: instanceId.trim(),
             instance_token: instanceToken.trim(),
+            client_token: clientToken.trim() || null,
             is_active: isActive,
           } as any);
 
