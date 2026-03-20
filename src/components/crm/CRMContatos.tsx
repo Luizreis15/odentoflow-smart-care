@@ -87,7 +87,7 @@ export function CRMContatos({ clinicId }: CRMContatosProps) {
       const inserts = newPatients.map(p => ({
         clinica_id: clinicId,
         patient_id: p.id,
-        name: p.name,
+        name: p.full_name,
         phone: p.phone!.replace(/\D/g, ''),
         tags: ['paciente']
       }));
