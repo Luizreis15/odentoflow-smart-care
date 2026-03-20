@@ -440,6 +440,83 @@ export function CRMChat({ clinicId }: CRMChatProps) {
           </div>
         )}
       </div>
+
+      {/* Modal Nova Conversa */}
+      <Dialog open={newConvOpen} onOpenChange={setNewConvOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nova Conversa</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {!selectedContact ? (
+              <>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar contato..."
+                    value={contactSearch}
+                    onChange={e => setContactSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <ScrollArea className="h-64">
+                  <div className="space-y-1">
+                    {filteredNewContacts.map(contact => (
+                      <div
+                        key={contact.id}
+                        onClick={() => setSelectedContact(contact)}
+                        className="flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-accent transition-colors"
+                      >
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="text-xs">{contact.name[0]?.toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="text-sm font-medium">{contact.name}</div>
+                          <div className="text-xs text-muted-foreground">{contact.phone}</div>
+                        </div>
+                      </div>
+                    ))}
+                    {filteredNewContacts.length === 0 && (
+                      <p className="text-center text-sm text-muted-foreground py-4">Nenhum contato encontrado</p>
+                    )}
+                  </div>
+                </ScrollArea>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 p-3 bg-accent/50 rounded-lg">
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback>{selectedContact.name[0]?.toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">{selectedContact.name}</div>
+                    <div className="text-xs text-muted-foreground">{selectedContact.phone}</div>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedContact(null)}>
+                    Trocar
+                  </Button>
+                </div>
+                <div>
+                  <Label>Mensagem *</Label>
+                  <Textarea
+                    value={firstMessage}
+                    onChange={e => setFirstMessage(e.target.value)}
+                    placeholder="Digite a primeira mensagem..."
+                    rows={4}
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setNewConvOpen(false)}>Cancelar</Button>
+                  <Button onClick={startNewConversation} disabled={sending || !firstMessage.trim()}>
+                    {sending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                    Enviar
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
