@@ -5,7 +5,10 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Send, Phone, CheckCheck, Clock, Search, Loader2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { MessageSquare, Send, Phone, CheckCheck, Clock, Search, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -48,6 +51,13 @@ export function CRMChat({ clinicId }: CRMChatProps) {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Nova conversa state
+  const [newConvOpen, setNewConvOpen] = useState(false);
+  const [allContacts, setAllContacts] = useState<Contact[]>([]);
+  const [contactSearch, setContactSearch] = useState("");
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [firstMessage, setFirstMessage] = useState("");
 
   useEffect(() => {
     loadConversations();
@@ -192,6 +202,105 @@ export function CRMChat({ clinicId }: CRMChatProps) {
     return <Clock className="w-3 h-3 opacity-30" />;
   };
 
+  const openNewConversation = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("crm_contacts")
+        .select("id, name, phone")
+        .eq("clinica_id", clinicId)
+        .order("name");
+      if (error) throw error;
+      setAllContacts(data || []);
+      setContactSearch("");
+      setSelectedContact(null);
+      setFirstMessage("");
+      setNewConvOpen(true);
+    } catch {
+      toast.error("Erro ao carregar contatos");
+    }
+  };
+
+  const startNewConversation = async () => {
+    if (!selectedContact || !firstMessage.trim()) {
+      toast.error("Selecione um contato e digite uma mensagem");
+      return;
+    }
+    setSending(true);
+    try {
+      // Check if conversation already exists for this contact
+      const { data: existingConv } = await supabase
+        .from("crm_conversations")
+        .select("id")
+        .eq("clinica_id", clinicId)
+        .eq("contact_id", selectedContact.id)
+        .neq("status", "closed")
+        .maybeSingle();
+
+      let convId: string;
+
+      if (existingConv) {
+        convId = existingConv.id;
+      } else {
+        const { data: newConv, error: convErr } = await supabase
+          .from("crm_conversations")
+          .insert({
+            clinica_id: clinicId,
+            contact_id: selectedContact.id,
+            status: "active",
+            kanban_stage: "novo",
+          })
+          .select("id")
+          .single();
+        if (convErr) throw convErr;
+        convId = newConv.id;
+      }
+
+      // Insert message
+      const { error: msgErr } = await supabase
+        .from("crm_messages")
+        .insert({
+          conversation_id: convId,
+          content: firstMessage.trim(),
+          is_from_me: true,
+          sender_id: (await supabase.auth.getUser()).data.user?.id,
+          message_type: "text",
+          status: "pending",
+        });
+      if (msgErr) throw msgErr;
+
+      // Send via WhatsApp
+      await supabase.functions.invoke("send-whatsapp", {
+        body: {
+          clinicId,
+          phone: selectedContact.phone,
+          messageType: "custom",
+          customMessage: firstMessage.trim(),
+        },
+      });
+
+      // Update conversation timestamp
+      await supabase
+        .from("crm_conversations")
+        .update({ last_message_at: new Date().toISOString() })
+        .eq("id", convId);
+
+      setNewConvOpen(false);
+      toast.success("Conversa iniciada!");
+      loadConversations();
+      setSelectedId(convId);
+    } catch (error) {
+      console.error("Erro ao iniciar conversa:", error);
+      toast.error("Erro ao iniciar conversa");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const filteredNewContacts = allContacts.filter(c =>
+    c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
+    c.phone.includes(contactSearch)
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -204,7 +313,11 @@ export function CRMChat({ clinicId }: CRMChatProps) {
     <div className="flex h-[calc(100vh-12rem)] border rounded-lg overflow-hidden bg-background">
       {/* Sidebar */}
       <div className="w-80 border-r flex flex-col">
-        <div className="p-3 border-b">
+        <div className="p-3 border-b space-y-2">
+          <Button onClick={openNewConversation} className="w-full" size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Conversa
+          </Button>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -327,6 +440,83 @@ export function CRMChat({ clinicId }: CRMChatProps) {
           </div>
         )}
       </div>
+
+      {/* Modal Nova Conversa */}
+      <Dialog open={newConvOpen} onOpenChange={setNewConvOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nova Conversa</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {!selectedContact ? (
+              <>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar contato..."
+                    value={contactSearch}
+                    onChange={e => setContactSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <ScrollArea className="h-64">
+                  <div className="space-y-1">
+                    {filteredNewContacts.map(contact => (
+                      <div
+                        key={contact.id}
+                        onClick={() => setSelectedContact(contact)}
+                        className="flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-accent transition-colors"
+                      >
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="text-xs">{contact.name[0]?.toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="text-sm font-medium">{contact.name}</div>
+                          <div className="text-xs text-muted-foreground">{contact.phone}</div>
+                        </div>
+                      </div>
+                    ))}
+                    {filteredNewContacts.length === 0 && (
+                      <p className="text-center text-sm text-muted-foreground py-4">Nenhum contato encontrado</p>
+                    )}
+                  </div>
+                </ScrollArea>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 p-3 bg-accent/50 rounded-lg">
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback>{selectedContact.name[0]?.toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">{selectedContact.name}</div>
+                    <div className="text-xs text-muted-foreground">{selectedContact.phone}</div>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedContact(null)}>
+                    Trocar
+                  </Button>
+                </div>
+                <div>
+                  <Label>Mensagem *</Label>
+                  <Textarea
+                    value={firstMessage}
+                    onChange={e => setFirstMessage(e.target.value)}
+                    placeholder="Digite a primeira mensagem..."
+                    rows={4}
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setNewConvOpen(false)}>Cancelar</Button>
+                  <Button onClick={startNewConversation} disabled={sending || !firstMessage.trim()}>
+                    {sending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                    Enviar
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
