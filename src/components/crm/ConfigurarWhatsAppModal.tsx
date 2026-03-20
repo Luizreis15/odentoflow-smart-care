@@ -144,7 +144,7 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
 
       // Se ativou, registrar webhook na Z-API automaticamente
       if (isActive) {
-        await registerWebhook(instanceId.trim(), instanceToken.trim());
+        await registerWebhook(instanceId.trim(), instanceToken.trim(), clientToken.trim());
       }
 
       toast.success(isActive ? "WhatsApp configurado e ativado!" : "Configuração salva (inativa)");
