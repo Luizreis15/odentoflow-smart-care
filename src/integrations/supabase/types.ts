@@ -6331,6 +6331,8 @@ export type Database = {
           connection_type: string
           created_at: string | null
           id: string
+          instance_id: string | null
+          instance_token: string | null
           is_active: boolean | null
           last_seen_at: string | null
           phone_number_id: string | null
@@ -6347,6 +6349,8 @@ export type Database = {
           connection_type?: string
           created_at?: string | null
           id?: string
+          instance_id?: string | null
+          instance_token?: string | null
           is_active?: boolean | null
           last_seen_at?: string | null
           phone_number_id?: string | null
@@ -6363,6 +6367,8 @@ export type Database = {
           connection_type?: string
           created_at?: string | null
           id?: string
+          instance_id?: string | null
+          instance_token?: string | null
           is_active?: boolean | null
           last_seen_at?: string | null
           phone_number_id?: string | null
