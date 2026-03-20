@@ -73,7 +73,7 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
         .from("whatsapp_configs" as any)
         .upsert({
           clinica_id: profile.clinic_id,
-          connection_type: "z_api",
+          connection_type: "web_qrcode",
           instance_id: instanceId.trim(),
           instance_token: instanceToken.trim(),
           is_active: isActive,
