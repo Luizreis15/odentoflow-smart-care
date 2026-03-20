@@ -1,41 +1,117 @@
 
 
-## Plano: Atalhos estratégicos para o Prontuário do Paciente
+# CRM WhatsApp — Rebuild Completo com Infraestrutura Real
 
-### Objetivo
-Tornar o nome do paciente clicável em todos os locais onde aparece, redirecionando para `/dashboard/prontuario/{patient_id}` — facilitando o acesso rápido ao prontuário.
+## Diagnóstico
+- Tabelas `crm_conversations`, `crm_contacts`, `crm_messages` **não existem** no banco
+- Conexão QR Code é **simulada** (setTimeout de 10s marca como conectado)
+- Envio de mensagens só insere em tabela inexistente, sem integração real
+- Contatos da clínica (pacientes) nunca são carregados no CRM
 
-### Locais que serão alterados
+## Estratégia de Integração WhatsApp
 
-1. **Agenda — Day Slots View** (`src/pages/dashboard/Agenda.tsx`, ~linha 748)
-   - O nome do paciente nos slots ocupados será um link clicável para o prontuário
-   - Adicionar `e.stopPropagation()` para não abrir o modal de detalhes ao clicar no nome
-   - Usar `useNavigate` (já importado via `react-router-dom`) + estilo de link (underline on hover, cursor pointer)
+A integração real com WhatsApp requer um provedor externo. O sistema já referencia **Z-API** nas Edge Functions existentes (`send-whatsapp`). Para uma integração real, precisamos:
 
-2. **Agenda — Week View** (`src/pages/dashboard/Agenda.tsx`, ~linha 979)
-   - O nome do paciente na célula semanal será clicável para o prontuário
-   - `e.stopPropagation()` para não disparar o `handleAppointmentClick`
+1. **Z-API** (já referenciado no código) — serviço brasileiro de API WhatsApp que funciona via instância web
+2. Credenciais: `instance_id` e `instance_token` (configurados pela clínica na tela de config)
 
-3. **Agenda — Detalhes do Agendamento Modal** (`src/components/agenda/DetalhesAgendamentoModal.tsx`, ~linha 234)
-   - O nome do paciente no modal será um link clicável para o prontuário
-   - Adicionar botão "Abrir Prontuário" nas ações do modal
+A Z-API já é o provedor escolhido no `send-whatsapp/index.ts`. Vamos manter essa escolha e construir o CRM em torno dela.
 
-4. **Dashboard — Agenda do Dia (tabela)** (`src/components/dashboard/DashboardAgendaTable.tsx`, ~linha 122)
-   - A coluna "Paciente" na tabela do dashboard será um link clicável
-   - Usar `useNavigate` para redirecionar
+## Plano de Implementação
 
-5. **Dashboard — Próximas Consultas** (`src/components/dashboard/UpcomingAppointments.tsx`, ~linha 83)
-   - O nome do paciente será clicável
+### 1. Criar tabelas no banco de dados
+```sql
+-- Contatos do CRM (sincronizados com pacientes + contatos avulsos)
+CREATE TABLE crm_contacts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  clinica_id UUID REFERENCES clinics(id) ON DELETE CASCADE NOT NULL,
+  patient_id UUID REFERENCES patients(id) ON DELETE SET NULL,
+  name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  tags TEXT[] DEFAULT '{}',
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(clinica_id, phone)
+);
 
-6. **Mobile — Agenda List** (`src/components/mobile/MobileAgendaList.tsx`)
-   - Já redireciona para prontuário no `onClick` do card — manter como está
+-- Conversas
+CREATE TABLE crm_conversations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  clinica_id UUID REFERENCES clinics(id) ON DELETE CASCADE NOT NULL,
+  contact_id UUID REFERENCES crm_contacts(id) ON DELETE CASCADE NOT NULL,
+  status TEXT DEFAULT 'pending', -- pending, active, closed
+  assigned_to UUID REFERENCES auth.users(id),
+  last_message_at TIMESTAMPTZ DEFAULT now(),
+  unread_count INT DEFAULT 0,
+  kanban_stage TEXT DEFAULT 'novo', -- novo, em_atendimento, aguardando, finalizado
+  created_at TIMESTAMPTZ DEFAULT now()
+);
 
-7. **Mobile — MobileAgenda** (`src/pages/mobile/MobileAgenda.tsx`)
-   - Já redireciona para prontuário no `onClick` — manter como está
+-- Mensagens
+CREATE TABLE crm_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  conversation_id UUID REFERENCES crm_conversations(id) ON DELETE CASCADE NOT NULL,
+  whatsapp_message_id TEXT,
+  content TEXT,
+  is_from_me BOOLEAN DEFAULT false,
+  sender_id UUID,
+  message_type TEXT DEFAULT 'text',
+  media_url TEXT,
+  status TEXT DEFAULT 'pending', -- pending, sent, delivered, read, failed, received
+  created_at TIMESTAMPTZ DEFAULT now()
+);
 
-### Detalhes técnicos
-- Estilo do link: `hover:underline text-primary cursor-pointer` no nome do paciente
-- Navegação: `navigate(\`/dashboard/prontuario/\${patientId}\`)`
-- `e.stopPropagation()` em todos os locais onde o clique no nome conflita com um clique no container pai (slot, card, row)
-- No modal de detalhes: adicionar um botão "Ir ao Prontuário" com ícone `FileText`
+-- Respostas rápidas
+CREATE TABLE crm_quick_replies (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  clinica_id UUID REFERENCES clinics(id) ON DELETE CASCADE NOT NULL,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  shortcut TEXT,
+  category TEXT DEFAULT 'geral',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Habilitar realtime
+ALTER PUBLICATION supabase_realtime ADD TABLE crm_messages;
+ALTER PUBLICATION supabase_realtime ADD TABLE crm_conversations;
+```
+
+RLS policies para todas as tabelas filtrando por `clinica_id` do usuário autenticado.
+
+### 2. Sincronizar pacientes como contatos
+- Ao abrir o CRM, verificar pacientes da clínica que têm telefone e não existem em `crm_contacts`
+- Criar automaticamente contatos para esses pacientes (sync one-way)
+- Permitir adicionar contatos avulsos (não-pacientes)
+
+### 3. Refatorar tela CRM Atendimento
+O `CRMAtendimento.tsx` será reescrito com:
+
+- **Aba Contatos**: Lista todos os contatos (pacientes sincronizados + avulsos), busca, filtros por tag
+- **Aba Conversas/Chat**: Layout atual de chat, mas usando tabelas reais
+- **Aba Kanban**: Board com colunas (Novo, Em Atendimento, Aguardando, Finalizado) — arrastar conversas entre etapas
+- **Aba Respostas Rápidas**: CRUD de templates de mensagem com atalhos (ex: `/bv` = "Bem-vindo!")
+- **Aba Campanhas**: (já existe em CRM.tsx, manter link)
+
+### 4. Integração real com Z-API
+A Edge Function `send-whatsapp` já faz a chamada para Z-API. O que falta:
+- Ao enviar mensagem no chat, chamar `send-whatsapp` ao invés de só inserir no banco
+- Webhook `whatsapp-webhook` já processa mensagens recebidas — só precisa das tabelas existirem
+- Configuração de WhatsApp: salvar `instance_id` e `instance_token` da Z-API (campos já existem na tabela `whatsapp_config`)
+
+### 5. Arquivos a modificar/criar
+
+| Arquivo | Ação |
+|---------|------|
+| **Migração SQL** | Criar tabelas crm_contacts, crm_conversations, crm_messages, crm_quick_replies + RLS |
+| `src/pages/dashboard/CRMAtendimento.tsx` | Reescrever com abas: Contatos, Chat, Kanban, Respostas Rápidas |
+| `src/components/crm/CRMContatos.tsx` | **Novo** — Lista/busca de contatos, sync de pacientes |
+| `src/components/crm/CRMKanban.tsx` | **Novo** — Board kanban de conversas |
+| `src/components/crm/RespostasRapidas.tsx` | **Novo** — CRUD de templates |
+| `src/components/crm/CRMChat.tsx` | **Novo** — Componente de chat extraído, com integração real via send-whatsapp |
+
+### Fora de escopo (requer ação do usuário)
+- Criar conta Z-API e configurar instância (o sistema já suporta os campos `instance_id` e `instance_token`)
+- A conexão real com WhatsApp depende de ter uma conta Z-API ativa
 
