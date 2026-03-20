@@ -55,16 +55,18 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
     }
   };
 
-  const registerWebhook = async (instId: string, instToken: string) => {
+  const registerWebhook = async (instId: string, instToken: string, cToken: string) => {
     try {
       const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/whatsapp-webhook`;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (cToken) headers['Client-Token'] = cToken;
 
       // Registrar webhook de mensagens recebidas
       const receivedRes = await fetch(
         `https://api.z-api.io/instances/${instId}/token/${instToken}/update-webhook-received`,
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ value: webhookUrl }),
         }
       );
