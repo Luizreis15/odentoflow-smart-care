@@ -19,6 +19,7 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
   const [loading, setLoading] = useState(false);
   const [instanceId, setInstanceId] = useState("");
   const [instanceToken, setInstanceToken] = useState("");
+  const [clientToken, setClientToken] = useState("");
   const [isActive, setIsActive] = useState(false);
   const [existingConfig, setExistingConfig] = useState(false);
 
@@ -46,6 +47,7 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
         setExistingConfig(true);
         setInstanceId((data as any).instance_id || "");
         setInstanceToken((data as any).instance_token || "");
+        setClientToken((data as any).client_token || "");
         setIsActive((data as any).is_active || false);
       }
     } catch (error) {
@@ -53,16 +55,18 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
     }
   };
 
-  const registerWebhook = async (instId: string, instToken: string) => {
+  const registerWebhook = async (instId: string, instToken: string, cToken: string) => {
     try {
       const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/whatsapp-webhook`;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (cToken) headers['Client-Token'] = cToken;
 
       // Registrar webhook de mensagens recebidas
       const receivedRes = await fetch(
         `https://api.z-api.io/instances/${instId}/token/${instToken}/update-webhook-received`,
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ value: webhookUrl }),
         }
       );
@@ -72,7 +76,7 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
         `https://api.z-api.io/instances/${instId}/token/${instToken}/update-webhook-message-status`,
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ value: webhookUrl }),
         }
       );
@@ -116,6 +120,7 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
             connection_type: "web_qrcode",
             instance_id: instanceId.trim(),
             instance_token: instanceToken.trim(),
+            client_token: clientToken.trim() || null,
             is_active: isActive,
           } as any)
           .eq("clinica_id", profile.clinic_id);
@@ -129,6 +134,7 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
             connection_type: "web_qrcode",
             instance_id: instanceId.trim(),
             instance_token: instanceToken.trim(),
+            client_token: clientToken.trim() || null,
             is_active: isActive,
           } as any);
 
@@ -138,7 +144,7 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
 
       // Se ativou, registrar webhook na Z-API automaticamente
       if (isActive) {
-        await registerWebhook(instanceId.trim(), instanceToken.trim());
+        await registerWebhook(instanceId.trim(), instanceToken.trim(), clientToken.trim());
       }
 
       toast.success(isActive ? "WhatsApp configurado e ativado!" : "Configuração salva (inativa)");
@@ -194,6 +200,18 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
               onChange={(e) => setInstanceToken(e.target.value)}
               placeholder="Token da instância"
             />
+          </div>
+
+          <div>
+            <Label htmlFor="client_token">Client-Token (Token de Segurança) *</Label>
+            <Input
+              id="client_token"
+              type="password"
+              value={clientToken}
+              onChange={(e) => setClientToken(e.target.value)}
+              placeholder="Token de segurança da instância"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Encontre em: Z-API → Sua instância → Token de segurança</p>
           </div>
 
           <Alert className={isActive ? "border-green-600/30 bg-green-50 dark:bg-green-950/20" : "border-yellow-600/30 bg-yellow-50 dark:bg-yellow-950/20"}>
