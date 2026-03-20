@@ -171,7 +171,7 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
 
       const { error } = await supabase
         .from("whatsapp_configs" as any)
-        .upsert(configData);
+        .upsert(configData, { onConflict: "clinica_id" });
 
       if (error) throw error;
 
