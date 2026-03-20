@@ -47,6 +47,7 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
         setExistingConfig(true);
         setInstanceId((data as any).instance_id || "");
         setInstanceToken((data as any).instance_token || "");
+        setClientToken((data as any).client_token || "");
         setIsActive((data as any).is_active || false);
       }
     } catch (error) {
