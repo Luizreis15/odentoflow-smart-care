@@ -57,7 +57,7 @@ serve(async (req) => {
         connection_type: 'web_qrcode',
         qr_code: qrData,
         is_active: false,
-      });
+      }, { onConflict: 'clinica_id' });
 
     // Simular conexão após 10 segundos (em produção, isso seria feito pela biblioteca baileys)
     setTimeout(async () => {
