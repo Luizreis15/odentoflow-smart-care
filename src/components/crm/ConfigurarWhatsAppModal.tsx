@@ -76,7 +76,7 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
         `https://api.z-api.io/instances/${instId}/token/${instToken}/update-webhook-message-status`,
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ value: webhookUrl }),
         }
       );
