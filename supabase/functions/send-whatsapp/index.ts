@@ -119,9 +119,14 @@ serve(async (req) => {
     
     console.log('[SEND-WHATSAPP] Sending to Z-API:', { phone: formattedPhone, messageType });
 
+    const zapiHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (config.client_token) {
+      zapiHeaders['Client-Token'] = config.client_token;
+    }
+
     const zapiResponse = await fetch(zapiUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: zapiHeaders,
       body: JSON.stringify({ phone: formattedPhone, message }),
     });
 

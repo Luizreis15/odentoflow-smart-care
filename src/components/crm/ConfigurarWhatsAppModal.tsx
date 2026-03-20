@@ -19,6 +19,7 @@ export function ConfigurarWhatsAppModal({ open, onOpenChange, onSuccess }: Confi
   const [loading, setLoading] = useState(false);
   const [instanceId, setInstanceId] = useState("");
   const [instanceToken, setInstanceToken] = useState("");
+  const [clientToken, setClientToken] = useState("");
   const [isActive, setIsActive] = useState(false);
   const [existingConfig, setExistingConfig] = useState(false);
 
