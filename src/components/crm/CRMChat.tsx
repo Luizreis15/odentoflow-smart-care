@@ -202,6 +202,105 @@ export function CRMChat({ clinicId }: CRMChatProps) {
     return <Clock className="w-3 h-3 opacity-30" />;
   };
 
+  const openNewConversation = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("crm_contacts")
+        .select("id, name, phone")
+        .eq("clinica_id", clinicId)
+        .order("name");
+      if (error) throw error;
+      setAllContacts(data || []);
+      setContactSearch("");
+      setSelectedContact(null);
+      setFirstMessage("");
+      setNewConvOpen(true);
+    } catch {
+      toast.error("Erro ao carregar contatos");
+    }
+  };
+
+  const startNewConversation = async () => {
+    if (!selectedContact || !firstMessage.trim()) {
+      toast.error("Selecione um contato e digite uma mensagem");
+      return;
+    }
+    setSending(true);
+    try {
+      // Check if conversation already exists for this contact
+      const { data: existingConv } = await supabase
+        .from("crm_conversations")
+        .select("id")
+        .eq("clinica_id", clinicId)
+        .eq("contact_id", selectedContact.id)
+        .neq("status", "closed")
+        .maybeSingle();
+
+      let convId: string;
+
+      if (existingConv) {
+        convId = existingConv.id;
+      } else {
+        const { data: newConv, error: convErr } = await supabase
+          .from("crm_conversations")
+          .insert({
+            clinica_id: clinicId,
+            contact_id: selectedContact.id,
+            status: "active",
+            kanban_stage: "novo",
+          })
+          .select("id")
+          .single();
+        if (convErr) throw convErr;
+        convId = newConv.id;
+      }
+
+      // Insert message
+      const { error: msgErr } = await supabase
+        .from("crm_messages")
+        .insert({
+          conversation_id: convId,
+          content: firstMessage.trim(),
+          is_from_me: true,
+          sender_id: (await supabase.auth.getUser()).data.user?.id,
+          message_type: "text",
+          status: "pending",
+        });
+      if (msgErr) throw msgErr;
+
+      // Send via WhatsApp
+      await supabase.functions.invoke("send-whatsapp", {
+        body: {
+          clinicId,
+          phone: selectedContact.phone,
+          messageType: "custom",
+          customMessage: firstMessage.trim(),
+        },
+      });
+
+      // Update conversation timestamp
+      await supabase
+        .from("crm_conversations")
+        .update({ last_message_at: new Date().toISOString() })
+        .eq("id", convId);
+
+      setNewConvOpen(false);
+      toast.success("Conversa iniciada!");
+      loadConversations();
+      setSelectedId(convId);
+    } catch (error) {
+      console.error("Erro ao iniciar conversa:", error);
+      toast.error("Erro ao iniciar conversa");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const filteredNewContacts = allContacts.filter(c =>
+    c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
+    c.phone.includes(contactSearch)
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -214,7 +313,11 @@ export function CRMChat({ clinicId }: CRMChatProps) {
     <div className="flex h-[calc(100vh-12rem)] border rounded-lg overflow-hidden bg-background">
       {/* Sidebar */}
       <div className="w-80 border-r flex flex-col">
-        <div className="p-3 border-b">
+        <div className="p-3 border-b space-y-2">
+          <Button onClick={openNewConversation} className="w-full" size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Conversa
+          </Button>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
