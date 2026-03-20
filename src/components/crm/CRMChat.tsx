@@ -52,6 +52,13 @@ export function CRMChat({ clinicId }: CRMChatProps) {
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Nova conversa state
+  const [newConvOpen, setNewConvOpen] = useState(false);
+  const [allContacts, setAllContacts] = useState<Contact[]>([]);
+  const [contactSearch, setContactSearch] = useState("");
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [firstMessage, setFirstMessage] = useState("");
+
   useEffect(() => {
     loadConversations();
   }, [clinicId]);
