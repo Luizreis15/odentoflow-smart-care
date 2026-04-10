@@ -351,6 +351,70 @@ export const AprovarOrcamentoModal = ({
         }
       }
 
+      // Auto-generate contract document
+      try {
+        const [clinicRes, patientRes, configRes] = await Promise.all([
+          supabase.from("clinicas").select("nome, cnpj, telefone, address").eq("id", budget.clinic_id).single(),
+          supabase.from("patients").select("full_name, cpf, address").eq("id", budget.patient_id).single(),
+          supabase.from("configuracoes_clinica").select("*").eq("clinica_id", budget.clinic_id).maybeSingle(),
+        ]);
+
+        const clinic = clinicRes.data;
+        const patient = patientRes.data;
+
+        // Get first professional from budget items
+        const firstProfId = budget.budget_items.find((i) => i.professional_id)?.professional_id;
+        let prof: any = null;
+        if (firstProfId) {
+          const { data: profData } = await supabase
+            .from("profissionais")
+            .select("nome, cro")
+            .eq("id", firstProfId)
+            .single();
+          prof = profData;
+        }
+
+        const clinicAddr = clinic?.address as any;
+        const clinicAddressStr = clinicAddr
+          ? [clinicAddr.street, clinicAddr.number, clinicAddr.neighborhood, clinicAddr.city, clinicAddr.state].filter(Boolean).join(", ")
+          : "";
+
+        const proceduresList = budget.budget_items.map((i) => i.procedure_name).join(", ");
+
+        const contractContent = generateContractTemplate({
+          patientName: patient?.full_name || "",
+          patientCpf: patient?.cpf || "",
+          patientAddress: patient?.address || "",
+          clinicName: clinic?.nome || "",
+          clinicCnpj: clinic?.cnpj || "",
+          clinicAddress: clinicAddressStr,
+          professionalName: prof?.nome || "",
+          professionalCro: prof?.cro || "",
+          contractValue: budget.final_value.toFixed(2),
+          procedures: proceduresList,
+          city: clinicAddr?.city || "",
+        });
+
+        await supabase.from("patient_documents").insert({
+          patient_id: budget.patient_id,
+          clinic_id: budget.clinic_id,
+          document_type: "contrato",
+          title: `Contrato de Prestação de Serviços - ${patient?.full_name || "Paciente"}`,
+          content: contractContent,
+          created_by: user.id,
+          status: "finalizado",
+          professional_id: firstProfId || null,
+          budget_id: budget.id,
+          contract_value: budget.final_value,
+          procedures_list: proceduresList,
+          patient_cpf: patient?.cpf || null,
+          patient_address: patient?.address || null,
+        });
+      } catch (contractErr) {
+        console.error("Erro ao gerar contrato automático:", contractErr);
+        // Non-blocking — approval still succeeds
+      }
+
       toast.success(
         isAllImmediate()
           ? `Orçamento aprovado e pagamento registrado! Recibo gerado.`
