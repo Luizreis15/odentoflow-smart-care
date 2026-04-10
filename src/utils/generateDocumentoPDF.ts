@@ -159,16 +159,21 @@ function drawHeader(doc: jsPDF, data: DocumentoPDFData, logoBase64: string | nul
 }
 
 function drawDocumentTitle(doc: jsPDF, title: string, y: number, primaryColor: [number, number, number]): number {
-  doc.setFont("times", "bold");
-  doc.setFontSize(20);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
   doc.setTextColor(...COLOR_BLACK);
-  doc.text(title, PAGE_W / 2, y, { align: "center" });
-  y += 4;
+
+  // Split long titles into multiple lines
+  const titleLines = doc.splitTextToSize(title, CONTENT_W - 10);
+  for (const tl of titleLines) {
+    doc.text(tl, PAGE_W / 2, y, { align: "center" });
+    y += 7;
+  }
 
   doc.setDrawColor(...primaryColor);
   doc.setLineWidth(0.8);
-  const titleWidth = doc.getTextWidth(title);
-  const lineHalf = Math.min(titleWidth / 2, 30);
+  const lastLineWidth = doc.getTextWidth(titleLines[titleLines.length - 1] || title);
+  const lineHalf = Math.min(lastLineWidth / 2, 30);
   doc.line(PAGE_W / 2 - lineHalf, y, PAGE_W / 2 + lineHalf, y);
   y += 12;
 
