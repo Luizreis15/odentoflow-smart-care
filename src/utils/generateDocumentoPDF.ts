@@ -218,14 +218,21 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
   const lines = content.split("\n");
   const bodyLines: string[] = [];
   let inProfessionalSection = false;
+  let skipContractHeaderLines = tipo === "contrato" ? 2 : 0; // skip title + contract number
 
   for (const line of lines) {
     const trimmed = line.trim();
 
-    // For contracts, don't filter out signature sections or professional info
+    // For contracts, skip redundant header lines and signature blocks from template
     if (tipo === "contrato") {
-      // Only skip separator-only lines with special chars
       if (/^[━═]{3,}$/.test(trimmed)) continue;
+      // Skip the first redundant lines (title + contract number already in PDF header)
+      if (isRedundantLine(trimmed, clinicName)) continue;
+      // Skip signature block lines at end of content (handled by drawContractSignatures)
+      if (/^_{5,}$/.test(trimmed) || /^________/.test(trimmed)) continue;
+      if (/^CONTRATANTE\s*$/i.test(trimmed)) continue;
+      if (/^CONTRATADO\(A\)\s*$/i.test(trimmed)) continue;
+      if (/^CRO\s*n[ºo°]\s/i.test(trimmed) && bodyLines.length > 0 && /^________/.test(bodyLines[bodyLines.length - 1]?.trim() || "")) continue;
       bodyLines.push(line);
       continue;
     }
@@ -247,11 +254,20 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
   }
 
   const lineHeight = 6.5;
+  const isMultiPage = tipo === "contrato";
+  const pageBottomLimit = isMultiPage ? PAGE_H - MARGIN_BOTTOM - 15 : PAGE_H - MARGIN_BOTTOM - 60;
 
   for (const rawLine of bodyLines) {
-    if (y + lineHeight > PAGE_H - MARGIN_BOTTOM - 60) break;
-
     const trimmed = rawLine.trim();
+
+    // Check page break for multi-page docs
+    if (isMultiPage && y + lineHeight > pageBottomLimit) {
+      drawFooter(doc, { tipo, title: "", content: "", clinicName: clinicName || "" } as DocumentoPDFData);
+      doc.addPage();
+      y = MARGIN_TOP;
+    } else if (!isMultiPage && y + lineHeight > pageBottomLimit) {
+      break;
+    }
 
     // Empty line = small vertical space
     if (!trimmed) {
@@ -259,22 +275,35 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
       continue;
     }
 
-    // Section headers (ALL CAPS, > 3 chars)
+    // Section headers — CLÁUSULA lines and ALL CAPS headers
+    const isClausula = /^CL[ÁA]USULA\s/i.test(trimmed);
     if (
-      trimmed === trimmed.toUpperCase() &&
-      trimmed.length > 3 &&
-      !/^(CID|CPF|CRO|CNPJ)/.test(trimmed) &&
-      !/^\d/.test(trimmed)
+      isClausula ||
+      (trimmed === trimmed.toUpperCase() &&
+       trimmed.length > 3 &&
+       !/^(CID|CPF|CRO|CNPJ)/.test(trimmed) &&
+       !/^\d/.test(trimmed))
     ) {
       y += 4;
-      doc.setFont("times", "bold");
-      doc.setFontSize(13);
+
+      // Page break check before section header
+      if (isMultiPage && y + lineHeight * 2 > pageBottomLimit) {
+        doc.addPage();
+        y = MARGIN_TOP;
+      }
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
       doc.setTextColor(...primaryColor);
-      doc.text(trimmed, MARGIN_X, y);
+      const headerLines = doc.splitTextToSize(trimmed, CONTENT_W);
+      for (const hl of headerLines) {
+        doc.text(hl, MARGIN_X, y);
+        y += lineHeight;
+      }
       doc.setTextColor(...COLOR_BLACK);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(11);
-      y += lineHeight + 2;
+      y += 2;
 
       // Draw a subtle line under section header
       drawThinLine(doc, y - lineHeight + 1, COLOR_LIGHT);
@@ -284,11 +313,10 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
     // Label:Value pairs (bold label, normal value)
     const colonIdx = trimmed.indexOf(":");
     if (colonIdx > 0 && colonIdx < 35 && !trimmed.startsWith("http")) {
-      const label = trimmed.substring(0, colonIdx + 1);
-      const value = trimmed.substring(colonIdx + 1).trim();
-
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
+      const label = trimmed.substring(0, colonIdx + 1);
+      const value = trimmed.substring(colonIdx + 1).trim();
       doc.text(label, MARGIN_X, y);
 
       if (value) {
@@ -296,9 +324,9 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
         const labelWidth = doc.getTextWidth(label + " ");
         const wrappedValue = doc.splitTextToSize(value, CONTENT_W - labelWidth);
         doc.text(wrappedValue[0], MARGIN_X + labelWidth, y);
-        // Additional wrapped lines
         for (let i = 1; i < wrappedValue.length; i++) {
           y += lineHeight;
+          if (isMultiPage && y > pageBottomLimit) { doc.addPage(); y = MARGIN_TOP; }
           doc.text(wrappedValue[i], MARGIN_X + labelWidth, y);
         }
       }
@@ -308,7 +336,7 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
       continue;
     }
 
-    // Numbered items (medications) - bold number, normal text
+    // Numbered items - bold number, normal text
     const numberedMatch = trimmed.match(/^(\d+)\.\s+(.+)/);
     if (numberedMatch) {
       y += 2;
@@ -320,7 +348,25 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
       doc.text(medText[0], MARGIN_X + 8, y);
       for (let i = 1; i < medText.length; i++) {
         y += lineHeight;
+        if (isMultiPage && y > pageBottomLimit) { doc.addPage(); y = MARGIN_TOP; }
         doc.text(medText[i], MARGIN_X + 8, y);
+      }
+      y += lineHeight;
+      continue;
+    }
+
+    // Lettered items (a), b), c) etc - for contract clauses
+    const letteredMatch = trimmed.match(/^([a-z])\)\s+(.+)/);
+    if (letteredMatch) {
+      doc.setFont("helvetica", "bold");
+      doc.text(`${letteredMatch[1]})`, MARGIN_X + 4, y);
+      doc.setFont("helvetica", "normal");
+      const itemText = doc.splitTextToSize(letteredMatch[2], CONTENT_W - 14);
+      doc.text(itemText[0], MARGIN_X + 12, y);
+      for (let i = 1; i < itemText.length; i++) {
+        y += lineHeight;
+        if (isMultiPage && y > pageBottomLimit) { doc.addPage(); y = MARGIN_TOP; }
+        doc.text(itemText[i], MARGIN_X + 12, y);
       }
       y += lineHeight;
       continue;
@@ -332,6 +378,7 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
       doc.setTextColor(90, 90, 90);
       const indentedText = doc.splitTextToSize(trimmed, CONTENT_W - 10);
       for (const il of indentedText) {
+        if (isMultiPage && y > pageBottomLimit) { doc.addPage(); y = MARGIN_TOP; }
         doc.text(il, MARGIN_X + 8, y);
         y += lineHeight - 0.5;
       }
@@ -343,6 +390,7 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
     // Regular line with wrapping
     const wrappedLines = doc.splitTextToSize(trimmed, CONTENT_W);
     for (const wl of wrappedLines) {
+      if (isMultiPage && y > pageBottomLimit) { doc.addPage(); y = MARGIN_TOP; }
       doc.text(wl, MARGIN_X, y);
       y += lineHeight;
     }
