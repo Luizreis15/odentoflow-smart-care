@@ -215,6 +215,14 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
   for (const line of lines) {
     const trimmed = line.trim();
 
+    // For contracts, don't filter out signature sections or professional info
+    if (tipo === "contrato") {
+      // Only skip separator-only lines with special chars
+      if (/^[━═]{3,}$/.test(trimmed)) continue;
+      bodyLines.push(line);
+      continue;
+    }
+
     // Skip redundant lines (already in PDF header/footer/signature)
     if (isRedundantLine(trimmed, clinicName)) continue;
 
