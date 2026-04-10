@@ -159,16 +159,21 @@ function drawHeader(doc: jsPDF, data: DocumentoPDFData, logoBase64: string | nul
 }
 
 function drawDocumentTitle(doc: jsPDF, title: string, y: number, primaryColor: [number, number, number]): number {
-  doc.setFont("times", "bold");
-  doc.setFontSize(20);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
   doc.setTextColor(...COLOR_BLACK);
-  doc.text(title, PAGE_W / 2, y, { align: "center" });
-  y += 4;
+
+  // Split long titles into multiple lines
+  const titleLines = doc.splitTextToSize(title, CONTENT_W - 10);
+  for (const tl of titleLines) {
+    doc.text(tl, PAGE_W / 2, y, { align: "center" });
+    y += 7;
+  }
 
   doc.setDrawColor(...primaryColor);
   doc.setLineWidth(0.8);
-  const titleWidth = doc.getTextWidth(title);
-  const lineHalf = Math.min(titleWidth / 2, 30);
+  const lastLineWidth = doc.getTextWidth(titleLines[titleLines.length - 1] || title);
+  const lineHalf = Math.min(lastLineWidth / 2, 30);
   doc.line(PAGE_W / 2 - lineHalf, y, PAGE_W / 2 + lineHalf, y);
   y += 12;
 
@@ -179,6 +184,8 @@ function drawDocumentTitle(doc: jsPDF, title: string, y: number, primaryColor: [
 const REDUNDANT_PATTERNS = [
   /^RECEITUÁRIO\s*(IMPRESSO|DIGITAL)?$/i,
   /^ATESTADO\s*ODONTOLÓGICO$/i,
+  /^CONTRATO DE PRESTAÇÃO DE SERVIÇOS ODONTOLÓGICOS$/i,
+  /^Contrato\s*N[ºo°]\s*\d+/i,
   /^━+$/,
   /^═+$/,
   /^={3,}$/,
@@ -211,14 +218,21 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
   const lines = content.split("\n");
   const bodyLines: string[] = [];
   let inProfessionalSection = false;
+  let skipContractHeaderLines = tipo === "contrato" ? 2 : 0; // skip title + contract number
 
   for (const line of lines) {
     const trimmed = line.trim();
 
-    // For contracts, don't filter out signature sections or professional info
+    // For contracts, skip redundant header lines and signature blocks from template
     if (tipo === "contrato") {
-      // Only skip separator-only lines with special chars
       if (/^[━═]{3,}$/.test(trimmed)) continue;
+      // Skip the first redundant lines (title + contract number already in PDF header)
+      if (isRedundantLine(trimmed, clinicName)) continue;
+      // Skip signature block lines at end of content (handled by drawContractSignatures)
+      if (/^_{5,}$/.test(trimmed) || /^________/.test(trimmed)) continue;
+      if (/^CONTRATANTE\s*$/i.test(trimmed)) continue;
+      if (/^CONTRATADO\(A\)\s*$/i.test(trimmed)) continue;
+      if (/^CRO\s*n[ºo°]\s/i.test(trimmed) && bodyLines.length > 0 && /^________/.test(bodyLines[bodyLines.length - 1]?.trim() || "")) continue;
       bodyLines.push(line);
       continue;
     }
@@ -240,11 +254,20 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
   }
 
   const lineHeight = 6.5;
+  const isMultiPage = tipo === "contrato";
+  const pageBottomLimit = isMultiPage ? PAGE_H - MARGIN_BOTTOM - 15 : PAGE_H - MARGIN_BOTTOM - 60;
 
   for (const rawLine of bodyLines) {
-    if (y + lineHeight > PAGE_H - MARGIN_BOTTOM - 60) break;
-
     const trimmed = rawLine.trim();
+
+    // Check page break for multi-page docs
+    if (isMultiPage && y + lineHeight > pageBottomLimit) {
+      drawFooter(doc, { tipo, title: "", content: "", clinicName: clinicName || "" } as DocumentoPDFData);
+      doc.addPage();
+      y = MARGIN_TOP;
+    } else if (!isMultiPage && y + lineHeight > pageBottomLimit) {
+      break;
+    }
 
     // Empty line = small vertical space
     if (!trimmed) {
@@ -252,22 +275,35 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
       continue;
     }
 
-    // Section headers (ALL CAPS, > 3 chars)
+    // Section headers — CLÁUSULA lines and ALL CAPS headers
+    const isClausula = /^CL[ÁA]USULA\s/i.test(trimmed);
     if (
-      trimmed === trimmed.toUpperCase() &&
-      trimmed.length > 3 &&
-      !/^(CID|CPF|CRO|CNPJ)/.test(trimmed) &&
-      !/^\d/.test(trimmed)
+      isClausula ||
+      (trimmed === trimmed.toUpperCase() &&
+       trimmed.length > 3 &&
+       !/^(CID|CPF|CRO|CNPJ)/.test(trimmed) &&
+       !/^\d/.test(trimmed))
     ) {
       y += 4;
-      doc.setFont("times", "bold");
-      doc.setFontSize(13);
+
+      // Page break check before section header
+      if (isMultiPage && y + lineHeight * 2 > pageBottomLimit) {
+        doc.addPage();
+        y = MARGIN_TOP;
+      }
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
       doc.setTextColor(...primaryColor);
-      doc.text(trimmed, MARGIN_X, y);
+      const headerLines = doc.splitTextToSize(trimmed, CONTENT_W);
+      for (const hl of headerLines) {
+        doc.text(hl, MARGIN_X, y);
+        y += lineHeight;
+      }
       doc.setTextColor(...COLOR_BLACK);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(11);
-      y += lineHeight + 2;
+      y += 2;
 
       // Draw a subtle line under section header
       drawThinLine(doc, y - lineHeight + 1, COLOR_LIGHT);
@@ -277,11 +313,10 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
     // Label:Value pairs (bold label, normal value)
     const colonIdx = trimmed.indexOf(":");
     if (colonIdx > 0 && colonIdx < 35 && !trimmed.startsWith("http")) {
-      const label = trimmed.substring(0, colonIdx + 1);
-      const value = trimmed.substring(colonIdx + 1).trim();
-
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
+      const label = trimmed.substring(0, colonIdx + 1);
+      const value = trimmed.substring(colonIdx + 1).trim();
       doc.text(label, MARGIN_X, y);
 
       if (value) {
@@ -289,9 +324,9 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
         const labelWidth = doc.getTextWidth(label + " ");
         const wrappedValue = doc.splitTextToSize(value, CONTENT_W - labelWidth);
         doc.text(wrappedValue[0], MARGIN_X + labelWidth, y);
-        // Additional wrapped lines
         for (let i = 1; i < wrappedValue.length; i++) {
           y += lineHeight;
+          if (isMultiPage && y > pageBottomLimit) { doc.addPage(); y = MARGIN_TOP; }
           doc.text(wrappedValue[i], MARGIN_X + labelWidth, y);
         }
       }
@@ -301,7 +336,7 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
       continue;
     }
 
-    // Numbered items (medications) - bold number, normal text
+    // Numbered items - bold number, normal text
     const numberedMatch = trimmed.match(/^(\d+)\.\s+(.+)/);
     if (numberedMatch) {
       y += 2;
@@ -313,7 +348,25 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
       doc.text(medText[0], MARGIN_X + 8, y);
       for (let i = 1; i < medText.length; i++) {
         y += lineHeight;
+        if (isMultiPage && y > pageBottomLimit) { doc.addPage(); y = MARGIN_TOP; }
         doc.text(medText[i], MARGIN_X + 8, y);
+      }
+      y += lineHeight;
+      continue;
+    }
+
+    // Lettered items (a), b), c) etc - for contract clauses
+    const letteredMatch = trimmed.match(/^([a-z])\)\s+(.+)/);
+    if (letteredMatch) {
+      doc.setFont("helvetica", "bold");
+      doc.text(`${letteredMatch[1]})`, MARGIN_X + 4, y);
+      doc.setFont("helvetica", "normal");
+      const itemText = doc.splitTextToSize(letteredMatch[2], CONTENT_W - 14);
+      doc.text(itemText[0], MARGIN_X + 12, y);
+      for (let i = 1; i < itemText.length; i++) {
+        y += lineHeight;
+        if (isMultiPage && y > pageBottomLimit) { doc.addPage(); y = MARGIN_TOP; }
+        doc.text(itemText[i], MARGIN_X + 12, y);
       }
       y += lineHeight;
       continue;
@@ -325,6 +378,7 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
       doc.setTextColor(90, 90, 90);
       const indentedText = doc.splitTextToSize(trimmed, CONTENT_W - 10);
       for (const il of indentedText) {
+        if (isMultiPage && y > pageBottomLimit) { doc.addPage(); y = MARGIN_TOP; }
         doc.text(il, MARGIN_X + 8, y);
         y += lineHeight - 0.5;
       }
@@ -336,6 +390,7 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
     // Regular line with wrapping
     const wrappedLines = doc.splitTextToSize(trimmed, CONTENT_W);
     for (const wl of wrappedLines) {
+      if (isMultiPage && y > pageBottomLimit) { doc.addPage(); y = MARGIN_TOP; }
       doc.text(wl, MARGIN_X, y);
       y += lineHeight;
     }
@@ -398,7 +453,13 @@ function drawSignature(doc: jsPDF, data: DocumentoPDFData, y: number): number {
 }
 
 function drawContractSignatures(doc: jsPDF, data: DocumentoPDFData, y: number): number {
-  y = Math.max(y + 10, PAGE_H - MARGIN_BOTTOM - 75);
+  // If signatures won't fit on current page, add a new page
+  if (y + 40 > PAGE_H - MARGIN_BOTTOM - 15) {
+    doc.addPage();
+    y = MARGIN_TOP + 20;
+  } else {
+    y += 15;
+  }
 
   const sigW = 70;
   const leftX = MARGIN_X + CONTENT_W * 0.25;
@@ -421,7 +482,7 @@ function drawContractSignatures(doc: jsPDF, data: DocumentoPDFData, y: number): 
   y += 10;
 
   // Professional info under right signature
-  doc.setFont("times", "bold");
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
   if (data.professionalName) {
     doc.text(data.professionalName, rightX, y, { align: "center" });
@@ -496,17 +557,44 @@ export async function generateDocumentoPDF(data: DocumentoPDFData): Promise<void
 
   let y = drawHeader(doc, data, logoBase64, primaryColor);
 
+  // For contracts, use a clean fixed title to avoid encoding issues
   const titleText = data.tipo === "atestado" 
-    ? "ATESTADO ODONTOLÓGICO" 
+    ? "ATESTADO ODONTOLOGICO" 
     : data.tipo === "contrato" 
-    ? (data.title || "CONTRATO DE PRESTAÇÃO DE SERVIÇOS")
-    : "RECEITUÁRIO";
+    ? "CONTRATO DE PRESTACAO DE SERVICOS"
+    : "RECEITUARIO";
   y = drawDocumentTitle(doc, titleText, y, primaryColor);
+
+  // Add patient info and date for contracts
+  if (data.tipo === "contrato") {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...COLOR_BLACK);
+
+    // Extract patient name from content
+    const patientMatch = data.content.match(/CONTRATANTE:\s*(.+?)(?:,|\n)/);
+    if (patientMatch) {
+      doc.text("Paciente:", MARGIN_X, y);
+      doc.setFont("helvetica", "normal");
+      doc.text(patientMatch[1].trim(), MARGIN_X + doc.getTextWidth("Paciente: "), y);
+      y += 6.5;
+    }
+
+    doc.setFont("helvetica", "bold");
+    const now = new Date();
+    const months = ["janeiro","fevereiro","marco","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+    const dateStr = `${now.getDate()} de ${months[now.getMonth()]} de ${now.getFullYear()} as ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    doc.text("Gerado em:", MARGIN_X, y);
+    doc.setFont("helvetica", "normal");
+    doc.text(dateStr, MARGIN_X + doc.getTextWidth("Gerado em: "), y);
+    y += 10;
+  }
 
   y = drawBody(doc, data.content, y, data.tipo, data.clinicName, primaryColor);
 
   drawSignature(doc, data, y);
 
+  // Draw footer on last page
   drawFooter(doc, data);
 
   const pdfBlob = doc.output("blob");
