@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 import { format, addMonths } from "date-fns";
 import { generateRecibo, type ReciboData } from "@/utils/generateRecibo";
+import { generateContractTemplate } from "@/utils/generateContractTemplate";
 import {
   Check,
   ChevronRight,
