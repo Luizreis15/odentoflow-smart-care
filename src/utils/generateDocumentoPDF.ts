@@ -551,17 +551,44 @@ export async function generateDocumentoPDF(data: DocumentoPDFData): Promise<void
 
   let y = drawHeader(doc, data, logoBase64, primaryColor);
 
+  // For contracts, use a clean fixed title to avoid encoding issues
   const titleText = data.tipo === "atestado" 
-    ? "ATESTADO ODONTOLÓGICO" 
+    ? "ATESTADO ODONTOLOGICO" 
     : data.tipo === "contrato" 
-    ? (data.title || "CONTRATO DE PRESTAÇÃO DE SERVIÇOS")
-    : "RECEITUÁRIO";
+    ? "CONTRATO DE PRESTACAO DE SERVICOS"
+    : "RECEITUARIO";
   y = drawDocumentTitle(doc, titleText, y, primaryColor);
+
+  // Add patient info and date for contracts
+  if (data.tipo === "contrato") {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...COLOR_BLACK);
+
+    // Extract patient name from content
+    const patientMatch = data.content.match(/CONTRATANTE:\s*(.+?)(?:,|\n)/);
+    if (patientMatch) {
+      doc.text("Paciente:", MARGIN_X, y);
+      doc.setFont("helvetica", "normal");
+      doc.text(patientMatch[1].trim(), MARGIN_X + doc.getTextWidth("Paciente: "), y);
+      y += 6.5;
+    }
+
+    doc.setFont("helvetica", "bold");
+    const now = new Date();
+    const months = ["janeiro","fevereiro","marco","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+    const dateStr = `${now.getDate()} de ${months[now.getMonth()]} de ${now.getFullYear()} as ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    doc.text("Gerado em:", MARGIN_X, y);
+    doc.setFont("helvetica", "normal");
+    doc.text(dateStr, MARGIN_X + doc.getTextWidth("Gerado em: "), y);
+    y += 10;
+  }
 
   y = drawBody(doc, data.content, y, data.tipo, data.clinicName, primaryColor);
 
   drawSignature(doc, data, y);
 
+  // Draw footer on last page
   drawFooter(doc, data);
 
   const pdfBlob = doc.output("blob");
