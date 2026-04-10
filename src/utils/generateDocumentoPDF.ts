@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 
 export interface DocumentoPDFData {
-  tipo: "atestado" | "receituario";
+  tipo: "atestado" | "receituario" | "contrato";
   title: string;
   content: string;
   // Clinic
@@ -215,6 +215,14 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
   for (const line of lines) {
     const trimmed = line.trim();
 
+    // For contracts, don't filter out signature sections or professional info
+    if (tipo === "contrato") {
+      // Only skip separator-only lines with special chars
+      if (/^[━═]{3,}$/.test(trimmed)) continue;
+      bodyLines.push(line);
+      continue;
+    }
+
     // Skip redundant lines (already in PDF header/footer/signature)
     if (isRedundantLine(trimmed, clinicName)) continue;
 
@@ -337,6 +345,10 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
 }
 
 function drawSignature(doc: jsPDF, data: DocumentoPDFData, y: number): number {
+  if (data.tipo === "contrato") {
+    return drawContractSignatures(doc, data, y);
+  }
+
   y = Math.max(y + 15, PAGE_H - MARGIN_BOTTOM - 55);
 
   doc.setFont("helvetica", "normal");
@@ -385,6 +397,46 @@ function drawSignature(doc: jsPDF, data: DocumentoPDFData, y: number): number {
   return y;
 }
 
+function drawContractSignatures(doc: jsPDF, data: DocumentoPDFData, y: number): number {
+  y = Math.max(y + 10, PAGE_H - MARGIN_BOTTOM - 75);
+
+  const sigW = 70;
+  const leftX = MARGIN_X + CONTENT_W * 0.25;
+  const rightX = MARGIN_X + CONTENT_W * 0.75;
+
+  doc.setDrawColor(...COLOR_BLACK);
+  doc.setLineWidth(0.4);
+
+  // Left signature - Contratante
+  doc.line(leftX - sigW / 2, y, leftX + sigW / 2, y);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...COLOR_BLACK);
+  doc.text("CONTRATANTE", leftX, y + 5, { align: "center" });
+
+  // Right signature - Contratado(a)
+  doc.line(rightX - sigW / 2, y, rightX + sigW / 2, y);
+  doc.text("CONTRATADO(A)", rightX, y + 5, { align: "center" });
+
+  y += 10;
+
+  // Professional info under right signature
+  doc.setFont("times", "bold");
+  doc.setFontSize(9.5);
+  if (data.professionalName) {
+    doc.text(data.professionalName, rightX, y, { align: "center" });
+    y += 4;
+  }
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...COLOR_GRAY);
+  if (data.professionalCro) {
+    doc.text(`CRO: ${data.professionalCro}`, rightX, y, { align: "center" });
+  }
+
+  return y + 5;
+}
+
 function drawFooter(doc: jsPDF, data: DocumentoPDFData) {
   const footerY = PAGE_H - MARGIN_BOTTOM + 5;
 
@@ -420,7 +472,8 @@ function drawFooter(doc: jsPDF, data: DocumentoPDFData) {
 
   // Document ID
   if (data.documentId) {
-    const docIdStr = `ID: FLD-${data.tipo === "atestado" ? "AT" : "RC"}-${new Date().getFullYear()}-${data.documentId.substring(0, 8).toUpperCase()}`;
+    const prefix = data.tipo === "atestado" ? "AT" : data.tipo === "contrato" ? "CT" : "RC";
+    const docIdStr = `ID: FLD-${prefix}-${new Date().getFullYear()}-${data.documentId.substring(0, 8).toUpperCase()}`;
     doc.setFontSize(6.5);
     doc.text(docIdStr, MARGIN_X, y);
   }
@@ -443,7 +496,11 @@ export async function generateDocumentoPDF(data: DocumentoPDFData): Promise<void
 
   let y = drawHeader(doc, data, logoBase64, primaryColor);
 
-  const titleText = data.tipo === "atestado" ? "ATESTADO ODONTOLÓGICO" : "RECEITUÁRIO";
+  const titleText = data.tipo === "atestado" 
+    ? "ATESTADO ODONTOLÓGICO" 
+    : data.tipo === "contrato" 
+    ? (data.title || "CONTRATO DE PRESTAÇÃO DE SERVIÇOS")
+    : "RECEITUÁRIO";
   y = drawDocumentTitle(doc, titleText, y, primaryColor);
 
   y = drawBody(doc, data.content, y, data.tipo, data.clinicName, primaryColor);
