@@ -184,6 +184,8 @@ function drawDocumentTitle(doc: jsPDF, title: string, y: number, primaryColor: [
 const REDUNDANT_PATTERNS = [
   /^RECEITUÁRIO\s*(IMPRESSO|DIGITAL)?$/i,
   /^ATESTADO\s*ODONTOLÓGICO$/i,
+  /^CONTRATO DE PRESTAÇÃO DE SERVIÇOS ODONTOLÓGICOS$/i,
+  /^Contrato\s*N[ºo°]\s*\d+/i,
   /^━+$/,
   /^═+$/,
   /^={3,}$/,
