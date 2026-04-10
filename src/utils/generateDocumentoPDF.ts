@@ -453,7 +453,13 @@ function drawSignature(doc: jsPDF, data: DocumentoPDFData, y: number): number {
 }
 
 function drawContractSignatures(doc: jsPDF, data: DocumentoPDFData, y: number): number {
-  y = Math.max(y + 10, PAGE_H - MARGIN_BOTTOM - 75);
+  // If signatures won't fit on current page, add a new page
+  if (y + 40 > PAGE_H - MARGIN_BOTTOM - 15) {
+    doc.addPage();
+    y = MARGIN_TOP + 20;
+  } else {
+    y += 15;
+  }
 
   const sigW = 70;
   const leftX = MARGIN_X + CONTENT_W * 0.25;
@@ -476,7 +482,7 @@ function drawContractSignatures(doc: jsPDF, data: DocumentoPDFData, y: number): 
   y += 10;
 
   // Professional info under right signature
-  doc.setFont("times", "bold");
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
   if (data.professionalName) {
     doc.text(data.professionalName, rightX, y, { align: "center" });
