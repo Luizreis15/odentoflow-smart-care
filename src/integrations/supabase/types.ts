@@ -2635,12 +2635,15 @@ export type Database = {
           budget_id: string | null
           clinic_id: string
           content: string
+          contract_number: string | null
           contract_value: number | null
+          contract_version: number | null
           created_at: string
           created_by: string
           document_type: string
           id: string
           metadata: Json | null
+          parent_contract_id: string | null
           patient_address: string | null
           patient_birth_date: string | null
           patient_cpf: string | null
@@ -2658,12 +2661,15 @@ export type Database = {
           budget_id?: string | null
           clinic_id: string
           content: string
+          contract_number?: string | null
           contract_value?: number | null
+          contract_version?: number | null
           created_at?: string
           created_by: string
           document_type: string
           id?: string
           metadata?: Json | null
+          parent_contract_id?: string | null
           patient_address?: string | null
           patient_birth_date?: string | null
           patient_cpf?: string | null
@@ -2681,12 +2687,15 @@ export type Database = {
           budget_id?: string | null
           clinic_id?: string
           content?: string
+          contract_number?: string | null
           contract_value?: number | null
+          contract_version?: number | null
           created_at?: string
           created_by?: string
           document_type?: string
           id?: string
           metadata?: Json | null
+          parent_contract_id?: string | null
           patient_address?: string | null
           patient_birth_date?: string | null
           patient_cpf?: string | null
@@ -2706,6 +2715,13 @@ export type Database = {
             columns: ["budget_id"]
             isOneToOne: false
             referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_documents_parent_contract_id_fkey"
+            columns: ["parent_contract_id"]
+            isOneToOne: false
+            referencedRelation: "patient_documents"
             referencedColumns: ["id"]
           },
           {
