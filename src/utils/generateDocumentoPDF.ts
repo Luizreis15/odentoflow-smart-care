@@ -184,13 +184,18 @@ function drawDocumentTitle(doc: jsPDF, title: string, y: number, primaryColor: [
 const REDUNDANT_PATTERNS = [
   /^RECEITUÁRIO\s*(IMPRESSO|DIGITAL)?$/i,
   /^ATESTADO\s*ODONTOLÓGICO$/i,
-  /^CONTRATO DE PRESTAÇÃO DE SERVIÇOS ODONTOLÓGICOS$/i,
+  /^CONTRATO DE PRESTAC[AÃ]O DE SERVIC[OÓ]S\s*(ODONTOL[OÓ]GICOS)?$/i,
   /^Contrato\s*N[ºo°]\s*\d+/i,
+  /^Contrato\s*No\s*\d+/i,
   /^━+$/,
   /^═+$/,
   /^={3,}$/,
   /^-{3,}$/,
   /^PROFISSIONAL RESPONSÁVEL$/i,
+  /^ASSINATURAS$/i,
+  /^AREA DE ASSINATURAS$/i,
+  /^Documento gerado eletronicamente/i,
+  /^Sem necessidade de reconhecimento/i,
 ];
 
 function isRedundantLine(line: string, clinicName?: string): boolean {
@@ -232,7 +237,12 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
       if (/^_{5,}$/.test(trimmed) || /^________/.test(trimmed)) continue;
       if (/^CONTRATANTE\s*$/i.test(trimmed)) continue;
       if (/^CONTRATADO\(A\)\s*$/i.test(trimmed)) continue;
-      if (/^CRO\s*n[ºo°]\s/i.test(trimmed) && bodyLines.length > 0 && /^________/.test(bodyLines[bodyLines.length - 1]?.trim() || "")) continue;
+      if (/^CONTRATADA\s*$/i.test(trimmed)) continue;
+      if (/^RESPONSAVEL LEGAL\s*$/i.test(trimmed)) continue;
+      if (/^CONTRATADA\s*\/\s*PROFISSIONAL\s*EXECUTOR$/i.test(trimmed)) continue;
+      if (/^CPF:\s/i.test(trimmed) && bodyLines.length > 0) continue;
+      if (/^CRO\s*n[ºo°]?\s/i.test(trimmed) && bodyLines.length > 0) continue;
+      if (/^E, por estarem de acordo/i.test(trimmed)) continue;
       bodyLines.push(line);
       continue;
     }
@@ -453,46 +463,60 @@ function drawSignature(doc: jsPDF, data: DocumentoPDFData, y: number): number {
 }
 
 function drawContractSignatures(doc: jsPDF, data: DocumentoPDFData, y: number): number {
-  // If signatures won't fit on current page, add a new page
-  if (y + 40 > PAGE_H - MARGIN_BOTTOM - 15) {
+  // Detect if content has RESPONSAVEL LEGAL section
+  const hasResponsible = /RESPONSAVEL LEGAL/i.test(data.content);
+  const signatureCount = hasResponsible ? 3 : 2;
+  const neededHeight = 50;
+
+  if (y + neededHeight > PAGE_H - MARGIN_BOTTOM - 15) {
+    drawFooter(doc, data);
     doc.addPage();
     y = MARGIN_TOP + 20;
   } else {
     y += 15;
   }
 
-  const sigW = 70;
-  const leftX = MARGIN_X + CONTENT_W * 0.25;
-  const rightX = MARGIN_X + CONTENT_W * 0.75;
-
+  const sigW = 65;
   doc.setDrawColor(...COLOR_BLACK);
   doc.setLineWidth(0.4);
-
-  // Left signature - Contratante
-  doc.line(leftX - sigW / 2, y, leftX + sigW / 2, y);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(...COLOR_BLACK);
-  doc.text("CONTRATANTE", leftX, y + 5, { align: "center" });
 
-  // Right signature - Contratado(a)
-  doc.line(rightX - sigW / 2, y, rightX + sigW / 2, y);
-  doc.text("CONTRATADO(A)", rightX, y + 5, { align: "center" });
+  if (signatureCount === 3) {
+    const positions = [MARGIN_X + CONTENT_W * 0.17, MARGIN_X + CONTENT_W * 0.5, MARGIN_X + CONTENT_W * 0.83];
+    const labels = ["CONTRATANTE", "RESPONSAVEL LEGAL", "CONTRATADA"];
+
+    for (let i = 0; i < 3; i++) {
+      doc.line(positions[i] - sigW / 2, y, positions[i] + sigW / 2, y);
+      doc.text(labels[i], positions[i], y + 5, { align: "center" });
+    }
+  } else {
+    const leftX = MARGIN_X + CONTENT_W * 0.25;
+    const rightX = MARGIN_X + CONTENT_W * 0.75;
+
+    doc.line(leftX - sigW / 2, y, leftX + sigW / 2, y);
+    doc.text("CONTRATANTE", leftX, y + 5, { align: "center" });
+
+    doc.line(rightX - sigW / 2, y, rightX + sigW / 2, y);
+    doc.text("CONTRATADA", rightX, y + 5, { align: "center" });
+  }
 
   y += 10;
 
-  // Professional info under right signature
+  // Professional info under last signature
+  const profX = signatureCount === 3 ? MARGIN_X + CONTENT_W * 0.83 : MARGIN_X + CONTENT_W * 0.75;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
   if (data.professionalName) {
-    doc.text(data.professionalName, rightX, y, { align: "center" });
+    doc.text(data.professionalName, profX, y, { align: "center" });
     y += 4;
   }
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...COLOR_GRAY);
   if (data.professionalCro) {
-    doc.text(`CRO: ${data.professionalCro}`, rightX, y, { align: "center" });
+    doc.text(`CRO: ${data.professionalCro}`, profX, y, { align: "center" });
   }
 
   return y + 5;
@@ -565,25 +589,31 @@ export async function generateDocumentoPDF(data: DocumentoPDFData): Promise<void
     : "RECEITUARIO";
   y = drawDocumentTitle(doc, titleText, y, primaryColor);
 
-  // Add patient info and date for contracts
+  // Add contract metadata header
   if (data.tipo === "contrato") {
+    // Extract contract number from content
+    const contractNumMatch = data.content.match(/Contrato\s*No?\s*(\d+)/i);
+    const versionMatch = data.content.match(/Versao\s*(\d+)/i);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...COLOR_GRAY);
+    if (contractNumMatch) {
+      doc.text(`Contrato No ${contractNumMatch[1]}${versionMatch ? ` - Versao ${versionMatch[1]}` : ""}`, PAGE_W / 2, y, { align: "center" });
+      y += 5;
+    }
+
+    // Extract patient name from content
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(...COLOR_BLACK);
+    const patientMatch = data.content.match(/CONTRATANTE[^,]*,\s*inscrito\(a\)\s*no\s*CPF/i)
+      ? null
+      : data.content.match(/denominado\(a\)\s+CONTRATANTE/i);
 
-    // Extract patient name from content
-    const patientMatch = data.content.match(/CONTRATANTE:\s*(.+?)(?:,|\n)/);
-    if (patientMatch) {
-      doc.text("Paciente:", MARGIN_X, y);
-      doc.setFont("helvetica", "normal");
-      doc.text(patientMatch[1].trim(), MARGIN_X + doc.getTextWidth("Paciente: "), y);
-      y += 6.5;
-    }
-
-    doc.setFont("helvetica", "bold");
     const now = new Date();
     const months = ["janeiro","fevereiro","marco","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
-    const dateStr = `${now.getDate()} de ${months[now.getMonth()]} de ${now.getFullYear()} as ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const dateStr = `${now.getDate()} de ${months[now.getMonth()]} de ${now.getFullYear()}`;
     doc.text("Gerado em:", MARGIN_X, y);
     doc.setFont("helvetica", "normal");
     doc.text(dateStr, MARGIN_X + doc.getTextWidth("Gerado em: "), y);
