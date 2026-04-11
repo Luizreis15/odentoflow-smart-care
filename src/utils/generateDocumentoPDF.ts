@@ -458,46 +458,60 @@ function drawSignature(doc: jsPDF, data: DocumentoPDFData, y: number): number {
 }
 
 function drawContractSignatures(doc: jsPDF, data: DocumentoPDFData, y: number): number {
-  // If signatures won't fit on current page, add a new page
-  if (y + 40 > PAGE_H - MARGIN_BOTTOM - 15) {
+  // Detect if content has RESPONSAVEL LEGAL section
+  const hasResponsible = /RESPONSAVEL LEGAL/i.test(data.content);
+  const signatureCount = hasResponsible ? 3 : 2;
+  const neededHeight = 50;
+
+  if (y + neededHeight > PAGE_H - MARGIN_BOTTOM - 15) {
+    drawFooter(doc, data);
     doc.addPage();
     y = MARGIN_TOP + 20;
   } else {
     y += 15;
   }
 
-  const sigW = 70;
-  const leftX = MARGIN_X + CONTENT_W * 0.25;
-  const rightX = MARGIN_X + CONTENT_W * 0.75;
-
+  const sigW = 65;
   doc.setDrawColor(...COLOR_BLACK);
   doc.setLineWidth(0.4);
-
-  // Left signature - Contratante
-  doc.line(leftX - sigW / 2, y, leftX + sigW / 2, y);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(...COLOR_BLACK);
-  doc.text("CONTRATANTE", leftX, y + 5, { align: "center" });
 
-  // Right signature - Contratado(a)
-  doc.line(rightX - sigW / 2, y, rightX + sigW / 2, y);
-  doc.text("CONTRATADO(A)", rightX, y + 5, { align: "center" });
+  if (signatureCount === 3) {
+    const positions = [MARGIN_X + CONTENT_W * 0.17, MARGIN_X + CONTENT_W * 0.5, MARGIN_X + CONTENT_W * 0.83];
+    const labels = ["CONTRATANTE", "RESPONSAVEL LEGAL", "CONTRATADA"];
+
+    for (let i = 0; i < 3; i++) {
+      doc.line(positions[i] - sigW / 2, y, positions[i] + sigW / 2, y);
+      doc.text(labels[i], positions[i], y + 5, { align: "center" });
+    }
+  } else {
+    const leftX = MARGIN_X + CONTENT_W * 0.25;
+    const rightX = MARGIN_X + CONTENT_W * 0.75;
+
+    doc.line(leftX - sigW / 2, y, leftX + sigW / 2, y);
+    doc.text("CONTRATANTE", leftX, y + 5, { align: "center" });
+
+    doc.line(rightX - sigW / 2, y, rightX + sigW / 2, y);
+    doc.text("CONTRATADA", rightX, y + 5, { align: "center" });
+  }
 
   y += 10;
 
-  // Professional info under right signature
+  // Professional info under last signature
+  const profX = signatureCount === 3 ? MARGIN_X + CONTENT_W * 0.83 : MARGIN_X + CONTENT_W * 0.75;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
   if (data.professionalName) {
-    doc.text(data.professionalName, rightX, y, { align: "center" });
+    doc.text(data.professionalName, profX, y, { align: "center" });
     y += 4;
   }
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...COLOR_GRAY);
   if (data.professionalCro) {
-    doc.text(`CRO: ${data.professionalCro}`, rightX, y, { align: "center" });
+    doc.text(`CRO: ${data.professionalCro}`, profX, y, { align: "center" });
   }
 
   return y + 5;
