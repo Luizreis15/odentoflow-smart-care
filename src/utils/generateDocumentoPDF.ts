@@ -584,25 +584,31 @@ export async function generateDocumentoPDF(data: DocumentoPDFData): Promise<void
     : "RECEITUARIO";
   y = drawDocumentTitle(doc, titleText, y, primaryColor);
 
-  // Add patient info and date for contracts
+  // Add contract metadata header
   if (data.tipo === "contrato") {
+    // Extract contract number from content
+    const contractNumMatch = data.content.match(/Contrato\s*No?\s*(\d+)/i);
+    const versionMatch = data.content.match(/Versao\s*(\d+)/i);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...COLOR_GRAY);
+    if (contractNumMatch) {
+      doc.text(`Contrato No ${contractNumMatch[1]}${versionMatch ? ` - Versao ${versionMatch[1]}` : ""}`, PAGE_W / 2, y, { align: "center" });
+      y += 5;
+    }
+
+    // Extract patient name from content
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(...COLOR_BLACK);
+    const patientMatch = data.content.match(/CONTRATANTE[^,]*,\s*inscrito\(a\)\s*no\s*CPF/i)
+      ? null
+      : data.content.match(/denominado\(a\)\s+CONTRATANTE/i);
 
-    // Extract patient name from content
-    const patientMatch = data.content.match(/CONTRATANTE:\s*(.+?)(?:,|\n)/);
-    if (patientMatch) {
-      doc.text("Paciente:", MARGIN_X, y);
-      doc.setFont("helvetica", "normal");
-      doc.text(patientMatch[1].trim(), MARGIN_X + doc.getTextWidth("Paciente: "), y);
-      y += 6.5;
-    }
-
-    doc.setFont("helvetica", "bold");
     const now = new Date();
     const months = ["janeiro","fevereiro","marco","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
-    const dateStr = `${now.getDate()} de ${months[now.getMonth()]} de ${now.getFullYear()} as ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const dateStr = `${now.getDate()} de ${months[now.getMonth()]} de ${now.getFullYear()}`;
     doc.text("Gerado em:", MARGIN_X, y);
     doc.setFont("helvetica", "normal");
     doc.text(dateStr, MARGIN_X + doc.getTextWidth("Gerado em: "), y);
