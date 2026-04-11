@@ -356,7 +356,7 @@ export const AprovarOrcamentoModal = ({
       try {
         const [clinicRes, patientRes, configRes] = await Promise.all([
           supabase.from("clinicas").select("nome, cnpj, telefone, address").eq("id", budget.clinic_id).single(),
-          supabase.from("patients").select("full_name, cpf, address").eq("id", budget.patient_id).single(),
+          supabase.from("patients").select("full_name, cpf, address, responsible_name, responsible_cpf").eq("id", budget.patient_id).single(),
           supabase.from("configuracoes_clinica").select("*").eq("clinica_id", budget.clinic_id).maybeSingle(),
         ]);
 
@@ -369,7 +369,7 @@ export const AprovarOrcamentoModal = ({
         if (firstProfId) {
           const { data: profData } = await supabase
             .from("profissionais")
-            .select("nome, cro")
+            .select("nome, cro, especialidade")
             .eq("id", firstProfId)
             .single();
           prof = profData;
@@ -379,28 +379,51 @@ export const AprovarOrcamentoModal = ({
         const clinicAddressStr = clinicAddr
           ? [clinicAddr.street, clinicAddr.number, clinicAddr.neighborhood, clinicAddr.city, clinicAddr.state].filter(Boolean).join(", ")
           : "";
+        const clinicCity = clinicAddr?.city || "";
+        const clinicUf = clinicAddr?.state || "";
 
         const proceduresList = budget.budget_items.map((i) => i.procedure_name).join(", ");
+        const contractNum = generateContractNumber();
+
+        // Build payment summary from allocations
+        const paymentMethodLabel = getPaymentMethodSummary();
+        const firstAlloc = allocations[0];
+        const totalInstallments = allocations.reduce((sum, a) => sum + a.installments_count, 0);
 
         const contractContent = generateContractTemplate({
-          patientName: patient?.full_name || "",
-          patientCpf: patient?.cpf || "",
-          patientAddress: patient?.address || "",
           clinicName: clinic?.nome || "",
           clinicCnpj: clinic?.cnpj || "",
           clinicAddress: clinicAddressStr,
+          clinicCity,
+          clinicUf,
+          clinicPhone: clinic?.telefone || "",
           professionalName: prof?.nome || "",
           professionalCro: prof?.cro || "",
-          contractValue: budget.final_value.toFixed(2),
-          procedures: proceduresList,
-          city: clinicAddr?.city || "",
+          professionalSpecialty: prof?.especialidade || "",
+          patientName: patient?.full_name || "",
+          patientCpf: patient?.cpf || "",
+          patientAddress: patient?.address || "",
+          patientCity: clinicCity,
+          responsibleName: (patient as any)?.responsible_name || undefined,
+          responsibleCpf: (patient as any)?.responsible_cpf || undefined,
+          mainProcedure: proceduresList,
+          totalValue: budget.final_value.toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
+          downPayment: firstAlloc?.is_immediate ? firstAlloc.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : undefined,
+          installmentsCount: totalInstallments > 1 ? String(totalInstallments) : undefined,
+          installmentValue: totalInstallments > 1 ? (budget.final_value / totalInstallments).toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : undefined,
+          paymentMethod: paymentMethodLabel,
+          signingCity: clinicCity,
+          signingDate: format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }),
+          courtDistrict: clinicCity,
+          contractNumber: contractNum,
+          contractVersion: "1",
         });
 
         await supabase.from("patient_documents").insert({
           patient_id: budget.patient_id,
           clinic_id: budget.clinic_id,
           document_type: "contrato",
-          title: `Contrato de Prestação de Serviços - ${patient?.full_name || "Paciente"}`,
+          title: `Contrato de Prestacao de Servicos - ${patient?.full_name || "Paciente"}`,
           content: contractContent,
           created_by: user.id,
           status: "finalizado",
@@ -410,9 +433,11 @@ export const AprovarOrcamentoModal = ({
           procedures_list: proceduresList,
           patient_cpf: patient?.cpf || null,
           patient_address: patient?.address || null,
+          contract_number: contractNum,
+          contract_version: 1,
         });
       } catch (contractErr) {
-        console.error("Erro ao gerar contrato automático:", contractErr);
+        console.error("Erro ao gerar contrato automatico:", contractErr);
         // Non-blocking — approval still succeeds
       }
 
