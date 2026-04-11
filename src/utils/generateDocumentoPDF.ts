@@ -237,7 +237,12 @@ function drawBody(doc: jsPDF, content: string, y: number, tipo: string, clinicNa
       if (/^_{5,}$/.test(trimmed) || /^________/.test(trimmed)) continue;
       if (/^CONTRATANTE\s*$/i.test(trimmed)) continue;
       if (/^CONTRATADO\(A\)\s*$/i.test(trimmed)) continue;
-      if (/^CRO\s*n[ºo°]\s/i.test(trimmed) && bodyLines.length > 0 && /^________/.test(bodyLines[bodyLines.length - 1]?.trim() || "")) continue;
+      if (/^CONTRATADA\s*$/i.test(trimmed)) continue;
+      if (/^RESPONSAVEL LEGAL\s*$/i.test(trimmed)) continue;
+      if (/^CONTRATADA\s*\/\s*PROFISSIONAL\s*EXECUTOR$/i.test(trimmed)) continue;
+      if (/^CPF:\s/i.test(trimmed) && bodyLines.length > 0) continue;
+      if (/^CRO\s*n[ºo°]?\s/i.test(trimmed) && bodyLines.length > 0) continue;
+      if (/^E, por estarem de acordo/i.test(trimmed)) continue;
       bodyLines.push(line);
       continue;
     }
