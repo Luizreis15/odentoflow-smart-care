@@ -184,13 +184,18 @@ function drawDocumentTitle(doc: jsPDF, title: string, y: number, primaryColor: [
 const REDUNDANT_PATTERNS = [
   /^RECEITUÁRIO\s*(IMPRESSO|DIGITAL)?$/i,
   /^ATESTADO\s*ODONTOLÓGICO$/i,
-  /^CONTRATO DE PRESTAÇÃO DE SERVIÇOS ODONTOLÓGICOS$/i,
+  /^CONTRATO DE PRESTAC[AÃ]O DE SERVIC[OÓ]S\s*(ODONTOL[OÓ]GICOS)?$/i,
   /^Contrato\s*N[ºo°]\s*\d+/i,
+  /^Contrato\s*No\s*\d+/i,
   /^━+$/,
   /^═+$/,
   /^={3,}$/,
   /^-{3,}$/,
   /^PROFISSIONAL RESPONSÁVEL$/i,
+  /^ASSINATURAS$/i,
+  /^AREA DE ASSINATURAS$/i,
+  /^Documento gerado eletronicamente/i,
+  /^Sem necessidade de reconhecimento/i,
 ];
 
 function isRedundantLine(line: string, clinicName?: string): boolean {
