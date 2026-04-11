@@ -1,38 +1,36 @@
 
+# Contrato Odontológico Institucional — Implementado
 
-# Correção: Geração de Contrato no Orçamento + PDF Premium para Contratos
+## Status: ✅ Completo
 
-## Problemas Identificados
+## O que foi implementado
 
-### Problema 1: Contrato não é gerado ao aprovar orçamento
-O `AprovarOrcamentoModal` não tem nenhuma lógica para criar um documento de contrato automaticamente após aprovação. O fluxo atual só cria tratamentos, parcelas e comissões.
+### 1. Template de Contrato Institucional (19 cláusulas)
+- `src/utils/generateContractTemplate.ts` reescrito com todas as cláusulas do PRD
+- Interface expandida com 40+ campos dinâmicos
+- Cláusula 13 (arrependimento CDC) condicional para contratos remotos
+- Responsável legal condicional
 
-### Problema 2: PDF de contrato renderiza como "Receituário"
-O `generateDocumentoPDF` só aceita `tipo: "atestado" | "receituario"`. Quando um contrato é impresso pelo histórico, o código usa a lógica `isAtestado ? "atestado" : "receituario"` — ou seja, qualquer documento que não seja atestado vira receituário no PDF. O título renderizado fica "RECEITUÁRIO" em vez do título do contrato.
+### 2. NovoContratoModal refatorado
+- Formulário lateral com seções colapsáveis (Clínica, Paciente, Responsável Legal, Profissional, Tratamento, Financeiro, Opções)
+- Preenchimento automático de dados do sistema
+- Vinculação com orçamento aprovado
+- Pré-visualização em tempo real
+- Validações obrigatórias: paciente, CPF, profissional, procedimento, valor
+- Salvar rascunho / Emitir contrato
 
-## Plano de Correções
+### 3. AprovarOrcamentoModal atualizado
+- Gera contrato automaticamente com nova interface expandida
+- Preenche dados financeiros das alocações de pagamento
+- Gera contract_number e contract_version
 
-### 1. Expandir `generateDocumentoPDF` para suportar contratos
-- Adicionar `"contrato"` ao tipo em `DocumentoPDFData`
-- No `drawDocumentTitle`, quando `tipo === "contrato"`, usar o título do documento (`data.title`) em vez de "RECEITUÁRIO"
-- No `drawBody`, ajustar a lógica de filtragem para não remover seções do contrato (cláusulas, assinaturas)
-- Adicionar área de assinatura dupla (contratante + contratado) no `drawSignature` quando for contrato
-- No footer, usar ID com prefixo `CT` para contratos
+### 4. PDF Premium para contratos
+- Formatação de cláusulas numeradas
+- Itens com letras (a, b, c)
+- Assinatura tripla (Contratante + Responsável Legal + Contratada) quando aplicável
+- Número do contrato e versão no cabeçalho
+- Multi-página com quebras automáticas
 
-### 2. Corrigir `HistoricoDocumentosModal` para detectar contratos
-- Verificar `doc.document_type === "contrato"` para definir `tipo: "contrato"` no `pdfData`, em vez de só verificar se é atestado
-
-### 3. Auto-gerar contrato ao aprovar orçamento
-- Após o sucesso do `handleApprove` no `AprovarOrcamentoModal`, inserir automaticamente um registro em `patient_documents` com `document_type: "contrato"` usando o template de contrato já existente em `NovoContratoModal`
-- Extrair a função `generateContractTemplate` para um utilitário reutilizável
-- Buscar dados do paciente, clínica e profissional para preencher o template
-
-### Arquivos a modificar
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/utils/generateDocumentoPDF.ts` | Adicionar suporte a `tipo: "contrato"` com layout específico |
-| `src/components/documentos/HistoricoDocumentosModal.tsx` | Detectar `document_type === "contrato"` e passar `tipo: "contrato"` |
-| `src/components/orcamentos/AprovarOrcamentoModal.tsx` | Auto-gerar contrato após aprovação bem-sucedida |
-| `src/utils/generateContractTemplate.ts` (novo) | Extrair template de contrato para reutilização |
-
+### 5. Banco de Dados
+- Colunas adicionadas: contract_number, contract_version, parent_contract_id
+- Índices para busca por número e aditivos
