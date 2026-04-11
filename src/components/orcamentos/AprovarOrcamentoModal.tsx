@@ -12,8 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 import { format, addMonths } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { generateRecibo, type ReciboData } from "@/utils/generateRecibo";
-import { generateContractTemplate } from "@/utils/generateContractTemplate";
+import { generateContractTemplate, generateContractNumber } from "@/utils/generateContractTemplate";
 import {
   Check,
   ChevronRight,
