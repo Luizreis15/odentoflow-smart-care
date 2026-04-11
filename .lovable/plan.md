@@ -1,38 +1,87 @@
 
 
-# Correção: Geração de Contrato no Orçamento + PDF Premium para Contratos
+# Contrato Odontológico Institucional — Refatoração Completa
 
-## Problemas Identificados
+## Resumo
 
-### Problema 1: Contrato não é gerado ao aprovar orçamento
-O `AprovarOrcamentoModal` não tem nenhuma lógica para criar um documento de contrato automaticamente após aprovação. O fluxo atual só cria tratamentos, parcelas e comissões.
+Reescrever do zero o módulo de contratos do sistema com template institucional profissional, 19 cláusulas com textos-base formais, variáveis dinâmicas preenchidas automaticamente, versionamento, regras de negócio e PDF premium multi-página.
 
-### Problema 2: PDF de contrato renderiza como "Receituário"
-O `generateDocumentoPDF` só aceita `tipo: "atestado" | "receituario"`. Quando um contrato é impresso pelo histórico, o código usa a lógica `isAtestado ? "atestado" : "receituario"` — ou seja, qualquer documento que não seja atestado vira receituário no PDF. O título renderizado fica "RECEITUÁRIO" em vez do título do contrato.
+## Mudanças no Banco de Dados
 
-## Plano de Correções
+Adicionar à tabela `patient_documents`:
+- `contract_number` (text) — número sequencial do contrato
+- `contract_version` (integer, default 1) — versionamento
+- `parent_contract_id` (uuid, FK self-ref) — para aditivos vinculados ao contrato original
 
-### 1. Expandir `generateDocumentoPDF` para suportar contratos
-- Adicionar `"contrato"` ao tipo em `DocumentoPDFData`
-- No `drawDocumentTitle`, quando `tipo === "contrato"`, usar o título do documento (`data.title`) em vez de "RECEITUÁRIO"
-- No `drawBody`, ajustar a lógica de filtragem para não remover seções do contrato (cláusulas, assinaturas)
-- Adicionar área de assinatura dupla (contratante + contratado) no `drawSignature` quando for contrato
-- No footer, usar ID com prefixo `CT` para contratos
+## Arquivos a Criar/Modificar
 
-### 2. Corrigir `HistoricoDocumentosModal` para detectar contratos
-- Verificar `doc.document_type === "contrato"` para definir `tipo: "contrato"` no `pdfData`, em vez de só verificar se é atestado
+### 1. `src/utils/generateContractTemplate.ts` — Reescrever completamente
 
-### 3. Auto-gerar contrato ao aprovar orçamento
-- Após o sucesso do `handleApprove` no `AprovarOrcamentoModal`, inserir automaticamente um registro em `patient_documents` com `document_type: "contrato"` usando o template de contrato já existente em `NovoContratoModal`
-- Extrair a função `generateContractTemplate` para um utilitário reutilizável
-- Buscar dados do paciente, clínica e profissional para preencher o template
+Substituir o template atual (7 cláusulas genéricas) pelo novo template institucional com 19 cláusulas conforme o PRD. Interface expandida:
 
-### Arquivos a modificar
+```typescript
+interface ContractTemplateData {
+  // Clínica
+  clinicName, clinicCnpj, clinicAddress, clinicCity, clinicUf, clinicCep, clinicPhone, clinicEmail
+  // Profissional executor
+  professionalName, professionalCro, professionalSpecialty
+  // Paciente
+  patientName, patientRg, patientCpf, patientBirthDate, patientAddress, patientCity, patientUf, patientCep, patientPhone, patientEmail
+  // Responsável legal
+  responsibleName?, responsibleCpf?, responsibleRelation?
+  // Tratamento
+  mainProcedure, dentalArea, treatmentPlanSummary, estimatedDuration, expectedStartDate
+  // Financeiro
+  totalValue, downPayment, installmentsCount, installmentValue, dueDay, paymentMethod, adjustmentIndex, lateFee, interestRate, noShowFee
+  // Fechamento
+  signingCity, signingDate, courtDistrict, contractNumber, contractVersion
+  // Flags
+  isRemoteContract?: boolean  // controla exibição da cláusula de arrependimento
+}
+```
 
-| Arquivo | Mudança |
-|---------|---------|
-| `src/utils/generateDocumentoPDF.ts` | Adicionar suporte a `tipo: "contrato"` com layout específico |
-| `src/components/documentos/HistoricoDocumentosModal.tsx` | Detectar `document_type === "contrato"` e passar `tipo: "contrato"` |
-| `src/components/orcamentos/AprovarOrcamentoModal.tsx` | Auto-gerar contrato após aprovação bem-sucedida |
-| `src/utils/generateContractTemplate.ts` (novo) | Extrair template de contrato para reutilização |
+Cada cláusula será uma função separada que retorna string, permitindo controle condicional (ex: cláusula 13 só aparece se `isRemoteContract`).
+
+### 2. `src/components/documentos/NovoContratoModal.tsx` — Refatorar
+
+- Expandir formulário lateral com todos os campos do PRD organizados em seções colapsáveis
+- Preencher automaticamente dados do paciente, clínica e profissional via queries existentes
+- Adicionar seleção de orçamento que puxa dados financeiros (valor, parcelas, forma de pagamento)
+- Adicionar campos de responsável legal (condicional)
+- Adicionar campo de procedimento principal e área odontológica
+- Pré-visualização em tempo real do contrato no painel direito
+- Validações: não emitir sem paciente, sem profissional executor, sem procedimento, sem valor
+- Ao finalizar, gerar `contract_number` e `contract_version = 1`
+- Botão "Salvar como Rascunho" e "Emitir Contrato" (congela versão)
+
+### 3. `src/components/orcamentos/AprovarOrcamentoModal.tsx` — Atualizar
+
+- Atualizar a chamada a `generateContractTemplate` para usar a nova interface expandida
+- Preencher todos os campos disponíveis (financeiros do orçamento, profissional, paciente)
+- Gerar `contract_number` automaticamente
+
+### 4. `src/utils/generateDocumentoPDF.ts` — Ajustar renderização
+
+- Melhorar formatação de cláusulas numeradas (CLÁUSULA PRIMEIRA, SEGUNDA, etc.)
+- Suportar itens com travessão/bullet (obrigações da contratada/contratante)
+- Garantir que parágrafos únicos e sub-itens letrados renderizam corretamente
+- Área de assinatura tripla: CONTRATANTE + RESPONSÁVEL LEGAL (condicional) + CONTRATADA
+- Adicionar número do contrato e versão no cabeçalho do PDF
+
+### 5. `src/components/documentos/HistoricoDocumentosModal.tsx` — Sem mudanças estruturais
+
+Já detecta contratos corretamente. Apenas garantir que o botão "Gerar PDF" funciona com o novo formato.
+
+## Regras de Negócio Implementadas
+
+1. Validação obrigatória: paciente, profissional executor, procedimento principal, valor
+2. Responsável legal exigido quando paciente for menor
+3. Contrato finalizado fica congelado (sem edição)
+4. Alterações geram aditivo (novo documento com `parent_contract_id` apontando para o original)
+5. Número de contrato sequencial por clínica
+6. Cláusula 13 (arrependimento) só aparece quando contrato tem origem remota/digital
+
+## Conteúdo Jurídico
+
+As 19 cláusulas do PRD serão implementadas literalmente com os textos-base fornecidos, substituindo variáveis dinâmicas. Cláusulas: Qualificação das partes, Objeto, Prazo estimado, Natureza da obrigação, Honorários, Mora, Obrigações contratada, Obrigações contratante, Faltas/abandono, Alteração do plano, Consentimento informado, Rescisão, Arrependimento (condicional), LGPD, Prontuário, Responsabilidade civil, Disposições gerais, Foro, Assinaturas.
 
